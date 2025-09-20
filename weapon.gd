@@ -24,6 +24,7 @@ func compute_dps() -> int:
 	# compute base damage
 		if Tag.PHYSICAL in affix.tags and Tag.FLAT in affix.tags:
 			new_dps += affix.value
+			print(new_dps)
 		if Tag.PHYSICAL in affix.tags and Tag.PERCENT in affix.tags:
 			new_dps *= (1 + (affix.value / 100))
 	# compute attack speed
