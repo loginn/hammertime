@@ -1,7 +1,7 @@
 class_name Affixes extends Node
 
 var prefixes: Array[Affix] = [
-	Affix.new("Physical Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.PHYSICAL]),
+	Affix.new("Physical Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.PHYSICAL, Tag.FLAT]),
 	Affix.new("Elemental Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL]),
 	Affix.new("Lightning Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.LIGHTNING]),
 	Affix.new("Fire Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.FIRE]),

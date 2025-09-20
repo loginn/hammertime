@@ -16,6 +16,7 @@ func _ready():
 	$ButtonControl/AddPrefixHammer.connect("pressed", AddPrefixHammer_toggled)
 	$ButtonControl/AddSuffixHammer.connect("pressed", AddSuffixHammer_toggled)
 	$ItemView.connect("gui_input", update_item)
+	update_label()
 
 func update_label():
 	$Label.text = self.current_item.get_display_text()
