@@ -25,6 +25,7 @@ func is_prefix() -> bool:
 func reroll():
 	self.value = randi_range(self.min_value, self.max_value)
 	print("reroll ", self.value)
+	
 
 func display():
 	pass

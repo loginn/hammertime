@@ -16,6 +16,6 @@ var suffixes: Array[Affix] = [
 	Affix.new("Sigil", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.MAGIC]),
 ]
 
-func from_affix(template: Affix) -> Affix:
-	var affix_copy = Affix.new(template.name, template.type, template.min_value, template.max_value, template.tags)
+static func from_affix(template: Affix) -> Affix:
+	var affix_copy = Affix.new(template.affix_name, template.type, template.min_value, template.max_value, template.tags)
 	return affix_copy

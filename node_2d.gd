@@ -5,21 +5,28 @@ enum button {NONE, IMPLICIT, PREFIX, SUFFIX}
 var buttons
 var button_pressed: button
 var current_item: Item
+var item_label: Label
 
 func _ready():
 	self.buttons = $ButtonControl.get_children()
 	self.current_item = LightSword.new()
+	self.item_label = $Label
+	
+	self.current_item.connect("item_updated", update_label)
 	$ButtonControl/ImplicitHammer.connect("pressed", ImplicitHammer_toggled)
 	$ButtonControl/AddPrefixHammer.connect("pressed", AddPrefixHammer_toggled)
 	$ButtonControl/AddSuffixHammer.connect("pressed", AddSuffixHammer_toggled)
 	$ItemView.connect("gui_input", update_item)
+
+func update_label():
+	$Label.text = self.current_item.get_display_text()
 
 func update_item(event: InputEvent):
 	if (event is not InputEventMouseButton) or (not event.button_index == MOUSE_BUTTON_LEFT or not event.pressed):
 		return
 	print("click")
 	if self.button_pressed == button.IMPLICIT:
-		self.current_item.implicit.reroll()
+		self.current_item.reroll_affix(self.current_item.implicit)
 	elif self.button_pressed == button.PREFIX:
 		self.current_item.add_prefix()
 	elif self.button_pressed == button.SUFFIX:
