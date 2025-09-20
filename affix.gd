@@ -15,8 +15,8 @@ func _init(affix_name: String, type: AffixType, min_value: int, max_value: int, 
 	self.type = type
 	self.tier = randi_range(1, 8)
 	self.tags = tags
-	self.min_value = min_value * (10/tier)
-	self.max_value = max_value * (10/tier)
+	self.min_value = min_value * (100/tier)
+	self.max_value = max_value * (100/tier)
 	self.value = randi_range(self.min_value, self.max_value)
 
 func is_prefix() -> bool:

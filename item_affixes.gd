@@ -8,8 +8,8 @@ var prefixes: Array[Affix] = [
 	Affix.new("Cold Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.COLD]),
 ]
 var suffixes: Array[Affix] = [
-	Affix.new("Attack Speed", Affix.AffixType.SUFFIX, 2, 10, [Tag.ATTACK]),
-	Affix.new("Cast Speed", Affix.AffixType.SUFFIX, 2, 10, [Tag.MAGIC]),
+	Affix.new("Attack Speed", Affix.AffixType.SUFFIX, 2, 10, [Tag.ATTACK, Tag.SPEED]),
+	Affix.new("Cast Speed", Affix.AffixType.SUFFIX, 2, 10, [Tag.MAGIC, Tag.SPEED]),
 	Affix.new("Damage over time", Affix.AffixType.SUFFIX, 2, 10, [Tag.DOT]),
 	Affix.new("Bleed Damage", Affix.AffixType.SUFFIX, 2, 10, [Tag.DOT, Tag.PHYSICAL]),
 	Affix.new("Life", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE]),

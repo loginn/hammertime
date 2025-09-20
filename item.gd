@@ -1,16 +1,11 @@
 class_name Item extends Node
 
 var item_name: String
-var base_damage: int
-var base_speed: int
 var implicit: Implicit
 var prefixes: Array[Affix] = []
 var suffixes: Array[Affix] = []
 var tier: int
 var valid_tags: Array[String]
-var dps: int
-
-signal item_updated
 
 func display():
 	print("\n----")
@@ -43,10 +38,6 @@ func get_display_text() -> String:
 
 func reroll_affix(affix: Affix):
 	affix.reroll()
-	item_updated.emit()
-
-func compute_dps():
-	self.dps = 123
 
 func is_affix_on_item(affix: Affix) -> bool:
 	print(self.prefixes)
@@ -75,11 +66,10 @@ func add_prefix():
 			if has_valid_tag(prefix) and not self.is_affix_on_item(prefix):
 				valid_prefixes.append(prefix)
 		print("valid: ", valid_prefixes)
-
-	var new_prefix: Affix = Affixes.from_affix(valid_prefixes.pick_random())
+	var new_prefix: Affix = valid_prefixes.pick_random()
+	
 	if new_prefix != null:
-		self.prefixes.append(new_prefix)
-		item_updated.emit()
+		self.prefixes.append(Affixes.from_affix(new_prefix))
 
 func add_suffix():
 	print("adding a suffix")
@@ -89,10 +79,9 @@ func add_suffix():
 		for suffix: Affix in ItemAffixes.suffixes:
 			if has_valid_tag(suffix) and not self.is_affix_on_item(suffix):
 				valid_suffixes.append(suffix)
-			print("valid: ", valid_suffixes)
-			
-	var new_suffix =  Affixes.from_affix(valid_suffixes.pick_random())
+			print("valid: ", valid_suffixes)	
+	var new_suffix = valid_suffixes.pick_random()
+	
 	if new_suffix != null:
 		print(new_suffix.name)
-		self.suffixes.append(new_suffix)
-		item_updated.emit()
+		self.suffixes.append( Affixes.from_affix(new_suffix))

@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://2pgqludcf00k"]
 
-[ext_resource type="Script" uid="uid://byte840tk6bc" path="res://crafting_view.gd" id="1_epypp"]
+[ext_resource type="Script" uid="uid://byte840tk6bc" path="res://node_2d.gd" id="1_epypp"]
 [ext_resource type="Texture2D" uid="uid://d4jb6n4k8jhax" path="res://sword.jpg" id="1_wtcfe"]
 [ext_resource type="Script" uid="uid://bwjhb1ucb1ejq" path="res://item_view.gd" id="2_0e48y"]
 

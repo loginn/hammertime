@@ -12,7 +12,6 @@ func _ready():
 	self.current_item = LightSword.new()
 	self.item_label = $Label
 	
-	self.current_item.connect("item_updated", update_label)
 	$ButtonControl/ImplicitHammer.connect("pressed", ImplicitHammer_toggled)
 	$ButtonControl/AddPrefixHammer.connect("pressed", AddPrefixHammer_toggled)
 	$ButtonControl/AddSuffixHammer.connect("pressed", AddSuffixHammer_toggled)
@@ -33,6 +32,9 @@ func update_item(event: InputEvent):
 		self.current_item.add_suffix()
 	else:
 		print("no button selected")
+	
+	self.current_item.update_value()
+	self.update_label()
 	print(current_item.display())
 
 func untoggle_all_other_buttons(pressed_button: Button):
