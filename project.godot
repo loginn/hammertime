@@ -1,0 +1,31 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Hammertime"
+run/main_scene="uid://cckyc2mqfbw7m"
+config/features=PackedStringArray("4.5", "Mobile")
+config/icon="res://icon.svg"
+
+[autoload]
+
+ItemAffixes="*res://item_affixes.gd"
+Tag="*res://Tag.gd"
+
+[display]
+
+window/size/viewport_width=1200
+window/size/viewport_height=700
+window/stretch/mode="canvas_items"
+
+[rendering]
+
+renderer/rendering_method="mobile"

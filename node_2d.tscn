@@ -1,0 +1,60 @@
+[gd_scene load_steps=4 format=3 uid="uid://2pgqludcf00k"]
+
+[ext_resource type="Script" uid="uid://byte840tk6bc" path="res://node_2d.gd" id="1_epypp"]
+[ext_resource type="Texture2D" uid="uid://d4jb6n4k8jhax" path="res://sword.jpg" id="1_wtcfe"]
+[ext_resource type="Script" uid="uid://bwjhb1ucb1ejq" path="res://item_view.gd" id="2_0e48y"]
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource("1_epypp")
+
+[node name="Label" type="Label" parent="."]
+offset_left = 882.0
+offset_top = 94.0
+offset_right = 1198.0
+offset_bottom = 614.0
+text = "Item:"
+horizontal_alignment = 1
+
+[node name="ItemView" type="TextureRect" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 470.0
+offset_top = 94.0
+offset_right = 774.0
+offset_bottom = 579.0
+grow_horizontal = 2
+size_flags_vertical = 4
+texture = ExtResource("1_wtcfe")
+expand_mode = 3
+script = ExtResource("2_0e48y")
+
+[node name="ButtonControl" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+metadata/_edit_use_anchors_ = true
+
+[node name="AddPrefixHammer" type="Button" parent="ButtonControl"]
+layout_mode = 0
+offset_top = 94.0
+offset_right = 162.0
+offset_bottom = 188.0
+toggle_mode = true
+text = "Add Prefix Hammer"
+
+[node name="ImplicitHammer" type="Button" parent="ButtonControl"]
+layout_mode = 0
+offset_right = 162.0
+offset_bottom = 94.0
+toggle_mode = true
+text = "Implicit Hammer"
+
+[node name="AddSuffixHammer" type="Button" parent="ButtonControl"]
+layout_mode = 0
+offset_top = 188.0
+offset_right = 162.0
+offset_bottom = 282.0
+toggle_mode = true
+text = "Add Suffix Hammer"
