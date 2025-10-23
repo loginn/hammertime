@@ -1,8 +1,8 @@
 class_name Affixes extends Node
 
 var prefixes: Array[Affix] = [
-	Affix.new("Physical Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.PHYSICAL, Tag.WEAPON]),
-	Affix.new("%Physical Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.PHYSICAL, Tag.WEAPON]),
+	Affix.new("Physical Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.PHYSICAL, Tag.FLAT, Tag.WEAPON]),
+	Affix.new("%Physical Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.PHYSICAL, Tag.PERCENTAGE, Tag.WEAPON]),
 	Affix.new("%Elemental Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.WEAPON]),
 	Affix.new("%Cold Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.WEAPON]),
 	Affix.new("%Fire Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.WEAPON]),
@@ -12,7 +12,7 @@ var prefixes: Array[Affix] = [
 	Affix.new("Cold Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.COLD, Tag.WEAPON]),
 ]
 var suffixes: Array[Affix] = [
-	Affix.new("Attack Speed", Affix.AffixType.SUFFIX, 2, 10, [Tag.ATTACK, Tag.WEAPON]),
+	Affix.new("Attack Speed", Affix.AffixType.SUFFIX, 2, 10, [Tag.SPEED, Tag.ATTACK, Tag.WEAPON]),
 	Affix.new("Cast Speed", Affix.AffixType.SUFFIX, 2, 10, [Tag.MAGIC, Tag.WEAPON]),
 	Affix.new("Damage over time", Affix.AffixType.SUFFIX, 2, 10, [Tag.DOT, Tag.WEAPON]),
 	Affix.new("Bleed Damage", Affix.AffixType.SUFFIX, 2, 10, [Tag.DOT, Tag.PHYSICAL, Tag.WEAPON]),
@@ -25,8 +25,8 @@ var suffixes: Array[Affix] = [
 	Affix.new("Elemental Reduction", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE]),
 	Affix.new("Dodge Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE]),
 	Affix.new("Dmg Suppression Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE]),
-	Affix.new("Critical Strike Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.CRIT]),
-	Affix.new("Critical Strike Damage", Affix.AffixType.SUFFIX, 2, 10, [Tag.CRIT]),
+	Affix.new("Critical Strike Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.CRITICAL]),
+	Affix.new("Critical Strike Damage", Affix.AffixType.SUFFIX, 2, 10, [Tag.CRITICAL]),
 ]
 
 static func from_affix(template: Affix) -> Affix:

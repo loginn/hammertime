@@ -1,7 +1,65 @@
-[gd_scene load_steps=2 format=3 uid="uid://cckyc2mqfbw7m"]
+[gd_scene load_steps=5 format=3 uid="uid://cckyc2mqfbw7m"]
 
-[ext_resource type="PackedScene" uid="uid://2pgqludcf00k" path="res://node_2d.tscn" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://m2eqdeysmrim" path="res://main_view.gd" id="1_main"]
+[ext_resource type="PackedScene" uid="uid://2pgqludcf00k" path="res://node_2d.tscn" id="2_crafting"]
+[ext_resource type="PackedScene" uid="uid://cptle7svpjrex" path="res://Hero view.tscn" id="3_hero"]
+[ext_resource type="PackedScene" path="res://Gameplay view.tscn" id="4_gameplay"]
 
-[node name="Node" type="Node"]
+[node name="MainView" type="Node2D"]
+script = ExtResource("1_main")
 
-[node name="Node2D" parent="." instance=ExtResource("1_ig7tw")]
+[node name="NavigationPanel" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 600.0
+offset_right = 1200.0
+offset_bottom = 700.0
+color = Color(0.2, 0.2, 0.3, 0.9)
+
+[node name="CraftingButton" type="Button" parent="NavigationPanel"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 10.0
+offset_right = -150.0
+offset_bottom = 50.0
+text = "Crafting"
+
+[node name="HeroButton" type="Button" parent="NavigationPanel"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 10.0
+offset_right = 50.0
+offset_bottom = 50.0
+text = "Hero"
+
+[node name="GameplayButton" type="Button" parent="NavigationPanel"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 100.0
+offset_top = 10.0
+offset_right = 250.0
+offset_bottom = 50.0
+text = "Adventure"
+
+[node name="HelpLabel" type="Label" parent="NavigationPanel"]
+layout_mode = 0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -25.0
+offset_right = 340.0
+offset_bottom = -5.0
+text = "Press TAB to toggle views, or use number keys 1/2/3"
+horizontal_alignment = 1
+
+[node name="CraftingView" parent="." instance=ExtResource("2_crafting")]
+
+[node name="HeroView" parent="." instance=ExtResource("3_hero")]
+
+[node name="GameplayView" parent="." instance=ExtResource("4_gameplay")]
