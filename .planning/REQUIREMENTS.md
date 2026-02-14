@@ -1,7 +1,7 @@
 # Requirements: Hammertime
 
 **Defined:** 2026-02-14
-**Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
+**Core Value:** The crafting loop must feel rewarding -- finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
 ## v0.1 Requirements
 
@@ -81,10 +81,10 @@ Preserved from v1.0 Crafting Overhaul planning. Will be re-scoped after v0.1 com
 
 | Feature | Reason |
 |---------|--------|
-| New gameplay features | This is cleanup only — no new mechanics |
+| New gameplay features | This is cleanup only -- no new mechanics |
 | Save/load system | Resource migration enables it, but implementation deferred |
-| Testing framework (GdUnit4) | Nice to have but not blocking — can add later |
-| Modifier pipeline (flat/increased/more) | Over-engineering for current scope — unify first, formalize later |
+| Testing framework (GdUnit4) | Nice to have but not blocking -- can add later |
+| Modifier pipeline (flat/increased/more) | Over-engineering for current scope -- unify first, formalize later |
 | Composition over inheritance | Current 5 item types don't justify the complexity |
 
 ## Traceability
@@ -93,29 +93,29 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STYLE-01 | - | Pending |
-| STYLE-02 | - | Pending |
-| STYLE-03 | - | Pending |
-| ORG-01 | - | Pending |
-| ORG-02 | - | Pending |
-| ORG-03 | - | Pending |
-| DATA-01 | - | Pending |
-| DATA-02 | - | Pending |
-| DATA-03 | - | Pending |
-| DATA-04 | - | Pending |
-| CALC-01 | - | Pending |
-| CALC-02 | - | Pending |
-| CALC-03 | - | Pending |
-| CALC-04 | - | Pending |
-| VIEW-01 | - | Pending |
-| VIEW-02 | - | Pending |
-| VIEW-03 | - | Pending |
+| STYLE-01 | Phase 1 | Pending |
+| STYLE-02 | Phase 1 | Pending |
+| STYLE-03 | Phase 1 | Pending |
+| ORG-01 | Phase 1 | Pending |
+| ORG-02 | Phase 1 | Pending |
+| ORG-03 | Phase 1 | Pending |
+| DATA-01 | Phase 2 | Pending |
+| DATA-02 | Phase 2 | Pending |
+| DATA-03 | Phase 2 | Pending |
+| DATA-04 | Phase 2 | Pending |
+| CALC-01 | Phase 3 | Pending |
+| CALC-02 | Phase 3 | Pending |
+| CALC-03 | Phase 3 | Pending |
+| CALC-04 | Phase 3 | Pending |
+| VIEW-01 | Phase 4 | Pending |
+| VIEW-02 | Phase 4 | Pending |
+| VIEW-03 | Phase 4 | Pending |
 
 **Coverage:**
 - v0.1 requirements: 17 total
-- Mapped to phases: 0
-- Unmapped: 17
+- Mapped to phases: 17
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-14*
-*Last updated: 2026-02-14 after initial definition*
+*Last updated: 2026-02-14 after roadmap creation*
