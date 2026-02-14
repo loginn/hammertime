@@ -1,4 +1,4 @@
-class_name Item extends Node
+class_name Item extends Resource
 
 var item_name: String
 var implicit: Implicit
@@ -13,11 +13,11 @@ func display() -> void:
 	print("name: %s" % self.item_name)
 
 	# Display DPS only if the item has it (weapons and rings)
-	if has_method("get_dps") or "dps" in self:
+	if self is Weapon or self is Ring:
 		print("dps: %.1f" % self.dps)
 
 	# Display defense stats for defense items
-	if has_method("get_total_defense"):
+	if self is Armor or self is Helmet or self is Boots:
 		var total_defense = self.total_defense
 		if total_defense > 0:
 			print("defense: %d" % total_defense)
@@ -43,11 +43,11 @@ func get_display_text() -> String:
 	output += ("name: %s\n" % self.item_name)
 
 	# Display DPS only if the item has it (weapons and rings)
-	if has_method("get_dps") or "dps" in self:
+	if self is Weapon or self is Ring:
 		output += "dps: %.1f\n" % self.dps
 
 	# Display defense stats for defense items
-	if has_method("get_total_defense"):
+	if self is Armor or self is Helmet or self is Boots:
 		var total_defense = self.total_defense
 		if total_defense > 0:
 			output += "defense: %d\n" % total_defense
