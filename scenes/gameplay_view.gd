@@ -11,9 +11,6 @@ var base_clearing_time: float = 3.0  # Base time in seconds
 var area_level: int = 1
 var area_difficulty_multiplier: float = 1.0
 
-# Hero instance
-var hero: Hero
-
 
 func _ready() -> void:
 	# Try to find other views
@@ -24,10 +21,6 @@ func _ready() -> void:
 	crafting_view = get_node_or_null("../CraftingView")
 	if crafting_view == null:
 		crafting_view = get_node_or_null("CraftingView")
-
-	# Get hero instance from hero_view
-	if hero_view:
-		hero = hero_view.hero
 
 	# Initialize item bases collection
 	item_bases_collected = []
@@ -70,11 +63,6 @@ func start_clearing() -> void:
 	hero_clearing = true
 	print("Hero started clearing ", current_area)
 
-	# Check if hero view is found
-	if hero_view == null:
-		print("ERROR: Hero view not found! Cannot calculate DPS.")
-		return
-
 	# Calculate clearing speed based on hero DPS
 	update_clearing_speed()
 
@@ -114,7 +102,7 @@ func clear_area() -> void:
 	take_damage()
 
 	# If hero died, don't continue
-	if not hero.is_healthy():
+	if not GameState.hero.is_healthy():
 		return
 
 	# Simulate clearing an area and getting an item base
@@ -166,12 +154,8 @@ func get_random_item_base() -> Item:
 
 
 func update_clearing_speed() -> void:
-	if hero_view == null:
-		print("ERROR: Hero view is null in update_clearing_speed()")
-		return
-
 	# Get hero's total DPS from the hero instance
-	var hero_dps = hero.get_total_dps()
+	var hero_dps = GameState.hero.get_total_dps()
 	print("Hero DPS calculated: ", hero_dps)
 
 	# Calculate clearing time based on DPS and area difficulty
@@ -225,7 +209,7 @@ func update_display() -> void:
 
 		# Show hero health
 		display_text += (
-			"Hero Health: " + "%.0f" % hero.health + "/" + "%.0f" % hero.max_health + "\n"
+			"Hero Health: " + "%.0f" % GameState.hero.health + "/" + "%.0f" % GameState.hero.max_health + "\n"
 		)
 		display_text += "Area: " + current_area + " (Level " + str(area_level) + ")\n"
 
@@ -287,7 +271,7 @@ func update_area_difficulty() -> void:
 
 func calculate_monster_damage() -> float:
 	# Get hero's total defense from the hero instance
-	var hero_defense = hero.get_total_defense()
+	var hero_defense = GameState.hero.get_total_defense()
 
 	# Calculate monster damage based on area level and hero defense
 	# Base monster damage increases with area level
@@ -310,15 +294,15 @@ func calculate_monster_damage() -> float:
 func take_damage() -> void:
 	# Hero takes damage from monsters while clearing
 	var damage = calculate_monster_damage()
-	hero.take_damage(damage)
+	GameState.hero.take_damage(damage)
 
 	# Check if hero died
-	if not hero.is_healthy():
+	if not GameState.hero.is_healthy():
 		hero_died()
 
 
 func hero_died() -> void:
 	print("Hero died! Stopping clearing.")
 	stop_clearing()
-	hero.revive()  # Resurrect with full health
+	GameState.hero.revive()  # Resurrect with full health
 	print("Hero resurrected with full health!")
