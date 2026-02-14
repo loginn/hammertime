@@ -47,11 +47,11 @@ Plans:
   3. GameState autoload holds a single Hero instance accessible from any script via GameState.hero
   4. GameEvents autoload defines core signals (equipment_changed, item_crafted, area_cleared) usable from any script
   5. The game launches and all existing functionality works identically (equipping, crafting, area clearing)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md -- Convert Affix, Implicit, Item, and all Item subclasses from Node to Resource
+- [ ] 02-02-PLAN.md -- Create GameState/GameEvents autoloads, convert Hero to Resource, wire views to GameState.hero
 
 ### Phase 3: Unified Calculations
 **Goal**: A single stat calculation system handles all item types, with clean tag separation between affix filtering and damage routing
@@ -91,7 +91,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | ✓ Complete | 2026-02-14 |
-| 2. Data Model Migration | 0/0 | Not started | - |
+| 2. Data Model Migration | 0/2 | Planned | - |
 | 3. Unified Calculations | 0/0 | Not started | - |
 | 4. Signal-Based Communication | 0/0 | Not started | - |
 
