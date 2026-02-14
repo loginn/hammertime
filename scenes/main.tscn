@@ -1,0 +1,65 @@
+[gd_scene format=3 uid="uid://cckyc2mqfbw7m"]
+
+[ext_resource type="Script" uid="uid://m2eqdeysmrim" path="res://scenes/main_view.gd" id="1_jyhfs"]
+[ext_resource type="PackedScene" uid="uid://2pgqludcf00k" path="res://scenes/node_2d.tscn" id="2_tbgi4"]
+[ext_resource type="PackedScene" uid="uid://cptle7svpjrex" path="res://scenes/hero_view.tscn" id="3_tefeu"]
+[ext_resource type="PackedScene" uid="uid://b8x7k2nan4p5q" path="res://scenes/gameplay_view.tscn" id="4_o6xl0"]
+
+[node name="MainView" type="Node2D" unique_id=1862265633]
+script = ExtResource("1_jyhfs")
+
+[node name="NavigationPanel" type="ColorRect" parent="." unique_id=2128580526]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 600.0
+offset_right = 1200.0
+offset_bottom = 700.0
+color = Color(0.2, 0.2, 0.3, 0.9)
+
+[node name="CraftingButton" type="Button" parent="NavigationPanel" unique_id=366829442]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 10.0
+offset_right = -150.0
+offset_bottom = 50.0
+text = "Crafting"
+
+[node name="HeroButton" type="Button" parent="NavigationPanel" unique_id=1997935368]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 10.0
+offset_right = 50.0
+offset_bottom = 50.0
+text = "Hero"
+
+[node name="GameplayButton" type="Button" parent="NavigationPanel" unique_id=1176893304]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 100.0
+offset_top = 10.0
+offset_right = 250.0
+offset_bottom = 50.0
+text = "Adventure"
+
+[node name="HelpLabel" type="Label" parent="NavigationPanel" unique_id=117625805]
+layout_mode = 0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -25.0
+offset_right = 340.0
+offset_bottom = -5.0
+text = "Press TAB to toggle views, or use number keys 1/2/3"
+horizontal_alignment = 1
+
+[node name="CraftingView" parent="." unique_id=1846480435 instance=ExtResource("2_tbgi4")]
+
+[node name="HeroView" parent="." unique_id=1048714341 instance=ExtResource("3_tefeu")]
+
+[node name="GameplayView" parent="." unique_id=1443059399 instance=ExtResource("4_o6xl0")]

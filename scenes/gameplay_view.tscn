@@ -1,0 +1,61 @@
+[gd_scene format=3 uid="uid://b8x7k2nan4p5q"]
+
+[ext_resource type="Script" uid="uid://yunpvh4fcw5g" path="res://scenes/gameplay_view.gd" id="1_gameplay"]
+
+[node name="GameplayView" type="Node2D"]
+script = ExtResource("1_gameplay")
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.1, 0.3, 0.1, 1)
+
+[node name="Title" type="Label" parent="."]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 50.0
+offset_top = -50.0
+offset_right = 200.0
+offset_bottom = -20.0
+text = "Adventure"
+horizontal_alignment = 1
+
+[node name="AreaLabel" type="Label" parent="."]
+offset_left = 50.0
+offset_top = 50.0
+offset_right = 300.0
+offset_bottom = 80.0
+text = "Current Area: Forest"
+
+[node name="StartClearingButton" type="Button" parent="."]
+offset_left = 50.0
+offset_top = 100.0
+offset_right = 200.0
+offset_bottom = 150.0
+text = "Start Clearing"
+
+[node name="NextAreaButton" type="Button" parent="."]
+offset_left = 220.0
+offset_top = 100.0
+offset_right = 320.0
+offset_bottom = 150.0
+text = "Next Area"
+
+[node name="MaterialsLabel" type="Label" parent="."]
+offset_left = 50.0
+offset_top = 200.0
+offset_right = 400.0
+offset_bottom = 400.0
+text = "Item Bases Found:
+
+No item bases found yet
+
+Hero is resting"
+vertical_alignment = 1
+
+[node name="ClearingTimer" type="Timer" parent="."]
+wait_time = 3.0
+autostart = false
+timeout = "_on_clearing_timer_timeout"
