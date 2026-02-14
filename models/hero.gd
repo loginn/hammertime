@@ -1,4 +1,4 @@
-class_name Hero extends Node
+class_name Hero extends Resource
 
 # Hero stats
 var health: float = 100.0
