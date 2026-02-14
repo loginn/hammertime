@@ -8,9 +8,19 @@ An ARPG-style crafting idle game built in Godot 4.5. Players send a hero to clea
 
 The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-## Current Milestone: v1.0 Crafting Overhaul
+## Current Milestone: v0.1 Code Cleanup & Architecture
 
-**Goal:** Replace the basic hammer system with a PoE-inspired rarity and currency system, all themed around different types of hammers.
+**Goal:** Refactor the codebase to follow Godot best practices — clean organization, proper UI patterns, unified damage calculations, and clear tag usage — before building v1.0.
+
+**Target features:**
+- Code organization: folder structure, separation of concerns
+- UI cleanup: proper Godot UI patterns (signals, scenes) replacing janky direct wiring
+- Damage calculation consolidation: unified system across weapon/ring/armor instead of scattered logic
+- Tag system clarification: clean separation of tag purposes (affix filtering vs damage routing)
+
+## Planned: v1.0 Crafting Overhaul
+
+**Goal:** Replace the basic hammer system with a PoE-inspired rarity and currency system, all themed around different types of hammers. (Research and requirements defined — see `.planning/research/` and v1.0 artifacts.)
 
 **Target features:**
 - Item rarity tiers (Normal / Magic / Rare)
@@ -37,11 +47,10 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] Item rarity system (Normal / Magic / Rare)
-- [ ] 6 new crafting hammers (Runic, Forge, Tack, Grand, Claw, Tuning)
-- [ ] Rarity-aware drop system (harder areas = rarer drops)
-- [ ] Replace old hammer system with new currency system
-- [ ] UI update: currency buttons with select-and-click-to-apply flow
+- [ ] Code organization with proper folder structure and file separation
+- [ ] UI refactor using Godot signals and scene patterns
+- [ ] Unified damage/stat calculation system across all item types
+- [ ] Tag system cleanup — clear purpose separation
 
 ### Out of Scope
 
@@ -62,7 +71,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 
 - **Tech stack**: Godot 4.5, GDScript only
 - **Platform**: Mobile target renderer, 1200x700 viewport
-- **Architecture**: Flat file structure, no deep folder nesting
+- **Architecture**: Adopt clean folder structure as part of this milestone
 
 ## Key Decisions
 
@@ -73,5 +82,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | PoE-style rarity tiers | Normal/Magic/Rare maps cleanly to affix count limits | -- Pending |
 | Select-and-click UI | Same flow as current hammers, minimal UI rework | -- Pending |
 
+| Code cleanup before v1.0 | Clean foundation prevents compounding tech debt across crafting overhaul | -- Pending |
+
 ---
-*Last updated: 2026-02-14 after milestone v1.0 definition*
+*Last updated: 2026-02-14 after milestone v0.1 definition*
