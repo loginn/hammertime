@@ -1,4 +1,4 @@
-class_name Affix extends Node
+class_name Affix extends Resource
 
 enum AffixType { IMPLICIT, PREFIX, SUFFIX }
 
@@ -12,7 +12,11 @@ var tags: Array[String]
 
 
 func _init(
-	p_name: String, p_type: AffixType, p_min: int, p_max: int, p_tags: Array[String]
+	p_name: String = "",
+	p_type: AffixType = AffixType.PREFIX,
+	p_min: int = 0,
+	p_max: int = 0,
+	p_tags: Array[String] = []
 ) -> void:
 	self.affix_name = p_name
 	self.type = p_type
