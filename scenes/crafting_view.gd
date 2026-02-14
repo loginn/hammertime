@@ -374,8 +374,8 @@ func update_item_type_button_states() -> void:
 	for item_type in button_map.keys():
 		var button_path = button_map[item_type]
 		if has_node(button_path):
-			var button = get_node(button_path)
-			button.button_pressed = (item_type == selected_item_type)
+			var type_button = get_node(button_path)
+			type_button.button_pressed = (item_type == selected_item_type)
 
 
 func update_inventory_display() -> void:

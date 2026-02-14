@@ -12,15 +12,15 @@ var tags: Array[String]
 
 
 func _init(
-	affix_name: String, type: AffixType, min_value: int, max_value: int, tags: Array[String]
+	p_name: String, p_type: AffixType, p_min: int, p_max: int, p_tags: Array[String]
 ) -> void:
-	self.affix_name = affix_name
-	self.type = type
+	self.affix_name = p_name
+	self.type = p_type
 	self.tier = randi_range(1, 8)
-	self.tags = tags
+	self.tags = p_tags
 	# Tier 1 is highest, so higher tier numbers = lower values
-	self.min_value = min_value * (9 - tier)
-	self.max_value = max_value * (9 - tier)
+	self.min_value = p_min * (9 - tier)
+	self.max_value = p_max * (9 - tier)
 	self.value = randi_range(self.min_value, self.max_value)
 
 

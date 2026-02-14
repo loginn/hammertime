@@ -1,6 +1,6 @@
 extends Node2D
 
-enum ItemSlot { WEAPON, HELMET, ARMOR, BOOTS, RING }
+enum ItemSlot { NONE = -1, WEAPON, HELMET, ARMOR, BOOTS, RING }
 
 var hero: Hero
 var stats_label: Label
@@ -8,7 +8,7 @@ var last_crafted_item: Item = null
 var last_crafted_label: Label
 var item_stats_label: Label
 var crafted_item_stats_label: Label
-var currently_hovered_slot: ItemSlot = -1
+var currently_hovered_slot: ItemSlot = ItemSlot.NONE
 
 
 func _ready() -> void:
@@ -79,8 +79,8 @@ func _on_item_slot_hover_entered(slot: ItemSlot) -> void:
 	update_item_stats_display()
 
 
-func _on_item_slot_hover_exited(slot: ItemSlot) -> void:
-	currently_hovered_slot = -1
+func _on_item_slot_hover_exited(_slot: ItemSlot) -> void:
+	currently_hovered_slot = ItemSlot.NONE
 	update_item_stats_display()
 
 
@@ -175,6 +175,8 @@ func get_slot_node(slot: ItemSlot) -> Button:
 
 func update_all_slots() -> void:
 	for slot in ItemSlot.values():
+		if slot == ItemSlot.NONE:
+			continue
 		update_slot_display(slot)
 
 
@@ -245,7 +247,7 @@ func update_item_stats_display() -> void:
 	if item_stats_label == null:
 		return
 
-	if currently_hovered_slot != -1:
+	if currently_hovered_slot != ItemSlot.NONE:
 		var slot_name = get_slot_name(currently_hovered_slot).to_lower()
 		var item = hero.equipped_items[slot_name]
 		if item != null:
