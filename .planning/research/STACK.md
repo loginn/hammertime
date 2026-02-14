@@ -1,6 +1,6 @@
 # Stack Research
 
-**Domain:** ARPG Crafting Idle Game - Item Rarity & Currency System
+**Domain:** Godot 4.5 ARPG Project Organization & Code Refactoring
 **Researched:** 2026-02-14
 **Confidence:** HIGH
 
@@ -10,315 +10,330 @@
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| **GDScript Enums** | Godot 4.5 | Rarity tier definition | Built-in type-safe constants with IDE autocomplete. Already used successfully for `AffixType` enum in existing codebase. Explicit value assignment prevents serialization issues. |
-| **Dictionary (typed)** | Godot 4.5 | Currency storage | Native Godot data structure. Already used in `crafting_view.gd` for `hammer_counts` and `crafting_inventory`. Easily serializable to JSON for save systems. Zero overhead. |
-| **RandomNumberGenerator** | Godot 4.5 | Weighted rarity drops | Built-in class with `rand_weighted()` method for weighted probability selection. Auto-seeded since Godot 4.0. Better than global `randi()` for multiple independent RNG streams. |
+| Godot Engine | 4.5 | Game engine | Already validated. Scene-based architecture encourages modular organization. Built-in refactoring tools (move/rename) maintain reference integrity. |
+| GDScript | 4.5 | Primary language | First-class Godot language with static typing support. Official style guide well-documented. Gradual typing allows incremental refactoring. |
+| .tres format | N/A | Development resources | Text-based format enables version control diffs. Auto-converts to binary .res on export. Essential for tracking resource changes during refactoring. |
 
 ### Supporting Libraries
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| **None Required** | - | - | All functionality achievable with Godot 4.5 built-ins. Avoid external dependencies for simple rarity/currency systems. |
+| godot-gdscript-toolkit | 4.2.2+ | Linting and formatting | Install via pip (`pip install gdtoolkit`). Use `gdlint` for style enforcement, `gdformat` for auto-formatting during refactor. |
+| GDScript Formatter (GDQuest) | Latest | Fast code formatting | Alternative to gdformat. Rust-based, formats in milliseconds. Available as Godot 4 addon or standalone binary. Better for large codebases. |
 
 ### Development Tools
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| **Godot 4.5 Inspector** | Configure rarity weights | Export variables to tune drop rates without code changes |
-| **Godot Debugger** | Test drop probabilities | Use breakpoints to verify weighted selection logic |
+| gdlint | Style guide enforcement | Enforces official GDScript style guide. Configurable via `gdlint:ignore` comments. Catches naming violations before commit. |
+| gdformat | Code auto-formatting | Reorders code sections automatically (signals → enums → variables → functions). Uncompromising formatter reduces bike-shedding. |
+| Godot Editor File Operations | Safe refactoring | CRITICAL: Always move/rename files in editor, never via filesystem. Editor updates .tscn references automatically. Breaking this causes broken scenes. |
 
-## Integration with Existing Codebase
+## Installation
 
-### Extend Item Class (item.gd)
+```bash
+# GDScript Toolkit (recommended for command-line workflow)
+pip install gdtoolkit
 
-```gdscript
-class_name Item extends Node
+# Check installation
+gdlint --version
+gdformat --version
 
-enum Rarity {NORMAL = 0, MAGIC = 1, RARE = 2}
+# Format single file
+gdformat path/to/script.gd
 
-var item_name: String
-var rarity: Rarity = Rarity.NORMAL  # NEW: Add rarity property
-var implicit: Implicit
-var prefixes: Array[Affix] = []
-var suffixes: Array[Affix] = []
-var tier: int
-var valid_tags: Array[String]
+# Lint entire project
+gdlint --recursive ./
 
-# NEW: Rarity constraints
-func get_max_prefixes() -> int:
-    match rarity:
-        Rarity.NORMAL: return 0
-        Rarity.MAGIC: return 1
-        Rarity.RARE: return 3
-        _: return 0
-
-func get_max_suffixes() -> int:
-    match rarity:
-        Rarity.NORMAL: return 0
-        Rarity.MAGIC: return 1
-        Rarity.RARE: return 3
-        _: return 0
+# GDScript Formatter (alternative, faster for large projects)
+# Download from: https://github.com/GDQuest/GDScript-formatter
+# Or install as Godot addon from Asset Library
 ```
-
-**Why:** Enums provide type safety. Match statements are efficient and readable. Existing `add_prefix()` method already checks `len(self.prefixes) >= 3`, so only need to change the limit based on rarity.
-
-### Extend Crafting View (crafting_view.gd)
-
-```gdscript
-# Replace existing hammer_counts dictionary
-var hammer_counts: Dictionary = {
-    "runic": 0,      # Normal -> Magic
-    "forge": 0,      # Normal -> Rare
-    "tack": 0,       # Add mod to Magic
-    "grand": 0,      # Add mod to Rare
-    "claw": 0,       # Remove mod
-    "tuning": 0      # Reroll values
-}
-```
-
-**Why:** Already using Dictionary for `hammer_counts`. Just rename keys and update UI button logic. Existing `update_hammer_button_states()` pattern extends cleanly.
-
-### Add Weighted Drop System (gameplay_view.gd)
-
-```gdscript
-var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-
-# Area difficulty affects rarity weights
-func get_rarity_weights() -> Array[float]:
-    var base_weights = [0.85, 0.10, 0.05]  # Normal, Magic, Rare
-    var difficulty_bonus = area_difficulty_multiplier - 1.0
-
-    # Higher difficulty shifts probability toward rarer items
-    base_weights[2] += difficulty_bonus * 0.02  # +2% Rare per difficulty level
-    base_weights[1] += difficulty_bonus * 0.03  # +3% Magic per difficulty level
-    base_weights[0] = 1.0 - base_weights[1] - base_weights[2]  # Remaining to Normal
-
-    return base_weights
-
-func get_random_item_base() -> Item:
-    var item_types = [LightSword, BasicHelmet, BasicArmor, BasicBoots, BasicRing]
-    var random_type = item_types[randi() % item_types.size()]
-    var item = random_type.new()
-
-    # NEW: Determine rarity based on area difficulty
-    var rarity_weights = get_rarity_weights()
-    var rarity_index = rng.rand_weighted(rarity_weights)
-    item.rarity = rarity_index as Item.Rarity
-
-    return item
-```
-
-**Why:** `RandomNumberGenerator.rand_weighted()` is built-in and handles weighted selection correctly. Existing `area_difficulty_multiplier` already scales with progression. No external libraries needed.
 
 ## Alternatives Considered
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| **GDScript Dictionary** | Custom Resource class | If you need save/load with `.tres` files or inspector editing of currency pools |
-| **Enum for Rarity** | String constants | Never. Enums are type-safe and prevent typos |
-| **RandomNumberGenerator** | Global `randi()`/`randf()` | Only if you never need seeded/deterministic randomness |
-| **Built-in weighted selection** | Manual cumulative probability loop | Never. `rand_weighted()` is clearer and less error-prone |
+| gdformat (Python) | GDScript Formatter (Rust) | Use Rust version when formatting speed matters (format-on-save, 100+ files). Both enforce official style guide identically. |
+| snake_case files | PascalCase files | NEVER in Godot 4. Godot 3 used PascalCase; Godot 4 convention changed to snake_case. Only C# scripts use PascalCase. |
+| Folder-per-feature | Folder-per-type | Use type-based folders (scripts/, scenes/, assets/) only for very small projects (<10 scenes). Feature-based scales better. |
+| .tres resources | .res resources | NEVER use .res during development. Binary format breaks version control diffs. Godot auto-converts .tres → .res on export. |
 
 ## What NOT to Use
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| **Nodes for item data** | Already using Node inheritance incorrectly. Items should be Resources or RefCounted classes, not Nodes. Nodes have scene tree overhead and `_ready()`/`_process()` callbacks that items don't need. | **Keep current Node approach temporarily** for consistency with existing codebase, but flag for future refactor to Resource-based items |
-| **Autoload singleton for currencies** | Crafting view already manages hammer counts. Adding autoload creates split responsibility. | **Dictionary in crafting_view.gd** (already proven pattern) |
-| **External loot table plugins** | Overkill for 3 rarity tiers. Adds dependency and learning curve. | **Built-in `rand_weighted()`** with inline weights |
-| **String-based rarity** | No compile-time safety. Typos like "MAGC" fail silently. | **Enum with explicit values** |
+| Files in project root | Creates clutter. Currently 21 .gd files flat in root. Hard to navigate in 6 months. | Feature-based folders: `items/`, `ui/`, `autoloads/`, `data/` |
+| Spaces in file names | "Gameplay view.tscn" causes CLI issues, shell escaping problems. Cross-platform fragility. | Underscores: `gameplay_view.tscn` |
+| Manual file moving | Breaks scene references. Godot uses absolute res:// paths internally. Filesystem moves don't update .tscn files. | Always use Godot editor's Move/Rename tools |
+| Mixed PascalCase/snake_case | "Tag.gd" vs "item_affixes.gd". Inconsistent casing harder to remember. | Enforce snake_case everywhere except C# scripts |
+| String typing where possible | `var item = get_item()` loses type information for autocomplete. | `var item := get_item()` or `var item: Item = get_item()` |
 
-## Stack Patterns by Feature
+## Stack Patterns by Variant
 
-### Pattern 1: Rarity System
+**For refactoring existing code:**
+- Start with non-breaking changes: run `gdformat` on all files, commit
+- Organize files into folders: use editor's "Move To" feature per file
+- Rename files to snake_case: editor updates all .tscn references automatically
+- Add type hints incrementally: new code first, then refactor hot paths
 
-**Data Structure:**
-```gdscript
-enum Rarity {NORMAL = 0, MAGIC = 1, RARE = 2}
-var rarity: Rarity = Rarity.NORMAL
+**For static typing adoption:**
+- Use type inference (`:=`) where right-hand side is obvious: `var speed := 5.0`
+- Explicit types when method returns Variant or unclear: `var data: Dictionary = parse_json()`
+- Add return type annotations to all functions: `func get_item() -> Item:`
+- Enable "Untyped Declaration" warning in Project Settings → Editor → GDScript
+
+**For folder organization (small project <50 scripts):**
+```
+res://
+├── autoloads/         # Global services (Tag, ItemAffixes)
+├── items/             # Item classes and item-related logic
+│   ├── base/          # Base classes (item.gd, weapon.gd, armor.gd)
+│   ├── weapons/       # Weapon implementations (light_sword.gd)
+│   ├── armor/         # Armor implementations (basic_armor.gd)
+│   └── accessories/   # Rings, amulets
+├── ui/                # UI scenes and scripts
+│   ├── hero_view/     # Hero screen (hero_view.tscn, hero_view.gd)
+│   ├── crafting_view/ # Crafting screen
+│   └── gameplay_view/ # Gameplay screen
+├── data/              # Data-only scripts (affix.gd, implicit.gd)
+├── scenes/            # Top-level scenes (main.tscn)
+└── assets/            # Art, audio (if any)
 ```
 
-**Why:**
-- Explicit integer values (0, 1, 2) ensure consistent serialization
-- Type annotations enable IDE autocomplete
-- Match statements provide exhaustive checking
-- Aligns with existing `AffixType` enum pattern in `affix.gd`
-
-### Pattern 2: Currency Management
-
-**Data Structure:**
-```gdscript
-var hammer_counts: Dictionary = {
-    "runic": 0,
-    "forge": 0,
-    "tack": 0,
-    "grand": 0,
-    "claw": 0,
-    "tuning": 0
-}
+**For folder organization (large project >50 scripts):**
 ```
-
-**Why:**
-- Already proven in existing `hammer_counts` system
-- Easily displayed in UI: `str(hammer_counts["runic"])`
-- Simple increment/decrement: `hammer_counts["tack"] += 1`
-- Dictionary keys act as currency type identifiers
-- No need for complex inventory system for consumables
-
-### Pattern 3: Weighted Drops
-
-**Implementation:**
-```gdscript
-var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-var weights: Array[float] = [0.85, 0.10, 0.05]  # Normal, Magic, Rare
-var rarity_index: int = rng.rand_weighted(weights)
+res://
+├── autoloads/
+├── core/              # Core systems
+│   ├── items/         # Item system
+│   ├── combat/        # Combat calculations
+│   └── progression/   # Hero leveling, area difficulty
+├── features/          # Feature-complete modules
+│   ├── hero/          # Hero feature (UI + logic)
+│   │   ├── hero_view.tscn
+│   │   ├── hero_view.gd
+│   │   └── hero.gd
+│   ├── crafting/      # Crafting feature
+│   └── gameplay/      # Gameplay loop feature
+├── shared/            # Shared utilities
+│   ├── ui/            # Reusable UI components
+│   └── utils/         # Helper functions
+└── scenes/            # Application entry points
+    └── main.tscn
 ```
-
-**Why:**
-- `rand_weighted()` returns index based on probability
-- Array order matches enum order (NORMAL=0, MAGIC=1, RARE=2)
-- Export weights to inspector for easy tuning: `@export var rarity_weights: Array[float] = [0.85, 0.10, 0.05]`
-- Instance RNG allows multiple drop tables with different seeds
-
-### Pattern 4: Crafting Operations
-
-**Currency Consumption:**
-```gdscript
-func use_runic_hammer():
-    if hammer_counts["runic"] <= 0:
-        print("No Runic Hammers available")
-        return false
-
-    if current_item.rarity != Item.Rarity.NORMAL:
-        print("Can only use Runic Hammer on Normal items")
-        return false
-
-    current_item.rarity = Item.Rarity.MAGIC
-    hammer_counts["runic"] -= 1
-    return true
-```
-
-**Why:**
-- Validation before state change (transaction safety)
-- Clear error messages for UI feedback
-- Return boolean for success/failure handling
-- Mirrors existing `update_item()` hammer consumption pattern
 
 ## Version Compatibility
 
-| Component | Godot Version | Notes |
-|-----------|---------------|-------|
-| RandomNumberGenerator.rand_weighted() | 4.0+ | Added in Godot 4.0 with weighted selection |
-| Auto-seeded RNG | 4.0+ | No need to call `randomize()` in `_ready()` |
-| Typed Dictionaries | 4.0+ | `var dict: Dictionary = {}` works, but values are Variant |
-| Enum type hints | 3.2+ | `var rarity: Rarity` supported, but runtime checks only |
+| Tool | Godot Version | Notes |
+|------|---------------|-------|
+| godot-gdscript-toolkit 4.2.2+ | Godot 4.0+ | Parses Godot 4 GDScript syntax. NOT compatible with Godot 3. |
+| GDScript Formatter (Rust) | Godot 4.0+ | Godot 4-specific. Separate version exists for Godot 3. |
+| Static typing with `:=` | Godot 3.1+ | Type inference added in 3.1, improved in 4.0. |
+| Editor Move/Rename tools | All versions | Works in Godot 3 and 4, but Godot 4 has better UX. |
 
-**Godot 4.5 Specific Benefits:**
-- Improved performance for Dictionary operations
-- Better type inference for enum matches
-- Enhanced debugger support for custom types
+## Current Project Assessment
+
+**Existing state (needs refactoring):**
+- ✗ 21 .gd files flat in project root → organize by feature
+- ✗ Scene files with spaces: "Gameplay view.tscn" → rename to snake_case
+- ✗ Mixed casing: "Tag.gd" vs "item_affixes.gd" → enforce snake_case
+- ✗ No linting/formatting configured → add gdformat
+- ✗ Inconsistent type hints → add gradually
+- ✓ Using .tscn (text scenes) for version control (correct)
+- ✓ Limited autoloads (Tag, ItemAffixes) for read-only data (correct)
+- ✓ Godot 4.5 with Mobile renderer (validated stack)
+
+**Recommended refactoring order:**
+1. **Format all code** (low risk): Run `gdformat` on all .gd files, commit
+2. **Rename scene files** (low risk): Remove spaces, use snake_case
+3. **Create folder structure** (medium risk): Move files via editor
+4. **Rename script files** (medium risk): Update to snake_case convention
+5. **Add type hints** (low risk): Gradual, start with return types
+6. **Refactor Node items to Resources** (high risk): Defer to future milestone
+
+**Good decisions to keep:**
+- Autoloads limited to read-only services (Tag for enums, ItemAffixes for data lookup)
+- Text-based scenes (.tscn) and resources (.tres) for version control
+- GDScript-only (no C# mixing reduces complexity for first Godot project)
+
+## Migration Paths
+
+### From Flat Root to Organized Folders
+
+**Phase 1: Prepare** (prevents breakage)
+1. Commit current working state
+2. Close all open scenes in editor
+3. Ensure no external file editors are watching project
+
+**Phase 2: Create Structure** (safe operations)
+```bash
+# Create folders in Godot editor's FileSystem dock
+# Right-click → New Folder
+autoloads/
+items/
+  base/
+  weapons/
+  armor/
+  accessories/
+ui/
+  hero_view/
+  crafting_view/
+  gameplay_view/
+data/
+scenes/
+```
+
+**Phase 3: Move Files** (ONLY via Godot editor)
+1. Right-click file → "Move To"
+2. Select destination folder
+3. Confirm (editor updates all references)
+4. Verify no broken dependencies (check Output panel for errors)
+
+**Phase 4: Rename Files** (ONLY via Godot editor)
+1. Right-click "Gameplay view.tscn" → Rename → "gameplay_view.tscn"
+2. Right-click "Tag.gd" → Rename → "tag.gd"
+3. Update project.godot autoload paths manually:
+```gdscript
+# Before
+ItemAffixes="*res://item_affixes.gd"
+Tag="*res://Tag.gd"
+
+# After
+ItemAffixes="*res://autoloads/item_affixes.gd"
+Tag="*res://autoloads/tag.gd"
+```
+
+**Phase 5: Verify**
+1. Run game (F5)
+2. Test all three views (Hero, Crafting, Gameplay)
+3. Check for "Resource not found" errors in Output
+4. Commit if successful
+
+### From No Types to Typed GDScript
+
+**Strategy: Gradual, non-breaking adoption**
+
+1. **Enable warnings** (no code changes yet)
+```gdscript
+# Project → Project Settings → Debug → GDScript
+# Enable: UNTYPED_DECLARATION, UNSAFE_METHOD_ACCESS
+```
+
+2. **Add return types** (low risk, high value)
+```gdscript
+# Before
+func get_max_prefixes():
+    return 3
+
+# After
+func get_max_prefixes() -> int:
+    return 3
+```
+
+3. **Use type inference** (quick wins)
+```gdscript
+# Before
+var speed = 5.0
+var items = []
+
+# After
+var speed := 5.0
+var items: Array[Item] = []
+```
+
+4. **Add parameter types** (catches bugs)
+```gdscript
+# Before
+func add_prefix(affix):
+    prefixes.append(affix)
+
+# After
+func add_prefix(affix: Affix) -> void:
+    prefixes.append(affix)
+```
+
+5. **Type exported variables** (better inspector UX)
+```gdscript
+# Before
+@export var max_health = 100
+
+# After
+@export var max_health: int = 100
+```
 
 ## Architectural Decisions
 
-### Why NOT Resources for Items?
+### Why Feature-Based Folders?
 
-**Current State:** Items extend Node (incorrect but established pattern)
+**Problem:** Type-based folders (scripts/, scenes/, resources/) create split-brain:
+- To understand "Hero" feature, must open scripts/hero_view.gd AND scenes/hero_view.tscn AND resources/hero_stats.tres
+- Files related to one feature scattered across 3+ folders
+- Hard to delete features cleanly (files left behind in multiple folders)
 
-**Recommendation:** Keep Node-based items for this milestone to minimize refactoring risk.
-
-**Future Refactor Path:**
-1. Create `ItemData` Resource class with all properties
-2. Have Item nodes reference ItemData
-3. Gradually migrate logic from Node to Resource
-4. Eventually replace Node items with Resource items
-
-**Why defer refactoring:**
-- Existing system works (5 equipment slots, display, DPS calculation)
-- Rarity/currency features don't require architecture change
-- Node → Resource migration is risky mid-development
-- Can ship rarity system faster without refactor
-
-### Why Dictionary for Currencies?
-
-**Alternatives Considered:**
-1. **Autoload singleton:** Splits state between views
-2. **Array of Currency Resources:** Over-engineered for 6 currencies
-3. **Individual variables:** `var runic_hammers: int`, etc. (verbose, hard to iterate)
-
-**Dictionary wins because:**
-- Already proven in `hammer_counts` and `crafting_inventory`
-- Iterable for UI generation: `for currency in hammer_counts.keys()`
-- String keys act as type identifiers for button mapping
-- Easily serializable for save systems: `JSON.stringify(hammer_counts)`
-
-### Why Enums for Rarity?
-
-**Type Safety:**
-```gdscript
-# Good: Compile-time autocomplete
-item.rarity = Item.Rarity.MAGIC
-
-# Bad: Typo fails silently
-item.rarity = "MAGC"  # No error, just broken logic later
+**Solution:** Co-locate related files in feature folders:
+```
+ui/hero_view/
+├── hero_view.tscn      # Scene
+├── hero_view.gd        # Script attached to scene
+└── hero_portrait.png   # Exclusive asset
 ```
 
-**Match Exhaustiveness:**
-```gdscript
-match item.rarity:
-    Item.Rarity.NORMAL: return 0
-    Item.Rarity.MAGIC: return 1
-    Item.Rarity.RARE: return 3
-    _: return 0  # Default case catches future enum additions
-```
+**Benefits:**
+- One folder contains everything for one feature
+- Delete folder = delete entire feature
+- Easier to reason about scope and dependencies
+- Aligns with Godot's scene-as-composition philosophy
 
-**Serialization Safety:**
-- Explicit values (`NORMAL = 0`) prevent reordering bugs
-- Integer serialization is compact and cross-compatible
-- Enum name remains readable in debug prints
+### Why snake_case for Files?
 
-## Implementation Checklist
+**Official Godot 4 convention changed from Godot 3:**
+- Godot 3: PascalCase files (Enemy.gd, PlayerController.gd)
+- Godot 4: snake_case files (enemy.gd, player_controller.gd)
 
-**Phase 1: Rarity Enum (Low Risk)**
-- [ ] Add `enum Rarity` to `item.gd`
-- [ ] Add `var rarity: Rarity = Rarity.NORMAL` to Item class
-- [ ] Add `get_max_prefixes()` and `get_max_suffixes()` methods
-- [ ] Update `add_prefix()` to check `get_max_prefixes()` instead of hardcoded 3
-- [ ] Update `add_suffix()` to check `get_max_suffixes()` instead of hardcoded 3
+**Rationale:**
+- GDScript uses snake_case for functions/variables (Python-inspired)
+- C++ core uses snake_case for file names
+- Cross-platform: some filesystems are case-insensitive (macOS/Windows)
+- Consistency: match function_name style with file_name style
 
-**Phase 2: Currency Dictionary (Low Risk)**
-- [ ] Rename `hammer_counts` keys to new currency names
-- [ ] Update `update_hammer_button_states()` to reference new keys
-- [ ] Update UI buttons to show new currency names
-- [ ] Update `add_hammers()` signature to accept 6 currency types
+**Exception:** C# scripts use PascalCase (Enemy.cs) to follow .NET conventions
 
-**Phase 3: Weighted Drops (Medium Risk)**
-- [ ] Add `RandomNumberGenerator` instance to `gameplay_view.gd`
-- [ ] Implement `get_rarity_weights()` based on `area_difficulty_multiplier`
-- [ ] Update `get_random_item_base()` to set item rarity via `rand_weighted()`
-- [ ] Export rarity weights to inspector for tuning
-- [ ] Test drop distribution across difficulty levels
+### Why Limit Autoloads?
 
-**Phase 4: Crafting Operations (Medium Risk)**
-- [ ] Implement Runic Hammer (Normal → Magic)
-- [ ] Implement Forge Hammer (Normal → Rare)
-- [ ] Implement Tack Hammer (add mod to Magic if space)
-- [ ] Implement Grand Hammer (add mod to Rare if space)
-- [ ] Implement Claw Hammer (remove random mod)
-- [ ] Implement Tuning Hammer (reroll existing mod values)
-- [ ] Add validation for each operation (check rarity, check slots, etc.)
+**Current autoloads:**
+- `Tag.gd` - Enum definitions (read-only) ✓
+- `ItemAffixes.gd` - Affix data lookup (read-only) ✓
+
+**Good use cases for autoloads:**
+- Read-only data (constants, enums, lookup tables)
+- Stateless services (logging, analytics)
+- Truly global services (audio manager, save system)
+
+**Bad use cases (avoid):**
+- Game state (player inventory, current area) → belongs in scene tree
+- Mutable shared data → creates hidden dependencies, hard to debug
+- "Convenience" singletons → lazy design, couples code tightly
+
+**Why current autoloads are correct:**
+- Tag.gd is pure enum definitions (no state)
+- ItemAffixes.gd is read-only data provider (loads once, queries many times)
+- Neither creates hidden mutation or state management issues
 
 ## Sources
 
-- [GDScript Enums Tutorial - Complete Guide](https://gamedevacademy.org/gdscript-enums-tutorial-complete-guide/) — Enum best practices, explicit values, type safety
-- [Resources — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/scripting/resources.html) — Resource vs Node guidance
-- [When to Node, Resource, and Class in Godot](https://backat50ft.substack.com/p/when-to-node-resource-and-class-in) — Architecture decision framework
-- [RandomNumberGenerator — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/classes/class_randomnumbergenerator.html) — rand_weighted() method, seeding
-- [Weighted Random Selection With Godot](http://kehomsforge.com/tutorials/single/weighted-random-selection-godot/) — Implementation patterns
-- [Singletons (Autoload) — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/scripting/singletons_autoload.html) — When to use autoload (and when not to)
-- [JSON In Godot - Complete Guide](https://gamedevacademy.org/json-in-godot-complete-guide/) — Dictionary serialization for save systems
-- [Godot 4.5 Release Notes](https://godotengine.org/releases/4.5/) — New features: shader baking, accessibility, custom loggers
+- [Project organization — Godot Engine (4.5) documentation](https://docs.godotengine.org/en/4.5/tutorials/best_practices/project_organization.html) — Official folder structure conventions (HIGH confidence)
+- [GDScript style guide — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html) — Official naming and formatting rules (HIGH confidence)
+- [Scene organization — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/best_practices/scene_organization.html) — Architecture patterns (HIGH confidence)
+- [Autoloads versus internal nodes — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/best_practices/autoloads_versus_internal_nodes.html) — When to use autoloads (HIGH confidence)
+- [Static typing in GDScript — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/static_typing.html) — Type system conventions (HIGH confidence)
+- [GDQuest GDScript Guidelines](https://gdquest.gitbook.io/gdquests-guidelines/godot-gdscript-guidelines) — Community best practices, file organization (MEDIUM confidence)
+- [godot-gdscript-toolkit on GitHub](https://github.com/Scony/godot-gdscript-toolkit) — gdlint and gdformat tool documentation (HIGH confidence)
+- [GDScript Formatter by GDQuest](https://github.com/GDQuest/GDScript-formatter) — Alternative fast formatter (HIGH confidence)
+- [Godot Forum: tres vs res file format](https://forum.godotengine.org/t/fileformat-differences-tres-res-scn-material-etc/80006) — Community explanation (MEDIUM confidence)
+- [Godot Forum: Folder structure for large game](https://forum.godotengine.org/t/folder-structure-for-large-game-in-godot-4-5/119115) — Real-world patterns (LOW confidence)
 
 ---
-*Stack research for: Hammertime ARPG - Rarity & Currency Milestone*
+*Stack research for: Hammertime ARPG - Code Organization & Refactoring*
 *Researched: 2026-02-14*
-*Confidence: HIGH — All recommendations based on Godot 4.5 official docs and proven patterns from existing codebase*
+*Confidence: HIGH — All core recommendations from Godot 4.5 official documentation*

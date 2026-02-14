@@ -1,431 +1,623 @@
 # Pitfalls Research
 
-**Domain:** Adding Item Rarity Tiers and Crafting Currencies to Existing ARPG
+**Domain:** Godot 4.5 ARPG Refactoring
 **Researched:** 2026-02-14
 **Confidence:** HIGH
 
 ## Critical Pitfalls
 
-### Pitfall 1: Rarity State Without Affix Count Enforcement
+Mistakes that cause rewrites or major issues during refactoring.
+
+### Pitfall 1: Moving Files Breaks Scene References and UIDs
 
 **What goes wrong:**
-The Item class has no `rarity` field, but `add_prefix()` and `add_suffix()` already enforce a hardcoded limit of 3 prefixes and 3 suffixes. When you add rarity tiers (Normal=0+0, Magic=1+1, Rare=3+3), items can violate rarity rules because the existing code allows any item to reach 3+3 mods regardless of intended rarity.
-
-Example failure: A Normal item (should be 0+0) gets `add_prefix()` called and now has 1 prefix, making it invalid for Normal rarity but without any rarity field to track this state change.
+Moving .gd or .tscn files to new folders causes all path-based references to break. Scene instances, preload() calls, and get_node() paths all fail silently or throw errors. The game appears to load but scripts don't attach, nodes are missing, or scenes fail to instantiate.
 
 **Why it happens:**
-Developers add a `rarity` enum to Item class but forget that existing item generation in `gameplay_view.gd` (line 151-155) creates items via `LightSword.new()` with no rarity assignment, and existing crafting methods don't check rarity before modifying affix counts.
+Godot 4.x uses both UIDs and file paths for references. While UIDs were introduced in Godot 4.0, support wasn't completely finished — many file types don't benefit from the UID system entirely. When moving files outside the editor, .uid files don't move with scripts, breaking references. Even moving within the editor can cause cache desynchronization in Godot 4.2-4.5.
 
-**How to avoid:**
-1. Add `rarity` field to Item class with explicit initialization in all item type constructors
-2. Refactor `add_prefix()` and `add_suffix()` to check rarity-based limits BEFORE checking hardcoded 3-affix limit
-3. Add `can_add_prefix()` and `can_add_suffix()` validation methods that return bool + reason string
-4. Make item generation always assign a rarity (even if just Normal by default)
+**Consequences:**
+- Broken scene references ("Can't load script" errors)
+- Missing node attachments in scenes
+- "Invalid UID, using text path instead" warnings in console
+- Scenes load but script logic doesn't execute
+- Hours debugging "why did this stop working?"
+- Potential data loss if changes not caught before commit
 
-**Warning signs:**
-- Items display with mod counts that don't match their rarity color
-- Currency usage succeeds but item becomes "invalid" (e.g., Magic item with 3 prefixes)
-- "Cannot add more prefixes" message appears on Magic item with only 1 prefix
-- Items created in `gameplay_view.gd` have `null` or undefined rarity
+**Prevention:**
+- **ALWAYS move files using Godot editor's FileSystem dock** (right-click → Move To / Rename), never via external file manager
+- After moving files in Godot 4.4+, re-save all affected scenes to regenerate UID references
+- When moving files externally (git operations), move .uid files alongside .gd files
+- Before major reorganization, commit to git so you can restore if references break
+- Test immediately after each file move — don't move multiple files then test
+- Use "Find in Files" to search for old paths before assuming move succeeded
+- Close external editors before refactoring to prevent auto-save conflicts
+
+**Detection:**
+- "Invalid UID, using text path instead" warnings in console
+- Output panel shows "Resource not found: res://old_path.gd" errors
+- Scenes show missing script icon (red broken script icon in scene tree)
+- Nodes appear in tree but properties are missing
+- "Cannot preload resource" errors
+- Run scene (F5) and check for immediate errors
 
 **Phase to address:**
-Phase 1 (Rarity Foundation) - This MUST be addressed during the initial rarity implementation, not deferred. Existing code assumes all items can have 3+3, breaking this assumption requires careful refactoring of Item.gd lines 81-124.
+Phase 1: Project Structure Setup — establish folder structure BEFORE writing new code, move all files once, verify, then continue.
 
 ---
 
-### Pitfall 2: Currency Validation Without State Transition Rules
+### Pitfall 2: Renaming Classes Breaks class_name and preload() References
 
 **What goes wrong:**
-Currencies like Runic Hammer (Normal→Magic) and Forge Hammer (Normal→Rare) change item rarity, but the current affix system has no "remove affixes" logic. When a Runic Hammer converts Normal(0+0) to Magic, the item needs to gain 1-2 mods, but when a Claw Hammer removes a mod from a Magic(1+1) item, what happens? Does it become Normal(0+0)? The code has no downgrade transition logic.
-
-Example failure:
-- Magic item has 2 prefixes, 1 suffix
-- Player uses Claw Hammer to remove 1 prefix
-- Item now has 1 prefix, 1 suffix - still valid Magic
-- Player uses Claw Hammer again to remove the suffix
-- Item now has 1 prefix, 0 suffixes - INVALID Magic (requires at least 1 suffix)
-- No logic exists to demote to Normal or prevent this invalid state
+Renaming a script that uses class_name causes "Could not resolve script" errors. All preload("res://old_name.gd") statements break. Autoloads fail to load. The project requires full reload to detect changes, and even then references may stay broken.
 
 **Why it happens:**
-Developers implement currency effects in isolation (Runic adds mods, Claw removes mods) without defining a state machine for valid rarity transitions. The assumption "just add/remove mods" ignores that rarity is state-dependent.
+GDScript's class_name creates a global identifier that other scripts reference. Renaming the file doesn't update these references automatically. **Godot 4.5 changed autoload behavior** — script files are no longer automatically renamed to PascalCase, creating mismatches between expected and actual class names. preload() uses compile-time path resolution, so renaming requires manual updates across all files.
 
-**How to avoid:**
-1. Define explicit state transition rules:
-   - Normal→Magic: Requires adding at least 1 mod
-   - Magic→Normal: Requires removing all mods
-   - Normal→Rare: Requires adding at least 2 mods
-   - Magic→Rare: Can only happen via Forge Hammer, not by adding mods to Magic
-   - Rare→Magic: NEVER allowed (prevent downgrade)
-   - Rare→Normal: NEVER allowed
-2. Implement `validate_rarity_transition(from_rarity, to_rarity, current_mods) -> Result` before applying currency
-3. Claw Hammer should check: "Would this removal make the item invalid for its current rarity?" and either prevent it OR auto-demote rarity
-4. Make "minimum mod count for rarity" a validation rule, not just a generation rule
+**Consequences:**
+- "Class X not found" errors
+- Type hints showing as invalid in editor
+- Autoload singleton returns null
+- "Identifier not declared in current scope" for previously working class names
+- Game won't start ("Autoload 'Tag' could not be loaded")
 
-**Warning signs:**
-- Currency use succeeds but item displays wrong rarity color
-- Items exist with Magic rarity but 0 mods
-- Claw Hammer can remove the last mod from a Magic item
-- No error message when invalid transition attempted
-- Currency consumption happens even when transition fails
+**Prevention:**
+- **Search entire project** for class name before renaming: "Find in Files" for old class name
+- Update all class_name declarations, preload() calls, and type hints in order
+- For autoloads in Godot 4.5+, verify the actual file naming matches expected class name
+- Check Project → Project Settings → Autoload after renaming any autoload file
+- Prefer @export var references over preload() where possible — they don't break on rename
+- Use class_name only for types that truly need global access
+- Consider not using class_name for small, internal classes
+- Run game (F5) immediately after renaming autoloads to catch early
+
+**Detection:**
+- "Class X not found" errors
+- Type hints showing as invalid in editor
+- Autoload singleton returns null
+- "Identifier not declared in current scope" for previously working class names
+- Black screen / game doesn't initialize
+- Output panel shows resource loading errors for autoloads
 
 **Phase to address:**
-Phase 2 (Currency System) - Must be designed BEFORE implementing individual currencies. The transition rules are the foundation; currencies are implementations of those rules.
+Phase 2: Data Model Migration — when creating new Resource-based classes, establish naming conventions and avoid mid-phase renames.
 
 ---
 
-### Pitfall 3: Hardcoded 3-Hammer System Not Fully Replaced
+### Pitfall 3: get_node() Paths Break When Restructuring Scene Hierarchy
 
 **What goes wrong:**
-`crafting_view.gd` has deeply embedded 3-hammer logic:
-- Line 19-23: `hammer_counts` dictionary with "implicit", "prefix", "suffix" keys
-- Line 98-118: Button toggle logic checking these specific hammer types
-- Line 134-143: Button text showing "(X remaining)" for these 3 types
-- Line 141: `gameplay_view.give_hammer_rewards()` generates these 3 types
-
-When adding 6 new currency types (Runic, Forge, Tack, Grand, Claw, Tuning), developers often:
-1. Add new currencies to a separate `currency_inventory` dictionary
-2. Keep old `hammer_counts` for backward compatibility
-3. End up with TWO parallel systems that desync
-
-Example failure:
-- Old system awards "prefix hammers" via `give_hammer_rewards()`
-- New system has "Tack Hammer" currency for adding prefix to Magic items
-- Player has both "10 prefix hammers" AND "5 Tack Hammers"
-- UI shows old buttons, new currencies never used
-- OR: UI shows new currencies, old rewards never granted
+Hardcoded get_node() paths like `get_node("../HeroView")` or `$"../../ButtonControl/ImplicitHammer"` break when scene structure changes. The code worked before refactoring, now nodes are null and features stop working. **Current codebase uses extensive get_node() with relative paths** (see crafting_view.gd lines 26, 34-36, 38-54).
 
 **Why it happens:**
-Fear of breaking existing functionality leads to "additive refactoring" instead of "replacement refactoring". The old system continues to function while the new system is bolted on, creating dual state management.
+Node paths are position-dependent. Moving nodes to different parents, renaming nodes, or changing hierarchy depth invalidates all relative paths. Godot has no automatic refactoring for node paths. The distinction between absolute and relative paths isn't obvious.
 
-**How to avoid:**
-1. REMOVE `hammer_counts` dictionary entirely, don't add to it
-2. Replace with `currency_inventory` dictionary with 6 new currency types
-3. Refactor `give_hammer_rewards()` in `gameplay_view.gd` to award new currencies based on area difficulty and rarity drop tables
-4. Replace the 3 hammer buttons with 6 currency buttons (or dynamic button generation)
-5. Search codebase for ALL references to "implicit", "prefix", "suffix" as dictionary keys and replace/remove
-6. Add migration: On first load, convert any remaining old hammers to equivalent new currencies (1 prefix hammer = 1 Tack Hammer)
+**Consequences:**
+- "Node not found" errors after scene restructuring
+- Null reference errors in previously working code
+- Features work in one scene configuration but break when duplicated
+- Error messages mention node paths with multiple `../` segments
+- NullReferenceException spam in Output panel
 
-**Warning signs:**
-- Both old and new hammer systems visible in UI
-- `hammer_counts` and `currency_inventory` both exist
-- Grep for "hammer_counts\[" returns results after migration
-- Awards in gameplay still reference old hammer types
-- Players report "I have hammers but can't use them" (wrong type for new system)
+**Prevention:**
+- **Replace relative paths with @export NodePath variables** — they update automatically when nodes move/rename in scene tree
+- Use unique names with %NodeName syntax (less brittle than paths, though still breaks on rename)
+- Prefer signal connections over direct node references
+- Use groups for finding related nodes: `get_tree().get_nodes_in_group("crafting_buttons")`
+- When get_node() is necessary, add null checks: `get_node_or_null()` with fallback logic
+- Use @onready for internal children: `@onready var stats_label = $StatsLabel`
+- Document which scripts reference which node paths
+- Search codebase for `$NodeName` references when renaming nodes
+
+**Detection:**
+- "Node not found" errors after scene restructuring
+- Null reference errors in previously working code
+- Features work in one scene configuration but break when duplicated
+- Error messages mention node paths with multiple `../` segments
 
 **Phase to address:**
-Phase 2 (Currency System) - This is a breaking change that must be done atomically. Phase should include: remove old system → implement new system → migration path for existing saves (if any). Do NOT attempt gradual migration.
+Phase 3: Decouple Views — when separating UI logic, establish signal-based communication patterns BEFORE moving nodes.
 
 ---
 
-### Pitfall 4: UI State Desync Between Views via Direct Node References
+### Pitfall 4: Extending Node for Data Objects (Current Anti-Pattern)
 
 **What goes wrong:**
-`crafting_view.gd` and `gameplay_view.gd` communicate via direct node references:
-- Line 34: `hero_view = get_node_or_null("../HeroView")`
-- Line 194: `hero_view.set_last_crafted_item(finished_item)`
-- `gameplay_view.gd` line 122: `crafting_view.set_new_item_base(item_base)`
-- Line 141: `crafting_view.add_hammers(...)`
-
-When adding currency UI and rarity indicators, state changes in one view don't automatically update the other:
-- Player uses Runic Hammer in `crafting_view`, item rarity changes Normal→Magic
-- `hero_view` still shows "Normal" because it cached the old state
-- OR: Item drops in `gameplay_view` with rarity determined by area level
-- `crafting_view` receives item but doesn't update rarity-dependent UI elements (available currencies)
+Data classes extend Node when they should extend Resource. **Every Item, Affix, Weapon, Ring in current codebase is a Node** (`class_name Item extends Node`). This adds unnecessary scene tree overhead, prevents proper serialization, makes data non-portable, and confuses "is this logic or data?"
 
 **Why it happens:**
-Direct method calls create tight coupling where each view must explicitly notify others of state changes. Godot signals exist but aren't used. When rarity introduces a new dimension of state, the notification graph explodes (rarity change must notify: hero_view for display, crafting_view for valid currencies, item_view for color, gameplay_view for drop eligibility).
+First-time Godot users assume "everything extends Node" because scene nodes do. The distinction between Node (logic, scene tree) and Resource (data, serializable) isn't obvious. Copy-paste from examples that use Nodes.
 
-**How to avoid:**
-1. Implement centralized event bus pattern via autoload singleton:
-   ```gdscript
-   # EventBus.gd (autoload)
-   signal item_rarity_changed(item: Item, old_rarity: String, new_rarity: String)
-   signal currency_used(currency_type: String, item: Item)
-   signal item_dropped(item: Item, area_level: int)
-   ```
-2. Views subscribe to events, not direct calls:
-   ```gdscript
-   # crafting_view.gd
-   func _ready():
-       EventBus.item_rarity_changed.connect(_on_item_rarity_changed)
-   ```
-3. State changes emit events instead of calling methods:
-   ```gdscript
-   # When using Runic Hammer
-   EventBus.item_rarity_changed.emit(item, "Normal", "Magic")
-   ```
-4. Each view updates itself based on events it cares about
+**Consequences:**
+- High memory usage, slow scene instantiation (100+ items in scene tree)
+- Can't save/load game state properly (.tres files can't be created)
+- Data stored in autoloads instead of .tres files
+- Difficulty serializing inventory/equipment state
+- Confusion about lifecycle (_ready() called on data objects?)
+- Can't edit item stats in inspector as resources
 
-**Warning signs:**
-- Item rarity shown differently in different UI panels
-- Crafting an item doesn't update hero stats until scene reload
-- Currency count updates in one view but not others
-- `get_node_or_null()` failures when adding new view panels
-- Print debugging shows correct state in one view, wrong state in another
-- Race conditions where order of method calls matters
+**Prevention:**
+- **Use Resource for data-only classes**: stats, configurations, item definitions
+- Use Node for logic that participates in scene tree: UI controllers, game managers
+- Resource advantages: automatic serialization, .tres files, inspector editing, no _ready() confusion
+- **Migration path**: Create parallel Resource classes, test, then replace Node versions (don't change in place)
+- Resources can't have _process() or children — if you need that, it's logic, not data
+- Create ItemData extends Resource first, keep Item extends Node wrapper temporarily
+- Gradually migrate code to use ItemData, remove Node wrapper only after all references updated
+
+**Detection:**
+- Data classes with no _ready(), _process(), or children
+- Classes that never add_child() or get added to scene tree
+- Data stored in autoloads instead of .tres files
+- Difficulty saving/loading game state
 
 **Phase to address:**
-Phase 1 (Rarity Foundation) - Introduce event bus BEFORE adding rarity, as adding rarity will require ALL views to react to rarity changes. Retrofitting event bus after rarity causes massive refactoring. Better to migrate existing hero/crafting communication to event bus first, THEN add rarity events.
+Phase 2: Data Model Migration — critical foundation. Must happen before logic refactoring. Do this migration in its own branch/milestone, not during other refactoring.
 
 ---
 
-### Pitfall 5: Affix Pool Exhaustion for Rarity Constraints
+### Pitfall 5: Duplicated Logic Across Similar Classes
 
 **What goes wrong:**
-`item_affixes.gd` defines 9 prefixes and 21 suffixes, but they're filtered by `valid_tags` (item.gd line 74-78). Magic items can have max 1 prefix + 1 suffix. If an item type (e.g., Ring) has `valid_tags = [Tag.DEFENSE]` and only 2 prefixes match, then:
-
-1. First Magic ring rolls 1 prefix → "Life" prefix added
-2. Second Magic ring tries to roll 1 prefix → "Life" already added, only other valid prefix is "Armor"
-3. Third Magic ring tries to roll 1 prefix → All 2 valid prefixes exhausted, `is_affix_on_item()` returns true for both
-4. `valid_prefixes.is_empty()` returns true (line 94)
-5. Magic item generates with 0 prefixes, violating Magic rarity rules
-
-Current code (item.gd line 94-96) just prints "No valid prefixes available" and returns, leaving the item in an invalid state.
+**weapon.gd and ring.gd both have compute_dps() with different implementations** (lines 18-64 in weapon.gd vs. 13-35 in ring.gd). Fixing bugs requires updating multiple files. Critical strike calculation differs between them. Adding new damage types requires editing both.
 
 **Why it happens:**
-The affix pool is global and shared, but filtering by tags + uniqueness constraint creates local scarcity. With Normal items (0 mods) and Rare items (3+3 mods), this rarely happens. With Magic items requiring exactly 1+1 or 2+2, the "one affix type per item" rule (line 62-72) makes it easy to hit "no valid affixes" even with a large global pool.
+Copy-paste development. Each item type started as a copy of another. No shared interface or composition pattern. Flat file structure makes duplication easy — everything's in root, grab any file as template.
 
-**How to avoid:**
-1. Calculate minimum affix pool size needed per item type:
-   - Count affixes matching each item's `valid_tags`
-   - Ensure: `matching_prefixes >= max_prefixes_for_rarest_tier` (for Rare = 3)
-   - Ensure: `matching_suffixes >= max_suffixes_for_rarest_tier` (for Rare = 3)
-2. Add validation at game initialization:
-   ```gdscript
-   func validate_affix_pools():
-       for item_type in [LightSword, BasicHelmet, ...]:
-           var item = item_type.new()
-           var valid_prefixes = count_valid_affixes(ItemAffixes.prefixes, item.valid_tags)
-           assert(valid_prefixes >= 3, "Item type has insufficient prefix pool")
-   ```
-3. When affix pool exhausted, handle gracefully:
-   - Option A: Allow duplicate affixes for Magic tier (remove uniqueness constraint)
-   - Option B: Reduce mod count requirement (Magic can be 1+0 or 0+1 instead of requiring both)
-   - Option C: Generate item at lower rarity (Magic → Normal if can't satisfy 1+1)
-4. Add more affixes to pools that have low counts for specific tags
+**Consequences:**
+- Bug fixes multiply across files
+- Inconsistent behavior between similar items (weapon vs ring crit calculation)
+- Adding new damage types requires editing 2+ files
+- Can't reuse damage calculation logic
+- Testing requires checking multiple implementations
 
-**Warning signs:**
-- "No valid prefixes available" message appears frequently
-- Magic items generated with 0 mods
-- Specific item types (Rings, Boots) always fail to generate Magic+ rarity
-- Grep for `valid_tags` shows item types with only 1-2 matching affixes
-- Drop rates show Normal items far exceed expected rate (failed Magic generations falling back)
+**Prevention:**
+- **Extract shared behavior into composition components** (DamageCalculator, AffixProcessor)
+- Create interface/contract for items that deal damage
+- Use inheritance only for "is-a" relationships, composition for "has-a"
+- When copying code, immediately ask "can this be shared?"
+- Single source of truth for game formulas
+
+**Detection:**
+- Similar method names across multiple classes (compute_dps appears in 2+ files)
+- Bug fixes that need to be applied to multiple files
+- Inconsistent behavior between similar items (weapon vs ring crit calculation)
+- Comments like "// Same as weapon but for rings"
 
 **Phase to address:**
-Phase 3 (Drop System) - This must be validated BEFORE implementing rarity-based drops. If affix pools are insufficient, fixing it after players have items requires database migration. Run validation during Phase 1 to catch this early, but actual pool expansion can happen in Phase 3.
+Phase 4: Shared Systems — after data model is stable, extract calculation logic into reusable systems.
 
 ---
 
-### Pitfall 6: No Rollback on Failed Currency Application
+### Pitfall 6: Refactoring Too Much At Once
 
 **What goes wrong:**
-Current hammer system (crafting_view.gd lines 98-118) follows this pattern:
-1. Check hammer count > 0
-2. Apply effect (`add_prefix()`, `reroll_affix()`)
-3. Decrement hammer count
-4. Update display
-
-But `add_prefix()` can fail (lines 94-96: "No valid prefixes available"). When adding currencies with complex rules:
-- Runic Hammer (Normal→Magic): Needs to add 1-2 mods. What if first mod succeeds but second fails?
-- Grand Hammer (add mod to Rare): What if Rare already has 3+3 mods? Or affix pool exhausted?
-- Tuning Hammer (reroll values): What if reroll generates value outside valid range due to tier change?
-
-Current code consumes the hammer (line 110, 117) BEFORE validating success. If `add_prefix()` fails, player loses the hammer but item is unchanged.
+Attempting to "fix everything" in one big rewrite: move all files, rename all classes, change data model, restructure scenes, add new patterns. Something breaks. Now debugging a maze of simultaneous changes with no way to isolate the cause. Game stops working. Can't identify which change broke what.
 
 **Why it happens:**
-The existing hammer system has simple, always-valid operations (reroll always works, add_prefix only fails in edge cases). New currencies have complex validation. Developers copy the existing pattern without adding validation or rollback.
+Excitement about "doing it right." Seeing all the problems at once makes incremental improvement feel too slow. Underestimating complexity of refactoring in Godot (no automated refactoring tools). Not having tests to catch regressions.
 
-**How to avoid:**
-1. Implement validate-apply-commit pattern:
-   ```gdscript
-   func use_currency(currency_type: String, item: Item) -> Result:
-       # Validate
-       var validation = validate_currency_use(currency_type, item)
-       if not validation.success:
-           return Result.error(validation.reason)
+**Consequences:**
+- Can't identify which change broke what
+- Multiple hours of refactoring without working game state
+- Git diff showing changes in 10+ files
+- Can't remember what worked before current session
+- Fixing one bug reveals three more
+- Temptation to "start over" instead of debugging
+- May need to revert entire session's work
 
-       # Apply (with ability to rollback)
-       var previous_state = item.serialize()
-       var result = apply_currency_effect(currency_type, item)
+**Prevention:**
+- **One refactor per commit**: move files OR rename classes OR restructure data, never all three
+- Test after each change before proceeding (press F5, takes 5 seconds)
+- Keep game running after every step
+- Use git branches for experiments
+- Write tests before refactoring (GUT or GdUnit4)
+- **Incremental pattern**: choose one behavior → write test → refactor → verify → next behavior
+- When stuck, revert and try smaller step
+- Small commits throughout refactoring
 
-       if not result.success:
-           item.deserialize(previous_state)  # Rollback
-           return Result.error(result.reason)
-
-       # Commit
-       consume_currency(currency_type)
-       return Result.ok()
-   ```
-2. Make all currency effects return Result type with success/failure + reason
-3. Only consume currency after successful effect application
-4. Add UI feedback: "Cannot use X on this item: reason"
-
-**Warning signs:**
-- Players report "I used a currency but nothing happened and I lost it"
-- Currency count decrements but item state unchanged
-- No error message when currency use fails
-- `add_prefix()` failure (line 94-96) has no return value checked by caller
-- Currency use code doesn't check return values
+**Detection:**
+- Multiple hours of refactoring without testing
+- Git diff showing changes in 10+ files
+- Can't remember what worked before current session
+- Fixing one bug reveals three more
+- Temptation to "start over" instead of debugging
 
 **Phase to address:**
-Phase 2 (Currency System) - This is a fundamental architecture requirement. All 6 currencies must implement validate-apply-commit from the start. Retrofitting this after currencies are implemented requires rewriting all currency handlers.
+Meta-phase guidance — applies to ALL phases. Each phase should enforce incremental changes.
 
 ---
 
-### Pitfall 7: Drop Table Rarity Probabilities Not Tested at Scale
+### Pitfall 7: Signal Spaghetti Replacing get_node() Spaghetti
 
 **What goes wrong:**
-`gameplay_view.gd` implements area scaling (line 233-251) where difficulty increases 1.5x per level. When adding rarity to drops, developers typically add:
-```gdscript
-func get_random_item_base() -> Item:
-    var rarity = roll_rarity_based_on_area_level()  # e.g., Area 1: 80% Normal, 15% Magic, 5% Rare
-    var item = generate_item_with_rarity(rarity)
-```
-
-But without simulation, common issues emerge:
-- Area 1: Players get mostly Normal items (intended)
-- Area 5: Players expect more Magic/Rare, but affix pool exhaustion causes most to downgrade to Normal
-- Area 10: Rare items drop frequently, but Rare items require 6 affixes total - if item type only has 4 valid affixes, can never generate valid Rare
-- Rarity curve doesn't match progression: Area 3 feels same as Area 1 because actual rarity distribution (after failed generations) is identical
+Attempting to "fix tight coupling" by connecting signals everywhere. Now tracking signal flow requires opening 3-4 files. Signals bubble through multiple layers (child emits → parent re-emits → grandparent re-emits). Debugging which connection fired is harder than tracing get_node() calls.
 
 **Why it happens:**
-Drop table probabilities are designed based on intent ("Area 5 should have 50% Magic drops") without simulating actual generation success rates. The gap between "attempted rarity" and "achieved rarity" is invisible until players experience it.
+Overreaction to "direct references are bad" advice. Misunderstanding when signals help vs. when they add complexity. No clear signal architecture. Every communication becomes a signal because "signals are the Godot way." Thinking signals are always better than direct calls.
 
-**How to avoid:**
-1. Build drop simulation tool:
-   ```gdscript
-   func simulate_drops(area_level: int, num_drops: int) -> DropStats:
-       var stats = DropStats.new()
-       for i in range(num_drops):
-           var item = generate_item_for_area(area_level)
-           stats.record(item.rarity, item.prefix_count, item.suffix_count)
-       return stats
-   ```
-2. Run simulation for each area level with 10,000 drops
-3. Compare attempted vs. achieved rarity distributions
-4. Adjust drop probabilities to account for generation failure rate
-5. Validate affix pool coverage: "Can this item type generate valid Rare items?"
+**Consequences:**
+- Debugging becomes harder (can't cmd+click to signal handlers)
+- Execution order unclear (signal handlers run in connection order)
+- More verbose code for no benefit
+- "Signal already connected" errors if not careful
+- Multiple unintended side effects from one signal emission
+- Spending more time in debugger than editor
+- "Why isn't this signal firing?" questions
 
-**Warning signs:**
-- Playtest feedback: "I never see Magic items even in high-level areas"
-- Actual rarity distribution doesn't match configured probabilities
-- Specific item types never drop as Rare
-- Drop table shows "5% Rare" but simulation shows "0.1% Rare achieved"
-- No testing framework for probabilistic systems
+**Prevention:**
+- **Signals for events, references for structure**: Use signals for one-time events (`took_damage`, `item_finished`), direct references for stable relationships
+- Use direct calls for parent → child communication (`$ChildNode.do_thing()`)
+- Use signals for child → parent communication (`signal thing_done`)
+- Use signals for distant/cross-scene communication (event bus)
+- **Avoid signal bubbling** — don't re-emit child signals through multiple parent layers
+- Use @export for stable parent-child references instead of signals
+- Consider global Events singleton for truly cross-tree communication
+- Limit connections per signal to 1-2 listeners
+- Keep signal scope minimal (connect in same script when possible)
+- Document signal flow in comments: "emits → CraftingView.on_item_crafted → HeroView updates"
+
+**Detection:**
+- Signals connected in 3+ places for single event
+- Parent nodes with multiple `child.signal.connect(func(): parent_signal.emit())` patterns
+- Difficulty answering "what happens when I press this button?"
+- grep-ing for signal name shows 10+ connection points
+- "This signal should fire but isn't" debugging sessions
 
 **Phase to address:**
-Phase 3 (Drop System) - Simulation should be built AS PART OF drop implementation, not after. Make it a CI check: "All area levels must achieve minimum rarity distribution thresholds". If simulation fails, CI fails, forcing drop table or affix pool fixes before merge.
+Phase 3: Decouple Views — when establishing communication patterns between views, define signal policy.
+
+---
+
+### Pitfall 8: Over-Engineering a Simple Idle Game
+
+**What goes wrong:**
+Implementing complex architecture patterns unnecessary for idle game scope: elaborate state machines, ECS architecture, extensive abstraction layers, plugin systems. Development slows to crawl. Simple features require touching 5 classes. Code harder to understand than before.
+
+**Why it happens:**
+Applying patterns from large-scale game development to small project. Following "best practices" without considering context. Excitement about learning new patterns. First project over-engineering (learning experience).
+
+**Consequences:**
+- More architecture code than game code
+- Can't explain system without drawing diagrams
+- New team member (or future you) can't understand code flow
+- "Just" adding a stat takes 3+ file changes
+- Documentation needed to explain how to add basic features
+- Development velocity drops
+
+**Prevention:**
+- **Prefer clarity over cleverness** — if a simple solution works, use it
+- Ask "does this complexity solve a problem we have?" before adding abstraction
+- YAGNI (You Aren't Gonna Need It) — don't build for hypothetical future features
+- For idle game scope: direct references often fine, simple inheritance sufficient, flat structures acceptable
+- Save complex patterns for when pain is obvious (100+ items? then abstraction helps)
+- Incremental complexity: start simple, add patterns when pain emerges
+
+**Detection:**
+- More architecture code than game code
+- Can't explain system without drawing diagrams
+- New team member (or future you) can't understand code flow
+- "Just" adding a stat takes 3+ file changes
+- Documentation needed to explain how to add basic features
+
+**Phase to address:**
+Phase 1: Project Structure Setup — set scope boundaries and complexity budget at start.
+
+---
+
+### Pitfall 9: Breaking Scene Inheritance Chains
+
+**What goes wrong:**
+Moving a parent scene but not child scenes, or vice versa, creates broken inheritance chains. If `item.tscn` extends `base_item.tscn` and you move only one, the parent reference breaks.
+
+**Why it happens:**
+Not understanding Godot's scene inheritance system. Thinking files are independent when they have parent-child relationships.
+
+**Consequences:**
+- Child scenes lose inherited properties
+- "Resource not found" cascade errors
+- Have to manually reconnect scene inheritance
+- Data in child scenes may be reset to defaults
+- Properties show default values instead of inherited values
+
+**Prevention:**
+- Before moving files, check Dependencies tab in Godot Editor (right-click file → Show in File System → Dependencies)
+- Move related scenes together (parent and all children)
+- Test each moved scene individually (double-click to open, verify no errors)
+- Keep a backup commit before major reorganization
+- Understand local vs inherited properties, make changes in base scene
+
+**Detection:**
+- Scene opens but shows "Couldn't load resource" warnings
+- Properties show default values instead of inherited values
+- Inspector shows broken scene inheritance icon
+
+**Phase to address:**
+Phase 1: Project Structure Setup — verify scene relationships before moving files.
+
+---
+
+## Moderate Pitfalls
+
+### Pitfall 10: Circular Dependencies Between Scenes
+
+**What goes wrong:**
+HeroView needs CraftingView reference, CraftingView needs HeroView reference → circular dependency, can't instantiate either. **Current codebase has this**: crafting_view.gd lines 34-36 gets HeroView reference, and they communicate bidirectionally.
+
+**Why it happens:**
+Siblings trying to communicate directly without going through parent coordinator.
+
+**Prevention:**
+Use event bus or parent scene to coordinate. Siblings shouldn't reference each other directly. Use signals to parent, parent calls methods on siblings.
+
+### Pitfall 11: Inconsistent snake_case Adoption
+
+**What goes wrong:**
+Partially converting to snake_case ("fixed 10 files, will do rest later") creates inconsistent codebase harder to navigate than original.
+
+**Prevention:**
+Use gdformat on ALL files at once. Commit as single "standardize formatting" change. Don't do piecemeal. Accept gdformat is "uncompromising formatter" (like Black for Python).
+
+### Pitfall 12: Adding Type Hints That Break Duck Typing
+
+**What goes wrong:**
+`func process_item(item: Weapon)` breaks when you later need to pass Armor. Overly specific types reduce flexibility.
+
+**Prevention:**
+Use base class types (`item: Item`) or interfaces where possible. Only specify concrete types when truly required. Start with base class types, narrow only when needed.
+
+### Pitfall 13: Not Testing After Each Refactor Step
+
+**What goes wrong:**
+Make 5 changes, game breaks, don't know which change caused it.
+
+**Prevention:**
+Test game after EACH file move, rename, or structural change. Takes 5 seconds to press F5. Saves hours of debugging. Read Output panel after every refactor step.
+
+### Pitfall 14: Forgetting to Update UI Node Paths
+
+**What goes wrong:**
+Refactor renames `$StatsLabel` to `$CharacterStats/StatsLabel`. Code still references `$StatsLabel` → null reference error.
+
+**Prevention:**
+Use @onready variables (`@onready var stats_label = $StatsLabel`). When refactoring UI, search codebase for `$StatsLabel` references.
+
+### Pitfall 15: Breaking Relative Scene Paths
+
+**What goes wrong:**
+Scene A references "../textures/sprite.png". Move Scene A to new folder, relative path breaks.
+
+**Prevention:**
+Use `res://` absolute paths for all resources. Relative paths are fragile.
+
+---
+
+## Minor Pitfalls
+
+### Pitfall 16: Overusing @export for Internal References
+
+**What goes wrong:**
+`@export var damage_label: Label` exposes internal UI structure in inspector, inviting manual misconfiguration.
+
+**Prevention:**
+Use @export only for cross-scene references. Use @onready for internal children: `@onready var damage_label = $DamageLabel`.
+
+### Pitfall 17: Not Committing Before Refactoring
+
+**What goes wrong:**
+Break something during refactoring, can't easily revert.
+
+**Prevention:**
+Commit working state before starting any refactoring session. Small commits throughout refactoring.
+
+### Pitfall 18: Assuming gdformat Preserves All Formatting
+
+**What goes wrong:**
+gdformat reorders code sections (signals, then enums, then vars, then functions). Custom organization lost.
+
+**Prevention:**
+Understand gdformat is "uncompromising formatter" (like Black for Python). Accept its ordering or don't use it.
+
+### Pitfall 19: Not Reading Editor Output Panel
+
+**What goes wrong:**
+Make change, game "seems fine", but Output panel shows 20 warnings about missing resources or deprecated calls. Warnings become errors later.
+
+**Prevention:**
+After every refactor step, read Output panel. Clean output panel = successful refactor.
 
 ---
 
 ## Technical Debt Patterns
 
+Shortcuts that seem reasonable but create long-term problems.
+
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Keep old `hammer_counts` alongside new `currency_inventory` | No breaking changes, gradual migration | Dual state management, desync bugs, doubled currency awards | Never - creates permanent tech debt |
-| Add `rarity` field but don't enforce in existing methods | Rarity displays work, old code unchanged | Items violate rarity rules, invalid states proliferate | Never - core invariant must be enforced everywhere |
-| Use string literals for currency types ("runic", "forge") | Easy to implement, no enum needed | Typo bugs, no autocomplete, refactoring breaks silently | Only in prototype phase, must refactor before Phase 2 |
-| Emit signals for some state changes but use direct calls for others | Incrementally adopt event bus | Inconsistent patterns, half the bugs of direct coupling remain | Acceptable during Phase 1 transition, not beyond |
-| Allow Magic items to have 0 mods when generation fails | Prevents crashes, player still gets item | Meaningless items, confuses rarity system | Never - better to downgrade rarity or retry generation |
-| Hard-code rarity thresholds (if mod_count >= 2: rarity = "Rare") | Simple to implement | Changing rarity rules requires hunting down thresholds | Never - use centralized `get_rarity_for_mod_count()` function |
+| All files in root folder | No thinking about organization, fast prototyping | Can't find files, naming conflicts, difficult refactoring | First 2-3 days of prototype only |
+| Duplicating code instead of extracting | Faster than designing proper abstraction | Bug fixes multiply, inconsistent behavior | Never in production code |
+| get_node() with hard paths | Simple, direct, no setup needed | Breaks on scene changes, tight coupling | Small single-scene prototypes |
+| Node instead of Resource for data | Familiar pattern, works immediately | Can't save/load properly, performance overhead | Learning phase only (switch before adding features) |
+| Skipping null checks on node references | Less verbose code | Random crashes when scenes change | Never (always use get_node_or_null) |
+| No tests during refactoring | Faster initial refactoring | No safety net, regressions hide until play test | Never for working features |
+| Global state via autoloads | Easy cross-scene communication | Tight coupling, difficult to test | Truly global game state only (score, player profile) |
 
 ## Integration Gotchas
 
+Common mistakes when working with Godot 4.5 systems.
+
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Godot Signals for State Sync | Connect signals in `_ready()` but emit in `_init()` → listeners not registered yet | Emit state changes only after scene tree ready, or use deferred emit |
-| ItemAffixes Singleton | Mutate global affix instances when rolling values → all items share same affix instance | Always use `Affixes.from_affix()` to create copies (line 32-34) |
-| Hero Equipment Updates | Call `update_stats()` immediately after equipping → computed before item affixes applied | Use call_deferred or next frame update to ensure affixes processed first |
-| Rarity Color Coding | Hard-code colors in UI ("Magic" → blue) → changing rarity names breaks UI | Use centralized `get_rarity_color(rarity: String) -> Color` function |
-| Currency Effects on Equipped Items | Allow currency use on equipped items → hero stats out of sync | Either block currency use on equipped items OR trigger hero stat recalc on change |
+| UID System (4.4+) | Moving files externally without .uid files | Move files in Godot editor, or move .uid alongside .gd |
+| Scene Inheritance | Modifying inherited scenes then wondering why changes don't propagate | Understand local vs inherited properties, make changes in base scene |
+| Autoloads (4.5) | Expecting PascalCase conversion (changed in 4.5!) | Verify autoload singleton names match actual file naming |
+| Resource Files | Editing .tres in text editor | Use Godot inspector for .tres editing to maintain format |
+| preload() | Using preload() with dynamic paths | Use load() for runtime paths, preload() only for compile-time constants |
+| Signals | Connecting to freed nodes | Check is_connected() before emit, or use one-shot connections |
+| Node Unique Names | Using % syntax then renaming node | % references name not path, rename breaks them too |
 
 ## Performance Traps
 
+Patterns that work at small scale but fail as usage grows.
+
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Validating Entire Affix Pool on Every Add | `has_valid_tag()` iterates ALL affixes every time (potentially 30+ affixes × 6 mods per item) | Cache filtered affix pools per item type at init time | >100 items generated per second (idle game with fast progression) |
-| Recomputing DPS on Every Affix Change | `update_value()` calls `compute_dps()` which iterates all affixes + complex math (lines 18-64) | Only recompute when item equipped or displayed, not during generation | >1000 items in inventory, sorting by DPS |
-| Signal Emission Loops | Item rarity change → emits signal → hero updates → emits signal → item updates → infinite loop | Use signal guards: `if _updating: return` before emit, or defer emissions | First rarity change implementation |
-| Deepcopying Items for Rollback | Serializing entire item state for every currency use validation | Only store changed fields (rarity, affixes array) not entire item | >50 currencies used per second (auto-crafter) |
+| Extending Node for every data object | High memory usage, slow scene instantiation | Use Resource for data, Node only for logic | 100+ items in scene tree |
+| get_tree() calls in _process() | Frame rate drops | Cache tree reference in _ready() | >30 calls per frame |
+| Recalculating DPS every frame | Performance degradation | Calculate only when stats change, cache result | Per-frame for 20+ items |
+| Multiple get_node() for same node | Lookup overhead | @onready var cached_node = get_node() | 10+ lookups per frame |
+| Duplicating complex scenes | Instantiation lag | Use simpler scenes, object pooling if needed | 50+ simultaneous instances |
 
 ## UX Pitfalls
 
+Common user experience mistakes in idle/crafting games.
+
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| No Visual Feedback on Invalid Currency Use | Player clicks currency, nothing happens, no explanation why | Show red tooltip: "Cannot use Runic Hammer: Item is already Magic" |
-| Rarity Changes Without Indication | Item transitions Normal→Magic but looks the same until mouse hover | Add brief animation/particle effect on rarity change, color flash |
-| Currency Icons All Look Similar | Player has 6 currency types, can't distinguish at a glance | Distinct shapes/colors: Runic=blue hammer, Forge=red anvil, Claw=grey pliers |
-| Affix Pool Exhaustion Silent Failure | Magic item generates with 0 mods, player confused why | Downgrade rarity if generation fails: "Generated as Normal (insufficient affixes for Magic)" |
-| No Undo for Expensive Currency | Player uses rare Tuning Hammer, rerolls from 80% to 30%, can't revert | Show value ranges before use: "Reroll: 20-100 (current: 80)" with confirmation |
-| Rarity Color-Blind Unfriendly | Standard white/blue/yellow colors indistinguishable for 8% of players | Add text labels: "MAGIC" or pattern fills alongside colors |
+| No undo for crafting mistakes | Frustration after accidental hammer use | Confirm expensive operations, or allow undo |
+| Lost items when inventory full | Progress loss, negative surprise | Prevent adding items when full, clear feedback |
+| Invisible stat changes | Can't tell if hammer did anything | Highlight changed values, show before/after |
+| No feedback on why action failed | Confusion ("why can't I add this affix?") | Error messages: "Item already has 3 prefixes" |
+| Finishing item with hammers remaining | Regret, feeling of waste | Warn if unused hammers, show hammer count prominently |
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Rarity Display:** Rarity color shown in UI — verify state changes update ALL views (crafting, hero, inventory)
-- [ ] **Currency Validation:** Currency buttons exist — verify disable state when currency unusable on current item
-- [ ] **Affix Count Enforcement:** add_prefix() respects rarity — verify works for ALL rarity transitions (Normal→Magic, Magic→Rare, not just initial generation)
-- [ ] **Drop Rarity Scaling:** Higher areas drop higher rarity — verify ACTUAL drops (post-generation-failure) match expected rates, not just attempted rates
-- [ ] **State Rollback:** Currency use can fail — verify currency NOT consumed on failure, item state unchanged
-- [ ] **Signal Propagation:** Item rarity changes — verify hero stats recalculate, UI updates, drop eligibility updates
-- [ ] **Affix Pool Coverage:** All item types can reach Rare — verify each type has 3+ valid prefixes AND 3+ valid suffixes
-- [ ] **Migration Path:** Old hammer system removed — verify NO references to hammer_counts["implicit"|"prefix"|"suffix"] remain
+Things that appear complete but are missing critical pieces.
+
+- [ ] **File Organization:** Files moved to folders — verify scene references still work after project reload
+- [ ] **Class Renaming:** Class renamed — search entire project for old name in preload(), type hints, autoloads
+- [ ] **Scene Restructuring:** Nodes rearranged — test all get_node() paths, check for null reference errors
+- [ ] **Data Model Changes:** Resource classes created — verify saving/loading works, inspector shows properties
+- [ ] **Signal Refactoring:** Signals added for decoupling — confirm all connections established, test disconnection on free
+- [ ] **Code Extraction:** Shared logic moved to new file — ensure all call sites updated, no orphaned code
+- [ ] **UID Migration:** Upgraded to 4.4+ — re-save all scenes and resources to regenerate UIDs
+- [ ] **Testing Added:** Tests written for refactored code — verify tests actually run and pass
+- [ ] **Autoload Updates:** Autoload renamed — check Project Settings → Autoload, verify paths updated
+- [ ] **Output Panel Clean:** No warnings in Output panel after refactor
 
 ## Recovery Strategies
 
+When pitfalls occur despite prevention, how to recover.
+
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Dual currency systems (old hammers + new) | MEDIUM | 1. Add migration script: convert hammer_counts to currency_inventory. 2. Remove hammer_counts references. 3. Test old saves still load. No data loss if migration tested. |
-| Items with invalid rarity state (Magic 0+0) | HIGH | 1. Scan all items in saves. 2. For invalid items: recalculate rarity from mod count OR add mods to meet rarity OR destroy item. 3. Player-visible item loss requires compensation. |
-| UI desync from missing signals | LOW | 1. Identify state changes not emitting signals. 2. Add event emissions. 3. Connect listeners. No data corruption, only display bugs. |
-| Affix pool exhaustion at runtime | MEDIUM | 1. Add emergency handler: if generation fails, downgrade rarity. 2. Log failures for analytics. 3. Expand affix pools in next patch. Temporary UX degradation, no crashes. |
-| Currency consumed but effect failed | HIGH | 1. Requires save file edit or player compensation. 2. Add validation-before-consumption for future. 3. If widespread, grant affected players currency refunds. Player trust impact high. |
-| Drop tables not tested at scale | LOW | 1. Run simulation. 2. Adjust probabilities. 3. Redeploy config. No code changes needed if generation logic sound. |
+| Broken scene references from file move | MEDIUM | 1. Revert git commit. 2. Move files one at a time via editor. 3. Test after each move. 4. Re-save scenes if using 4.4+. |
+| class_name rename broke preloads | LOW | 1. Use "Find in Files" for old class name. 2. Update all references. 3. Reload project. 4. Verify no "class not found" errors. |
+| get_node() paths broken | LOW | 1. Add null checks: get_node_or_null(). 2. Find correct new paths via scene tree. 3. Update all paths. 4. Consider replacing with @export. |
+| Node/Resource confusion | HIGH | 1. Create new Resource version alongside. 2. Migrate data. 3. Test new version. 4. Remove Node version. 5. Update all references. |
+| Signal spaghetti | MEDIUM | 1. Document current flow. 2. Identify unnecessary re-emits. 3. Replace simple signal chains with direct references. 4. Keep signals only for events. |
+| Over-engineered system | HIGH | 1. Identify core feature. 2. Extract to simple version in new file. 3. Test simple version. 4. Replace complex system. 5. Delete unused abstractions. |
+| Big refactor broke everything | VERY HIGH | 1. Revert git to last working state. 2. Write tests for current behavior. 3. Make ONE change. 4. Test. 5. Commit. 6. Repeat incrementally. |
+| Broken autoload | LOW | 1. Project → Project Settings → Autoload. 2. Update paths. 3. Close/reopen project. |
+| Broken scene inheritance | MEDIUM | 1. Open child scene. 2. Scene → "Change Scene Root Node". 3. Re-inherit from parent. 4. Reset overridden properties. |
 
 ## Pitfall-to-Phase Mapping
 
+How roadmap phases should address these pitfalls.
+
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Rarity state without enforcement | Phase 1: Rarity Foundation | Unit test: Create Normal item, call add_prefix(), assert fails or rarity becomes Magic |
-| Currency validation without transitions | Phase 2: Currency System | Integration test: Use each currency on each rarity, verify state transitions or rejections correct |
-| Hardcoded 3-hammer system not replaced | Phase 2: Currency System | Grep codebase for "hammer_counts", "implicit", "prefix", "suffix" dictionary keys - expect 0 results |
-| UI state desync via direct references | Phase 1: Rarity Foundation | Integration test: Change rarity in one view, verify other views update within 1 frame |
-| Affix pool exhaustion | Phase 1: Rarity Foundation (validation), Phase 3: Drop System (fixing) | Unit test: For each item type, attempt to generate 100 Rare items, assert 0 failures |
-| No rollback on failed currency use | Phase 2: Currency System | Unit test: Use currency with mocked failure, verify currency count unchanged, item state unchanged |
-| Drop table probabilities not tested | Phase 3: Drop System | Simulation test: 10k drops per area level, assert actual rarity distribution within 5% of target |
+| Moving files breaks references | Phase 1: Project Structure | All scenes load without errors, scripts attach to nodes |
+| Renaming classes breaks preload | Phase 2: Data Model Migration | Project loads without "class not found" errors |
+| get_node() paths break | Phase 3: Decouple Views | Features work after scene restructuring |
+| Node for data objects | Phase 2: Data Model Migration | All data classes extend Resource, .tres files exist |
+| Duplicated logic | Phase 4: Shared Systems | Single compute_dps implementation used by all items |
+| Refactoring too much at once | ALL PHASES | Each commit keeps game functional, tests pass |
+| Signal spaghetti | Phase 3: Decouple Views | Can trace any event flow in max 2 files |
+| Over-engineering | Phase 1: Project Structure | Team member can understand any system in <10 minutes |
+| Breaking scene inheritance | Phase 1: Project Structure | All child scenes maintain inherited properties |
+
+## Godot 4.5 Specific Gotchas
+
+Version-specific issues for this project.
+
+**UID System Limitations:**
+- UID support in 4.0-4.5 is partial — not all file types fully supported
+- Must re-save scenes in 4.4+ to generate UIDs for moved files
+- .uid files must move with scripts when using external tools
+- "Invalid UID, using text path instead" warnings indicate incomplete UID coverage
+
+**Autoload Changes (4.5):**
+- Godot 4.5 stopped auto-converting autoload script names to PascalCase
+- Projects upgrading from 4.4 may have mismatched class_name expectations
+- Verify autoload singleton names match actual file naming
+- Check Project Settings → Autoload after any autoload file rename
+
+**Node Unique Names:**
+- % syntax introduced for unique names, but renaming still breaks references
+- Not a silver bullet for node path stability
+- Still requires manual updates when node is renamed
+
+**Refactoring Tool Gaps:**
+- No automated refactoring for class renames, file moves, or node paths
+- Must manually find and update all references
+- "Find in Files" is primary refactoring tool
+- Third-party IDE support (VS Code, etc.) doesn't understand scene structure
+
+**Testing Support:**
+- GUT 9.x and GdUnit4 available for unit testing
+- Scene testing possible but requires setup
+- No built-in test framework — must install addon
+- Mocking and stubbing supported but not automatic
+
+## Warning Signs
+
+**Red flags during refactoring:**
+
+1. **"Game was working, now nothing loads"** → Likely moved files outside editor or broke scene inheritance
+2. **"This signal should fire but isn't"** → Signal connection order issue or over-refactored signals
+3. **"Error in 30 different files after one change"** → Broke fundamental type (Node → Resource without migration)
+4. **"Can't find what I'm looking for"** → Inconsistent naming (some snake_case, some PascalCase)
+5. **"This worked yesterday"** → Didn't commit before refactoring, can't revert
+6. **"NullReferenceException spam in Output"** → Broke node paths, @onready variables not updated
+
+**Green flags (refactoring is going well):**
+
+1. Game runs after each small change
+2. Output panel is clean (no warnings)
+3. Can easily find files by feature
+4. Code follows consistent style
+5. Changes committed incrementally
+6. Can test scenes independently
 
 ## Sources
 
-**ARPG Rarity System Design:**
-- [Path of Exile Rarity (PoE Wiki)](https://www.poewiki.net/wiki/Rarity)
-- [Path of Exile 2 Item Rarity Explained (PoE Currency)](https://www.poecurrency.com/news/poe-2-why-can-item-rarity-make-you-rich)
-- [Loot Tables in ARPG Game Design (Game Wisdom)](https://game-wisdom.com/critical/loot-tables-game-design)
-- [Item/Equipment/Monster Rarity Discussion (GameDev.net)](https://www.gamedev.net/forums/topic/610743-itemequipmentmonster-rarity/)
+**Official Godot Documentation:**
+- [Godot 4 Best Practices](https://docs.godotengine.org/en/stable/tutorials/best_practices/index.html)
+- [When and how to avoid using nodes for everything](https://docs.godotengine.org/en/stable/getting_started/workflow/best_practices/node_alternatives.html)
+- [TSCN file format (4.4)](https://docs.godotengine.org/en/4.4/contributing/development/file_formats/tscn.html)
+- [UID changes coming to Godot 4.4](https://godotengine.org/article/uid-changes-coming-to-godot-4-4/)
+- [Godot 4.6 Release Notes](https://godotengine.org/releases/4.6/)
 
-**Crafting Currency Systems:**
-- [Study of Path of Exile Currency Building (MMOJUGG)](https://www.mmojugg.com/news/study-of-path-of-exile-currency-building.html)
-- [Currency System in Path of Exile 2 (Odealo)](https://odealo.com/articles/currency-system-in-path-of-exile-2)
-- [Avoiding Pitfalls in Your Crafting System (DeepFriedGamer)](https://deepfriedgamer.com/blog/avoiding-pitfalls-in-your-crafting-system)
-- [5 Approaches to Crafting Systems in Games (Envato Tuts+)](https://code.tutsplus.com/5-approaches-to-crafting-systems-in-games-and-where-to-use-them--cms-22628a)
+**GitHub Issues:**
+- [Godot 4 Beta 8 Refactoring Scenes breaks dependencies #70130](https://github.com/godotengine/godot/issues/70130)
+- [Moving resource into folder breaks scene #69260](https://github.com/godotengine/godot/issues/69260)
+- [Changing script name after preload() breaks #92007](https://github.com/godotengine/godot/issues/92007)
+- [Autoload naming broken in 4.5 #110908](https://github.com/godotengine/godot/issues/110908)
+- [Using class_name reference doesn't work with preload #55615](https://github.com/godotengine/godot/issues/55615)
 
-**State Management & Refactoring:**
-- [State Pattern in Game Programming (Game Programming Patterns)](https://gameprogrammingpatterns.com/state.html)
-- [State Machines: Game Development Essentials (NumberAnalytics)](https://www.numberanalytics.com/blog/state-machines-game-development-essentials)
-- [Breaking Free from Hardcoded Values (IN-COM DATA SYSTEMS)](https://www.in-com.com/blog/breaking-free-from-hardcoded-values-smarter-strategies-for-modern-software/)
-- [Mastering Refactoring in Game Development (NumberAnalytics)](https://www.numberanalytics.com/blog/ultimate-guide-to-refactoring-in-game-programming)
+**Community Resources:**
+- [GDQuest: Best practices with Godot signals](https://www.gdquest.com/tutorial/godot/best-practices/signals/)
+- [GDQuest: Design patterns in Godot](https://www.gdquest.com/tutorial/godot/design-patterns/intro-to-design-patterns/)
+- [Go, Go, Godot: GDScript refactoring exercise](https://www.gogogodot.io/refactoring-in-godot/)
+- [Godot 4.6 Complete Guide 2026](https://www.live-laugh-love.world/blog/godot-46-complete-guide-2026/)
+- [Medium: Securely Refactoring a Skater State Machine in Godot](https://medium.com/@kpicaza/securely-refactoring-a-skater-state-machine-in-godot-with-tests-6c862bc8081f)
+- [Godot Forum: How to reference nodes robustly?](https://forum.godotengine.org/t/how-to-reference-nodes-robustly/60071)
+- [Godot Forum: How to properly refactor class name, .gd and .tscn](https://forum.godotengine.org/t/how-to-properly-refactor-a-class-name-gd-and-tscn-in-godot/115118)
 
-**Godot Signal Patterns:**
-- [Using Signals (Godot Documentation)](https://docs.godotengine.org/en/stable/getting_started/step_by_step/signals.html)
-- [Godot Signals Complete Guide (Generalist Programmer)](https://generalistprogrammer.com/tutorials/godot-signals-complete-guide-scene-communication)
-- [Signals in Godot (Medium - Partly Functional)](https://medium.com/partly-functional/signals-in-godot-c042db56d0ac)
+**Testing Frameworks:**
+- [GdUnit4 GitHub](https://github.com/MikeSchulze/gdUnit4)
+- [GUT (Godot Unit Test) GitHub](https://github.com/bitwes/Gut)
 
-**Edge Cases & Validation:**
-- [Understanding Edge Cases (TestDevLab)](https://www.testdevlab.com/blog/what-are-edge-cases)
-- [Software Testing Lessons from Edge Cases (Qase)](https://qase.io/blog/edge-cases-lessons-learned/)
-
-**Affix System Issues:**
-- [Apotheosis: Insufficient Number of Affixes Bug (GitHub)](https://github.com/Shadows-of-Fire/Apotheosis/issues/1450)
-- [Mythic Loot Affixes Not Generating (GitHub)](https://github.com/Shadows-of-Fire/Apotheosis/issues/1051)
+**Current Project Analysis:**
+- Examined 21 .gd files in project root
+- Identified Node-based data objects (Item, Weapon, Ring)
+- Found duplicated compute_dps() in weapon.gd and ring.gd
+- Observed get_node() paths in crafting_view.gd (lines 26, 34-54)
+- Confirmed flat file structure with no folder organization
 
 ---
-*Pitfalls research for: Adding item rarity tiers and crafting currencies to existing ARPG codebase*
+
+*Pitfalls research for: Godot 4.5 ARPG Refactoring*
 *Researched: 2026-02-14*
+*Confidence: HIGH — sourced from official docs, GitHub issues, community best practices, and direct codebase analysis*

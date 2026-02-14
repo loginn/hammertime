@@ -1,628 +1,676 @@
-# Architecture Research
+# Architecture Research: Godot 4.5 ARPG Refactoring
 
-**Domain:** ARPG Item Rarity & Crafting Currency System
+**Domain:** Godot 4.5 ARPG Idle Game Refactoring
 **Researched:** 2026-02-14
 **Confidence:** HIGH
 
-## Integration Architecture Overview
+## Standard Architecture
+
+### System Overview
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│                         UI Layer                                │
-├────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
-│  │ CraftingView │  │  HeroView    │  │ GameplayView │         │
-│  │              │  │              │  │              │         │
-│  │ - currency   │  │ - equipped   │  │ - drop logic │         │
-│  │   buttons    │  │   items      │  │ - hammer     │         │
-│  │ - validation │  │              │  │   rewards    │         │
-│  └──────┬───────┘  └──────────────┘  └──────┬───────┘         │
-│         │                                    │                 │
-├─────────┴────────────────────────────────────┴─────────────────┤
-│                      Domain Logic                               │
-├────────────────────────────────────────────────────────────────┤
-│  ┌──────────────────────────────────────────────────────┐      │
-│  │            Item (with rarity property)               │      │
-│  │    Weapon, Armor, Helmet, Boots, Ring (unchanged)   │      │
-│  └──────────────────────────────────────────────────────┘      │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────┐      │
-│  │         CurrencyValidator (new static class)         │      │
-│  │  - can_apply_to_item(currency, item) -> bool         │      │
-│  │  - get_error_message(currency, item) -> String       │      │
-│  └──────────────────────────────────────────────────────┘      │
-├────────────────────────────────────────────────────────────────┤
-│                        Data Layer                               │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                     │
-│  │ Currency │  │ ItemDrop │  │ ItemAff- │                     │
-│  │ Manager  │  │ Manager  │  │ ixes     │                     │
-│  │(autoload)│  │(autoload)│  │(existing)│                     │
-│  └──────────┘  └──────────┘  └──────────┘                     │
-└────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                     Main Scene (Root)                        │
+│  - Manages view switching                                    │
+│  - Coordinates high-level communication                      │
+├─────────────────────────────────────────────────────────────┤
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐              │
+│  │  Hero    │    │ Crafting │    │ Gameplay │              │
+│  │  View    │    │  View    │    │  View    │              │
+│  │ (Scene)  │    │ (Scene)  │    │ (Scene)  │              │
+│  └────┬─────┘    └────┬─────┘    └────┬─────┘              │
+│       │ signals       │ signals       │ signals             │
+├───────┴───────────────┴───────────────┴─────────────────────┤
+│                   Autoload Singletons                        │
+│  (Global State, Constants, Event Bus)                        │
+├─────────────────────────────────────────────────────────────┤
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐              │
+│  │  Hero    │    │  Item    │    │  Game    │              │
+│  │ (Model)  │    │ (Model)  │    │  State   │              │
+│  │ Resource │    │ Resource │    │ Resource │              │
+│  └──────────┘    └──────────┘    └──────────┘              │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Component Responsibilities
+### Component Responsibilities
 
-| Component | Responsibility | Implementation Type |
-|-----------|----------------|---------------------|
-| **ItemRarity enum** | Define rarity tiers (Normal/Magic/Rare) | Enum in Item.gd |
-| **CurrencyType enum** | Define 6 currency types | Enum in new autoload |
-| **CurrencyManager** | Track currency counts globally | Autoload singleton |
-| **CurrencyValidator** | Validate currency application rules | Static utility class |
-| **ItemDropManager** | Determine item rarity based on area level | Autoload singleton |
-| **Item.rarity** | Store current rarity state | New property on Item |
-| **Item.get_max_affixes()** | Return max prefix/suffix based on rarity | New method on Item |
-| **crafting_view.gd** | Replace hammer buttons with currency buttons | Modified existing |
-| **gameplay_view.gd** | Use ItemDropManager for rarity-aware drops | Modified existing |
+| Component | Responsibility | Typical Implementation |
+|-----------|----------------|------------------------|
+| **Views (Scenes)** | Display game state, handle UI interactions | Node2D/Control scenes with attached scripts |
+| **Models (Resources/Classes)** | Store game data, business logic | Resource classes (serializable) or RefCounted classes |
+| **Autoloads** | Global constants, shared state, event bus | Scripts registered in project settings |
+| **Main Scene** | Coordinate view lifecycle, orchestrate communication | Root scene managing child view visibility |
 
-## New Components Required
+## Current Architecture Analysis
 
-### 1. CurrencyManager Autoload
+### Existing Structure Issues
 
-**Purpose:** Centralized global currency state management
+**Problem 1: Flat File Organization**
+- All 21 .gd files in project root
+- No logical grouping
+- Hard to navigate and maintain
 
-**File:** `currency_manager.gd`
+**Problem 2: Item Data as Nodes**
+- Item extends Node but contains only data
+- Anti-pattern: Nodes should handle behavior, not pure data
+- Memory overhead and no built-in serialization
 
-**Responsibilities:**
-- Track counts of 6 hammer currencies
-- Provide add/subtract methods
-- Emit signals on currency changes
-- Persist currency counts across scenes
+**Problem 3: Tight Coupling via get_node()**
+- Views use `get_node_or_null("../HeroView")` for cross-communication
+- Fragile: breaks if scene tree changes
+- Prevents independent scene testing
 
-**Why Autoload:** Currency is global state that persists across scene transitions and needs to be accessible from CraftingView (consumption) and GameplayView (rewards).
+**Problem 4: Hero Instance Passed by Reference**
+- Hero created in hero_view.gd
+- Manually passed to gameplay_view via property access
+- No single source of truth
+- Lifecycle management unclear
 
-**Rationale:** [Godot's autoload singleton pattern](https://docs.godotengine.org/en/latest/tutorials/scripting/singletons_autoload.html) is designed for exactly this use case - "elements that need to be shared and managed game-wide" including "player score, money, lives, and inventory."
+**Problem 5: View-Owned Business Logic**
+- Equipment logic in hero_view.gd
+- Crafting logic in crafting_view.gd
+- Should be in model layer
 
-### 2. ItemDropManager Autoload
-
-**Purpose:** Rarity-weighted item generation
-
-**File:** `item_drop_manager.gd`
-
-**Responsibilities:**
-- Calculate rarity weights based on area level
-- Roll random rarity for new item drops
-- Return ItemRarity enum value
-
-**Why Autoload:** Drop logic is stateless utility that needs to be accessed from GameplayView. While this could be a static class, using autoload provides consistency with other managers and allows future extension (e.g., adding drop rate modifiers).
-
-### 3. CurrencyValidator Static Class
-
-**Purpose:** Encapsulate currency application rules
-
-**File:** `currency_validator.gd`
-
-**Responsibilities:**
-- Validate if currency can be applied to item
-- Return human-readable error messages
-- Centralize all business rules (e.g., "Tack Hammer only applies to Magic items")
-
-**Why Static:** Pure validation logic with no state. Doesn't need to be instantiated or autoloaded.
-
-**Pattern:** This follows the [validation pattern](https://medium.com/gamedev-architecture/decoupling-game-code-via-command-pattern-debugging-it-with-time-machine-2b177e61556c) where validation is separated from execution, allowing UI to check validity before attempting application.
-
-## Modified Components
-
-### Item Class
-
-**New Properties:**
-```gdscript
-enum ItemRarity { NORMAL, MAGIC, RARE }
-var rarity: ItemRarity = ItemRarity.NORMAL
-```
-
-**New Methods:**
-```gdscript
-func get_max_prefixes() -> int:
-    match rarity:
-        ItemRarity.NORMAL: return 0
-        ItemRarity.MAGIC: return 1
-        ItemRarity.RARE: return 3
-
-func get_max_suffixes() -> int:
-    match rarity:
-        ItemRarity.NORMAL: return 0
-        ItemRarity.MAGIC: return 1
-        ItemRarity.RARE: return 3
-
-func can_add_prefix() -> bool:
-    return prefixes.size() < get_max_prefixes()
-
-func can_add_suffix() -> bool:
-    return suffixes.size() < get_max_suffixes()
-```
-
-**Modified Methods:**
-- `add_prefix()`: Check `can_add_prefix()` instead of hardcoded `>= 3`
-- `add_suffix()`: Check `can_add_suffix()` instead of hardcoded `>= 3`
-- `get_display_text()`: Show rarity tier in output
-
-**Rationale:** [Using enums for item rarity](https://tajammalmaqbool.com/blogs/godot-enum-a-comprehensive-guide) is the standard GDScript pattern. Enums are preferred over classes for simple state because they "make code more expressive, maintainable, and less error-prone than using raw numbers or strings."
-
-### crafting_view.gd
-
-**Replace:**
-- `hammer_counts` dictionary → Call `CurrencyManager.get_count(type)`
-- 3 hammer buttons → 6 currency buttons
-- `update_item()` logic → Currency application via validation
-
-**New:**
-```gdscript
-var selected_currency: CurrencyManager.CurrencyType = CurrencyManager.CurrencyType.NONE
-
-func _on_currency_button_pressed(currency_type):
-    selected_currency = currency_type
-    update_currency_button_states()
-
-func update_item(event: InputEvent):
-    if selected_currency == CurrencyManager.CurrencyType.NONE:
-        return
-
-    # Validate before applying
-    if not CurrencyValidator.can_apply(selected_currency, current_item):
-        print(CurrencyValidator.get_error_message(selected_currency, current_item))
-        return
-
-    # Check currency count
-    if CurrencyManager.get_count(selected_currency) <= 0:
-        print("No ", CurrencyManager.get_name(selected_currency), " remaining!")
-        return
-
-    # Apply currency effect
-    apply_currency(selected_currency, current_item)
-    CurrencyManager.subtract(selected_currency, 1)
-    update_currency_button_states()
-```
-
-**Rationale:** Existing pattern of button toggles + item clicking works well. Just expand from 3 buttons to 6 and replace direct dictionary access with CurrencyManager calls.
-
-### gameplay_view.gd
-
-**Modified:**
-```gdscript
-func get_random_item_base() -> Item:
-    var item_types = [LightSword, BasicHelmet, BasicArmor, BasicBoots, BasicRing]
-    var random_type = item_types[randi() % item_types.size()]
-    var item = random_type.new()
-
-    # NEW: Set rarity based on area level
-    item.rarity = ItemDropManager.roll_rarity(area_level)
-
-    # NEW: If rarity is Magic or Rare, add starting affixes
-    if item.rarity == Item.ItemRarity.MAGIC:
-        item.add_prefix()  # 1 random prefix
-        item.add_suffix()  # 1 random suffix
-    elif item.rarity == Item.ItemRarity.RARE:
-        # Add 3 prefixes and 3 suffixes
-        for i in range(3):
-            item.add_prefix()
-            item.add_suffix()
-
-    return item
-
-func give_hammer_rewards():
-    # Replace hardcoded hammer distribution with currency distribution
-    # Higher area levels can drop rarer currencies more frequently
-    var currency_drops = ItemDropManager.roll_currency_rewards(area_level)
-
-    for currency_type in currency_drops:
-        CurrencyManager.add(currency_type, currency_drops[currency_type])
-```
-
-**Rationale:** Minimal change to existing drop logic. ItemDropManager encapsulates rarity rolling, keeping gameplay_view.gd clean.
-
-## Data Flow Patterns
-
-### Currency Application Flow
+## Recommended Project Structure
 
 ```
-[User clicks currency button]
-    ↓
-[crafting_view sets selected_currency]
-    ↓
-[User clicks item]
-    ↓
-[CurrencyValidator.can_apply(currency, item)] → Returns bool + error msg
-    ↓
-[If valid] → apply_currency(currency, item)
-    ↓
-[CurrencyManager.subtract(currency, 1)]
-    ↓
-[Item.update_value()] → Recalculate DPS
-    ↓
-[Update UI]
+res://
+├── autoload/              # Singleton scripts
+│   ├── game_state.gd      # Global game state manager
+│   ├── game_events.gd     # Event bus for cross-scene signals
+│   └── item_registry.gd   # Item definitions & affix data (renamed from ItemAffixes)
+│
+├── models/                # Data models (Resources/Classes)
+│   ├── hero/
+│   │   ├── hero.gd        # Hero data class (RefCounted or Resource)
+│   │   └── hero_stats.gd  # Stats calculation logic
+│   ├── items/
+│   │   ├── item.gd        # Base item (Resource, not Node)
+│   │   ├── weapon.gd      # Weapon subclass
+│   │   ├── armor.gd       # Armor subclass
+│   │   ├── helmet.gd      # Helmet subclass
+│   │   ├── boots.gd       # Boots subclass
+│   │   ├── ring.gd        # Ring subclass
+│   │   └── affixes/
+│   │       ├── affix.gd       # Base affix
+│   │       └── implicit.gd    # Implicit affix
+│   └── items/concrete/    # Concrete item implementations
+│       ├── light_sword.gd
+│       ├── basic_armor.gd
+│       ├── basic_helmet.gd
+│       ├── basic_boots.gd
+│       └── basic_ring.gd
+│
+├── scenes/                # Scene files and view scripts
+│   ├── main/
+│   │   ├── main.tscn          # Root scene
+│   │   └── main_view.gd       # Main orchestration script
+│   ├── hero/
+│   │   ├── hero_view.tscn     # Hero equipment UI
+│   │   └── hero_view.gd       # Hero view controller
+│   ├── crafting/
+│   │   ├── crafting_view.tscn # Crafting UI
+│   │   └── crafting_view.gd   # Crafting view controller
+│   └── gameplay/
+│       ├── gameplay_view.tscn # Adventure UI
+│       └── gameplay_view.gd   # Gameplay view controller
+│
+├── utils/                 # Helper classes
+│   └── constants.gd       # Game constants (renamed from Tag.gd)
+│
+└── project.godot
 ```
 
-### Item Drop Flow
+### Structure Rationale
 
-```
-[Hero clears area]
-    ↓
-[gameplay_view.clear_area()]
-    ↓
-[ItemDropManager.roll_rarity(area_level)] → Returns ItemRarity enum
-    ↓
-[Create item with rarity]
-    ↓
-[If Magic/Rare] → Add starting affixes based on rarity limits
-    ↓
-[crafting_view.set_new_item_base(item)]
-```
-
-### Currency Reward Flow
-
-```
-[Hero clears area]
-    ↓
-[ItemDropManager.roll_currency_rewards(area_level)] → Returns Dictionary
-    ↓
-[For each currency type] → CurrencyManager.add(type, count)
-    ↓
-[CurrencyManager emits "currency_changed" signal]
-    ↓
-[crafting_view updates button states]
-```
-
-## Currency Application Rules (Validation Logic)
-
-| Currency | Effect | Valid When | Error Message |
-|----------|--------|------------|---------------|
-| **Runic Hammer** | Normal → Magic, add 1 prefix + 1 suffix | Item is Normal rarity | "Can only upgrade Normal items to Magic" |
-| **Forge Hammer** | Normal → Rare, add 3 prefix + 3 suffix | Item is Normal rarity | "Can only upgrade Normal items to Rare" |
-| **Tack Hammer** | Add 1 mod (prefix or suffix) | Item is Magic, has room for 1 more mod | "Can only add mods to Magic items with open slots" |
-| **Grand Hammer** | Add 1 mod (prefix or suffix) | Item is Rare, has room for 1 more mod | "Can only add mods to Rare items with open slots" |
-| **Claw Hammer** | Remove 1 random mod | Item has at least 1 prefix or suffix | "Item has no mods to remove" |
-| **Tuning Hammer** | Reroll all mod values | Item has at least 1 prefix or suffix | "Item has no mods to reroll" |
-
-**Implementation:** All rules centralized in `CurrencyValidator.can_apply()` method.
+- **autoload/**: Globally accessible singletons for shared state and event coordination
+- **models/**: Pure data and business logic, separated from presentation (Resources for serialization, RefCounted for runtime-only)
+- **scenes/**: Each scene grouped with its view controller script, organized by feature
+- **utils/**: Helper scripts that don't fit elsewhere
 
 ## Architectural Patterns
 
-### Pattern 1: Enum for Rarity State
+### Pattern 1: Model-View Separation
 
-**What:** Use GDScript enum for item rarity instead of separate classes or string literals.
+**What:** Separate data/logic (Model) from presentation (View). Models are Resources or RefCounted classes. Views are Nodes that display model state.
 
-**When to use:** For simple, mutually exclusive states with no behavior differences.
+**When to use:** Always for maintainable projects. Critical when data needs to persist, be serialized, or be tested independently.
 
 **Trade-offs:**
-- **Pro:** Type-safe, autocomplete-friendly, memory-efficient
-- **Pro:** Match statements provide exhaustive case checking
-- **Con:** Cannot add methods to enum values (but Item class has methods)
+- **Pros:** Testable logic, reusable models, serializable game state, clear separation of concerns
+- **Cons:** More initial setup, need to coordinate model-view updates
 
 **Example:**
 ```gdscript
-# Item.gd
-enum ItemRarity { NORMAL, MAGIC, RARE }
-var rarity: ItemRarity = ItemRarity.NORMAL
+# models/hero/hero.gd (Resource for serialization)
+class_name Hero extends Resource
 
-func get_max_prefixes() -> int:
-    match rarity:
-        ItemRarity.NORMAL: return 0
-        ItemRarity.MAGIC: return 1
-        ItemRarity.RARE: return 3
+@export var hero_name: String = "Adventurer"
+@export var max_health: float = 100.0
+@export var health: float = 100.0
+@export var equipped_items: Dictionary = {}
+
+func equip_item(item: Item, slot: String) -> void:
+    equipped_items[slot] = item
+    emit_changed()  # Resource signal for observers
+
+func get_total_dps() -> float:
+    var total := 0.0
+    if equipped_items.has("weapon") and equipped_items["weapon"]:
+        total += equipped_items["weapon"].dps
+    if equipped_items.has("ring") and equipped_items["ring"]:
+        total += equipped_items["ring"].dps
+    return total
+
+# scenes/hero/hero_view.gd (View displays Hero state)
+extends Node2D
+
+var hero: Hero  # Reference to model
+
+func _ready() -> void:
+    hero = GameState.hero  # Get from singleton
+    hero.changed.connect(_on_hero_changed)  # Listen to model updates
+    _update_display()
+
+func _on_hero_changed() -> void:
+    _update_display()
+
+func _update_display() -> void:
+    $StatsLabel.text = "DPS: %.1f" % hero.get_total_dps()
 ```
 
-**Rationale:** [GDScript enum best practices](https://gamedevacademy.org/gdscript-enums-tutorial-complete-guide/) recommend enums for "states, modes, item rarities, AI phases" because they "make code more expressive, maintainable, and less error-prone."
+### Pattern 2: Signal-Based Communication (Call Down, Signal Up)
 
-### Pattern 2: Autoload Singleton for Global Currency State
+**What:** Parent nodes access children via `get_node()` or `@onready` variables. Children signal up to parents. Siblings communicate through common parent.
 
-**What:** Use Godot's autoload feature to create a globally accessible currency manager.
-
-**When to use:** For game-wide shared state that needs to persist across scenes and be accessed from multiple independent nodes.
+**When to use:** All node-to-node communication. This is the Godot way.
 
 **Trade-offs:**
-- **Pro:** Accessible from any script without get_node() references
-- **Pro:** Automatically instantiated at game start
-- **Pro:** Persists across scene changes
-- **Con:** Global state can lead to tight coupling if overused
-- **Mitigation:** Use signals for change notifications, keep manager focused on data storage only
+- **Pros:** Decoupled, portable scenes, testable in isolation
+- **Cons:** More verbose than direct calls, requires thinking about hierarchy
 
 **Example:**
 ```gdscript
-# currency_manager.gd (autoload as "CurrencyManager")
+# scenes/crafting/crafting_view.gd (Child emits signal)
+extends Node2D
+
+signal item_crafted(item: Item)
+
+func _on_finish_button_pressed() -> void:
+    var item = _create_finished_item()
+    item_crafted.emit(item)  # Signal up
+
+# scenes/main/main_view.gd (Parent coordinates)
+extends Node2D
+
+@onready var crafting_view: Node2D = $CraftingView
+@onready var hero_view: Node2D = $HeroView
+
+func _ready() -> void:
+    # Connect sibling communication through parent
+    crafting_view.item_crafted.connect(_on_item_crafted)
+
+func _on_item_crafted(item: Item) -> void:
+    # Update shared state
+    GameState.last_crafted_item = item
+    # Notify other views via signals or direct call (we're the parent)
+    hero_view.set_craftable_item(item)
+```
+
+### Pattern 3: Event Bus for Distant Communication
+
+**What:** Autoload singleton with signals for cross-scene, loosely-coupled communication.
+
+**When to use:** When nodes are far apart in scene tree OR across different scene files. Avoid for parent-child or close relatives.
+
+**Trade-offs:**
+- **Pros:** Zero coupling, works across any scene structure
+- **Cons:** Harder to debug (global signal tracking), can become a dumping ground for unrelated signals
+
+**Example:**
+```gdscript
+# autoload/game_events.gd
 extends Node
 
-signal currency_changed(currency_type: CurrencyType, new_count: int)
+# Equipment events
+signal equipment_changed(hero: Hero)
+signal item_equipped(item: Item, slot: String)
 
-enum CurrencyType { NONE, RUNIC, FORGE, TACK, GRAND, CLAW, TUNING }
+# Crafting events
+signal item_crafted(item: Item)
+signal hammers_gained(implicit: int, prefix: int, suffix: int)
 
-var counts: Dictionary = {
-    CurrencyType.RUNIC: 10,
-    CurrencyType.FORGE: 5,
-    CurrencyType.TACK: 10,
-    CurrencyType.GRAND: 5,
-    CurrencyType.CLAW: 3,
-    CurrencyType.TUNING: 3
-}
+# Gameplay events
+signal area_cleared()
+signal hero_died()
 
-func add(type: CurrencyType, amount: int):
-    counts[type] += amount
-    currency_changed.emit(type, counts[type])
-
-func subtract(type: CurrencyType, amount: int) -> bool:
-    if counts[type] >= amount:
-        counts[type] -= amount
-        currency_changed.emit(type, counts[type])
-        return true
-    return false
-
-func get_count(type: CurrencyType) -> int:
-    return counts[type]
-```
-
-**Rationale:** [Godot autoload documentation](https://docs.godotengine.org/en/stable/tutorials/scripting/singletons_autoload.html) states it's "ideal for Global State Management like player score, money, lives, and inventory." Using signals maintains loose coupling.
-
-### Pattern 3: Validation Before Mutation
-
-**What:** Separate validation logic from execution logic. Check if an action is valid before performing it.
-
-**When to use:** When actions have preconditions and you want to provide user feedback before failure.
-
-**Trade-offs:**
-- **Pro:** UI can disable/enable buttons based on validity
-- **Pro:** Provides clear error messages before action attempt
-- **Pro:** Centralized business rules in validator
-- **Con:** Slight performance overhead of double-checking (validation + execution)
-- **Mitigation:** For crafting UI, overhead is negligible
-
-**Example:**
-```gdscript
-# currency_validator.gd
-class_name CurrencyValidator
-
-static func can_apply(currency: CurrencyManager.CurrencyType, item: Item) -> bool:
-    match currency:
-        CurrencyManager.CurrencyType.RUNIC:
-            return item.rarity == Item.ItemRarity.NORMAL
-        CurrencyManager.CurrencyType.TACK:
-            return item.rarity == Item.ItemRarity.MAGIC and \
-                   (item.can_add_prefix() or item.can_add_suffix())
-        # ... other cases
-    return false
-
-static func get_error_message(currency: CurrencyManager.CurrencyType, item: Item) -> String:
-    if can_apply(currency, item):
-        return ""
-    match currency:
-        CurrencyManager.CurrencyType.RUNIC:
-            return "Runic Hammer can only upgrade Normal items to Magic"
-        # ... other cases
-```
-
-**Rationale:** This follows the [validation pattern in game systems](https://medium.com/gamedev-architecture/decoupling-game-code-via-command-pattern-debugging-it-with-time-machine-2b177e61556c) where "the system must check if the game state is valid" before mutations. Enables better UX through early validation.
-
-### Pattern 4: Weighted Random with Area Scaling
-
-**What:** Use area level to influence rarity drop weights, making rarer items more likely in harder areas.
-
-**When to use:** For progression systems where difficulty correlates with reward quality.
-
-**Trade-offs:**
-- **Pro:** Creates natural progression curve
-- **Pro:** Rewards players for tackling harder content
-- **Con:** Requires balancing drop rates across area levels
-- **Mitigation:** Use formulaic weights that scale predictably
-
-**Example:**
-```gdscript
-# item_drop_manager.gd
+# autoload/game_state.gd
 extends Node
 
-static func roll_rarity(area_level: int) -> Item.ItemRarity:
-    # Weight calculation: higher area = better rarity chances
-    # Area 1: 70% Normal, 25% Magic, 5% Rare
-    # Area 5: 40% Normal, 40% Magic, 20% Rare
-    # Area 10: 20% Normal, 40% Magic, 40% Rare
+var hero: Hero
+var last_crafted_item: Item = null
 
-    var normal_weight = max(20, 70 - (area_level * 5))
-    var magic_weight = min(40, 25 + (area_level * 3))
-    var rare_weight = min(40, 5 + (area_level * 3))
+func _ready() -> void:
+    hero = Hero.new()
+    hero.equipped_items = {
+        "weapon": null,
+        "helmet": null,
+        "armor": null,
+        "boots": null,
+        "ring": null
+    }
 
-    var total = normal_weight + magic_weight + rare_weight
-    var roll = randf() * total
+# scenes/hero/hero_view.gd (Listener)
+func _ready() -> void:
+    GameEvents.item_crafted.connect(_on_item_crafted)
 
-    if roll < normal_weight:
-        return Item.ItemRarity.NORMAL
-    elif roll < normal_weight + magic_weight:
-        return Item.ItemRarity.MAGIC
-    else:
-        return Item.ItemRarity.RARE
+func _on_item_crafted(item: Item) -> void:
+    # React to crafted item from anywhere
+
+# scenes/gameplay/gameplay_view.gd (Emitter)
+func _on_area_cleared() -> void:
+    GameEvents.area_cleared.emit()  # Any scene can listen
 ```
 
-**Rationale:** Based on [ARPG item rarity systems](https://www.poewiki.net/wiki/Rarity) from Path of Exile where "rarity gives a visual indicator of how one item compares to another in terms of game advancement."
+### Pattern 4: @onready and @export for Node References
 
-## Build Order (Dependency Graph)
+**What:** Use `@onready` to cache node references. Use `@export` to assign nodes in Inspector.
 
-### Phase 1: Foundation (No Dependencies)
+**When to use:** Always for performance and robustness. Avoids repeated `get_node()` calls.
 
-1. **CurrencyManager autoload** - Pure data storage, no dependencies
-2. **ItemRarity enum in Item.gd** - Just add enum, no logic changes
-3. **CurrencyValidator class** - References CurrencyManager enum and Item.ItemRarity enum
+**Trade-offs:**
+- **Pros:** Faster (one lookup), clearer dependencies, less error-prone
+- **Cons:** Slightly more verbose
 
-**Why First:** These are foundational types that other components depend on. No behavioral changes yet, so existing code continues working.
-
-### Phase 2: Item Rarity Logic (Depends on Phase 1)
-
-4. **Item.get_max_affixes() methods** - Uses ItemRarity enum
-5. **Item.add_prefix()/add_suffix() modifications** - Calls get_max_affixes()
-6. **Item.get_display_text() modification** - Shows rarity
-
-**Why Second:** Makes Item class rarity-aware. Doesn't break existing code because items default to NORMAL rarity (0 max affixes until upgraded).
-
-### Phase 3: Drop System (Depends on Phase 2)
-
-7. **ItemDropManager autoload** - Returns ItemRarity values
-8. **gameplay_view.get_random_item_base() modification** - Calls ItemDropManager
-9. **gameplay_view.give_hammer_rewards() modification** - Calls CurrencyManager
-
-**Why Third:** Integrates rarity into drop system. Items now drop with rarities, but crafting UI still uses old hammer system (backward compatible).
-
-### Phase 4: Crafting UI (Depends on All Previous)
-
-10. **crafting_view.gd currency button UI** - Replace 3 hammers with 6 currencies
-11. **crafting_view.update_item() rewrite** - Use CurrencyValidator and CurrencyManager
-12. **crafting_view currency application logic** - Implement all 6 currency effects
-
-**Why Last:** This is the final integration point. All supporting systems must be in place. This phase replaces the old hammer system with the new currency system.
-
-### Dependency Rationale
-
-```
-CurrencyManager ──┐
-ItemRarity enum ──┼─→ CurrencyValidator
-                  │
-                  ├─→ Item rarity methods
-                  │       ↓
-                  ├─→ ItemDropManager ─→ gameplay_view
-                  │
-                  └─→ crafting_view (final integration)
-```
-
-**Build order prevents:**
-- Referencing undefined enums
-- Calling methods that don't exist yet
-- UI depending on backend logic before it's implemented
-
-**Safe rollback:** Each phase is independently testable. If Phase 4 has issues, Phase 1-3 remain functional.
-
-## Anti-Patterns to Avoid
-
-### Anti-Pattern 1: String-Based Rarity
-
-**What people do:** Use strings like `var rarity = "magic"` instead of enums
-
-**Why it's wrong:**
-- No type safety - typos cause runtime errors
-- No autocomplete
-- Cannot exhaustively check all cases in match statements
-- String comparisons are slower than int comparisons
-
-**Do this instead:** Use `enum ItemRarity { NORMAL, MAGIC, RARE }` and `var rarity: ItemRarity`
-
-### Anti-Pattern 2: Currency Logic in UI
-
-**What people do:** Implement currency application rules directly in crafting_view.gd button handlers
-
-**Why it's wrong:**
-- Business logic mixed with UI logic
-- Cannot reuse validation elsewhere (e.g., in item tooltips)
-- Hard to test without instantiating entire UI
-- Violation of single responsibility principle
-
-**Do this instead:** Centralize rules in `CurrencyValidator` static class, UI just calls validator methods
-
-### Anti-Pattern 3: Hardcoded Affix Limits
-
-**What people do:** Keep `if len(prefixes) >= 3` checks in add_prefix/add_suffix
-
-**Why it's wrong:**
-- Doesn't respect rarity-based limits
-- Magic items with 1 max would still check against 3
-- Business rule (max affixes) is scattered across codebase
-
-**Do this instead:** Use `can_add_prefix()` / `can_add_suffix()` methods that check `get_max_prefixes()` / `get_max_suffixes()`
-
-### Anti-Pattern 4: Direct Currency Dictionary Access
-
-**What people do:** Access `CurrencyManager.counts` directly from UI
-
-**Why it's wrong:**
-- Breaks encapsulation
-- UI can modify counts without triggering signals
-- Cannot add validation or logging to currency changes
-- Tight coupling between UI and data structure
-
-**Do this instead:** Use `CurrencyManager.get_count()`, `add()`, `subtract()` methods. Subscribe to `currency_changed` signal for updates.
-
-### Anti-Pattern 5: Creating Items at Wrong Rarity
-
-**What people do:** Create item, then upgrade rarity, then add affixes
-
+**Example:**
 ```gdscript
-var item = LightSword.new()  # Defaults to NORMAL
-item.rarity = Item.ItemRarity.RARE  # Upgrade
-for i in range(3):
-    item.add_prefix()  # Add affixes after
+extends Node2D
+
+# @onready caches child references at _ready()
+@onready var stats_label: Label = $StatsPanel/StatsLabel
+@onready var weapon_slot: Button = $WeaponSlot
+
+# @export allows Inspector assignment (best for flexibility)
+@export var inventory_panel: Control
+
+func _ready() -> void:
+    weapon_slot.pressed.connect(_on_weapon_slot_pressed)
+    stats_label.text = "Ready"
+```
+
+### Pattern 5: Resources for Data, Nodes for Behavior
+
+**What:** Use Resource classes for pure data (items, stats, config). Use Nodes for things that need scene tree access or rendering.
+
+**When to use:**
+- **Resource:** Data that should serialize (save/load), doesn't need _process(), no visual representation
+- **Node:** Needs rendering, physics, scene tree access, frame updates
+
+**Trade-offs:**
+- **Resources Pros:** Built-in serialization, lightweight, editor-friendly
+- **Resources Cons:** No scene tree access, no _process() callbacks
+- **Nodes Pros:** Full engine features, scene integration
+- **Nodes Cons:** Memory overhead, not designed for pure data
+
+**Example:**
+```gdscript
+# models/items/item.gd (Resource - pure data)
+class_name Item extends Resource
+
+@export var item_name: String
+@export var tier: int
+@export var implicit: Implicit
+@export var prefixes: Array[Affix] = []
+@export var suffixes: Array[Affix] = []
+
+func add_prefix() -> void:
+    # Business logic is fine in Resources
+    if prefixes.size() >= 3:
+        return
+    var new_prefix = _select_valid_prefix()
+    if new_prefix:
+        prefixes.append(new_prefix)
+        emit_changed()  # Built-in Resource signal
+
+# models/items/weapon.gd (Resource - weapon data)
+class_name Weapon extends Item
+
+@export var base_damage: int = 10
+@export var base_speed: float = 1.0
+@export var dps: float = 10.0
+@export var crit_chance: float = 5.0
+@export var crit_damage: float = 150.0
+
+func update_dps() -> void:
+    dps = base_damage * base_speed
+    emit_changed()
+```
+
+## Data Flow
+
+### Equipment Flow
+
+```
+User clicks slot in HeroView
+    ↓
+HeroView.gd: _on_slot_clicked()
+    ↓
+GameState.hero.equip_item(item, slot)  # Model update
+    ↓
+Hero emits changed signal
+    ↓
+HeroView._on_hero_changed() updates UI
+    ↓
+GameEvents.equipment_changed.emit(hero)  # Notify distant listeners
+    ↓
+GameplayView receives signal, updates clearing speed
+```
+
+### Crafting Flow
+
+```
+User clicks hammer in CraftingView
+    ↓
+CraftingView: apply_affix_to_item()
+    ↓
+Item.add_prefix() (model logic)
+    ↓
+Item emits changed signal
+    ↓
+CraftingView._on_item_changed() updates item display
+    ↓
+User clicks "Finish Item"
+    ↓
+CraftingView.item_crafted.emit(item)  # Signal to parent
+    ↓
+MainView receives signal, updates GameState.last_crafted_item
+    ↓
+GameEvents.item_crafted.emit(item)  # Global notification
+    ↓
+HeroView receives, enables equipping
+```
+
+### State Management
+
+```
+┌──────────────┐
+│  GameState   │  (Autoload - single source of truth)
+│  - hero      │
+│  - inventory │
+└──────┬───────┘
+       │ (reads/writes)
+       ↓
+┌──────────────┐       signals        ┌──────────────┐
+│  Models      │  ←─────────────────→  │  Views       │
+│  (Resources) │                       │  (Nodes)     │
+└──────────────┘                       └──────────────┘
+       ↑                                      ↑
+       │                                      │
+       └────────── GameEvents.signal ─────────┘
+           (distant communication)
+```
+
+### Key Data Flows
+
+1. **Hero State Flow:** GameState.hero (source of truth) → Views observe via signals → Views update UI
+2. **Cross-View Communication:** View A emits signal → MainView coordinates OR GameEvents relays → View B reacts
+3. **Persistence:** Resources auto-serialize → ResourceSaver.save(hero, "user://save.tres") → ResourceLoader.load("user://save.tres")
+
+## Decision Framework
+
+### Signals vs Direct Calls vs Autoload
+
+| Scenario | Solution | Rationale |
+|----------|----------|-----------|
+| Parent needs child data | Direct call down: `$ChildNode.get_data()` | Performance, clarity |
+| Child needs parent action | Signal up: `signal_name.emit()`, parent connects | Decoupling |
+| Sibling communication | Signal to parent, parent coordinates | Maintains hierarchy |
+| Distant/cross-scene | Event bus (GameEvents autoload) | Zero coupling |
+| Shared state access | GameState autoload with properties | Single source of truth |
+
+### Resource vs Node vs RefCounted
+
+| Need | Use | Example |
+|------|-----|---------|
+| Serializable data | Resource | Item, Hero, SaveData |
+| Runtime-only data | RefCounted class | Temporary calculations, builders |
+| Visual representation | Node (Control, Node2D) | UI elements, sprites |
+| Physics/collision | Node (CharacterBody2D, Area2D) | Player, enemies |
+| Frame updates | Node with _process() | Animation controllers |
+
+### Autoload vs Scene Instance
+
+| Use Autoload When | Use Scene Instance When |
+|-------------------|-------------------------|
+| Truly global (one instance ever) | Multiple instances needed |
+| Cross-scene persistence | Scene-specific lifecycle |
+| Event bus, constants | UI views, gameplay entities |
+| Example: GameState, GameEvents | Example: HeroView, EnemySpawner |
+
+## Scaling Considerations
+
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| 0-10 scenes | Simple structure fine, minimal abstraction |
+| 10-50 scenes | Introduce event bus, consistent folder structure critical |
+| 50+ scenes | Modular architecture with feature-based organization, consider addons for reusable systems |
+
+### Scaling Priorities
+
+1. **First bottleneck:** get_node() fragility as scene tree evolves
+   - **Fix:** Switch to @onready caching and signal-based communication early
+
+2. **Second bottleneck:** Cluttered autoloads with mixed concerns
+   - **Fix:** Split into domain-specific autoloads (GameState, GameEvents, ItemRegistry)
+
+3. **Third bottleneck:** Duplicate logic across views
+   - **Fix:** Extract to model layer (Resources/RefCounted) or service classes
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Nodes for Pure Data
+
+**What people do:** `class_name Item extends Node` with only data properties
+
+**Why it's wrong:**
+- Nodes have process overhead (even if not using _process)
+- No built-in serialization (must write custom save/load)
+- Memory inefficient
+- Misleading (Nodes imply behavior)
+
+**Do this instead:**
+```gdscript
+# WRONG
+class_name Item extends Node
+var item_name: String
+var damage: int
+
+# RIGHT
+class_name Item extends Resource
+@export var item_name: String
+@export var damage: int
+# Resources auto-serialize with ResourceSaver/Loader
+```
+
+### Anti-Pattern 2: get_parent() Chains
+
+**What people do:**
+```gdscript
+get_parent().get_parent().get_node("UI/HealthBar")
+get_node("../SiblingNode/ChildNode")
 ```
 
 **Why it's wrong:**
-- Two-step process that can be interrupted
-- Affixes added after rarity change might not respect old limits
-- Creates "in-between" states that violate invariants
+- Fragile: breaks when hierarchy changes
+- Prevents scene reuse/testing
+- Violates encapsulation
 
-**Do this instead:** Set rarity immediately on creation, before adding affixes
-
+**Do this instead:**
 ```gdscript
-var item = LightSword.new()
-item.rarity = ItemDropManager.roll_rarity(area_level)
-# Now add affixes - they'll respect rarity limits
+# For siblings: signal to parent, parent coordinates
+signal health_changed(new_health: int)
+# Parent connects: player.health_changed.connect(ui.update_health)
+
+# For distant nodes: event bus
+GameEvents.health_changed.emit(new_health)
+```
+
+### Anti-Pattern 3: Autoload Overuse
+
+**What people do:** Put everything in autoloads because "it's easier to access"
+
+**Why it's wrong:**
+- Global state makes debugging hard
+- Memory never freed
+- Tight coupling across entire codebase
+- Hard to test
+
+**Do this instead:**
+- **Autoload:** Only for truly global systems (GameState, GameEvents, constants)
+- **Scene instances:** For most gameplay logic
+- **Dependency injection:** Pass references via exported variables or signals
+
+### Anti-Pattern 4: Logic in View Scripts
+
+**What people do:** Implement game rules, calculations, and state management in `hero_view.gd`, `crafting_view.gd`
+
+**Why it's wrong:**
+- Can't test logic without UI
+- Can't reuse logic (e.g., headless server, different UI)
+- Violates separation of concerns
+
+**Do this instead:**
+```gdscript
+# WRONG: Logic in view
+# hero_view.gd
+func equip_item(item: Item, slot: String):
+    if item is Weapon and slot == "weapon":
+        hero.weapon = item
+        hero.dps = calculate_dps()  # Logic in view
+
+# RIGHT: Logic in model
+# models/hero/hero.gd
+func equip_item(item: Item, slot: String) -> bool:
+    if not _can_equip(item, slot):
+        return false
+    equipped_items[slot] = item
+    _recalculate_stats()  # Model owns logic
+    emit_changed()
+    return true
+
+# scenes/hero/hero_view.gd (View just coordinates)
+func _on_slot_clicked(slot: String):
+    var success = GameState.hero.equip_item(last_item, slot)
+    if success:
+        _update_display()
+```
+
+### Anti-Pattern 5: No Single Source of Truth
+
+**What people do:**
+```gdscript
+# hero_view.gd
+var hero: Hero = Hero.new()
+
+# gameplay_view.gd
+var hero: Hero  # Gets passed from hero_view
+```
+
+**Why it's wrong:**
+- Multiple sources of truth
+- Lifecycle management unclear
+- Easy to have stale references
+
+**Do this instead:**
+```gdscript
+# autoload/game_state.gd
+var hero: Hero
+
+func _ready():
+    hero = Hero.new()
+    # Single authoritative instance
+
+# All views access same instance
+func _ready():
+    var hero = GameState.hero
 ```
 
 ## Integration Points
 
+### Current System to Refactored
+
+| Current Component | New Component | Migration Path |
+|-------------------|---------------|----------------|
+| hero_view.gd (owns Hero instance) | GameState autoload owns Hero | Move Hero creation to GameState._ready() |
+| item.gd extends Node | item.gd extends Resource | Change base class, remove from scene tree, use model layer |
+| get_node_or_null("../CraftingView") | GameEvents signal or parent coordination | Add signals, connect in parent (main_view.gd) |
+| ItemAffixes autoload | ItemRegistry autoload | Rename, keep functionality |
+| Tag autoload | Constants class | Move to utils/constants.gd, not autoload unless needed globally |
+| hero_view equip logic | Hero.equip_item() in model | Move method to Hero class |
+| crafting_view hammer counts | CraftingState (in GameState or Resource) | Extract to state object |
+
 ### Internal Boundaries
 
-| Boundary | Communication Pattern | Notes |
-|----------|----------------------|-------|
-| **CraftingView ↔ CurrencyManager** | Direct method calls + signal subscription | CraftingView calls `get_count()`, `subtract()`. Subscribes to `currency_changed` for UI updates |
-| **CraftingView ↔ CurrencyValidator** | Static method calls | CraftingView calls `can_apply()` before enabling buttons, `get_error_message()` for tooltips |
-| **GameplayView ↔ ItemDropManager** | Static method calls | GameplayView calls `roll_rarity()` and `roll_currency_rewards()` during item/reward generation |
-| **GameplayView ↔ CurrencyManager** | Direct method calls | GameplayView calls `add()` to grant currency rewards |
-| **CraftingView ↔ GameplayView** | Sibling node references (existing) | `get_node_or_null("../GameplayView")` pattern unchanged |
-| **Item ↔ ItemAffixes** | Autoload reference (existing) | Items call `ItemAffixes.prefixes/suffixes` arrays unchanged |
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| View ↔ Model | Views read model, subscribe to changed signal | Models never know about views |
+| View ↔ View (siblings) | Signal to parent OR event bus | Never direct get_node to sibling |
+| View ↔ Autoload | Direct property access for reads, signals for writes | Autoload can emit signals views connect to |
+| Model ↔ Autoload | Autoload owns model instances | Models stored in GameState |
 
-### View Communication Pattern (Existing)
+## Refactoring Build Order
 
-```gdscript
-# Existing sibling reference pattern - UNCHANGED
-var crafting_view = get_node_or_null("../CraftingView")
-crafting_view.set_new_item_base(item)
-```
+### Phase 1: Foundation (Models & Autoloads)
+1. Create folder structure: `models/`, `autoload/`, `scenes/`, `utils/`
+2. Create `autoload/game_state.gd` and register as autoload
+3. Create `autoload/game_events.gd` with initial signals
+4. Convert `item.gd` and subclasses from Node to Resource
+5. Move Hero creation to GameState
+6. Rename/move ItemAffixes to `autoload/item_registry.gd`
+7. Move Tag to `utils/constants.gd` (remove autoload if not needed)
 
-**Why not change:** This pattern already works. Views are guaranteed to be siblings in main.tscn structure. Refactoring to signals would be over-engineering for this simple case.
+### Phase 2: Model Logic Extraction
+1. Move equip/unequip logic from hero_view.gd to Hero class
+2. Move crafting logic from crafting_view.gd to Item/CraftingState
+3. Extract stat calculations to Hero model
 
-## Scaling Considerations
+### Phase 3: Scene Organization
+1. Move scene files to `scenes/[feature]/`
+2. Move view scripts alongside their .tscn files
+3. Update scene paths in main.tscn
 
-| Scale | Current Architecture | Notes |
-|-------|---------------------|-------|
-| **6 currencies** | CurrencyManager.counts dictionary | Works fine |
-| **50+ currencies** | Consider categorizing currencies in sub-dictionaries | E.g., `basic_currencies`, `advanced_currencies` |
-| **Complex currency interactions** | Add CurrencyEffect class hierarchy | If currencies need state or multi-step effects |
-| **Multiplayer** | CurrencyManager needs network sync | Would need to emit RPC calls on add/subtract |
+### Phase 4: Communication Refactor
+1. Replace get_node_or_null("../OtherView") with signals
+2. Connect sibling signals in main_view.gd
+3. Add GameEvents emissions for distant communication
+4. Convert @onready for child node references
 
-### Scaling Priorities
-
-**Current scope (6 currencies, single-player):** Proposed architecture is appropriate. Simple, direct, no unnecessary abstraction.
-
-**If expanding to 20+ currencies:** Consider factory pattern for currency application instead of giant match statement in `apply_currency()`.
-
-**If adding multiplayer:** CurrencyManager would need authority checks and RPC synchronization. ItemDropManager would need to run on server only to prevent client cheating.
+### Phase 5: Testing & Polish
+1. Test each view independently
+2. Verify serialization works (save/load Hero)
+3. Remove old/unused code
+4. Document signal contracts
 
 ## Sources
 
-**Godot-Specific Patterns:**
-- [Godot 4 Grid Inventory with Patterns](https://github.com/alpapaydin/Godot-4-Grid-Inventory-with-Patterns) - Item rarity system examples
-- [Pandora RPG Data Management](https://github.com/bitbrain/pandora) - Modular RPG systems for Godot 4
-- [Simple In-Game Currency System in Godot](https://www.wayline.io/blog/simple-in-game-currency-system-godot) - Currency implementation patterns
-- [Construct a Crafting System in Godot 4](https://academy.zenva.com/product/godot-crafting-system/) - Crafting system architecture
+**Official Godot Documentation (HIGH Confidence):**
+- [Scene organization — Godot Engine (stable)](https://docs.godotengine.org/en/stable/tutorials/best_practices/scene_organization.html)
+- [Autoloads versus regular nodes — Godot Engine (stable)](https://docs.godotengine.org/en/stable/tutorials/best_practices/autoloads_versus_internal_nodes.html)
+- [Using signals — Godot Engine (stable)](https://docs.godotengine.org/en/stable/getting_started/step_by_step/signals.html)
+- [Singletons (Autoload) — Godot Engine (stable)](https://docs.godotengine.org/en/stable/tutorials/scripting/singletons_autoload.html)
+- [Project organization — Godot Engine (stable)](https://docs.godotengine.org/en/stable/tutorials/best_practices/project_organization.html)
+- [Resources — Godot Engine (stable)](https://docs.godotengine.org/en/stable/tutorials/scripting/resources.html)
 
-**GDScript Language Patterns:**
-- [Godot Enum - Comprehensive Guide](https://tajammalmaqbool.com/blogs/godot-enum-a-comprehensive-guide) - Enum best practices
-- [GDScript Enums Tutorial](https://gamedevacademy.org/gdscript-enums-tutorial-complete-guide/) - When to use enums vs classes
-- [Singletons (Autoload) - Official Docs](https://docs.godotengine.org/en/latest/tutorials/scripting/singletons_autoload.html) - Autoload pattern for global state
-- [Managing Cross-Scene Data with Autoload](https://uhiyama-lab.com/en/notes/godot/autoload-global-data-management/) - Currency and state management
+**Community Best Practices (MEDIUM Confidence):**
+- [Node communication (the right way) :: Godot 4 Recipes](https://kidscancode.org/godot_recipes/4.x/basics/node_communication/)
+- [Best practices with Godot signals · GDQuest](https://www.gdquest.com/tutorial/godot/best-practices/signals/)
+- [The Events bus singleton · GDQuest](https://www.gdquest.com/tutorial/godot/design-patterns/event-bus-singleton/)
+- [When to Node, Resource, and Class in Godot](https://backat50ft.substack.com/p/when-to-node-resource-and-class-in)
+- [MVC in Godot | Rads and Relics](https://radsandrelics.com/posts/godot-mvc/)
 
-**ARPG Design Patterns:**
-- [Rarity - PoE Wiki](https://www.poewiki.net/wiki/Rarity) - Item rarity tier systems
-- [Path of Exile 2 Crafting Overview](https://maxroll.gg/poe2/resources/path-of-exile-2-crafting-overview) - Currency-based crafting
-- [Currency - PoE Wiki](https://www.poewiki.net/wiki/Currency) - Orb system architecture
-- [Color-Coded Item Tiers](https://tvtropes.org/pmwiki/pmwiki.php/Main/ColorCodedItemTiers) - Rarity visualization
-
-**Game Architecture Patterns:**
-- [Decoupling Game Code via Command Pattern](https://medium.com/gamedev-architecture/decoupling-game-code-via-command-pattern-debugging-it-with-time-machine-2b177e61556c) - Validation before mutation
-- [Command Pattern - Game Programming Patterns](https://gameprogrammingpatterns.com/command.html) - State validation patterns
-- [Top Game Development Patterns in Godot Engine](https://www.manuelsanchezdev.com/blog/game-development-patterns) - Godot-specific architectural patterns
+**GitHub Resources (MEDIUM Confidence):**
+- [godot-architecture-organization-advice](https://github.com/abmarnie/godot-architecture-organization-advice)
 
 ---
-*Architecture research for: Hammertime ARPG Item Rarity & Crafting Currency System*
+*Architecture research for: Godot 4.5 ARPG Idle Game Refactoring*
 *Researched: 2026-02-14*

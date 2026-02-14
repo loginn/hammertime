@@ -1,317 +1,400 @@
 # Feature Research
 
-**Domain:** ARPG Item Rarity and Crafting Currency Systems
+**Domain:** GDScript Codebase Refactoring (ARPG Idle Game)
 **Researched:** 2026-02-14
 **Confidence:** MEDIUM
 
 ## Feature Landscape
 
-### Table Stakes (Users Expect These)
+### Table Stakes (Core Refactoring Patterns)
 
-Features users assume exist. Missing these = product feels incomplete.
+Features that any comprehensive refactoring needs to address. Missing these = incomplete refactoring.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Visual rarity differentiation (colors) | Standard across ALL ARPGs since Diablo (1996) - white/blue/yellow is industry convention | LOW | Normal=white, Magic=blue, Rare=yellow. User expectations are hardcoded. |
-| Rarity determines mod count limits | Core ARPG mechanic - Normal=0, Magic=1+1, Rare=3+3. Path of Exile, Last Epoch, Diablo all use this structure. | LOW | Already partially implemented - existing code has 3 prefix/3 suffix limits. Need to add rarity-based enforcement. |
-| Currency shows preview/validation before use | Users expect to know what will happen - "Can I use this?" feedback before clicking | MEDIUM | Need pre-application validation: "This item already has max mods", "This currency requires Magic rarity", etc. |
-| Currency application feedback | Users need to see what changed - before/after comparison, highlight new/changed mods | MEDIUM | Visual feedback on success/failure. Highlight mod value changes for Tuning Hammer, show removed mod for Claw Hammer. |
-| Drop rate scaling with difficulty | Harder areas = better loot is fundamental ARPG loop. PoE shows 200-1000% rarity increase for magic/rare monsters. | LOW | Area difficulty should influence rarity roll weights. Already have area system. |
-| Consistent rarity upgrade paths | Users expect Normal→Magic→Rare to be clear and achievable, not random dead-ends | LOW | Runic (N→M) and Forge (N→R) provide this. Need to ensure no "stuck" states. |
-| Mod count visibility | Users must see current mod count vs. max (e.g., "Prefixes: 2/3") to make informed crafting decisions | LOW | Display rarity + current/max mod counts in item tooltip. Critical for decision-making. |
+| Unified Stat Calculation System | Eliminates duplicate compute_dps() logic across weapon.gd and ring.gd | MEDIUM | Resource-based stat modifiers with central calculation engine. Both Weapon and Ring call the same calculation pipeline. |
+| Tag System Separation of Concerns | Tag.gd currently serves dual purposes (affix filtering AND damage calculation routing) | LOW | Split into TagFilter (item eligibility) and DamageType/StatType enums. Clear single-responsibility per constant set. |
+| Proper Inheritance/Polymorphism Structure | Item subclasses share behavior but override methods inconsistently | LOW-MEDIUM | Define abstract update_value() contract in Item base class, standardize interface across all item types. |
+| Signal-Based UI Communication | UI views use direct get_node() references causing tight coupling | MEDIUM | Implement "call down, signal up" pattern. Items emit stat_changed signals, UI components listen without direct references. |
+| Directory Organization | All 21 .gd files in project root creates navigation/maintenance burden | LOW | Group by domain: items/, ui/, systems/, data/. Widely accepted as basic code hygiene. |
+| Resource-Based Item Data | Currently items are Nodes, should be Resources for data-driven design | MEDIUM-HIGH | Migrate item definitions to custom Resources. Separates data from logic, enables inspector editing. |
 
-### Differentiators (Competitive Advantage)
+### Differentiators (Advanced Refactoring Patterns)
 
-Features that set the product apart. Not required, but valuable.
+Patterns that go beyond basic cleanup and improve architecture significantly.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Hammer-themed currency identity | Makes crafting memorable and thematic - "Tack Hammer" vs generic "Orb of Augmentation" creates brand identity | LOW | Already committed to this. Opportunity for visual/audio feedback (hammer striking item). |
-| No full-reroll chaos orb equivalent | Reduces RNG frustration - items evolve rather than get bricked and rerolled infinitely | LOW | Explicit design choice. Positions game as "incremental improvement" vs "gambling simulator". |
-| Simplified rarity system (no Unique tier) | Reduces complexity for idle game context - 3 tiers vs. 4+ in most ARPGs | LOW | Good for idle/incremental genre. Less to learn, faster to mastery. |
-| Claw Hammer (mod removal) at lower rarity | PoE's Orb of Annulment is late-game currency. Early access = more experimentation | MEDIUM | Differentiator if common enough. Risk: too common = trivializes crafting. Needs drop rate balancing. |
-| Grand Hammer for Rare augmentation | PoE's Exalted Orb equivalent. Giving this early (vs. ultra-rare) changes crafting accessibility | MEDIUM | Makes perfect rares achievable in reasonable time. Good for idle game pacing. |
-| Persistent rarity through modification | Items never downgrade rarity unless explicitly scouring - reduces "bricking" anxiety | LOW | Build on PoE2 pattern where Annulment doesn't downgrade. Psychologically friendlier. |
+| Modifier Pipeline Architecture | Centralized stat modification system following order-of-operations (flat → increased → more) | HIGH | Industry-standard pattern from Path of Exile. Enables complex affix interactions without exponential code growth. Reference: Modular stat system with sequential modifier application. |
+| Strategy Pattern for Damage Calculations | Different damage types (physical, elemental, DOT) use strategy objects instead of inline tag checking | MEDIUM | Eliminates if-chains in compute_dps(). Each DamageCalculationStrategy handles its own type. More extensible than current tag-checking approach. |
+| Composition Over Deep Inheritance | Item behaviors defined by components/capabilities rather than rigid type hierarchy | HIGH | Prevents "weapon-that-is-also-armor" type problems. May be overkill for current scope. Godot community prefers pragmatic inheritance for simple cases. |
+| Event Bus for Global State | Centralized signal routing through autoload singleton for hero stats, inventory changes | LOW-MEDIUM | Recommended by GDQuest for cases where direct connections create coupling. Alternative to direct signal wiring. |
+| Stat Dependencies and Reactivity | Stats automatically recalculate when dependencies change (e.g., max_health affects health_percentage) | MEDIUM | Resource-based stats with getter properties. Prevents stale data bugs. Enables reactive UI updates. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features that seem good but create problems.
+Refactoring approaches that seem good but create problems.
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Deterministic crafting (choose exact mod) | Feels "fair", removes RNG frustration | Removes entire gameplay loop - finding good RNG drops becomes worthless, everything is crafted to perfection | Use tag-based mod pools (already implemented) + targetable currencies with smart weighting. Let users nudge RNG, not eliminate it. |
-| Full item reroll (Chaos Orb) | Feels powerful, gives "one more try" when item is bad | Creates degenerate "spam chaos until good" gameplay. Infinite rerolls = no value to drops or incremental progress. | Item melting (future) + incremental modification only. Forces strategic improvement. |
-| Rarity downgrade currencies | Seems like it adds flexibility ("I want this Rare to be Magic") | Creates confusing edge cases and no clear use case. Why would you want fewer mods? | Claw Hammer removes mods without rarity change. If you want fewer mods, remove them. Rarity follows as consequence. |
-| Guaranteed mod addition (no RNG) | "I should be able to add exactly what I want" | Eliminates itemization progression - perfect items in hours. Destroys long-term engagement. | Grand Hammer adds random mod within tag restrictions. Exalted-style RNG preserved. |
-| Complex rarity tiers (Exalted/Fractured/Synthesized) | "More content!" | Feature bloat for idle game. Diablo/PoE complexity inappropriate for incremental genre. | Stick to 3 tiers. Add depth through mod tiers (already have 1-8) and hammer variety. |
-| Metamod/block crafting (PoE-style) | Power users want control | Extreme complexity - requires understanding tag system, mod groups, blocking mechanics. Barrier to entry. | Tag-based filtering (already implemented) is sufficient. Keep it accessible. |
+| Full Entity-Component-System (ECS) | Composition over inheritance is mentioned frequently in game dev | Massive architectural rewrite, overkill for 5 item types, GDScript lacks ECS performance benefits that C++ engines get | Pragmatic inheritance with component-like Resource attachments for variable behavior |
+| Over-Abstraction of Calculations | "Make everything configurable via data files" mentality | Premature generalization. Current game has ~10 affix types and 5 item types. Over-engineering before you understand requirements leads to wrong abstractions. | Start with shared base calculation, extract data when patterns emerge from real usage (Rule of Three) |
+| Traits/Mixins via Scripts | GitHub proposal #6416 for trait system in GDScript | Not yet implemented in Godot 4.5. Relying on proposed features creates maintenance burden and migration work if never added or implemented differently. | Use composition with Resources and standard single inheritance |
+| Immediate Type Safety Everywhere | Add type hints to all variables immediately | While valuable long-term, type hints don't provide performance benefits yet in GDScript. Refactoring for structure is higher priority than refactoring for types. | Add types to public APIs first (function parameters/returns), internal variables second |
 
 ## Feature Dependencies
 
 ```
-[Item Rarity System]
-    └──requires──> [Rarity-Based Mod Limits]
-                       └──requires──> [Mod Count Validation]
+Directory Organization
+    └──enables──> Clear Module Boundaries
+                      └──enables──> Proper Encapsulation
 
-[Rarity Upgrade Currencies (Runic/Forge)]
-    └──requires──> [Item Rarity System]
-    └──requires──> [Mod Addition Logic]
+Tag System Separation
+    └──unlocks──> Damage Strategy Pattern
+                      └──requires──> Unified Stat Calculation
 
-[Mod Addition Currencies (Tack/Grand)]
-    └──requires──> [Rarity Validation] (can't use Grand on Magic)
-    └──requires──> [Mod Count Validation] (can't exceed 1+1 or 3+3)
+Unified Stat Calculation
+    └──requires──> Modifier Pipeline (order-of-operations)
+    └──enables──> Reactive Stat Updates
 
-[Claw Hammer (Mod Removal)]
-    └──requires──> [Rarity Preservation Logic] (item stays same rarity)
-    └──requires──> [Mod Count Tracking]
+Resource-Based Item Data
+    └──enables──> Data-Driven Design
+    └──conflicts──> Current Node-Based Architecture (requires migration)
 
-[Tuning Hammer (Value Reroll)]
-    └──requires──> [Mod Value Range System] (already exists: min_value/max_value)
-    └──enhances──> [All Other Hammers] (optimize after adding mods)
-
-[Drop Rate Scaling]
-    └──requires──> [Area Difficulty System] (already exists)
-    └──requires──> [Rarity Weight Tables]
-
-[Crafting Feedback UI]
-    └──requires──> [All Currency Systems] (needs to validate each)
-    └──enhances──> [User Experience] (prevents confusion/mistakes)
+Signal-Based UI
+    └──requires──> Event Emission Points in Systems
+    └──enhances──> Reactive Stat Updates
 ```
 
 ### Dependency Notes
 
-- **Item Rarity System requires Rarity-Based Mod Limits:** Cannot enforce Normal=0, Magic=1+1, Rare=3+3 without rarity field on items
-- **All Currencies require Rarity Validation:** Each hammer must check "Can I use this on this rarity?" before application
-- **Claw Hammer requires Rarity Preservation Logic:** Edge case - removing last mod from Magic item should keep it Magic (0 mods, but Magic rarity) to match PoE pattern
-- **Tuning Hammer enhances All Other Hammers:** Natural last step in crafting flow - add mods, then optimize values
-- **Crafting Feedback UI requires All Currency Systems:** Must validate against all rules to show accurate previews
-
-## Edge Cases Documentation
-
-### Critical Edge Cases by Currency
-
-#### Runic Hammer (Normal→Magic)
-- **Already Magic/Rare:** Cannot use. Show error: "Item must be Normal rarity"
-- **Normal with 0 implicit mods:** Still valid. Adds 1-2 explicit mods, upgrades to Magic
-- **Result mod count:** Randomly 1 or 2 mods (1 prefix, 1 suffix, or both)
-
-#### Forge Hammer (Normal→Rare)
-- **Already Magic/Rare:** Cannot use. Show error: "Item must be Normal rarity"
-- **Result mod count:** 4-6 mods (PoE Alchemy pattern). Guarantees "feels rare" result
-- **Skip Magic tier entirely:** Direct Normal→Rare is valid path
-
-#### Tack Hammer (Add mod to Magic)
-- **Used on Normal:** Cannot use. Show error: "Item must be Magic rarity"
-- **Used on Rare:** Cannot use. Show error: "Item must be Magic rarity"
-- **Magic already at 1+1:** Cannot use. Show error: "Item has maximum mods (1 prefix, 1 suffix)"
-- **Magic with 1 prefix, needs suffix:** Adds random suffix from valid pool
-- **No valid mods available:** Cannot use. Show error: "No valid mods available" (edge case: all valid mods already on item)
-
-#### Grand Hammer (Add mod to Rare)
-- **Used on Normal/Magic:** Cannot use. Show error: "Item must be Rare rarity"
-- **Rare already at 3+3:** Cannot use. Show error: "Item has maximum mods (3 prefixes, 3 suffixes)"
-- **Rare with 3 prefixes, 2 suffixes:** Adds random suffix only
-- **No valid mods available:** Cannot use. Show error: "No valid mods available"
-
-#### Claw Hammer (Remove mod)
-- **Used on Normal (0 mods):** Cannot use. Show error: "Item has no mods to remove"
-- **Used on Magic with 1 mod:** Removes mod, **item stays Magic rarity** with 0 mods (PoE pattern)
-- **Used on Magic with 2 mods:** Removes random mod (50/50 prefix/suffix), stays Magic
-- **Used on Rare with 1 mod:** Removes mod, **item stays Rare rarity** with 0 mods
-- **Rarity never downgrades:** Critical rule - Claw Hammer only removes mods, not rarity
-- **Random selection:** User cannot choose which mod to remove
-
-#### Tuning Hammer (Reroll values)
-- **Used on Normal (0 mods):** Cannot use. Show error: "Item has no mods to reroll" (only implicit exists, don't reroll that)
-- **Used on item with mods:** Rerolls ALL explicit mod values within their tier ranges
-- **Does not change tiers:** A tier 3 mod stays tier 3, just gets new value within that tier's min/max
-- **Does not change mods:** Same mods, different values only
-- **Implicit preservation:** Implicit mod value is NOT rerolled
-
-### Rarity State Transitions
-
-```
-Normal (0 mods)
-    ├─[Runic Hammer]──> Magic (1-2 mods)
-    └─[Forge Hammer]──> Rare (4-6 mods)
-
-Magic (0-2 mods)
-    ├─[Tack Hammer]──> Magic (1-2 mods) [if not at max]
-    ├─[Claw Hammer]──> Magic (0-1 mods) [rarity preserved]
-    └─[Cannot downgrade to Normal]
-
-Rare (0-6 mods)
-    ├─[Grand Hammer]──> Rare (1-6 mods) [if not at max]
-    ├─[Claw Hammer]──> Rare (0-5 mods) [rarity preserved]
-    └─[Cannot downgrade to Magic/Normal]
-
-Any rarity with mods
-    └─[Tuning Hammer]──> Same rarity, same mods, new values
-```
-
-### Validation Flow for Currency Application
-
-1. **Check item rarity matches currency requirement**
-   - Runic/Forge: Must be Normal
-   - Tack: Must be Magic
-   - Grand: Must be Rare
-   - Claw/Tuning: Any rarity with mods
-
-2. **Check mod count limits**
-   - Tack: Magic must have <2 mods (1 prefix + 1 suffix max)
-   - Grand: Rare must have <6 mods (3 prefix + 3 suffix max)
-   - Claw: Must have >0 mods to remove
-
-3. **Check valid mod pool availability**
-   - Tack/Grand: Must have at least 1 valid mod that's not already on item
-   - Tag filtering already implemented in existing code
-
-4. **Show preview/confirmation**
-   - "This will add a random [prefix/suffix] to your [Magic/Rare] item"
-   - "This will remove a random mod from your item (stays [current rarity])"
-   - "This will reroll all mod values within their current ranges"
+- **Tag System Separation unlocks Damage Strategy:** Cannot cleanly implement strategy pattern while tags serve dual purposes. Separation allows damage strategies to reference DamageType enum without conflating with affix eligibility.
+- **Unified Stat Calculation requires Modifier Pipeline:** If weapon.gd and ring.gd both call shared calculate_dps(), that function needs to handle order-of-operations (flat bonuses before percentage bonuses). Otherwise moving logic to one place doesn't eliminate the complexity.
+- **Resource-Based Item Data conflicts with Node-Based:** Current Item extends Node. Resources can't be scene tree members. Migration path: Item becomes ItemData (Resource), ItemInstance wraps ItemData as Node where needed.
+- **Signal-Based UI requires Event Emission Points:** Hero.update_stats() must emit signals for UI to react. Dependency is not on refactored structure, but on instrumentation of existing systems.
 
 ## MVP Definition
 
-### Launch With (v1) - This Milestone
+### Launch With (Refactoring v1 - Core Cleanup)
 
-Minimum viable crafting system for rarity + currency milestone.
+Essential refactoring to eliminate immediate pain points.
 
-- [x] **Item rarity field (Normal/Magic/Rare)** — Core system requirement. Cannot enforce mod limits without it.
-- [x] **Rarity-based mod count enforcement** — Normal=0 explicit, Magic=1+1 max, Rare=3+3 max. Prevents invalid states.
-- [x] **Runic Hammer (Normal→Magic)** — Primary rarity upgrade path. Adds 1-2 mods.
-- [x] **Forge Hammer (Normal→Rare)** — Alternative upgrade path. Adds 4-6 mods. Skips Magic tier.
-- [x] **Tack Hammer (Add mod to Magic)** — Completes partial Magic items. Essential for Magic crafting.
-- [x] **Grand Hammer (Add mod to Rare)** — Completes partial Rare items. Core late-game currency.
-- [x] **Claw Hammer (Remove mod)** — Mistake correction. Allows iterative crafting without bricking items.
-- [x] **Tuning Hammer (Reroll values)** — Value optimization. Natural final step in crafting flow.
-- [x] **Basic currency validation** — "Can I use this currency on this item?" prevention logic.
-- [x] **Rarity-based drop weighting** — Harder areas drop rarer items. Core ARPG loop.
-- [x] **Visual rarity indicators** — White/blue/yellow text colors. Industry standard expectation.
+- [x] **Directory Organization** — Creates clear boundaries before restructuring code. Foundational for all other work.
+- [x] **Tag System Separation** — Eliminates dual-purpose confusion. Low-effort, high-clarity gain.
+- [x] **Unified Stat Calculation System** — Primary goal: eliminate duplicate compute_dps() logic in weapon.gd and ring.gd. Core value of this refactoring milestone.
+- [x] **Standardized Item Interface** — Define abstract update_value() contract in Item base class. Ensures all item types calculate stats consistently.
+- [x] **Signal-Based UI Updates** — Break tight coupling between hero stats and UI. Enables testing and future UI changes.
 
-### Add After Validation (v1.x)
+### Add After Core Works (v1.x - Architectural Improvements)
 
-Features to add once core rarity system is working.
+Features to add once basic refactoring is validated and tests pass.
 
-- [ ] **Currency drop rate balancing** — Trigger: After observing crafting progression pacing. Adjust hammer rarity to match desired time-to-perfect-item.
-- [ ] **Advanced crafting feedback UI** — Trigger: User confusion about currency usage. Add preview windows, before/after comparisons, mod highlighting.
-- [ ] **Rarity-specific visual effects** — Trigger: Items feel samey. Add glow effects, particle systems, sound effects per rarity.
-- [ ] **Currency stacking display** — Trigger: Inventory clutter. Show hammer counts more prominently, consolidate space.
-- [ ] **Crafting history/undo** — Trigger: User frustration with Claw Hammer RNG. Allow 1-step undo or show "last removed mod" info.
-- [ ] **Smart currency suggestions** — Trigger: New user confusion. Highlight usable currencies for selected item.
+- [ ] **Modifier Pipeline Architecture** — Once unified calculation works, formalize order-of-operations (flat → increased → more). Trigger: when adding new affix types that interact in complex ways.
+- [ ] **Strategy Pattern for Damage Types** — Once tag separation is done, implement strategies for physical/elemental/DOT. Trigger: when adding 3+ damage types with unique calculation rules.
+- [ ] **Event Bus Singleton** — After signal-based UI is working with direct connections, consider centralizing if connection management becomes burdensome. Trigger: more than 10 signal connections causing spaghetti.
 
-### Future Consideration (v2+)
+### Future Consideration (v2+ - Advanced Patterns)
 
-Features to defer until core crafting is validated.
+Defer until current refactoring is complete and new requirements emerge.
 
-- [ ] **Item melting/recycling** — Defer until: Item inventory overflow becomes problem. Converts unwanted items to resources.
-- [ ] **Crafting achievements/milestones** — Defer until: Core loop is fun. Meta-progression layer on top of crafting.
-- [ ] **Hammer upgrade tiers** — Defer until: Late-game feels stale. Better hammers with modified rules (e.g., "Blessed Tuning Hammer: reroll with +10% to max value").
-- [ ] **Fractured/locked mods** — Defer until: Advanced players want more control. PoE-style complexity inappropriate for v1.
-- [ ] **Crafting bench/workstation** — Defer until: Crafting feels disconnected from world. Spatial element to hammer usage.
-- [ ] **Currency exchange/conversion** — Defer until: Hammer economy is established. Trade unwanted hammers for desired ones.
+- [ ] **Resource-Based Item Data** — Major migration from Node to Resource. Enables data-driven design and inspector editing. Defer: requires rewriting item instantiation, scene structure. Consider when adding item editor or external item definitions.
+- [ ] **Composition Over Inheritance** — Component-based item capabilities. Defer: current 5 item types don't justify complexity. Consider if requirements emerge like "weapon-armor hybrid" or "stackable equipment".
+- [ ] **Reactive Stat Dependencies** — Automatic recalculation when dependencies change. Defer: current manual update_stats() works. Consider when adding complex derived stats or performance issues from over-calculation.
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Item rarity field + enforcement | HIGH | LOW | P1 |
-| Visual rarity colors (white/blue/yellow) | HIGH | LOW | P1 |
-| Runic Hammer (Normal→Magic) | HIGH | LOW | P1 |
-| Forge Hammer (Normal→Rare) | HIGH | LOW | P1 |
-| Tack Hammer (add to Magic) | HIGH | MEDIUM | P1 |
-| Grand Hammer (add to Rare) | HIGH | MEDIUM | P1 |
-| Claw Hammer (remove mod) | MEDIUM | MEDIUM | P1 |
-| Tuning Hammer (reroll values) | HIGH | LOW | P1 |
-| Currency validation (prevent invalid use) | HIGH | MEDIUM | P1 |
-| Drop rate scaling | HIGH | LOW | P1 |
-| Mod count visibility (2/3 prefixes) | HIGH | LOW | P1 |
-| Advanced crafting feedback UI | MEDIUM | HIGH | P2 |
-| Currency drop rate balancing | HIGH | LOW | P2 |
-| Rarity visual effects (glow/particles) | MEDIUM | MEDIUM | P2 |
-| Crafting history/undo | LOW | MEDIUM | P2 |
-| Smart currency suggestions | MEDIUM | MEDIUM | P2 |
-| Item melting/recycling | MEDIUM | MEDIUM | P3 |
-| Hammer upgrade tiers | LOW | HIGH | P3 |
-| Fractured/locked mods | LOW | HIGH | P3 |
+| Unified Stat Calculation | HIGH | MEDIUM | P1 |
+| Tag System Separation | HIGH | LOW | P1 |
+| Directory Organization | MEDIUM | LOW | P1 |
+| Signal-Based UI | HIGH | MEDIUM | P1 |
+| Standardized Item Interface | HIGH | LOW | P1 |
+| Modifier Pipeline | MEDIUM | HIGH | P2 |
+| Damage Strategy Pattern | MEDIUM | MEDIUM | P2 |
+| Event Bus | LOW | LOW | P2 |
+| Resource-Based Items | MEDIUM | HIGH | P3 |
+| Composition Architecture | LOW | HIGH | P3 |
+| Reactive Stat System | LOW | MEDIUM | P3 |
 
 **Priority key:**
-- P1: Must have for milestone completion - core rarity + all 6 currencies functional
-- P2: Should have when polish time available - improves UX, prevents frustration
-- P3: Nice to have, future consideration - adds depth but not essential
+- P1: Must have for refactoring milestone completion
+- P2: Should have, add when patterns emerge
+- P3: Nice to have, future architectural evolution
 
-## Competitor Feature Analysis
+## Implementation Patterns
 
-| Feature | Path of Exile | Last Epoch | Diablo 3 | Hammertime Approach |
-|---------|---------------|------------|----------|---------------------|
-| Rarity tiers | Normal/Magic/Rare/Unique (4 tiers) | Normal/Magic/Rare/Exalted/Unique/Legendary (6+ tiers) | Normal/Magic/Rare/Legendary/Set (5 tiers) | **Normal/Magic/Rare (3 tiers)** - Simplified for idle game. No unique tier. |
-| Normal→Magic upgrade | Orb of Transmutation (common) | Rune of Shattering (common) | Drops as Magic | **Runic Hammer** - Thematic name, common drop |
-| Normal→Rare upgrade | Orb of Alchemy (uncommon) | Rune of Ascendance (rare) | Drops as Rare | **Forge Hammer** - Skips Magic tier entirely |
-| Add mod to Magic | Orb of Augmentation (common) | Glyph of Despair (common) | N/A (no crafting on Magic) | **Tack Hammer** - Small hammer for small items |
-| Add mod to Rare | Exalted Orb (ultra-rare, tradeable) | Glyph of Despair (common, can't use on Rare) | N/A (limited crafting) | **Grand Hammer** - More accessible than PoE Exalts. Not ultra-rare. |
-| Remove mod | Orb of Annulment (rare, random) | Rune of Removal (common, choose which) | N/A | **Claw Hammer** - Random like PoE, preserves rarity |
-| Reroll values | Divine Orb (valuable, tradeable) | Glyph of Order (uncommon) | Enchanting (limited) | **Tuning Hammer** - Rerolls ALL mod values at once |
-| Full item reroll | Chaos Orb (common, core currency) | Chaos (rare) | N/A | **NONE** - Explicit anti-feature. No chaos spam. |
-| Rarity downgrade | Orb of Scouring (clears to Normal) | N/A | N/A | **NONE** - Items only upgrade. Claw Hammer removes mods but preserves rarity. |
-| Mod count limits | Magic: 1+1, Rare: 3+3 | Magic: 1+1, Rare: 2+2, Exalted: 4 affixes (T6+) | Rare: Fixed count by slot | **Magic: 1+1, Rare: 3+3** - Matches PoE standard |
-| Drop rate scaling | 200-1000% rarity boost for Magic/Rare/Unique mobs | Corruption/Blessing modifiers on zones | Torment difficulty: 1.15^N multiplier per level | **Area difficulty scaling** - Harder areas = rarer drops. Specific formula TBD. |
-| Visual differentiation | White/Blue/Yellow/Orange text + 3D art | White/Blue/Yellow/Purple/Orange/Pink + unique models | White/Blue/Yellow/Orange/Green + unique effects | **White/Blue/Yellow text** - Standard colors. Future: glow effects. |
+### Pattern 1: Unified Stat Calculation
 
-### Key Differentiation Points
+**Current Problem:** weapon.gd lines 18-64 and ring.gd lines 13-35 have nearly identical compute_dps() implementations. weapon.gd has more sophisticated tag checking (PHYSICAL + FLAT, PHYSICAL + PERCENTAGE) while ring.gd uses simpler tag matching (ATTACK, SPEED, CRITICAL).
 
-1. **Simplified rarity tiers** - 3 instead of 4-6. Better for idle game learning curve.
-2. **No chaos orb equivalent** - Forces incremental improvement, not infinite rerolls.
-3. **Grand Hammer accessibility** - PoE's Exalted Orbs are ultra-rare economy drivers. Hammertime makes them achievable for solo play.
-4. **Rarity preservation** - Claw Hammer doesn't downgrade. Reduces crafting anxiety.
-5. **Thematic currency names** - "Hammers" not "Orbs". Fits "Hammertime" brand.
-6. **All currencies available early** - PoE gates advanced crafting behind late-game. Hammertime gives all tools upfront, balanced by drop rates.
+**Solution Approach:**
 
-## Implementation Dependencies on Existing Systems
+```gdscript
+# stat_calculator.gd (new system script)
+class_name StatCalculator extends Node
 
-### Already Exists (Leverage)
+static func calculate_dps(base_damage: int, base_speed: int, affixes: Array[Affix], base_crit_chance: float = 5.0, base_crit_damage: float = 150.0) -> float:
+    # Centralized calculation logic
+    # Order: flat damage → percentage damage → attack speed → crit
+    pass
 
-- **Affix tier system (1-8)** - Already implemented with tier-based value scaling
-- **Tag-based mod filtering** - `has_valid_tag()` in item.gd line 74
-- **Mod count limits (3+3)** - Enforced in `add_prefix()` line 83 and `add_suffix()` line 105
-- **Duplicate mod prevention** - `is_affix_on_item()` in item.gd line 62
-- **Value reroll logic** - `reroll()` in affix.gd line 26-27
-- **Item display system** - `get_display_text()` shows current mods
-- **Hero equipment slots** - Already calculates DPS/defense from equipped items
+# weapon.gd (refactored)
+func compute_dps() -> float:
+    var affixes = self.prefixes + self.suffixes + [self.implicit]
+    return StatCalculator.calculate_dps(base_damage, base_speed, affixes, crit_chance, crit_damage)
 
-### Needs Addition
+# ring.gd (refactored)
+func compute_dps() -> float:
+    var affixes = self.prefixes + self.suffixes + [self.implicit]
+    return StatCalculator.calculate_dps(base_damage, base_speed, affixes, crit_chance, crit_damage)
+```
 
-- **Item rarity field** - Add `enum Rarity {NORMAL, MAGIC, RARE}` to item.gd
-- **Rarity-based mod limit enforcement** - Replace hardcoded `>= 3` with rarity-dependent max
-- **Currency item class** - New `Currency` class with `can_apply(item)` and `apply(item)` methods
-- **Rarity upgrade logic** - Methods for Normal→Magic and Normal→Rare with random mod addition
-- **Mod removal logic** - Random mod selection + removal while preserving rarity
-- **Visual rarity indicators** - Color-code item names in UI based on rarity
-- **Drop rate weighting** - Area difficulty → rarity weights for item/currency drops
-- **Currency inventory** - Track hammer counts, show in UI
-- **Validation feedback** - "Cannot use because..." messages for blocked currency usage
+**Why:** Eliminates duplication, centralizes ARPG calculation rules, makes testing easier. Based on modular stat system pattern from Medium article and GDQuest separation of concerns.
+
+**Complexity:** MEDIUM - requires extracting logic, handling different tag interpretation between items, ensuring backward compatibility with current behavior.
+
+**Sources:**
+- [Modular Stat/Attribute System Tutorial for Godot 4](https://medium.com/@minoqi/modular-stat-attribute-system-tutorial-for-godot-4-0bac1c5062ce)
+- [Godot Tactics RPG – 09. Stats](https://theliquidfire.com/2024/10/10/godot-tactics-rpg-09-stats/)
+
+### Pattern 2: Tag System Separation
+
+**Current Problem:** Tag.gd defines constants used for both:
+1. Affix eligibility filtering (item.gd lines 74-77: "does this affix have a tag matching item.valid_tags?")
+2. Damage calculation routing (weapon.gd lines 33-39: "if PHYSICAL and FLAT in tags, add to base damage")
+
+**Solution Approach:**
+
+```gdscript
+# affix_tag.gd (affix eligibility)
+class_name AffixTag extends Node
+const WEAPON = "WEAPON"
+const ARMOR = "ARMOR"
+const DEFENSE = "DEFENSE"
+const ATTACK = "ATTACK"
+
+# stat_type.gd (calculation routing)
+class_name StatType extends Node
+const PHYSICAL_FLAT = "PHYSICAL_FLAT"
+const PHYSICAL_PERCENT = "PHYSICAL_PERCENT"
+const ATTACK_SPEED = "ATTACK_SPEED"
+const CRIT_CHANCE = "CRIT_CHANCE"
+const CRIT_DAMAGE = "CRIT_DAMAGE"
+
+# affix.gd (updated)
+var eligibility_tags: Array[String] = []  # for filtering
+var stat_modifications: Array[StatModifier] = []  # for calculations
+```
+
+**Why:** Single Responsibility Principle. Affix filtering is about "what can roll on this item base" while stat calculation is about "how does this affix modify stats". They change for different reasons (adding new item types vs. adding new damage mechanics).
+
+**Complexity:** LOW - mostly renaming and updating references. No algorithmic changes.
+
+**Sources:**
+- [GDScript Principles - Single Responsibility](https://this-is-envy.github.io/writing/gdscript.html)
+- [SOLID Principles prevention strategy](https://www.bairesdev.com/blog/software-anti-patterns/)
+
+### Pattern 3: Signal-Based UI Communication
+
+**Current Problem:** UI views likely use get_node() to access hero stats, creating tight coupling. Changes to scene hierarchy break at runtime only.
+
+**Solution Pattern: "Call Down, Signal Up"**
+
+```gdscript
+# hero.gd (emits changes)
+signal stats_updated(stats: Dictionary)
+signal health_changed(current: float, max: float)
+
+func update_stats():
+    calculate_dps()
+    calculate_defense()
+    calculate_crit_stats()
+    stats_updated.emit({
+        "dps": total_dps,
+        "defense": total_defense,
+        "crit_chance": total_crit_chance,
+        "crit_damage": total_crit_damage
+    })
+
+func take_damage(damage: float):
+    health -= damage
+    health = max(0, health)
+    health_changed.emit(health, max_health)
+    # ...
+
+# hero_view.gd (listens)
+@onready var hero: Hero = get_node("../../Hero")  # cache on ready
+
+func _ready():
+    hero.stats_updated.connect(_on_hero_stats_updated)
+    hero.health_changed.connect(_on_hero_health_changed)
+
+func _on_hero_stats_updated(stats: Dictionary):
+    dps_label.text = "DPS: %.1f" % stats.dps
+    # ...
+```
+
+**Why:** Loose coupling. UI doesn't need to poll for changes. Hero doesn't need to know about UI structure. Enables multiple listeners without hero knowing.
+
+**Complexity:** MEDIUM - requires adding signal emissions at all state change points, updating UI to listen instead of poll.
+
+**Sources:**
+- [Node communication (the right way) - Godot 4 Recipes](https://kidscancode.org/godot_recipes/4.x/basics/node_communication/index.html)
+- [Godot Signals Complete Guide: Scene Communication Mastery](https://generalistprogrammer.com/tutorials/godot-signals-complete-guide-scene-communication)
+- [Best practices with Godot signals - GDQuest](https://www.gdquest.com/tutorial/godot/best-practices/signals/)
+
+### Pattern 4: Modifier Pipeline (Advanced)
+
+**When to Implement:** After unified stat calculation is working, when adding affixes with complex interactions.
+
+**Order-of-Operations Pattern:**
+
+```gdscript
+# stat_modifier.gd
+class_name StatModifier extends Resource
+
+enum ModifierType {
+    FLAT,        # +50 damage
+    INCREASED,   # +25% increased damage (additive with other increased)
+    MORE,        # 30% more damage (multiplicative, separate)
+}
+
+var type: ModifierType
+var value: float
+var stat_name: String
+
+# stat_calculator.gd
+static func apply_modifiers(base_value: float, modifiers: Array[StatModifier]) -> float:
+    # Phase 1: Flat additions
+    var flat_sum = base_value
+    for mod in modifiers:
+        if mod.type == StatModifier.ModifierType.FLAT:
+            flat_sum += mod.value
+
+    # Phase 2: Increased (additive pool)
+    var increased_sum = 0.0
+    for mod in modifiers:
+        if mod.type == StatModifier.ModifierType.INCREASED:
+            increased_sum += mod.value
+    flat_sum *= (1.0 + increased_sum / 100.0)
+
+    # Phase 3: More (multiplicative)
+    var final_value = flat_sum
+    for mod in modifiers:
+        if mod.type == StatModifier.ModifierType.MORE:
+            final_value *= (1.0 + mod.value / 100.0)
+
+    return final_value
+```
+
+**Why:** Prevents exponential power creep from stacking multipliers. Industry-standard pattern from Path of Exile, Diablo-likes. Allows "+25% increased damage" and "+25% increased damage" to combine as 50% (additive) rather than 56.25% (multiplicative).
+
+**Complexity:** HIGH - requires refactoring affix system to emit StatModifiers instead of raw tags, updating all calculation paths to use pipeline.
+
+**Sources:**
+- [Modular Stat/Attribute System Tutorial for Godot 4](https://medium.com/@minoqi/modular-stat-attribute-system-tutorial-for-godot-4-0bac1c5062ce)
+- Path of Exile modifier mechanics (common game dev knowledge, multiplicative vs increased distinction)
+
+## Refactoring Threshold Rules
+
+### When to Extract Shared Logic
+
+**Rule of Three:** Don't abstract until code appears in 3 places. Currently weapon.gd and ring.gd = 2 instances. If a third damage-dealing item type is added, THEN extract. However, the duplication is substantial (47 lines in weapon.gd vs 23 in ring.gd covering same concepts), so extraction is justified.
+
+**Source:** [My Thresholds for Refactoring - Coffee Brain Games](https://coffeebraingames.wordpress.com/2017/11/06/my-thresholds-for-refactoring/)
+
+### When NOT to Refactor
+
+**Stable Code:** If armor.gd update_value() (lines 11-32) works correctly and hasn't changed in months, leave it alone even if structure differs from weapon/ring. "If it ain't broke, don't fix it" applies when code isn't causing maintenance burden.
+
+**Before Understanding:** Don't refactor calculation logic until you understand why weapon.gd uses `new_dps *= (1.0 + affix.value / 100.0)` (multiplicative) while ring.gd uses `new_spd += affix.value` (additive). Refactoring without understanding leads to breaking subtle intentional differences.
+
+**Source:** [Refactoring: the Way to Perfection](https://www.gamedeveloper.com/programming/refactoring-the-way-to-perfection-)
+
+## Anti-Pattern Warnings
+
+### God Class/Object
+
+**Risk:** Creating a CentralItemManager that handles item creation, stat calculation, affix rolling, display formatting, inventory management, etc.
+
+**Prevention:** Keep StatCalculator focused on stat calculation only. Item creation stays in item factory. Display logic stays in items. Inventory management is separate system.
+
+**Source:** [The God Class Intervention: Avoiding the All-Knowing Anti-Pattern in Game Development](https://www.wayline.io/blog/god-class-intervention-avoiding-anti-pattern)
+
+### Premature Abstraction
+
+**Risk:** Creating abstract "CalculationStrategy" interfaces before you have 3+ concrete strategies to learn from.
+
+**Prevention:** Start with concrete StatCalculator.calculate_dps(). If adding elemental damage reveals different calculation path, THEN extract strategy interface from 2 working implementations.
+
+**Source:** [Anti-patterns You Should Avoid in Your Code](https://www.freecodecamp.org/news/antipatterns-to-avoid-in-code/)
+
+### Reinventing the Wheel
+
+**Risk:** Creating custom modifier system when Godot Resource-based stats exist.
+
+**Prevention:** Check GitHub for existing Godot 4 stat systems (EnhancedStat addon, inventory-system by expressobits) before building from scratch. Adapt existing patterns to your needs.
+
+**Sources:**
+- [EnhancedStat addon for Godot 4](https://github.com/Zennyth/EnhancedStat)
+- [Modular inventory system for Godot 4](https://github.com/expressobits/inventory-system)
 
 ## Sources
 
-### High Confidence (Official Documentation)
+### Godot-Specific Resources
+- [GDScript style guide - Godot Engine](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html)
+- [A GDScript refactoring exercise - Go, Go, Godot!](https://www.gogogodot.io/refactoring-in-godot/)
+- [Godot GDScript guidelines - GDQuest](https://gdquest.gitbook.io/gdquests-guidelines/godot-gdscript-guidelines)
+- [Node communication (the right way) - Godot 4 Recipes](https://kidscancode.org/godot_recipes/4.x/basics/node_communication/index.html)
+- [Best practices with Godot signals - GDQuest](https://www.gdquest.com/tutorial/godot/best-practices/signals/)
+- [The Events bus singleton - GDQuest](https://www.gdquest.com/tutorial/godot/design-patterns/event-bus-singleton/)
+- [Godot Signals Complete Guide: Scene Communication Mastery](https://generalistprogrammer.com/tutorials/godot-signals-complete-guide-scene-communication)
 
-- [Path of Exile Wiki - Rarity](https://www.poewiki.net/wiki/Rarity) - Authoritative source for PoE rarity mechanics
-- [Path of Exile Wiki - Orb of Scouring](https://www.poewiki.net/wiki/Orb_of_Scouring) - Mod removal and rarity downgrade mechanics
-- [Path of Exile Wiki - Orb of Annulment](https://www.poewiki.net/wiki/Orb_of_Annulment) - Random mod removal without rarity change
-- [Path of Exile Wiki - Divine Orb](https://www.poewiki.net/wiki/Divine_Orb) - Value reroll mechanics
-- [Path of Exile 2 Crafting Overview - Maxroll.gg](https://maxroll.gg/poe2/resources/path-of-exile-2-crafting-overview) - PoE2 crafting changes and patterns
+### Stat System Architecture
+- [Modular Stat/Attribute System Tutorial for Godot 4](https://medium.com/@minoqi/modular-stat-attribute-system-tutorial-for-godot-4-0bac1c5062ce)
+- [How is a complex RPG damage system typically done? - Godot Forum](https://forum.godotengine.org/t/how-is-a-complex-rpg-damage-system-typically-done/87174)
+- [Godot Tactics RPG – 09. Stats](https://theliquidfire.com/2024/10/10/godot-tactics-rpg-09-stats/)
+- [EnhancedStat addon - GitHub](https://github.com/Zennyth/EnhancedStat)
 
-### Medium Confidence (Verified Web Sources)
+### Resource-Based Design
+- [Resource-based architecture for Godot 4](https://medium.com/@sfmayke/resource-based-architecture-for-godot-4-25bd4b2d9018)
+- [Creating and Using Custom Resources - Data-Driven Design in Godot Engine](https://uhiyama-lab.com/en/notes/godot/custom-resource-data-driven/)
+- [Inventory System Design Fundamentals - Resource and Signals](https://uhiyama-lab.com/en/notes/godot/inventory-system/)
+- [Custom Resources are OP in Godot 4](https://ezcha.net/news/3-1-23-custom-resources-are-op-in-godot-4)
+- [Build Powerful and Scalable Inventories in Godot](https://dropc-gamestudio.com/concepts/build-powerful-and-scalable-inventories-in-godot/)
 
-- [Last Epoch Crafting Guide - Maxroll.gg](https://maxroll.gg/last-epoch/resources/beginner-crafting-guide) - Alternative ARPG crafting system
-- [Diablo Wiki - Item Rarity](https://www.diablowiki.net/Legendary) - Diablo series rarity conventions
-- [Path of Exile 2 Currency Guide - NeonLightsMedia](https://www.neonlightsmedia.com/blog/path-of-exile-2-currency-crafting-guide-2026) - Current PoE2 currency mechanics
-- [Game UI Database - Crafting](https://www.gameuidatabase.com/index.php?scrn=75) - Crafting UI patterns across games
+### Object-Oriented Design Patterns
+- [Polymorphism in GDScript - Godot Forum](https://forum.godotengine.org/t/polymorphism-in-gdscript/27500)
+- [Godot's Node System, Part 1: An OOP Overview](https://willnationsdev.wordpress.com/2018/04/05/godots-node-system-a-paradigm-overview/)
+- [Inheritance, polymorphism, and more!](http://blog.moblcade.com/?p=59)
+- [Class Inheritance - Godot GDScript Tutorial](https://godottutorials.com/courses/introduction-to-gdscript/godot-tutorials-gdscript-17/)
 
-### Low Confidence (Community/General)
+### Composition vs Inheritance
+- [OOP: Inheritance or Components for an Item System - GameDev.net](https://www.gamedev.net/forums/topic/704545-oop-inheritance-or-components-for-an-item-system/)
+- [Composition over Inheritance - Example in game development](https://www.ckhang.com/blog/2020/composition-over-inheritance/)
+- [Composition vs. Inheritance: Boosting Game Performance with Component-Based Design](https://www.wayline.io/blog/composition-vs-inheritance-game-performance)
+- [Prefer Composition over Implementation Inheritance](http://whats-in-a-game.com/prefer-composition-over-implementation-inheritance/)
 
-- [TV Tropes - Color-Coded Item Tiers](https://tvtropes.org/pmwiki/pmwiki.php/Main/ColorCodedItemTiers) - Historical context on rarity colors
-- [Origins of Color Coded Loot - Tales of the Aggronaut](https://aggronaut.com/2020/09/03/origins-of-color-coded-loot/) - Diablo (1996) origin of white/blue/yellow convention
+### Design Patterns for Damage/Stats
+- [Strategy Pattern - Composition over Inheritance](https://onewheelstudio.com/blog/2020/8/16/strategy-pattern-composition-over-inheritance)
+- [Designing a data driven crafting system using tags - GameDev.net](https://www.gamedev.net/forums/topic/715034-designing-a-data-driven-crafting-system-using-tags/)
+- [Essential Game Development Programming Patterns](https://medium.com/@chitranshnishad27/essential-game-development-programming-patterns-ebcf606d2ca9)
+- [Game Programming Patterns - Table of Contents](https://gameprogrammingpatterns.com/contents.html)
+
+### Refactoring Best Practices
+- [Code Refactor and Game Polishing Advice - Godot Tutorials](https://godottutorials.com/courses/pong-gdscript-series/pong-gdscript-tutorial-14/)
+- [Refactoring the Pong Game - Godot Tutorials](https://godottutorials.com/courses/pong-gdscript-series/pong-gdscript-tutorial-07/)
+- [My Thresholds for Refactoring - Coffee Brain Games](https://coffeebraingames.wordpress.com/2017/11/06/my-thresholds-for-refactoring/)
+- [Refactoring: the Way to Perfection - Game Developer](https://www.gamedeveloper.com/programming/refactoring-the-way-to-perfection-)
+
+### Anti-Patterns to Avoid
+- [The God Class Intervention: Avoiding the All-Knowing Anti-Pattern in Game Development](https://www.wayline.io/blog/god-class-intervention-avoiding-anti-pattern)
+- [A Catalogue of Game-Specific Anti-Patterns - ACM](https://dl.acm.org/doi/abs/10.1145/3511430.3511436)
+- [Top 5 Software Anti Patterns to Avoid](https://www.bairesdev.com/blog/software-anti-patterns/)
+- [Anti-patterns You Should Avoid in Your Code](https://www.freecodecamp.org/news/antipatterns-to-avoid-in-code/)
+- [6 Types of Anti Patterns to Avoid in Software Development](https://www.geeksforgeeks.org/blogs/types-of-anti-patterns-to-avoid-in-software-development/)
 
 ---
-*Feature research for: Hammertime ARPG Crafting - Item Rarity and Currency Systems*
+*Feature research for: Refactoring GDScript ARPG Codebase*
 *Researched: 2026-02-14*
