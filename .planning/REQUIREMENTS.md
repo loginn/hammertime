@@ -83,34 +83,34 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RARITY-01 | - | Pending |
-| RARITY-02 | - | Pending |
-| RARITY-03 | - | Pending |
-| RARITY-04 | - | Pending |
-| RARITY-05 | - | Pending |
-| RARITY-06 | - | Pending |
-| CRAFT-01 | - | Pending |
-| CRAFT-02 | - | Pending |
-| CRAFT-03 | - | Pending |
-| CRAFT-04 | - | Pending |
-| CRAFT-05 | - | Pending |
-| CRAFT-06 | - | Pending |
-| CRAFT-07 | - | Pending |
-| CRAFT-08 | - | Pending |
-| CRAFT-09 | - | Pending |
-| DROP-01 | - | Pending |
-| DROP-02 | - | Pending |
-| DROP-03 | - | Pending |
-| UI-01 | - | Pending |
-| UI-02 | - | Pending |
-| UI-03 | - | Pending |
-| UI-04 | - | Pending |
+| RARITY-01 | Phase 1 | Pending |
+| RARITY-02 | Phase 1 | Pending |
+| RARITY-03 | Phase 1 | Pending |
+| RARITY-04 | Phase 1 | Pending |
+| RARITY-05 | Phase 1 | Pending |
+| RARITY-06 | Phase 1 | Pending |
+| CRAFT-01 | Phase 2 | Pending |
+| CRAFT-02 | Phase 2 | Pending |
+| CRAFT-03 | Phase 2 | Pending |
+| CRAFT-04 | Phase 2 | Pending |
+| CRAFT-05 | Phase 2 | Pending |
+| CRAFT-06 | Phase 2 | Pending |
+| CRAFT-07 | Phase 2 | Pending |
+| CRAFT-08 | Phase 2 | Pending |
+| CRAFT-09 | Phase 2 | Pending |
+| UI-01 | Phase 3 | Pending |
+| UI-02 | Phase 3 | Pending |
+| UI-03 | Phase 3 | Pending |
+| UI-04 | Phase 3 | Pending |
+| DROP-01 | Phase 4 | Pending |
+| DROP-02 | Phase 4 | Pending |
+| DROP-03 | Phase 4 | Pending |
 
 **Coverage:**
 - v1.0 requirements: 22 total
-- Mapped to phases: 0
-- Unmapped: 22
+- Mapped to phases: 22
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-14*
-*Last updated: 2026-02-14 after initial definition*
+*Last updated: 2026-02-14 after roadmap creation*
