@@ -12,7 +12,7 @@ Refactor the Hammertime codebase from a flat, inconsistently structured prototyp
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Format all code, establish folder structure, move files
+- [x] **Phase 1: Foundation** - Format all code, establish folder structure, move files
 - [ ] **Phase 2: Data Model Migration** - Migrate Item/Affix classes to Resource, create GameState/GameEvents autoloads
 - [ ] **Phase 3: Unified Calculations** - Consolidate stat calculation, separate tag system, standardize item interface
 - [ ] **Phase 4: Signal-Based Communication** - Replace get_node() wiring with signals, enforce call down/signal up
@@ -34,8 +34,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **NOTE**: File moves (ORG-02, ORG-03) must be done via Godot Editor's FileSystem dock to preserve scene references. Claude cannot move files from terminal -- the user must perform moves in the editor. Plans should provide clear move-by-move instructions for the user to follow.
 
 Plans:
-- [ ] 01-01-PLAN.md -- Format all GDScript with gdformat and add return type hints to every function
-- [ ] 01-02-PLAN.md -- Rename files to snake_case, create folder structure, move files via Godot Editor
+- [x] 01-01-PLAN.md -- Format all GDScript with gdformat and add return type hints to every function
+- [x] 01-02-PLAN.md -- Rename files to snake_case, create folder structure, move files via Godot Editor
 
 ### Phase 2: Data Model Migration
 **Goal**: All game data classes extend Resource instead of Node, with GameState and GameEvents autoloads as the backbone for state management and cross-scene communication
@@ -90,7 +90,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/2 | Planned | - |
+| 1. Foundation | 2/2 | ✓ Complete | 2026-02-14 |
 | 2. Data Model Migration | 0/0 | Not started | - |
 | 3. Unified Calculations | 0/0 | Not started | - |
 | 4. Signal-Based Communication | 0/0 | Not started | - |
