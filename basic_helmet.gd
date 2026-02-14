@@ -1,6 +1,7 @@
 class_name BasicHelmet extends Helmet
 
-func _init():
+
+func _init() -> void:
 	self.item_name = "Basic Helmet"
 	self.tier = 8
 	self.valid_tags = [Tag.DEFENSE, Tag.ARMOR, Tag.ENERGY_SHIELD, Tag.MANA]

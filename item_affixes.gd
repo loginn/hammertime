@@ -1,13 +1,27 @@
 class_name Affixes extends Node
 
 var prefixes: Array[Affix] = [
-	Affix.new("Physical Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.PHYSICAL, Tag.FLAT, Tag.WEAPON]),
-	Affix.new("%Physical Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.PHYSICAL, Tag.PERCENTAGE, Tag.WEAPON]),
+	Affix.new(
+		"Physical Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.PHYSICAL, Tag.FLAT, Tag.WEAPON]
+	),
+	Affix.new(
+		"%Physical Damage",
+		Affix.AffixType.PREFIX,
+		2,
+		10,
+		[Tag.PHYSICAL, Tag.PERCENTAGE, Tag.WEAPON]
+	),
 	Affix.new("%Elemental Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.WEAPON]),
 	Affix.new("%Cold Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.WEAPON]),
 	Affix.new("%Fire Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.WEAPON]),
 	Affix.new("%Lightning Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.WEAPON]),
-	Affix.new("Lightning Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.LIGHTNING, Tag.WEAPON]),
+	Affix.new(
+		"Lightning Damage",
+		Affix.AffixType.PREFIX,
+		2,
+		10,
+		[Tag.ELEMENTAL, Tag.LIGHTNING, Tag.WEAPON]
+	),
 	Affix.new("Fire Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.FIRE, Tag.WEAPON]),
 	Affix.new("Cold Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.COLD, Tag.WEAPON]),
 ]
@@ -29,6 +43,9 @@ var suffixes: Array[Affix] = [
 	Affix.new("Critical Strike Damage", Affix.AffixType.SUFFIX, 2, 10, [Tag.CRITICAL]),
 ]
 
+
 static func from_affix(template: Affix) -> Affix:
-	var affix_copy = Affix.new(template.affix_name, template.type, template.min_value, template.max_value, template.tags)
+	var affix_copy = Affix.new(
+		template.affix_name, template.type, template.min_value, template.max_value, template.tags
+	)
 	return affix_copy

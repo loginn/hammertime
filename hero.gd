@@ -16,45 +16,52 @@ var total_crit_damage: float = 150.0
 var is_alive: bool = true
 var is_clearing: bool = false
 
-func _init():
+
+func _init() -> void:
 	# Initialize hero with default stats
 	update_stats()
 
-func take_damage(damage: float):
+
+func take_damage(damage: float) -> void:
 	"""Hero takes damage and updates health"""
 	health -= damage
 	health = max(0, health)  # Don't go below 0
-	
+
 	print("Hero took ", damage, " damage! Health: ", health, "/", max_health)
-	
+
 	if health <= 0:
 		die()
 
-func heal(amount: float):
+
+func heal(amount: float) -> void:
 	"""Heal the hero by the specified amount"""
 	health += amount
 	health = min(health, max_health)  # Don't exceed max health
 	print("Hero healed for ", amount, "! Health: ", health, "/", max_health)
 
-func die():
+
+func die() -> void:
 	"""Hero dies and stops all activities"""
 	is_alive = false
 	is_clearing = false
 	print("Hero died!")
 
-func revive():
+
+func revive() -> void:
 	"""Revive the hero with full health"""
 	health = max_health
 	is_alive = true
 	print("Hero revived with full health!")
 
-func equip_item(item: Item, slot: String):
+
+func equip_item(item: Item, slot: String) -> void:
 	"""Equip an item to the specified slot"""
 	equipped_items[slot] = item
 	update_stats()
 	print("Equipped ", item.item_name, " to ", slot)
 
-func unequip_item(slot: String):
+
+func unequip_item(slot: String) -> void:
 	"""Unequip an item from the specified slot"""
 	if slot in equipped_items:
 		var item = equipped_items[slot]
@@ -62,34 +69,37 @@ func unequip_item(slot: String):
 		update_stats()
 		print("Unequipped ", item.item_name, " from ", slot)
 
-func update_stats():
+
+func update_stats() -> void:
 	"""Recalculate all hero stats based on equipped items"""
 	calculate_dps()
 	calculate_defense()
 	calculate_crit_stats()
 
+
 func calculate_dps() -> float:
 	"""Calculate total DPS from equipped weapon and rings"""
 	total_dps = 0.0
-	
+
 	# Add DPS from weapon
 	if "weapon" in equipped_items and equipped_items["weapon"] != null:
 		var weapon = equipped_items["weapon"]
 		if weapon is Weapon:
 			total_dps += weapon.dps
-	
+
 	# Add DPS from rings (damage slots)
 	if "ring" in equipped_items and equipped_items["ring"] != null:
 		var ring = equipped_items["ring"]
 		if ring is Ring:
 			total_dps += ring.dps
-	
+
 	return total_dps
+
 
 func calculate_defense() -> int:
 	"""Calculate total defense from equipped armor"""
 	total_defense = 0
-	
+
 	# Add defense from armor pieces
 	for slot in ["helmet", "armor", "boots"]:
 		if slot in equipped_items and equipped_items[slot] != null:
@@ -98,21 +108,22 @@ func calculate_defense() -> int:
 				total_defense += armor_item.get_total_defense()
 			elif "total_defense" in armor_item:
 				total_defense += armor_item.total_defense
-	
+
 	return total_defense
 
-func calculate_crit_stats():
+
+func calculate_crit_stats() -> void:
 	"""Calculate crit chance and damage from equipped items"""
 	total_crit_chance = 5.0  # Base crit chance
 	total_crit_damage = 150.0  # Base crit damage
-	
+
 	# Add crit stats from weapons
 	if "weapon" in equipped_items and equipped_items["weapon"] != null:
 		var weapon = equipped_items["weapon"]
 		if weapon is Weapon:
 			total_crit_chance += weapon.crit_chance - 5.0  # Subtract base to avoid double counting
 			total_crit_damage += weapon.crit_damage - 150.0
-	
+
 	# Add crit stats from rings (damage slots)
 	if "ring" in equipped_items and equipped_items["ring"] != null:
 		var ring = equipped_items["ring"]
@@ -120,29 +131,36 @@ func calculate_crit_stats():
 			total_crit_chance += ring.crit_chance - 5.0  # Subtract base to avoid double counting
 			total_crit_damage += ring.crit_damage - 150.0
 
+
 func get_total_dps() -> float:
 	"""Get the hero's total DPS"""
 	return total_dps
+
 
 func get_total_defense() -> int:
 	"""Get the hero's total defense"""
 	return total_defense
 
+
 func get_total_crit_chance() -> float:
 	"""Get the hero's total crit chance"""
 	return total_crit_chance
+
 
 func get_total_crit_damage() -> float:
 	"""Get the hero's total crit damage"""
 	return total_crit_damage
 
+
 func get_health_percentage() -> float:
 	"""Get health as a percentage (0.0 to 1.0)"""
 	return health / max_health
 
+
 func is_healthy() -> bool:
 	"""Check if hero is alive and has health"""
 	return is_alive and health > 0
+
 
 func get_status_text() -> String:
 	"""Get a text description of the hero's current status"""
