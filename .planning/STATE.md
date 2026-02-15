@@ -8,25 +8,25 @@
 
 **Current Milestone:** v1.0 Crafting Overhaul
 
-**Current Focus:** Phase 7 - Drop Integration (complete)
+**Current Focus:** Phase 8 - UI Migration (complete)
 
 ## Current Position
 
-**Phase:** 7 of 8 (v1.0 Crafting Overhaul)
+**Phase:** 8 of 8 (v1.0 Crafting Overhaul)
 
-**Plan:** 07-02 complete (Plan 2 of 2)
+**Plan:** 08-01 complete (Plan 1 of 1)
 
-**Status:** Phase 7 complete
+**Status:** Phase 8 complete
 
 **Progress:**
 ```
 [██████████] 100%
-v1.0 Milestone Progress: [██████████] 100% (2/2 plans complete in Phase 7)
+v1.0 Milestone Progress: [██████████] 100% (1/1 plans complete in Phase 8)
 
 Phase 5: Item Rarity System        [████] Complete (2/2 plans complete)
 Phase 6: Currency Behaviors         [████] Complete (2/2 plans complete)
 Phase 7: Drop Integration           [████] Complete (2/2 plans complete)
-Phase 8: UI Migration               [----] Pending
+Phase 8: UI Migration               [████] Complete (1/1 plans complete)
 ```
 
 ## Performance Metrics
@@ -58,6 +58,7 @@ Phase 8: UI Migration               [----] Pending
 - Phase 6, Plan 2: 87s (2 tasks, 4 files)
 - Phase 7, Plan 1: 83s (2 tasks, 2 files)
 - Phase 7, Plan 2: 132s (2 tasks, 5 files)
+- Phase 8, Plan 1: 190s (2 tasks, 2 files)
 
 ### Previous Milestone: v0.1 Code Cleanup & Architecture
 
@@ -128,9 +129,9 @@ Phase 8: UI Migration               [----] Pending
 
 **What we're building:** v1.0 Crafting Overhaul replacing basic 3-hammer system with Normal/Magic/Rare items and 6 themed crafting hammers
 
-**Where we are:** Phase 7 complete. All 6 currency types drop from area clearing with appropriate rates. Currency counts tracked in GameState and displayed in crafting view.
+**Where we are:** Phase 8 complete. All phases (5-8) complete. UI now uses 6 currency-specific buttons with direct Currency.apply() integration.
 
-**Next step:** Execute Phase 8 - UI Migration (replace 3 crafting buttons with 6 currency-specific buttons)
+**Next step:** v1.0 Crafting Overhaul milestone complete. Ready for next milestone planning.
 
 **Key context:**
 - Rarity system complete: Enum, limits, enforcement, and visual display (Phase 5)
@@ -143,28 +144,31 @@ Phase 8: UI Migration               [----] Pending
   - TuningHammer: Reroll mod values (any rarity)
 - All currencies use template method pattern with consume-only-on-success
 - All currencies validate before applying with descriptive error messages
+- Drop integration complete: Currency drops with rarity-weighted rates (Phase 7)
+- UI migration complete: 6 currency buttons with direct Currency.apply() (Phase 8)
 
 **Files to reference:**
-- `.planning/ROADMAP.md` - Phase 8 goals and requirements
-- `.planning/REQUIREMENTS.md` - UI-01 through UI-04 requirements
+- `.planning/ROADMAP.md` - Milestone overview and phase structure
+- `.planning/REQUIREMENTS.md` - All v1.0 requirements (RARITY, CRAFT, DROP, UI)
 - `models/currencies/*.gd` - All 6 hammer implementations with can_apply() validation
 - `models/loot/loot_table.gd` - Rarity-weighted drop system with currency drops
-- `.planning/phases/07-drop-integration/07-02-SUMMARY.md` - Currency drop integration
+- `scenes/crafting_view.gd` - Currency button UI with Currency.apply() pattern
+- `.planning/phases/08-ui-migration/08-01-SUMMARY.md` - UI migration completion
 
 ## Session Continuity
 
-**Previous session:** Phase 7, Plan 1 execution (2026-02-15)
+**Previous session:** Phase 7, Plan 2 execution (2026-02-15)
 
-**This session:** Phase 7, Plan 2 execution (2026-02-15)
+**This session:** Phase 8, Plan 1 execution (2026-02-15)
 
-**Next session:** Phase 8 execution
+**Next session:** Next milestone planning
 
 **Handoff notes:**
-- Phase 7 complete: Drop integration finished
-- 2/2 plans complete in Phase 7
-- All DROP requirements satisfied (DROP-01, DROP-02, DROP-03)
-- All 6 currency types drop with independent chances and area scaling
-- Currency inventory tracked in GameState with add_currencies() and spend_currency()
-- Crafting view displays all 6 currency counts
-- Old 3-button system still works via temporary mapping (Phase 8 will replace)
-- Ready for Phase 8: UI Migration (6-button crafting interface)
+- v1.0 Crafting Overhaul COMPLETE
+- All 4 phases complete (5: Rarity, 6: Currencies, 7: Drops, 8: UI)
+- All 22 requirements satisfied (RARITY-01 through UI-04)
+- 8 plans executed, 16 tasks completed, 23 files changed
+- Total phase execution time: 607s (Phase 5: 199s, Phase 6: 193s, Phase 7: 215s, Phase 8: 190s)
+- Old 3-hammer system completely removed, replaced with 6 currency-specific buttons
+- Full integration: Currency models → GameState inventory → Drop system → UI buttons
+- Ready for next milestone (gameplay testing, balance tuning, or new features)
