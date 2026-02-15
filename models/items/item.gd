@@ -1,11 +1,34 @@
 class_name Item extends Resource
 
+enum Rarity { NORMAL, MAGIC, RARE }
+
+const RARITY_LIMITS: Dictionary = {
+	Rarity.NORMAL: { "prefixes": 0, "suffixes": 0 },
+	Rarity.MAGIC: { "prefixes": 1, "suffixes": 1 },
+	Rarity.RARE: { "prefixes": 3, "suffixes": 3 },
+}
+
 var item_name: String
 var implicit: Implicit
 var prefixes: Array[Affix] = []
 var suffixes: Array[Affix] = []
 var tier: int
 var valid_tags: Array[String]
+var rarity: Rarity = Rarity.NORMAL
+var custom_max_prefixes = null
+var custom_max_suffixes = null
+
+
+func max_prefixes() -> int:
+	if custom_max_prefixes != null:
+		return custom_max_prefixes
+	return RARITY_LIMITS[rarity]["prefixes"]
+
+
+func max_suffixes() -> int:
+	if custom_max_suffixes != null:
+		return custom_max_suffixes
+	return RARITY_LIMITS[rarity]["suffixes"]
 
 
 ## Recalculates item stats from current affixes.
@@ -102,11 +125,11 @@ func has_valid_tag(affix: Affix) -> bool:
 	return false
 
 
-func add_prefix() -> void:
+func add_prefix() -> bool:
 	print("adding a prefix")
-	if len(self.prefixes) >= 3:
-		print("Cannot add more prefixes - item already has 3")
-		return
+	if len(self.prefixes) >= max_prefixes():
+		print("Cannot add more prefixes - at rarity limit (%d)" % max_prefixes())
+		return false
 
 	var valid_prefixes: Array[Affix] = []
 	#pick a random valid affix:
@@ -117,19 +140,22 @@ func add_prefix() -> void:
 
 	if valid_prefixes.is_empty():
 		print("No valid prefixes available for this item")
-		return
+		return false
 
 	var new_prefix: Affix = valid_prefixes.pick_random()
 	if new_prefix != null:
 		self.prefixes.append(Affixes.from_affix(new_prefix))
 		print("Added prefix: ", new_prefix.affix_name)
+		return true
+
+	return false
 
 
-func add_suffix() -> void:
+func add_suffix() -> bool:
 	print("adding a suffix")
-	if len(self.suffixes) >= 3:
-		print("Cannot add more suffixes - item already has 3")
-		return
+	if len(self.suffixes) >= max_suffixes():
+		print("Cannot add more suffixes - at rarity limit (%d)" % max_suffixes())
+		return false
 
 	var valid_suffixes: Array[Affix] = []
 	#pick a random valid affix:
@@ -140,9 +166,12 @@ func add_suffix() -> void:
 
 	if valid_suffixes.is_empty():
 		print("No valid suffixes available for this item")
-		return
+		return false
 
 	var new_suffix = valid_suffixes.pick_random()
 	if new_suffix != null:
 		print("Added suffix: ", new_suffix.affix_name)
 		self.suffixes.append(Affixes.from_affix(new_suffix))
+		return true
+
+	return false
