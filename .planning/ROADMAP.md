@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v0.1 Code Cleanup & Architecture** — Phases 1-4 (shipped 2026-02-15)
-- 🚧 **v1.0 Crafting Overhaul** — Phases 5-8 (in progress)
+- ✅ **v1.0 Crafting Overhaul** — Phases 5-8 (shipped 2026-02-15)
 
 ## Phases
 
@@ -114,9 +114,9 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 08-01-PLAN.md -- Replace 3 hammer buttons with 6 currency buttons using Currency.apply() pattern
+- [x] 08-01-PLAN.md -- Replace 3 hammer buttons with 6 currency buttons using Currency.apply() pattern
 
-**Status:** Pending
+**Status:** ✓ Complete (2026-02-15)
 
 ---
 
@@ -131,8 +131,8 @@ Plans:
 | 5. Item Rarity System | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 6. Currency Behaviors | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 7. Drop Integration | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
-| 8. UI Migration | v1.0 | 0/1 | Pending | - |
+| 8. UI Migration | v1.0 | 1/1 | ✓ Complete | 2026-02-15 |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-15 (Phase 8 planned: 1 plan)*
+*Last updated: 2026-02-15 (Phase 8 complete — v1.0 milestone shipped)*
