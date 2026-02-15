@@ -46,8 +46,11 @@ v1.0 Crafting Overhaul             [████] Shipped 2026-02-15
 ### Known Issues
 
 - Non-weapon items have no prefix affixes (all prefixes require Tag.WEAPON)
-- Light Sword item type button regenerates a free weapon; other types do not
 - debug_hammers flag in game_state.gd (currently false)
+
+### Fixed Issues
+
+- ~~Light Sword item type button regenerates a free weapon; other types do not~~ - Fixed in quick-01 (2026-02-15)
 
 ### Context for Next Session
 
@@ -64,6 +67,6 @@ v1.0 Crafting Overhaul             [████] Shipped 2026-02-15
 
 ## Session Continuity
 
-**Previous session:** v1.0 milestone completion (2026-02-15)
+**Previous session:** Quick fix 01 - Free Light Sword bug (2026-02-15)
 
 **Next session:** New milestone planning
