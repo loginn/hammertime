@@ -111,6 +111,11 @@ Plans:
 3. Currency counts display correctly per hammer type
 4. Old 3-hammer buttons and logic completely removed from codebase
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 08-01-PLAN.md -- Replace 3 hammer buttons with 6 currency buttons using Currency.apply() pattern
+
 **Status:** Pending
 
 ---
@@ -126,8 +131,8 @@ Plans:
 | 5. Item Rarity System | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 6. Currency Behaviors | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 7. Drop Integration | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
-| 8. UI Migration | v1.0 | 0/? | Pending | - |
+| 8. UI Migration | v1.0 | 0/1 | Pending | - |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-15 (Phase 7 complete: 2/2 plans)*
+*Last updated: 2026-02-15 (Phase 8 planned: 1 plan)*
