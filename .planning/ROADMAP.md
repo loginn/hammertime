@@ -62,11 +62,11 @@ Plans:
   2. Tags are separated into AffixTag (controls which affixes can roll on which items) and StatType (routes values into damage calculations) with no overlap in responsibilities
   3. Every item type (Weapon, Helmet, Armor, Boots, Ring) implements the same update_value() interface for stat recalculation
   4. DPS calculation produces consistent results regardless of which item type contributes the stats (multiplicative vs additive inconsistencies resolved)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md -- Create StatType enum, StatCalculator class, and wire stat_types into all affix definitions
+- [ ] 03-02-PLAN.md -- Refactor all item types to delegate calculations to StatCalculator, remove duplicate compute_dps()
 
 ### Phase 4: Signal-Based Communication
 **Goal**: Views communicate through signals instead of direct node references, following Godot's call-down/signal-up pattern
@@ -92,7 +92,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | ✓ Complete | 2026-02-14 |
 | 2. Data Model Migration | 2/2 | ✓ Complete | 2026-02-15 |
-| 3. Unified Calculations | 0/0 | Not started | - |
+| 3. Unified Calculations | 0/2 | Planned | - |
 | 4. Signal-Based Communication | 0/0 | Not started | - |
 
 ---
