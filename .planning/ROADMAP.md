@@ -77,11 +77,11 @@ Plans:
   2. Parent-to-child communication uses direct method calls; child-to-parent communication uses signals (call down, signal up pattern verified)
   3. All node references use @onready var caching -- no repeated get_node() calls inside methods
   4. The game launches and all UI updates work identically (hero stats update when equipping, crafting view reflects inventory changes, gameplay view responds to area clearing)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md -- Replace sibling get_node() calls with typed signals, wire main_view as parent coordinator
+- [ ] 04-02-PLAN.md -- Convert all $NodePath references to @onready cached variables across all views
 
 ## Progress
 
@@ -93,7 +93,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Foundation | 2/2 | ✓ Complete | 2026-02-14 |
 | 2. Data Model Migration | 2/2 | ✓ Complete | 2026-02-15 |
 | 3. Unified Calculations | 2/2 | ✓ Complete | 2026-02-15 |
-| 4. Signal-Based Communication | 0/0 | Not started | - |
+| 4. Signal-Based Communication | 0/2 | Planning complete | - |
 
 ---
 *Roadmap created: 2026-02-14*
