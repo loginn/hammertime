@@ -9,32 +9,11 @@ var crit_damage: float = 150.0
 
 
 func update_value() -> void:
-	self.dps = self.compute_dps()
-
-
-func compute_dps() -> float:
-	var affixes = self.prefixes + self.suffixes
-	affixes.append(self.implicit)
-
-	var new_spd = self.base_speed
-	var new_dps = self.base_damage
-	var current_crit_chance = self.crit_chance
-	var current_crit_damage = self.crit_damage
-
-	for affix: Affix in affixes:
-		if Tag.ATTACK in affix.tags:
-			new_dps += affix.value
-		elif Tag.SPEED in affix.tags:
-			new_spd += affix.value
-		elif Tag.CRITICAL in affix.tags:
-			if "Chance" in affix.affix_name:
-				current_crit_chance += affix.value
-			elif "Damage" in affix.affix_name:
-				current_crit_damage += affix.value
-
-	# Calculate DPS with crit
-	var crit_multiplier = 1.0 + (current_crit_chance / 100.0) * (current_crit_damage / 100.0)
-	return new_dps * new_spd * crit_multiplier
+	var all_affixes := self.prefixes + self.suffixes
+	all_affixes.append(self.implicit)
+	self.dps = StatCalculator.calculate_dps(
+		self.base_damage, self.base_speed, all_affixes, self.crit_chance, self.crit_damage
+	)
 
 
 func get_display_text() -> String:

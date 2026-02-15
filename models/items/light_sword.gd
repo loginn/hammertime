@@ -11,4 +11,4 @@ func _init() -> void:
 	)
 	self.base_damage = 10
 	self.base_speed = 1
-	self.dps = self.compute_dps()
+	self.update_value()
