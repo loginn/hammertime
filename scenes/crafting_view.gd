@@ -27,8 +27,8 @@ var crafting_inventory: Dictionary = {}
 var inventory_types = ["weapon", "helmet", "armor", "boots", "ring"]
 var selected_item_type: String = "weapon"
 
-# Hammer limit system
-var hammer_counts: Dictionary = {"implicit": 10, "prefix": 10, "suffix": 10}
+# Hammer limit system (initialized to 0, incremented from drops)
+var hammer_counts: Dictionary = {"implicit": 0, "prefix": 0, "suffix": 0}
 
 
 func _ready() -> void:
@@ -218,32 +218,25 @@ func set_new_item_base(item_base: Item) -> void:
 	print("New item base received: ", item_base.item_name)
 
 
-func add_hammers(implicit_count: int, prefix_count: int, suffix_count: int) -> void:
-	# Add hammers found by hero in the area
-	hammer_counts["implicit"] += implicit_count
-	hammer_counts["prefix"] += prefix_count
-	hammer_counts["suffix"] += suffix_count
+func on_currencies_found(drops: Dictionary) -> void:
+	# Map currency drops to old hammer counts for backward compatibility
+	# Tuning/Claw -> implicit
+	hammer_counts["implicit"] += drops.get("tuning", 0) + drops.get("claw", 0)
 
-	print(
-		"Hero found hammers! Added: ",
-		implicit_count,
-		" implicit, ",
-		prefix_count,
-		" prefix, ",
-		suffix_count,
-		" suffix"
-	)
-	print(
-		"Total hammers now: Implicit(",
-		hammer_counts["implicit"],
-		") Prefix(",
-		hammer_counts["prefix"],
-		") Suffix(",
-		hammer_counts["suffix"],
-		")"
+	# Runic/Tack/Forge -> prefix
+	hammer_counts["prefix"] += (
+		drops.get("runic", 0) + drops.get("tack", 0) + drops.get("forge", 0)
 	)
 
-	# Update button states to reflect new hammer counts
+	# Runic/Grand/Forge -> suffix
+	hammer_counts["suffix"] += (
+		drops.get("runic", 0) + drops.get("grand", 0) + drops.get("forge", 0)
+	)
+
+	print("Currencies received: ", drops)
+
+	# Update UI
+	update_inventory_display()
 	update_hammer_button_states()
 
 
@@ -393,5 +386,14 @@ func update_inventory_display() -> void:
 			display_text += "\n"
 		else:
 			display_text += type_name + ": None\n"
+
+	# Add currency counts section
+	display_text += "\nCurrencies:\n"
+	display_text += "Runic Hammer: " + str(GameState.currency_counts.get("runic", 0)) + "\n"
+	display_text += "Forge Hammer: " + str(GameState.currency_counts.get("forge", 0)) + "\n"
+	display_text += "Tack Hammer: " + str(GameState.currency_counts.get("tack", 0)) + "\n"
+	display_text += "Grand Hammer: " + str(GameState.currency_counts.get("grand", 0)) + "\n"
+	display_text += "Claw Hammer: " + str(GameState.currency_counts.get("claw", 0)) + "\n"
+	display_text += "Tuning Hammer: " + str(GameState.currency_counts.get("tuning", 0)) + "\n"
 
 	inventory_label.text = display_text

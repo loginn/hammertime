@@ -19,7 +19,7 @@ func _ready() -> void:
 	crafting_view.item_finished.connect(hero_view.set_last_crafted_item)
 	hero_view.equipment_changed.connect(gameplay_view.refresh_clearing_speed)
 	gameplay_view.item_base_found.connect(crafting_view.set_new_item_base)
-	gameplay_view.hammers_found.connect(crafting_view.add_hammers)
+	gameplay_view.currencies_found.connect(crafting_view.on_currencies_found)
 
 	# Show crafting view by default
 	show_view("crafting")

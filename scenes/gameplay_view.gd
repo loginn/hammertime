@@ -1,7 +1,7 @@
 extends Node2D
 
 signal item_base_found(item_base: Item)
-signal hammers_found(implicit_count: int, prefix_count: int, suffix_count: int)
+signal currencies_found(drops: Dictionary)
 
 @onready var start_clearing_button: Button = $StartClearingButton
 @onready var next_area_button: Button = $NextAreaButton
@@ -110,13 +110,19 @@ func clear_area() -> void:
 
 
 func give_hammer_rewards() -> void:
-	# Hero finds random hammers in the area
-	var implicit_hammers = randi_range(1, 3)  # 1-3 implicit hammers
-	var prefix_hammers = randi_range(1, 2)  # 1-2 prefix hammers
-	var suffix_hammers = randi_range(1, 2)  # 1-2 suffix hammers
+	# Roll currency drops based on area level
+	var drops = LootTable.roll_currency_drops(area_level)
 
-	# Give hammers to crafting view
-	hammers_found.emit(implicit_hammers, prefix_hammers, suffix_hammers)
+	# Store drops in GameState
+	GameState.add_currencies(drops)
+
+	# Print what dropped
+	print("Currency drops:")
+	for currency_name in drops:
+		print("  ", currency_name, ": ", drops[currency_name])
+
+	# Emit signal for UI update
+	currencies_found.emit(drops)
 
 
 func check_area_progression() -> void:
