@@ -21,10 +21,10 @@ Requirements for the Code Cleanup & Architecture milestone.
 
 ### Data Model
 
-- [ ] **DATA-01**: Item, Weapon, Armor, Helmet, Boots, Ring classes extend Resource instead of Node
-- [ ] **DATA-02**: Affix and Implicit classes extend Resource instead of Node
-- [ ] **DATA-03**: GameState autoload exists as single source of truth for Hero instance
-- [ ] **DATA-04**: GameEvents autoload exists as event bus for cross-scene signals
+- [x] **DATA-01**: Item, Weapon, Armor, Helmet, Boots, Ring classes extend Resource instead of Node
+- [x] **DATA-02**: Affix and Implicit classes extend Resource instead of Node
+- [x] **DATA-03**: GameState autoload exists as single source of truth for Hero instance
+- [x] **DATA-04**: GameEvents autoload exists as event bus for cross-scene signals
 
 ### Stat Calculations
 
@@ -99,10 +99,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ORG-01 | Phase 1 | Pending |
 | ORG-02 | Phase 1 | Pending |
 | ORG-03 | Phase 1 | Pending |
-| DATA-01 | Phase 2 | Pending |
-| DATA-02 | Phase 2 | Pending |
-| DATA-03 | Phase 2 | Pending |
-| DATA-04 | Phase 2 | Pending |
+| DATA-01 | Phase 2 | Done |
+| DATA-02 | Phase 2 | Done |
+| DATA-03 | Phase 2 | Done |
+| DATA-04 | Phase 2 | Done |
 | CALC-01 | Phase 3 | Pending |
 | CALC-02 | Phase 3 | Pending |
 | CALC-03 | Phase 3 | Pending |
