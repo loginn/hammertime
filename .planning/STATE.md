@@ -8,24 +8,24 @@
 
 **Current Milestone:** v1.0 Crafting Overhaul
 
-**Current Focus:** Phase 7 - Drop Integration (in progress)
+**Current Focus:** Phase 7 - Drop Integration (complete)
 
 ## Current Position
 
 **Phase:** 7 of 8 (v1.0 Crafting Overhaul)
 
-**Plan:** 07-01 complete (Plan 1 of 2)
+**Plan:** 07-02 complete (Plan 2 of 2)
 
-**Status:** Phase 7 in progress
+**Status:** Phase 7 complete
 
 **Progress:**
 ```
-[█████████░] 93%
-v1.0 Milestone Progress: [███████---] 64% (1/2 plans complete in Phase 7)
+[██████████] 100%
+v1.0 Milestone Progress: [██████████] 100% (2/2 plans complete in Phase 7)
 
 Phase 5: Item Rarity System        [████] Complete (2/2 plans complete)
 Phase 6: Currency Behaviors         [████] Complete (2/2 plans complete)
-Phase 7: Drop Integration           [██--] In Progress (1/2 plans complete)
+Phase 7: Drop Integration           [████] Complete (2/2 plans complete)
 Phase 8: UI Migration               [----] Pending
 ```
 
@@ -57,6 +57,7 @@ Phase 8: UI Migration               [----] Pending
 - Phase 6, Plan 1: 106s (2 tasks, 3 files)
 - Phase 6, Plan 2: 87s (2 tasks, 4 files)
 - Phase 7, Plan 1: 83s (2 tasks, 2 files)
+- Phase 7, Plan 2: 132s (2 tasks, 5 files)
 
 ### Previous Milestone: v0.1 Code Cleanup & Architecture
 
@@ -101,6 +102,10 @@ Phase 8: UI Migration               [----] Pending
 - [Phase 07]: LootTable uses static methods (no instance needed, pure utility)
 - [Phase 07]: Duplicated mod-addition logic from RunicHammer/ForgeHammer intentionally (drop generation vs crafting)
 - [Phase 07]: Area levels beyond 5 use level-5 weights to prevent power creep ceiling
+- [Phase 07]: Each currency has independent drop chance (not mutually exclusive)
+- [Phase 07]: Area bonus drops add to currencies that already dropped (richer rewards in harder areas)
+- [Phase 07]: Guarantee 1 runic hammer if no currencies drop (prevent empty clears)
+- [Phase 07]: Map currencies to old 3-button system as temporary bridge until Phase 8
 
 ### Active TODOs
 
@@ -123,9 +128,9 @@ Phase 8: UI Migration               [----] Pending
 
 **What we're building:** v1.0 Crafting Overhaul replacing basic 3-hammer system with Normal/Magic/Rare items and 6 themed crafting hammers
 
-**Where we are:** Phase 7 in progress. LootTable implemented for rarity-weighted item drops. Ready for Plan 07-02 (currency drops).
+**Where we are:** Phase 7 complete. All 6 currency types drop from area clearing with appropriate rates. Currency counts tracked in GameState and displayed in crafting view.
 
-**Next step:** Execute Phase 7, Plan 2 - Currency Drops (hook hammer drops into enemy loot tables)
+**Next step:** Execute Phase 8 - UI Migration (replace 3 crafting buttons with 6 currency-specific buttons)
 
 **Key context:**
 - Rarity system complete: Enum, limits, enforcement, and visual display (Phase 5)
@@ -140,25 +145,26 @@ Phase 8: UI Migration               [----] Pending
 - All currencies validate before applying with descriptive error messages
 
 **Files to reference:**
-- `.planning/ROADMAP.md` - Phase 7 goals and requirements
-- `.planning/REQUIREMENTS.md` - DROP-01 through DROP-03 requirements
-- `models/currencies/*.gd` - All 6 hammer implementations
-- `models/loot/loot_table.gd` - Rarity-weighted drop system
-- `.planning/phases/07-drop-integration/07-01-SUMMARY.md` - LootTable implementation
+- `.planning/ROADMAP.md` - Phase 8 goals and requirements
+- `.planning/REQUIREMENTS.md` - UI-01 through UI-04 requirements
+- `models/currencies/*.gd` - All 6 hammer implementations with can_apply() validation
+- `models/loot/loot_table.gd` - Rarity-weighted drop system with currency drops
+- `.planning/phases/07-drop-integration/07-02-SUMMARY.md` - Currency drop integration
 
 ## Session Continuity
 
-**Previous session:** Phase 6, Plan 2 execution (2026-02-15)
+**Previous session:** Phase 7, Plan 1 execution (2026-02-15)
 
-**This session:** Phase 7, Plan 1 execution (2026-02-15)
+**This session:** Phase 7, Plan 2 execution (2026-02-15)
 
-**Next session:** Phase 7, Plan 2 execution
+**Next session:** Phase 8 execution
 
 **Handoff notes:**
-- Phase 7 in progress: LootTable implemented for rarity-weighted item drops
-- 1/2 plans complete in Phase 7
-- DROP-01 and DROP-03 satisfied (area difficulty → rarity, rarity-appropriate mods)
-- LootTable uses static methods with weighted random selection
-- Forest: 80% Normal, Shadow Realm: 65% Rare
-- Magic items: 1-2 mods, Rare items: 4-6 mods
-- Ready for Plan 07-02: Currency Drops (hammer loot from enemies)
+- Phase 7 complete: Drop integration finished
+- 2/2 plans complete in Phase 7
+- All DROP requirements satisfied (DROP-01, DROP-02, DROP-03)
+- All 6 currency types drop with independent chances and area scaling
+- Currency inventory tracked in GameState with add_currencies() and spend_currency()
+- Crafting view displays all 6 currency counts
+- Old 3-button system still works via temporary mapping (Phase 8 will replace)
+- Ready for Phase 8: UI Migration (6-button crafting interface)
