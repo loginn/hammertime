@@ -1,54 +1,132 @@
-# Project State
+# Project State: Hammertime
+
+**Last updated:** 2026-02-15
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-15)
+**Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Core value:** The crafting loop must feel rewarding -- finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** v1.0 Crafting Overhaul -- Defining requirements
+**Current Milestone:** v1.0 Crafting Overhaul
+
+**Current Focus:** Phase 5 - Item Rarity System (not yet started)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: --
-Status: Defining requirements
-Last activity: 2026-02-15 -- Milestone v1.0 started
+**Phase:** 5 of 8 (v1.0 Crafting Overhaul)
+
+**Plan:** Not yet created
+
+**Status:** Awaiting planning
+
+**Progress:**
+```
+v1.0 Milestone Progress: [----] 0% (0/4 phases complete)
+
+Phase 5: Item Rarity System        [----] Pending
+Phase 6: Currency Behaviors         [----] Pending
+Phase 7: Drop Integration           [----] Pending
+Phase 8: UI Migration               [----] Pending
+```
 
 ## Performance Metrics
 
-**Velocity:**
-- Total plans completed: 8
-- Average duration: 5.1 minutes
-- Total execution time: 0.68 hours
+### Milestone: v1.0 Crafting Overhaul
 
-**By Phase:**
+**Target:** Replace basic 3-hammer system with rarity tiers and 6 themed crafting hammers
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01-foundation | 2/2 | 17 min | 8.5 min |
-| 02-data-model-migration | 2/2 | 16 min | 8 min |
-| 03-unified-calculations | 2/2 | 13 min | 6.5 min |
-| 04-signal-based-communication | 2/2 | 6 min | 3 min |
+**Requirements:** 22 total
+- Item Rarity: 6 requirements
+- Crafting Currencies: 9 requirements
+- Drop System: 3 requirements
+- UI: 4 requirements
 
-*Updated after each plan completion*
+**Coverage:** 22/22 mapped (100%)
+
+**Phases planned:** 4 phases (5-8)
+
+**Started:** 2026-02-15
+
+**Completed:** Not started
+
+**Duration:** TBD
+
+### Previous Milestone: v0.1 Code Cleanup & Architecture
+
+**Completed:** 2026-02-15 (2 days)
+
+**Stats:** 4 phases, 8 plans, 45 commits, 109 files changed, 1,953 LOC GDScript
+
+**Key outcomes:**
+- Formatted 18 GDScript files, added 78 return type hints
+- Reorganized 25 files into feature-based folders
+- Migrated data classes from Node to Resource
+- Created GameState/GameEvents autoloads
+- Built unified StatCalculator (removed 96 lines of duplication)
+- Replaced get_node() with signal-based communication (33 @onready refs)
 
 ## Accumulated Context
 
-### Decisions
+### Decisions Made
 
-Decisions are logged in PROJECT.md Key Decisions table.
-v0.1 decisions archived -- see `.planning/milestones/v0.1-ROADMAP.md` for full history.
+**v1.0 Milestone Planning (2026-02-15):**
+- Phase structure: 5 (Rarity) → 6 (Currencies) → 7 (Drops) → 8 (UI)
+- Rarity system as foundation before currency behaviors
+- Drop integration before UI to validate full system
+- Start phase numbering at 5 (continuing from v0.1)
 
-### Pending Todos
+**v0.1 Milestone (2026-02-14 to 2026-02-15):**
+- Resource over Node for data model
+- GameState/GameEvents autoloads for state management
+- StatCalculator singleton for unified calculations
+- Signal-based parent coordination (call down, signal up)
+- @onready caching over repeated get_node() calls
 
-None.
+### Active TODOs
 
-### Blockers/Concerns
+**Planning:**
+- [ ] Create Phase 5 plan (Item Rarity System)
+- [ ] Identify research needs for rarity validation patterns
 
-None -- ready for v1.0 planning.
+**Implementation:**
+- [ ] None (awaiting Phase 5 planning)
+
+### Known Blockers
+
+**Current:** None
+
+**Resolved:**
+- v0.1 complete: Clean architecture foundation established
+
+### Context for Next Session
+
+**What we're building:** v1.0 Crafting Overhaul replacing basic 3-hammer system with Normal/Magic/Rare items and 6 themed crafting hammers
+
+**Where we are:** Roadmap complete, Phase 5 (Item Rarity System) ready for planning
+
+**Next step:** Run `/gsd:plan-phase 5` to decompose rarity system into executable plans
+
+**Key context:**
+- Item model already Resource-based (v0.1 migration complete)
+- StatCalculator handles all DPS calculations
+- Rarity system must integrate with existing affix limits (3 prefix + 3 suffix max)
+- Success criteria focus on enforcing mod count limits per rarity tier
+
+**Files to reference:**
+- `.planning/ROADMAP.md` - Phase 5 goals and success criteria
+- `.planning/REQUIREMENTS.md` - RARITY-01 through RARITY-06 requirements
+- `models/items/item.gd` - Current Item Resource structure
 
 ## Session Continuity
 
-Last session: 2026-02-15
-Stopped at: v0.1 milestone completed and archived
-Resume file: None
+**Previous session:** v0.1 milestone completion and archive (2026-02-15)
+
+**This session:** v1.0 roadmap creation (2026-02-15)
+
+**Next session:** Phase 5 planning and implementation
+
+**Handoff notes:**
+- All 22 v1.0 requirements mapped to phases
+- 100% coverage validated
+- No orphaned requirements
+- Phase dependencies identified (5→6→7→8)
+- Research summary from v0.1 available but not directly applicable to v1.0 scope
