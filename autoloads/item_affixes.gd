@@ -35,6 +35,89 @@ var prefixes: Array[Affix] = [
 	Affix.new(
 		"Cold Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.COLD, Tag.WEAPON], []
 	),
+	# Defensive prefixes (30-tier range)
+	Affix.new(
+		"Armored",
+		Affix.AffixType.PREFIX,
+		2,
+		5,
+		[Tag.DEFENSE, Tag.ARMOR],
+		[Tag.StatType.FLAT_ARMOR],
+		Vector2i(1, 30)
+	),
+	Affix.new(
+		"Reinforced",
+		Affix.AffixType.PREFIX,
+		1,
+		3,
+		[Tag.DEFENSE, Tag.ARMOR],
+		[Tag.StatType.PERCENT_ARMOR],
+		Vector2i(1, 30)
+	),
+	Affix.new(
+		"Evasive",
+		Affix.AffixType.PREFIX,
+		2,
+		5,
+		[Tag.DEFENSE, Tag.EVASION],
+		[Tag.StatType.FLAT_EVASION],
+		Vector2i(1, 30)
+	),
+	Affix.new(
+		"Swift",
+		Affix.AffixType.PREFIX,
+		1,
+		3,
+		[Tag.DEFENSE, Tag.EVASION],
+		[Tag.StatType.PERCENT_EVASION],
+		Vector2i(1, 30)
+	),
+	Affix.new(
+		"Warded",
+		Affix.AffixType.PREFIX,
+		3,
+		6,
+		[Tag.DEFENSE, Tag.ENERGY_SHIELD],
+		[Tag.StatType.FLAT_ENERGY_SHIELD],
+		Vector2i(1, 30)
+	),
+	Affix.new(
+		"Arcane",
+		Affix.AffixType.PREFIX,
+		1,
+		3,
+		[Tag.DEFENSE, Tag.ENERGY_SHIELD],
+		[Tag.StatType.PERCENT_ENERGY_SHIELD],
+		Vector2i(1, 30)
+	),
+	# Utility prefixes (30-tier range)
+	Affix.new(
+		"Healthy",
+		Affix.AffixType.PREFIX,
+		3,
+		8,
+		[Tag.DEFENSE, Tag.UTILITY],
+		[Tag.StatType.FLAT_HEALTH],
+		Vector2i(1, 30)
+	),
+	Affix.new(
+		"Vital",
+		Affix.AffixType.PREFIX,
+		1,
+		3,
+		[Tag.DEFENSE, Tag.UTILITY],
+		[Tag.StatType.PERCENT_HEALTH],
+		Vector2i(1, 30)
+	),
+	Affix.new(
+		"Mystic",
+		Affix.AffixType.PREFIX,
+		2,
+		6,
+		[Tag.DEFENSE, Tag.MANA, Tag.UTILITY],
+		[Tag.StatType.FLAT_MANA],
+		Vector2i(1, 30)
+	),
 ]
 var suffixes: Array[Affix] = [
 	Affix.new(
@@ -82,9 +165,10 @@ static func from_affix(template: Affix) -> Affix:
 	var affix_copy = Affix.new(
 		template.affix_name,
 		template.type,
-		template.min_value,
-		template.max_value,
+		template.base_min,
+		template.base_max,
 		template.tags,
-		template.stat_types
+		template.stat_types,
+		template.tier_range
 	)
 	return affix_copy
