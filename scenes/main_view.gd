@@ -1,52 +1,28 @@
 extends Node2D
 
 var current_view: String = "crafting"
-var crafting_view: Node2D
-var hero_view: Node2D
-var gameplay_view: Node2D
+@onready var crafting_view: Node2D = $CraftingView
+@onready var hero_view: Node2D = $HeroView
+@onready var gameplay_view: Node2D = $GameplayView
+@onready var crafting_button: Button = $NavigationPanel/CraftingButton
+@onready var hero_button: Button = $NavigationPanel/HeroButton
+@onready var gameplay_button: Button = $NavigationPanel/GameplayButton
 
 
 func _ready() -> void:
-	print("MainView: Starting initialization...")
-
-	# Get references to all views
-	crafting_view = $CraftingView
-	hero_view = $HeroView
-	gameplay_view = $GameplayView
-
-	print("MainView: Crafting view found: ", crafting_view != null)
-	print("MainView: Hero view found: ", hero_view != null)
-	print("MainView: Gameplay view found: ", gameplay_view != null)
-	print("MainView: Navigation panel found: ", has_node("NavigationPanel"))
-
 	# Connect navigation buttons
-	if has_node("NavigationPanel/CraftingButton"):
-		$NavigationPanel/CraftingButton.connect("pressed", _on_crafting_button_pressed)
-		print("MainView: Crafting button connected")
-	else:
-		print("MainView: ERROR - Crafting button not found!")
+	crafting_button.pressed.connect(_on_crafting_button_pressed)
+	hero_button.pressed.connect(_on_hero_button_pressed)
+	gameplay_button.pressed.connect(_on_gameplay_button_pressed)
 
-	if has_node("NavigationPanel/HeroButton"):
-		$NavigationPanel/HeroButton.connect("pressed", _on_hero_button_pressed)
-		print("MainView: Hero button connected")
-	else:
-		print("MainView: ERROR - Hero button not found!")
-
-	if has_node("NavigationPanel/GameplayButton"):
-		$NavigationPanel/GameplayButton.connect("pressed", _on_gameplay_button_pressed)
-		print("MainView: Gameplay button connected")
-	else:
-		print("MainView: ERROR - Gameplay button not found!")
+	# Child-to-sibling communication via parent coordination
+	crafting_view.item_finished.connect(hero_view.set_last_crafted_item)
+	hero_view.equipment_changed.connect(gameplay_view.refresh_clearing_speed)
+	gameplay_view.item_base_found.connect(crafting_view.set_new_item_base)
+	gameplay_view.hammers_found.connect(crafting_view.add_hammers)
 
 	# Show crafting view by default
 	show_view("crafting")
-
-	# Make navigation panel more visible for debugging
-	if has_node("NavigationPanel"):
-		$NavigationPanel.modulate = Color.WHITE
-		print("MainView: Navigation panel made visible")
-
-	print("MainView: Initialization complete")
 
 
 func _input(event) -> void:
@@ -91,19 +67,19 @@ func show_view(view_name: String) -> void:
 	match view_name:
 		"crafting":
 			crafting_view.visible = true
-			$NavigationPanel/CraftingButton.disabled = true
-			$NavigationPanel/HeroButton.disabled = false
-			$NavigationPanel/GameplayButton.disabled = false
+			crafting_button.disabled = true
+			hero_button.disabled = false
+			gameplay_button.disabled = false
 		"hero":
 			hero_view.visible = true
-			$NavigationPanel/CraftingButton.disabled = false
-			$NavigationPanel/HeroButton.disabled = true
-			$NavigationPanel/GameplayButton.disabled = false
+			crafting_button.disabled = false
+			hero_button.disabled = true
+			gameplay_button.disabled = false
 		"gameplay":
 			gameplay_view.visible = true
-			$NavigationPanel/CraftingButton.disabled = false
-			$NavigationPanel/HeroButton.disabled = false
-			$NavigationPanel/GameplayButton.disabled = true
+			crafting_button.disabled = false
+			hero_button.disabled = false
+			gameplay_button.disabled = true
 
 	current_view = view_name
 	print("Switched to ", view_name, " view")
