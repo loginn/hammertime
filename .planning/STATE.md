@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 
 ## Current Position
 
-Phase: 3 of 4 (Unified Calculations)
-Plan: 2 of 2 completed
-Status: Phase 03 complete, ready for Phase 04
-Last activity: 2026-02-15 -- Phase 03 verified and complete
+Phase: 4 of 4 (Signal-Based Communication)
+Plan: 1 of 2 completed
+Status: Phase 04 in progress
+Last activity: 2026-02-15 -- Phase 04-01 complete (Signal-Based View Communication)
 
-Progress: [██████████] 100% (Phase 03)
+Progress: [█████-----] 50% (Phase 04)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 6 minutes
-- Total execution time: 0.6 hours
+- Total plans completed: 7
+- Average duration: 5.7 minutes
+- Total execution time: 0.67 hours
 
 **By Phase:**
 
@@ -30,10 +30,11 @@ Progress: [██████████] 100% (Phase 03)
 | 01-foundation | 2/2 | 17 min | 8.5 min |
 | 02-data-model-migration | 2/2 | 16 min | 8 min |
 | 03-unified-calculations | 2/2 | 13 min | 6.5 min |
+| 04-signal-based-communication | 1/2 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 1min, 15min, 2min, 11s (0.2min)
-- Trend: Accelerating (recent plans faster)
+- Last 5 plans: 15min, 2min, 11s (0.2min), 3min
+- Trend: Stabilizing (recent plans consistently fast)
 
 *Updated after each plan completion*
 
@@ -66,6 +67,8 @@ Recent decisions affecting current work:
 - [03-01]: 15 affixes with empty stat_types are legitimate (exist for filtering, not calculations)
 - [Phase 03-02]: Removed compute_dps() from weapon.gd and ring.gd to establish single source of truth in StatCalculator
 - [Phase 03-02]: Added base update_value() method to Item.gd to make stat recalculation contract explicit
+- [Phase 04-01]: Use @onready for all node references in main_view instead of manual _ready() assignments
+- [Phase 04-01]: Wire GameEvents signals alongside local signals to eliminate unused signal warnings
 
 ### Pending Todos
 
@@ -73,12 +76,12 @@ None yet.
 
 ### Blockers/Concerns
 
-None - Phase 03 complete, unified calculations in place, ready for Phase 04
+None - Phase 04-01 complete, signal-based view communication in place, ready for 04-02
 
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Phase 03 complete -- verified and roadmap updated
+Stopped at: Completed 04-01-PLAN.md (Signal-Based View Communication)
 Resume file: None
 
 **Completed plans:**
@@ -88,3 +91,4 @@ Resume file: None
 - 02-02: GameState and GameEvents Autoloads (15min) - 14ff59b
 - 03-01: Unified Calculation Infrastructure (2min) - 34349a4
 - 03-02: Unified Item Calculations (11s) - 091f4bb
+- 04-01: Signal-Based View Communication (3min) - 45674a6
