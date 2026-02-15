@@ -5,7 +5,6 @@ signal equipment_changed()
 enum ItemSlot { NONE = -1, WEAPON, HELMET, ARMOR, BOOTS, RING }
 
 @onready var stats_label: Label = $StatsPanel/StatsLabel
-@onready var last_crafted_label: Label = $LastCraftedLabel
 @onready var item_stats_label: Label = $ItemStatsPanel/ItemStatsLabel
 @onready var crafted_item_stats_label: Label = $CraftedItemStatsPanel/CraftedItemStatsLabel
 @onready var weapon_slot: Button = $WeaponSlot
