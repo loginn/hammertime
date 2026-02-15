@@ -4,12 +4,23 @@ signal item_finished(item: Item)
 
 enum button { NONE, IMPLICIT, PREFIX, SUFFIX }
 
-var buttons
+@onready var buttons = $ButtonControl.get_children()
+@onready var item_label: Label = $Label
+@onready var inventory_label: Label = $InventoryPanel/InventoryLabel
+@onready var implicit_hammer_btn: Button = $ButtonControl/ImplicitHammer
+@onready var prefix_hammer_btn: Button = $ButtonControl/AddPrefixHammer
+@onready var suffix_hammer_btn: Button = $ButtonControl/AddSuffixHammer
+@onready var finish_item_btn: Button = $ButtonControl/FinishItemButton
+@onready var item_view: TextureRect = $ItemView
+@onready var weapon_type_btn: Button = $ItemTypeButtons/WeaponButton
+@onready var helmet_type_btn: Button = $ItemTypeButtons/HelmetButton
+@onready var armor_type_btn: Button = $ItemTypeButtons/ArmorButton
+@onready var boots_type_btn: Button = $ItemTypeButtons/BootsButton
+@onready var ring_type_btn: Button = $ItemTypeButtons/RingButton
+
 var button_pressed: button
 var current_item: Item
-var item_label: Label
 var finished_item: Item = null
-var inventory_label: Label
 
 # Crafting inventory system
 var crafting_inventory: Dictionary = {}
@@ -21,30 +32,19 @@ var hammer_counts: Dictionary = {"implicit": 10, "prefix": 10, "suffix": 10}
 
 
 func _ready() -> void:
-	self.buttons = $ButtonControl.get_children()
-	self.item_label = $Label
-	self.inventory_label = $InventoryPanel/InventoryLabel
-
 	# Initialize crafting inventory
 	initialize_crafting_inventory()
 
-	$ButtonControl/ImplicitHammer.connect("pressed", ImplicitHammer_toggled)
-	$ButtonControl/AddPrefixHammer.connect("pressed", AddPrefixHammer_toggled)
-	$ButtonControl/AddSuffixHammer.connect("pressed", AddSuffixHammer_toggled)
-	$ButtonControl/FinishItemButton.connect("pressed", _on_finish_item_button_pressed)
-	$ItemView.connect("gui_input", update_item)
-
-	# Connect item type selection buttons
-	if has_node("ItemTypeButtons/WeaponButton"):
-		$ItemTypeButtons/WeaponButton.connect("pressed", _on_item_type_selected.bind("weapon"))
-	if has_node("ItemTypeButtons/HelmetButton"):
-		$ItemTypeButtons/HelmetButton.connect("pressed", _on_item_type_selected.bind("helmet"))
-	if has_node("ItemTypeButtons/ArmorButton"):
-		$ItemTypeButtons/ArmorButton.connect("pressed", _on_item_type_selected.bind("armor"))
-	if has_node("ItemTypeButtons/BootsButton"):
-		$ItemTypeButtons/BootsButton.connect("pressed", _on_item_type_selected.bind("boots"))
-	if has_node("ItemTypeButtons/RingButton"):
-		$ItemTypeButtons/RingButton.connect("pressed", _on_item_type_selected.bind("ring"))
+	implicit_hammer_btn.pressed.connect(ImplicitHammer_toggled)
+	prefix_hammer_btn.pressed.connect(AddPrefixHammer_toggled)
+	suffix_hammer_btn.pressed.connect(AddSuffixHammer_toggled)
+	finish_item_btn.pressed.connect(_on_finish_item_button_pressed)
+	item_view.gui_input.connect(update_item)
+	weapon_type_btn.pressed.connect(_on_item_type_selected.bind("weapon"))
+	helmet_type_btn.pressed.connect(_on_item_type_selected.bind("helmet"))
+	armor_type_btn.pressed.connect(_on_item_type_selected.bind("armor"))
+	boots_type_btn.pressed.connect(_on_item_type_selected.bind("boots"))
+	ring_type_btn.pressed.connect(_on_item_type_selected.bind("ring"))
 
 	# Start with one basic item of each type for testing
 	var starting_weapon = LightSword.new()
@@ -74,9 +74,9 @@ func _ready() -> void:
 
 func update_label() -> void:
 	if current_item != null:
-		$Label.text = self.current_item.get_display_text()
+		item_label.text = self.current_item.get_display_text()
 	else:
-		$Label.text = "No item selected for crafting"
+		item_label.text = "No item selected for crafting"
 
 
 func update_item(event: InputEvent) -> void:
@@ -132,25 +132,25 @@ func untoggle_all_other_buttons(pressed_button: Button) -> void:
 
 func update_hammer_button_states() -> void:
 	# Update hammer button states based on remaining counts
-	$ButtonControl/ImplicitHammer.disabled = (hammer_counts["implicit"] <= 0)
-	$ButtonControl/AddPrefixHammer.disabled = (hammer_counts["prefix"] <= 0)
-	$ButtonControl/AddSuffixHammer.disabled = (hammer_counts["suffix"] <= 0)
+	implicit_hammer_btn.disabled = (hammer_counts["implicit"] <= 0)
+	prefix_hammer_btn.disabled = (hammer_counts["prefix"] <= 0)
+	suffix_hammer_btn.disabled = (hammer_counts["suffix"] <= 0)
 
 	# Update button text to show remaining counts
-	$ButtonControl/ImplicitHammer.text = "Implicit (" + str(hammer_counts["implicit"]) + ")"
-	$ButtonControl/AddPrefixHammer.text = "Add Prefix (" + str(hammer_counts["prefix"]) + ")"
-	$ButtonControl/AddSuffixHammer.text = "Add Suffix (" + str(hammer_counts["suffix"]) + ")"
+	implicit_hammer_btn.text = "Implicit (" + str(hammer_counts["implicit"]) + ")"
+	prefix_hammer_btn.text = "Add Prefix (" + str(hammer_counts["prefix"]) + ")"
+	suffix_hammer_btn.text = "Add Suffix (" + str(hammer_counts["suffix"]) + ")"
 
 
 func ImplicitHammer_toggled() -> void:
 	# Check if implicit hammers are available
 	if hammer_counts["implicit"] <= 0:
 		print("No implicit hammers remaining!")
-		$ButtonControl/ImplicitHammer.button_pressed = false
+		implicit_hammer_btn.button_pressed = false
 		return
 
-	self.untoggle_all_other_buttons($ButtonControl/ImplicitHammer)
-	if $ButtonControl/ImplicitHammer.button_pressed:
+	self.untoggle_all_other_buttons(implicit_hammer_btn)
+	if implicit_hammer_btn.button_pressed:
 		self.button_pressed = button.IMPLICIT
 		print("implicit")
 
@@ -159,11 +159,11 @@ func AddPrefixHammer_toggled() -> void:
 	# Check if prefix hammers are available
 	if hammer_counts["prefix"] <= 0:
 		print("No prefix hammers remaining!")
-		$ButtonControl/AddPrefixHammer.button_pressed = false
+		prefix_hammer_btn.button_pressed = false
 		return
 
-	self.untoggle_all_other_buttons($ButtonControl/AddPrefixHammer)
-	if $ButtonControl/AddPrefixHammer.button_pressed:
+	self.untoggle_all_other_buttons(prefix_hammer_btn)
+	if prefix_hammer_btn.button_pressed:
 		self.button_pressed = button.PREFIX
 		print("prefix")
 
@@ -172,11 +172,11 @@ func AddSuffixHammer_toggled() -> void:
 	# Check if suffix hammers are available
 	if hammer_counts["suffix"] <= 0:
 		print("No suffix hammers remaining!")
-		$ButtonControl/AddSuffixHammer.button_pressed = false
+		suffix_hammer_btn.button_pressed = false
 		return
 
-	self.untoggle_all_other_buttons($ButtonControl/AddSuffixHammer)
-	if $ButtonControl/AddSuffixHammer.button_pressed:
+	self.untoggle_all_other_buttons(suffix_hammer_btn)
+	if suffix_hammer_btn.button_pressed:
 		self.button_pressed = button.SUFFIX
 		print("suffix")
 
@@ -358,18 +358,15 @@ func _on_item_type_selected(item_type: String) -> void:
 func update_item_type_button_states() -> void:
 	# Update button pressed states to show which type is selected
 	var button_map = {
-		"weapon": "ItemTypeButtons/WeaponButton",
-		"helmet": "ItemTypeButtons/HelmetButton",
-		"armor": "ItemTypeButtons/ArmorButton",
-		"boots": "ItemTypeButtons/BootsButton",
-		"ring": "ItemTypeButtons/RingButton"
+		"weapon": weapon_type_btn,
+		"helmet": helmet_type_btn,
+		"armor": armor_type_btn,
+		"boots": boots_type_btn,
+		"ring": ring_type_btn
 	}
 
 	for item_type in button_map.keys():
-		var button_path = button_map[item_type]
-		if has_node(button_path):
-			var type_button = get_node(button_path)
-			type_button.button_pressed = (item_type == selected_item_type)
+		button_map[item_type].button_pressed = (item_type == selected_item_type)
 
 
 func update_inventory_display() -> void:
