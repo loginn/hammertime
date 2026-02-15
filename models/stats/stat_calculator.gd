@@ -60,6 +60,18 @@ static func calculate_flat_stat(affixes: Array, stat_type: int) -> float:
 	return total
 
 
+## Calculates percentage-based stat modifiers using additive stacking.
+## All "increased X%" affixes for a stat type sum, then apply once to base value.
+## Matches INCREASED_DAMAGE pattern from calculate_dps().
+## Example: base=100, two +50% affixes -> 100 * (1.0 + 0.5 + 0.5) = 200
+static func calculate_percentage_stat(base_value: float, affixes: Array, stat_type: int) -> float:
+	var additive_mult := 0.0
+	for affix: Affix in affixes:
+		if stat_type in affix.stat_types:
+			additive_mult += affix.value / 100.0
+	return base_value * (1.0 + additive_mult)
+
+
 ## Correct crit multiplier using weighted average formula:
 ## E[multiplier] = (1 - c) * 1.0 + c * d = 1 + c * (d - 1)
 ## Where c = crit_chance/100, d = crit_damage/100
