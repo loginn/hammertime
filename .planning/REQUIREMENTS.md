@@ -77,30 +77,31 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DPFX-01 | — | Pending |
-| DPFX-02 | — | Pending |
-| DPFX-03 | — | Pending |
-| DPFX-04 | — | Pending |
-| DPFX-05 | — | Pending |
-| ERES-01 | — | Pending |
-| ERES-02 | — | Pending |
-| ERES-03 | — | Pending |
-| GATE-01 | — | Pending |
-| GATE-02 | — | Pending |
-| GATE-03 | — | Pending |
-| GATE-04 | — | Pending |
-| AREA-01 | — | Pending |
-| AREA-02 | — | Pending |
-| AREA-03 | — | Pending |
-| DROP-01 | — | Pending |
-| DROP-02 | — | Pending |
-| DROP-03 | — | Pending |
+| DPFX-01 | Phase 9 | Pending |
+| DPFX-02 | Phase 9 | Pending |
+| DPFX-03 | Phase 9 | Pending |
+| DPFX-04 | Phase 9 | Pending |
+| DPFX-05 | Phase 9 | Pending |
+| ERES-01 | Phase 10 | Pending |
+| ERES-02 | Phase 10 | Pending |
+| ERES-03 | Phase 10 | Pending |
+| GATE-01 | Phase 11 | Pending |
+| GATE-02 | Phase 11 | Pending |
+| GATE-03 | Phase 11 | Pending |
+| GATE-04 | Phase 11 | Pending |
+| AREA-01 | Phase 11 | Pending |
+| AREA-02 | Phase 11 | Pending |
+| AREA-03 | Phase 11 | Pending |
+| DROP-01 | Phase 12 | Pending |
+| DROP-02 | Phase 12 | Pending |
+| DROP-03 | Phase 12 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 ⚠️
+- Mapped to phases: 18
+- Unmapped: 0
+- Coverage: 100%
 
 ---
 *Requirements defined: 2026-02-15*
-*Last updated: 2026-02-15 after initial definition*
+*Last updated: 2026-02-15 (traceability updated with phase mappings)*
