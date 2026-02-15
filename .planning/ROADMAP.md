@@ -66,10 +66,10 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md -- Base Currency Resource + Runic/Forge upgrade hammers
-- [ ] 06-02-PLAN.md -- Tack/Grand/Claw/Tuning modifier hammers
+- [x] 06-01-PLAN.md -- Base Currency Resource + Runic/Forge upgrade hammers
+- [x] 06-02-PLAN.md -- Tack/Grand/Claw/Tuning modifier hammers
 
-**Status:** Pending
+**Status:** ✓ Complete (2026-02-15)
 
 ---
 
@@ -118,10 +118,10 @@ Plans:
 | 3. Unified Calculations | v0.1 | 2/2 | ✓ Complete | 2026-02-15 |
 | 4. Signal-Based Communication | v0.1 | 2/2 | ✓ Complete | 2026-02-15 |
 | 5. Item Rarity System | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
-| 6. Currency Behaviors | v1.0 | 0/2 | Pending | - |
+| 6. Currency Behaviors | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 7. Drop Integration | v1.0 | 0/? | Pending | - |
 | 8. UI Migration | v1.0 | 0/? | Pending | - |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-15 (Phase 6 planned: 2 plans)*
+*Last updated: 2026-02-15 (Phase 6 complete: 2/2 plans)*
