@@ -1,5 +1,7 @@
 extends Node
 
+@export var debug_hammers: bool = false
+
 var hero: Hero
 var currency_counts: Dictionary = {}
 
@@ -14,7 +16,6 @@ func _ready() -> void:
 	hero.equipped_items["ring"] = null
 
 	# Initialize currency counts
-	var debug_hammers := OS.get_cmdline_args().has("--debug-hammers")
 	var start_count := 999 if debug_hammers else 0
 	currency_counts = {
 		"runic": start_count,
