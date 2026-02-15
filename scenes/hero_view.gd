@@ -144,7 +144,7 @@ func update_slot_display(slot: ItemSlot) -> void:
 
 	if item:
 		slot_node.text = item.item_name
-		slot_node.modulate = Color.WHITE
+		slot_node.modulate = item.get_rarity_color()
 	else:
 		slot_node.text = get_slot_name(slot) + "\n(Empty)"
 		slot_node.modulate = Color.GRAY
@@ -255,7 +255,13 @@ func update_item_stats_display() -> void:
 
 # Get formatted stats text for an item
 func get_item_stats_text(item: Item) -> String:
-	var stats_text = item.item_name + "\n\n"
+	var rarity_name = "Normal"
+	match item.rarity:
+		Item.Rarity.MAGIC:
+			rarity_name = "Magic"
+		Item.Rarity.RARE:
+			rarity_name = "Rare"
+	var stats_text = item.item_name + " (" + rarity_name + ")" + "\n\n"
 
 	if item is Weapon:
 		var weapon = item as Weapon

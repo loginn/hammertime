@@ -75,8 +75,10 @@ func _ready() -> void:
 func update_label() -> void:
 	if current_item != null:
 		item_label.text = self.current_item.get_display_text()
+		item_label.modulate = current_item.get_rarity_color()
 	else:
 		item_label.text = "No item selected for crafting"
+		item_label.modulate = Color.WHITE
 
 
 func update_item(event: InputEvent) -> void:
@@ -381,8 +383,13 @@ func update_inventory_display() -> void:
 
 		if item != null:
 			display_text += type_name + ": " + item.item_name
-			var tier = get_item_tier(item)
-			display_text += " (Tier " + str(tier) + ")"
+			var rarity_name = "Normal"
+			match item.rarity:
+				Item.Rarity.MAGIC:
+					rarity_name = "Magic"
+				Item.Rarity.RARE:
+					rarity_name = "Rare"
+			display_text += " (" + rarity_name + ")"
 			display_text += "\n"
 		else:
 			display_text += type_name + ": None\n"
