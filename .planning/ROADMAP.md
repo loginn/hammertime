@@ -36,7 +36,13 @@ Full details: `.planning/milestones/v0.1-ROADMAP.md`
 4. Rare items enforce 3 prefix + 3 suffix maximum
 5. Item display shows visual rarity distinction (white/blue/yellow) and mod count vs limit
 
-**Status:** Pending
+**Plans:** 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md -- Rarity data model and mod limit enforcement
+- [ ] 05-02-PLAN.md -- Rarity display colors and clean Normal drops
+
+**Status:** Planned
 
 ---
 
@@ -105,11 +111,11 @@ Full details: `.planning/milestones/v0.1-ROADMAP.md`
 | 2. Data Model Migration | v0.1 | 2/2 | ✓ Complete | 2026-02-15 |
 | 3. Unified Calculations | v0.1 | 2/2 | ✓ Complete | 2026-02-15 |
 | 4. Signal-Based Communication | v0.1 | 2/2 | ✓ Complete | 2026-02-15 |
-| 5. Item Rarity System | v1.0 | 0/? | Pending | - |
+| 5. Item Rarity System | v1.0 | 0/2 | Planned | - |
 | 6. Currency Behaviors | v1.0 | 0/? | Pending | - |
 | 7. Drop Integration | v1.0 | 0/? | Pending | - |
 | 8. UI Migration | v1.0 | 0/? | Pending | - |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-15 (v1.0 phases added)*
+*Last updated: 2026-02-15 (Phase 5 planned: 2 plans)*
