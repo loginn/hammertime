@@ -305,26 +305,8 @@ func update_current_item() -> void:
 		current_item = crafting_inventory[selected_type]
 		print("Selected ", current_item.item_name, " for crafting")
 	else:
-		# Create appropriate default item based on selected type
-		if selected_type == "weapon":
-			current_item = LightSword.new()
-			print("No weapon in inventory, using default Light Sword")
-		elif selected_type == "helmet":
-			current_item = BasicHelmet.new()
-			print("No helmet in inventory, using default Basic Helmet")
-		elif selected_type == "armor":
-			current_item = BasicArmor.new()
-			print("No armor in inventory, using default Basic Armor")
-		elif selected_type == "boots":
-			current_item = BasicBoots.new()
-			print("No boots in inventory, using default Basic Boots")
-		elif selected_type == "ring":
-			current_item = BasicRing.new()
-			print("No ring in inventory, using default Basic Ring")
-		else:
-			# Fallback to Light Sword for unknown types
-			current_item = LightSword.new()
-			print("Unknown item type, using default Light Sword")
+		current_item = null
+		print("No ", selected_type, " in inventory")
 
 	update_label()
 
@@ -336,8 +318,7 @@ func get_selected_item_type() -> String:
 
 func _on_item_type_selected(item_type: String) -> void:
 	# Check if there's an item of this type in the inventory
-	# Exception: weapons always work for testing (creates Light Swords)
-	if crafting_inventory[item_type] == null and item_type != "weapon":
+	if crafting_inventory[item_type] == null:
 		print("No ", item_type, " in inventory - selection ignored")
 		return
 
