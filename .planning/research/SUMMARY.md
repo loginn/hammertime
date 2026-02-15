@@ -1,294 +1,207 @@
 # Project Research Summary
 
-**Project:** Hammertime ARPG - Code Cleanup & Architecture (v0.1)
-**Domain:** Godot 4.5 ARPG Idle Game Refactoring
-**Researched:** 2026-02-14
+**Project:** Hammertime v1.1 - Defensive Affixes & Currency Gating
+**Domain:** ARPG Crafting Idle Game (Godot 4.6 GDScript)
+**Researched:** 2026-02-15
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This project refactors an existing Godot 4.5 ARPG idle game codebase to establish professional architecture and maintainability. The codebase exhibits common first-project issues: 21 .gd files flat in project root, mixed naming conventions (Tag.gd vs item_affixes.gd), duplicate logic across item types (compute_dps() in both weapon.gd and ring.gd), and the anti-pattern of extending Node for pure data objects. The user is new to Godot, making clear structure and best-practice patterns critical for long-term success.
+The v1.1 milestone extends Hammertime's existing tag-based affix system to support defensive equipment crafting and area-gated progression. Research confirms that **all four features (defensive prefixes, expanded affixes, currency area gating, drop rate rebalancing) integrate cleanly through extension, not architectural modification**. The existing codebase already contains the necessary infrastructure through its ItemAffixes autoload (unlimited affix definitions), LootTable static class (area-aware drop generation), and Resource-based data model (extensible without refactoring).
 
-The recommended approach follows Godot 4.5 official conventions: feature-based folder organization, Resource-based data models (not Nodes), signal-based UI communication ("call down, signal up"), and incremental refactoring with continuous testing. The stack is validated (Godot 4.5, GDScript, text-based resources) and requires only tooling additions (gdformat for standardization, possibly GdUnit4 for testing safety). Critical systems to establish: unified stat calculation eliminating duplicate compute_dps() implementations, tag system separation of concerns (affix filtering vs damage calculation), and Model-View separation with GameState autoload as single source of truth.
+The recommended approach follows ARPG industry standards: flat/percentage defensive stat split (Path of Exile model), elemental resistance separation (table stakes for the genre), and threshold-based currency gating (clearer than pure RNG). All technologies are already validated - Godot 4.6 with GDScript requires no external libraries or plugins. The primary risk is tag filter explosion causing empty affix pools for some item types, which is mitigated by establishing tag taxonomy before adding any affixes and testing pool sizes per item type.
 
-The primary risk is breaking scene references during file reorganization — Godot 4.5's UID system is partial, and moving files outside the editor destroys .tscn dependencies. Mitigation: **always move files within Godot editor**, test after each change (F5 takes 5 seconds), commit incrementally, and never refactor more than one concern at a time. Secondary risks include signal spaghetti from over-correction of tight coupling, and over-engineering patterns unnecessary for idle game scope. The refactoring must be incremental (format → organize → migrate data model → extract shared logic) to maintain working game state throughout.
+**Key takeaway:** This is pure content and balance work, not systems engineering. The architecture supports unlimited expansion. Success depends on data discipline (tag taxonomy, affix pool documentation) and quantitative tuning (simulation-based drop rate testing), not technical complexity.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack (Godot 4.5, GDScript, text-based .tscn/.tres files) is solid and requires no changes. Add development tooling for consistency and safety during refactoring.
+**No stack changes required.** The existing Godot 4.6 + GDScript stack handles all v1.1 features through data model extension.
 
 **Core technologies:**
-- **Godot 4.5** (game engine) — Already validated. Scene-based architecture encourages modular organization. Editor's Move/Rename tools maintain reference integrity when used correctly.
-- **GDScript with static typing** (primary language) — Gradual typing allows incremental type hint adoption. Focus on function signatures first, internal variables second.
-- **gdformat/gdlint** (formatting/linting) — Enforces official GDScript style guide. Run on all 21 .gd files as first refactoring step to establish baseline consistency.
+- Godot 4.6: Already configured for mobile rendering; recent GDScript profiling improvements optimize affix pool iteration (negligible performance impact with 15-20 total prefixes)
+- GDScript 4.6: Type-safe Resource extensions already power the data model; no language additions needed
+- Autoload pattern: Four existing autoloads (ItemAffixes, Tag, GameState, GameEvents) are sufficient; new features fit existing architecture
 
-**Critical tooling to add:**
-- `gdformat` for code standardization (uncompromising formatter, run once on entire codebase)
-- Consider GdUnit4 for test safety net during refactoring (prevents regressions)
+**What NOT to add:**
+- Loot table plugins (project has custom LootTable.gd with area-based weighting already implemented)
+- State machine libraries (area gating is simple boolean unlock state, not complex transitions)
+- Weighted choice plugins (LootTable.roll_rarity() already implements weighted random correctly)
 
-**Folder structure pattern** (small project <50 scripts):
-```
-res://
-├── autoloads/         # GameState, GameEvents, ItemRegistry (rename from ItemAffixes)
-├── models/            # Data classes as Resources (hero/, items/, affixes/)
-├── scenes/            # Views by feature (hero/, crafting/, gameplay/, main/)
-├── utils/             # Constants (rename Tag.gd to constants.gd)
-```
+**Critical pattern:** Tag-based filtering (Item.has_valid_tag()) enables unlimited affix expansion without code changes - just add Affix definitions to ItemAffixes.prefixes[] and suffixes[] arrays.
 
 ### Expected Features
 
-This is a refactoring milestone, not a new-feature milestone. "Features" here are refactoring patterns that establish maintainable architecture.
+**Must have (table stakes):**
+- Defensive prefixes on armor slots - ARPGs universally have armor/evasion/energy shield prefixes; non-weapon items currently have zero prefixes, making them uncraftable
+- Elemental resistance split - Individual fire/cold/lightning resistances are table stakes (current "Elemental Reduction" suffix is too generic)
+- Defense scaling with item level - Defensive affixes must use T1-T8 tier scaling like offensive affixes to remain competitive
+- Currency drop rate progression - Higher areas must drop rarer currencies; currently all 6 hammers have equal chance across all 4 areas
 
-**Must have (table stakes for completion):**
-- **Directory Organization** — Group by feature/domain, not flat root. Foundational for all other work.
-- **Unified Stat Calculation System** — Eliminate duplicate compute_dps() in weapon.gd and ring.gd. Primary goal of this milestone.
-- **Tag System Separation** — Split dual-purpose Tag.gd into AffixTag (eligibility) and StatType (calculation routing). Clear single-responsibility.
-- **Standardized Item Interface** — Define abstract update_value() contract in Item base class.
-- **Signal-Based UI Updates** — Break tight coupling between views using "call down, signal up" pattern.
+**Should have (competitive advantage):**
+- Deterministic currency gating - Threshold-based unlock ("Grand Hammer unlocks in area 3") is clearer than pure RNG and differentiates from competitors
+- Tag-based affix pool clarity - Showing valid tags in tooltips reduces trial-and-error crafting
+- Defense type specialization - Different armor slots having different valid tags (rings=ES, boots=movement) creates build variety
 
-**Should have (architectural improvements):**
-- **Modifier Pipeline Architecture** — Formalize order-of-operations (flat → increased → more) once unified calculation works.
-- **Strategy Pattern for Damage Types** — Use strategy objects instead of tag-checking if-chains. Defer until 3+ damage types exist.
-- **Event Bus Singleton** — Centralize signal routing via GameEvents autoload for distant communication.
+**Defer (v2+):**
+- Hybrid defense prefixes - Armor+Evasion single-slot affixes add complexity; defer until basic defensive system validates
+- Visual prefix/suffix separation - UI polish that waits for 6-affix rare items to create clutter
+- Suffix expansion beyond resistances - Focus prefixes first; suffixes already have 15 types
 
-**Defer (v2+ - advanced patterns):**
-- **Resource-Based Item Data** — Major migration from Node to Resource. High complexity, enables data-driven design.
-- **Composition Over Inheritance** — Component-based capabilities. Current 5 item types don't justify complexity.
-- **Reactive Stat Dependencies** — Automatic recalculation. Current manual update_stats() works fine.
+**Critical insight:** Industry analysis shows affix pool size matters more than affix variety - Path of Exile suffers from "dead mod" problems with 100+ affixes per slot, while Last Epoch succeeds with 15-25 focused affixes. Recommendation: Start with 15-20 defensive affixes total, avoid bloat.
 
 ### Architecture Approach
 
-Establish Model-View separation with GameState autoload as single source of truth. Views are Nodes that display and interact. Models are Resources (for serialization) or RefCounted classes (runtime only) that contain business logic. Communication follows "call down, signal up" — parents call child methods directly, children emit signals up to parents. Siblings coordinate through parent or GameEvents bus for distant communication.
+**Extension through existing patterns, no refactoring required.** The v1.1 features integrate via four clean extension points:
 
 **Major components:**
-1. **GameState autoload** — Owns Hero instance, provides single source of truth for game state. All views reference GameState.hero instead of passing references manually.
-2. **GameEvents autoload** — Event bus for cross-scene signals (equipment_changed, item_crafted, area_cleared). Decouples distant nodes.
-3. **Model layer (Resources)** — Item, Weapon, Armor, Ring, Affix classes extend Resource (not Node). Enables serialization, inspector editing, lightweight data storage.
-4. **View layer (Scenes)** — HeroView, CraftingView, GameplayView display model state. Subscribe to model.changed signals, update UI on changes.
-5. **Shared Systems** — StatCalculator for unified DPS calculation. Called by all item types, centralizes ARPG formulas.
+1. **ItemAffixes autoload** - Extend prefixes[] with defensive definitions (Tag.ARMOR, Tag.ENERGY_SHIELD); extend suffixes[] with resistance splits; tag-based filtering automatically routes new affixes to correct item types
+2. **LootTable static class** - Add min_area_level gating to roll_currency_drops(); modify RARITY_WEIGHTS and currency_rules constants for rebalancing; area-aware logic already present
+3. **StatCalculator** - Add calculate_defense() method (mirrors existing calculate_dps() pattern); handles new StatType enum values for armor/evasion/ES calculations
+4. **GameState autoload** - Add current_area_level field for currency gating reference; add area_unlock_status Dictionary if hard gates needed (simple O(1) lookup)
 
-**Data flow pattern:**
-```
-User clicks slot in HeroView
-    ↓
-GameState.hero.equip_item(item, slot)  # Model update
-    ↓
-Hero emits changed signal
-    ↓
-HeroView._on_hero_changed() updates UI
-    ↓
-GameEvents.equipment_changed.emit(hero)  # Notify distant listeners
-    ↓
-GameplayView receives signal, updates clearing speed
-```
+**Integration pattern:** Defensive prefixes flow through existing Item.add_prefix() → has_valid_tag() filter → StatCalculator.calculate_defense() → Item.update_value(). No new data flow, just new affix definitions matched to non-weapon item types.
 
-**Critical architectural decisions:**
-- **Resource vs Node**: Use Resource for data (items, stats), Node for behavior (UI, logic that needs scene tree). Current codebase uses Node for data — must migrate.
-- **Autoload limits**: Only GameState (shared state), GameEvents (event bus), ItemRegistry (read-only data). Never put game logic or mutable state in autoloads.
-- **Feature-based folders**: Co-locate scenes/scripts by feature (scenes/hero/, scenes/crafting/), not by type (scripts/, scenes/). Easier to reason about scope.
+**Build order:** Defensive Prefixes (1-2 hours) → Expanded Suffixes (30 min) → Currency Gating (1-2 hours) → Drop Rebalancing (15-30 min). Features are fully independent with zero dependencies between them.
 
 ### Critical Pitfalls
 
-1. **Moving files breaks scene references** — Godot 4.5's UID system is partial. Moving files outside editor destroys .tscn dependencies. **Prevention**: Always move files within Godot editor's FileSystem dock (right-click → Move To). Test after each move (F5). Commit before reorganization.
+1. **Tag Filter Explosion** - Adding defensive prefixes with ARMOR/HELMET/BOOTS tags can cause weapons to get empty affix pools if tag taxonomy isn't established first. **Prevention:** Define mutually exclusive tag groups (WEAPON_ONLY, ARMOR_ONLY, ANY_ITEM) before adding affixes; test valid_prefixes.size() for each item type after changes.
 
-2. **Renaming classes breaks class_name and preload()** — Search entire project for old name before renaming. Update class_name declarations, preload() calls, type hints, and autoload paths in sequence. Godot 4.5 changed autoload naming (no auto-PascalCase conversion).
+2. **StatType Enum Expansion Breaking Calculator** - Adding INCREASED_ARMOR, FLAT_EVASION to Tag.StatType enum requires corresponding StatCalculator functions. Missing these causes items to show 0 for new stats despite having affixes. **Prevention:** Add StatType enum + calculator function in same commit; use match statements with wildcard fallback for unhandled cases.
 
-3. **get_node() paths break during restructuring** — Current codebase uses extensive relative paths (crafting_view.gd lines 26, 34-54). **Prevention**: Replace with @export NodePath variables or @onready caching. Prefer signals over direct node references.
+3. **Area Bonus Drop Concentration** - Current bonus drop system (`for i in range(area_level - 1): drops[random_currency] += 1`) assumes all currencies are eligible. Area-gating reduces eligible pool, concentrating bonuses into unlocked currencies and creating exponential reward curves (area 1 awards 3-4x intended runic hammers). **Prevention:** Adjust bonus drops by unlocked currency count, or gate at UI/consumption instead of drop generation.
 
-4. **Extending Node for data objects** — Current Item, Weapon, Ring, Affix all extend Node. Should extend Resource. Causes high memory overhead, prevents serialization, confuses data vs logic. **Prevention**: Migrate to Resource-based models before other refactoring.
+4. **Display-Only Stats Creating Confusion** - Defensive stats display prominently but don't affect combat until later milestone. Players optimize for high armor, equip defensive items over offensive items, then die because armor does nothing. **Prevention:** Add "(not yet functional)" to stat display, gray out text, or hide defensive stats until combat integration begins.
 
-5. **Refactoring too much at once** — Making multiple simultaneous changes (move files AND rename classes AND restructure data) makes debugging impossible. **Prevention**: One refactor per commit. Test after each change. Incremental: format → organize → migrate → extract.
+5. **Affix Pool Dilution** - Adding 12 defensive prefixes to existing 9 weapon prefixes doesn't dilute weapons (tag filtering protects them), but dilutes armor items from "guaranteed one of 3 options" to 1/12 (8.3%) probability for specific mod. **Prevention:** Document affix counts per tag category before adding; flag if pool exceeds 15 affixes per category without targeted crafting currencies.
+
+6. **Rebalancing Without Anchors** - Tweaking RARITY_WEIGHTS to "feel better" without baseline metrics causes directionless iteration. **Prevention:** Record current drop rates before changes, define target metrics (items/hour, crafts per area), use simulation for validation instead of subjective feelings.
 
 ## Implications for Roadmap
 
-Based on research, refactoring must follow strict dependency order to maintain working game state throughout. The architecture requires foundation layers before UI decoupling can succeed.
+Based on research, suggested phase structure (4 phases, 3-6 hours total development):
 
-### Phase 1: Foundation Setup
-**Rationale:** Establish baseline consistency and folder structure before code changes. Non-breaking changes reduce risk.
-
-**Delivers:**
-- All code formatted via gdformat (standardized style)
-- Feature-based folder structure created
-- Files moved to appropriate folders (via Godot editor only)
-- Scene files renamed to snake_case (remove spaces from "Gameplay view.tscn")
-
-**Addresses:** Directory Organization (FEATURES.md table stakes), inconsistent naming (STACK.md assessment)
-
-**Avoids:** Pitfall #1 (file move breaking references) by using editor's Move tool and testing after each change
-
-**Research flags:** Standard patterns, no additional research needed. Follow STACK.md folder structure recommendations.
-
----
-
-### Phase 2: Data Model Migration
-**Rationale:** Must happen before UI refactoring. Changing Item from Node to Resource while also refactoring signals creates debugging nightmare. Foundation for all subsequent work.
+### Phase 1: Defensive Prefix Foundation
+**Rationale:** Defensive prefixes are the foundation for all other features - unblocks non-weapon item crafting and establishes tag taxonomy that governs affix pool expansion. Must come first to prevent tag filter explosion.
 
 **Delivers:**
-- Item, Weapon, Armor, Ring, Affix classes extend Resource (not Node)
-- GameState autoload created with hero instance
-- GameEvents autoload created with core signals
-- ItemRegistry autoload (renamed from ItemAffixes)
-- .tres resource files for item definitions
+- 6 core defensive prefixes (flat armor, %armor, flat evasion, %evasion, flat ES, %ES)
+- Tag expansion (Tag.JEWELRY for rings)
+- StatType expansion (INCREASED_ARMOR, FLAT_EVASION, INCREASED_EVASION, FLAT_ENERGY_SHIELD, INCREASED_ENERGY_SHIELD)
+- StatCalculator.calculate_defense() method
+- Updated Armor/Helmet/Boots/Ring.update_value() to use defense calculator
 
-**Uses:** Godot Resource system (STACK.md architectural decisions)
+**Addresses:** Table stakes - defensive prefixes on armor items, defense scaling with item level
+**Avoids:** Tag filter explosion (establish taxonomy first), StatType enum breaks (add enums + calculator together), display-only stat confusion (add UI disclaimer)
 
-**Implements:** Model layer (ARCHITECTURE.md component #3)
+**Research flag:** Standard patterns - tag filtering and StatCalculator extension follow existing codebase patterns exactly. No additional research needed.
 
-**Avoids:** Pitfall #4 (Node for data objects) by migrating all data to Resources. Pitfall #2 (class renaming) by establishing final names during migration.
-
-**Research flags:** Standard Resource patterns from official docs. May need research-phase if custom serialization required for save/load system.
-
----
-
-### Phase 3: Unified Calculations
-**Rationale:** Core value of this milestone. Once data model is stable (Resources), extract duplicate logic safely. Dependencies clear: both weapon.gd and ring.gd must be Resources before shared calculation can reference them polymorphically.
+### Phase 2: Elemental Resistance Split
+**Rationale:** Builds on Phase 1's StatType expansion. Resistances are suffixes (separate from prefix work), allowing parallel development or sequential add-on. Simple data addition with zero new mechanics.
 
 **Delivers:**
-- StatCalculator system for unified DPS calculation
-- Single compute_dps() implementation replacing duplicates in weapon.gd/ring.gd
-- Tag system separation (AffixTag for filtering, StatType for calculations)
-- Standardized Item.update_value() interface across all item types
+- 4 new suffixes (fire resistance, cold resistance, lightning resistance, all resistance)
+- Replaces generic "Elemental Reduction" suffix
+- Uses existing StatType.FIRE_RESIST, COLD_RESIST, LIGHTNING_RESIST (already exist in Tag.gd)
 
-**Addresses:** Unified Stat Calculation, Tag System Separation, Standardized Item Interface (all FEATURES.md P1 priorities)
+**Addresses:** Table stakes - elemental resistance split (ARPG genre standard)
+**Uses:** StatCalculator pattern from Phase 1
 
-**Avoids:** Pitfall #5 (duplicated logic) by centralizing formulas. Pitfall #6 (refactoring too much) by focusing only on calculations, not UI.
+**Research flag:** Standard patterns - suffix addition identical to Phase 1 prefix addition. No research needed.
 
-**Research flags:** Modifier pipeline order-of-operations may need research-phase if ARPG calculation patterns unclear. Otherwise standard refactoring.
-
----
-
-### Phase 4: Signal-Based Communication
-**Rationale:** UI decoupling depends on stable data model (Phase 2) and clear calculation ownership (Phase 3). Signals connect model changes to UI updates.
+### Phase 3: Currency Area Gating
+**Rationale:** Independent from affix work. Can develop in parallel or after Phases 1-2. Requires careful design of gating mechanism to avoid area bonus drop concentration.
 
 **Delivers:**
-- Hero emits stats_updated and health_changed signals
-- Views listen to model changes instead of polling
-- Sibling communication through MainView coordinator or GameEvents
-- @onready caching replaces repeated get_node() calls
+- Currency.min_area_level field (default 1)
+- Set min_area_level in each Currency subclass (Runic: 1, Forge: 2, Grand: 3, Claw: 4, Tuning: 1, Tack: 1)
+- GameState.current_area_level field
+- Modified LootTable.roll_currency_drops() with area-level gating before probability rolls
+- Optional ramping logic (low drop chance when just unlocked, scales up over 2 levels)
 
-**Addresses:** Signal-Based UI Updates (FEATURES.md P1 priority)
+**Addresses:** Table stakes - currency drop rate progression by area; Differentiator - deterministic currency gating
+**Avoids:** Area bonus drop concentration (design gating separate from probability checks, simulate before committing)
 
-**Implements:** "Call down, signal up" pattern (ARCHITECTURE.md Pattern #2)
+**Research flag:** Moderate complexity - bonus drop distribution requires simulation testing to verify linear (not exponential) reward curve. Consider running 100-clear simulation per area level before finalizing.
 
-**Avoids:** Pitfall #3 (get_node() paths break) by replacing with signals. Pitfall #7 (signal spaghetti) by using direct calls for parent→child, signals only for child→parent and distant communication.
+### Phase 4: Drop Rate Rebalancing
+**Rationale:** Must come LAST. Rebalancing requires all content in place (defensive affixes + currency gating) to tune against actual gameplay loop. Tuning too early wastes effort when mechanics change.
 
-**Research flags:** Standard Godot signal patterns. No additional research needed beyond ARCHITECTURE.md examples.
+**Delivers:**
+- Modified LootTable.RARITY_WEIGHTS (reduce rare% at low levels: area 1 = 0% rare instead of 2%)
+- Modified currency_rules (reduce advanced currency chances by 30-50%)
+- Baseline metrics documented (current: 1.2 items/clear at area 1, 0.18 magic, 0.02 rare)
+- Target metrics defined (goal: 1 rare per 30 clears at area 1)
 
----
+**Addresses:** Table stakes - item rarity progression by area
+**Avoids:** Rebalancing without anchors (document baseline, define targets, simulate before committing)
+
+**Research flag:** Requires playtesting - no amount of research replaces empirical testing. Plan for iteration: initial tuning → playtest → adjust → re-test. Create simulation script first (roll_rarity 1000 times per area, record distribution).
 
 ### Phase Ordering Rationale
 
-**Why this order:**
-1. **Format/organize first** — Non-breaking changes establish baseline. Can't effectively refactor spaghetti code that's also inconsistently formatted.
-2. **Data model before logic** — Changing Item from Node to Resource while also extracting shared calculations creates impossible debugging scenario. Data foundation must be stable.
-3. **Calculations before UI** — Unified stat system must exist before UI can reliably listen to stat changes. Can't signal "stats changed" when stat calculation is still duplicated and inconsistent.
-4. **Signals last** — UI decoupling requires stable models to reference and stable calculation results to display. Attempting signal refactoring with moving targets causes signal spaghetti.
-
-**How this avoids pitfalls:**
-- Incremental commits (each phase has working game state) prevents Pitfall #6 (refactoring too much)
-- Phase boundaries enforce testing points — can't proceed to Phase 2 until Phase 1 files load correctly
-- Data model migration isolated in Phase 2 prevents mixing concerns (Pitfall #5)
-- UI changes deferred to Phase 4 prevent breaking get_node() paths mid-refactor (Pitfall #3)
+- **Phases 1-2 are data work** (add affixes, add StatTypes) with zero risk to existing systems - tag filtering protects weapons from defensive prefix additions
+- **Phase 3 is mechanics work** (currency gating) that's independent from affixes - can run in parallel with Phases 1-2 or sequentially
+- **Phase 4 requires all content in place** - can't balance drop rates without knowing full affix pool size and currency unlock thresholds
+- **No dependencies between Phases 1-2-3** - defensive prefixes, resistance suffixes, and currency gating are orthogonal features
+- **Phase 4 depends on 1-2-3 completion** - rebalancing is final tuning pass
 
 ### Research Flags
 
-**Phases needing potential research:**
-- **Phase 2 (Data Model):** May need research-phase if save/load serialization patterns unclear. Custom Resource serialization for game state persistence.
-- **Phase 3 (Calculations):** May need research-phase for ARPG modifier pipeline patterns (flat → increased → more order-of-operations) if extending beyond basic DPS.
+**Phases needing deeper research during planning:**
+- **Phase 3 (Currency Area Gating):** Requires simulation script to validate drop distribution. Create `drop_simulator.gd` that runs 1000 area clears, logs currency counts, verifies linear reward curve (not exponential). Medium complexity - pattern exists in LootTable.gd but scaling math needs verification.
 
 **Phases with standard patterns (skip research-phase):**
-- **Phase 1 (Foundation):** Well-documented file organization and formatting. Follow STACK.md directly.
-- **Phase 4 (Signals):** Godot signal patterns are standard. ARCHITECTURE.md provides sufficient examples and decision framework.
+- **Phase 1 (Defensive Prefix Foundation):** Tag filtering and StatCalculator extension follow existing codebase patterns exactly (compare: weapon prefixes in ItemAffixes.gd lines 3-37, StatCalculator.calculate_dps() lines 15-45)
+- **Phase 2 (Elemental Resistance Split):** Suffix addition identical to existing suffix definitions (ItemAffixes.gd lines 39-78)
+- **Phase 4 (Drop Rate Rebalancing):** Constant modification only; research can't predict "feels good" - empirical playtesting required instead
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All recommendations from Godot 4.5 official documentation. Existing stack validated. No technology changes needed. |
-| Features | HIGH | Refactoring patterns well-established in community. Table stakes features (organization, signal-based UI) have clear implementations. Priority ordering matches dependency analysis. |
-| Architecture | HIGH | Model-View separation, Resource-based data, signal communication all official Godot best practices. Pattern examples verified against official docs and GDQuest guidelines. |
-| Pitfalls | HIGH | Sourced from official docs, GitHub issues tracking real bugs, community post-mortems. Pitfalls #1-4 directly observed in current codebase or documented in Godot 4.5 issue tracker. |
+| Stack | HIGH | All recommendations validated against existing Godot 4.6 codebase; no external dependencies required; patterns proven in current implementation |
+| Features | HIGH | Multiple ARPG source comparisons (PoE, D4, Last Epoch) confirm table stakes; feature prioritization matrix clear; MVP scoped to 6 defensive prefixes + 4 resistances |
+| Architecture | HIGH | Integration points verified in codebase; extension patterns (not refactoring) keep risk low; build order has zero dependencies between Phases 1-2-3 |
+| Pitfalls | HIGH (code analysis) / MEDIUM (patterns) | Critical pitfalls derived from codebase analysis (tag filtering, StatType enum, area bonus math); industry pattern pitfalls (pool dilution, rebalancing) verified via WebSearch |
 
 **Overall confidence:** HIGH
 
-Research draws from Godot 4.5 official documentation (scene organization, signals, resources, autoloads), verified GitHub issues (UID system limitations, autoload naming changes), and established community resources (GDQuest, KidsCanCode, GodotTutorials). All core recommendations traceable to authoritative sources. Current codebase analyzed directly to confirm anti-patterns and duplication.
-
 ### Gaps to Address
 
-**Minor gaps requiring validation during implementation:**
+**Defensive stat combat integration timeline:** Research assumes defensive stats are display-only in v1.1 (combat integration happens in later milestone). If combat integration is required for v1.1, add Phase 5 for combat math (damage reduction formulas, resistance caps, defense vs offense scaling). This was not in scope for current research.
 
-1. **Save/load serialization patterns** — Research confirms Resources support serialization, but specific implementation for hero equipment state, crafting hammers, and area progress may need experimentation. Consider adding save/load as Phase 2 acceptance criteria to validate Resource migration.
+**Area count expansion:** Research assumes 4 areas (current codebase state). If area count expands to 5+ during v1.1, currency gating thresholds need recalibration (currently: Runic/Tack=1, Forge=2, Grand=3, Claw=4). Monitor PROJECT.md for area expansion requirements.
 
-2. **ARPG modifier order-of-operations** — Research identifies industry-standard pattern (flat → increased → more from Path of Exile), but implementation details for tag-to-modifier conversion need working prototype. Consider Phase 3 research-phase spike if extending beyond basic DPS.
+**Hybrid defense prefixes complexity:** Research deferred hybrid affixes to v2.0+. If user feedback during Phase 1-2 shows affix slot pressure (players want more stats per affix), re-evaluate hybrid prefix addition. Currently flagged as "add after validation" not "never add."
 
-3. **Testing framework setup** — GdUnit4 and GUT identified as options, but no research on setup complexity or integration with existing project. If tests are added (recommended for refactoring safety), allocate setup time in Phase 1 or pre-Phase 1 spike.
+**Affix pool size limits:** Research recommends 15-20 defensive affixes total to avoid pool dilution. If design requires more affixes (e.g., adding life/mana/movement prefixes in addition to armor/ES/evasion), implement targeted crafting currencies (Armorer's Hammer, Jeweler's Hammer) to prevent 1/30 crafting odds.
 
-4. **Node unique names (% syntax) reliability** — Research notes % syntax still breaks on renames. If using unique names in Phase 4, validate behavior in Godot 4.5 specifically.
-
-**How to handle during planning:**
-- Add save/load spike to Phase 2 (Data Model Migration) — 2-4 hours to validate ResourceSaver.save() with equipped items
-- Add ARPG calculation research-phase to Phase 3 if modifier pipeline is implemented (defer if not)
-- Testing framework decision: make during Phase 1 planning. If adding tests, allocate 4-6 hours for GdUnit4 setup and first test cases.
-- Document % syntax behavior if using unique names — add to Phase 4 acceptance criteria
-
-**Confidence remains HIGH** despite minor gaps — all gaps have clear investigation paths and don't affect core architectural recommendations.
+**Drop rate "feels good" calibration:** Phase 4 requires playtesting - no research substitute. Budget 2-3 iteration cycles: initial tuning (30 min) → playtest session (1 hour) → adjustments (15 min) → re-test. Consider external playtesters (internal testers know drop rates are tuned, real players don't).
 
 ## Sources
 
 ### Primary (HIGH confidence)
-
-**Official Godot 4.5 Documentation:**
-- [Project organization](https://docs.godotengine.org/en/4.5/tutorials/best_practices/project_organization.html) — Folder structure conventions
-- [GDScript style guide](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html) — Naming, formatting rules
-- [Scene organization](https://docs.godotengine.org/en/stable/tutorials/best_practices/scene_organization.html) — Architecture patterns
-- [Autoloads versus internal nodes](https://docs.godotengine.org/en/stable/tutorials/best_practices/autoloads_versus_internal_nodes.html) — When to use autoloads
-- [Static typing in GDScript](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/static_typing.html) — Type system conventions
-- [Resources](https://docs.godotengine.org/en/stable/tutorials/scripting/resources.html) — Resource-based data patterns
-- [Using signals](https://docs.godotengine.org/en/stable/getting_started/step_by_step/signals.html) — Signal patterns
-
-**GitHub Issues (Godot 4.5 specific):**
-- [Godot #70130](https://github.com/godotengine/godot/issues/70130) — Refactoring scenes breaks dependencies
-- [Godot #69260](https://github.com/godotengine/godot/issues/69260) — Moving resources breaks scenes
-- [Godot #110908](https://github.com/godotengine/godot/issues/110908) — Autoload naming broken in 4.5
-- [UID changes in Godot 4.4](https://godotengine.org/article/uid-changes-coming-to-godot-4-4/) — UID system limitations
+- Existing Hammertime codebase (`/var/home/travelboi/Programming/hammertime/`) - Architecture patterns, tag filtering implementation, LootTable area scaling, StatCalculator formulas
+- [Godot 4.6 Release](https://godotengine.org/releases/4.6/) - Confirmed January 27, 2026 release, GDScript performance improvements
+- [Godot Resources Documentation](https://docs.godotengine.org/en/stable/tutorials/scripting/resources.html) - Resource extension patterns via @export
+- [Item Affixes for Gear - Diablo 4 Wowhead Guide](https://www.wowhead.com/diablo-4/guide/gear-items/affixes) - Defensive affix patterns, table stakes identification
+- [Gear Walkthrough - Last Epoch Maxroll.gg](https://maxroll.gg/last-epoch/resources/gear-walkthrough) - Focused affix pool approach (15-25 affixes)
+- [Defences - PoE Wiki](https://www.poewiki.net/wiki/Defences) - Flat/percentage defensive stat split, hybrid mod structure
 
 ### Secondary (MEDIUM confidence)
+- [Path of Exile 2 Defense and Resistance Guide](https://www.sportskeeda.com/mmo/exile-2-poe2-defense-resistance-guide-energy-shield-armor-evasion) - Resistance suffix patterns
+- [Diablo 4 World Tiers Guide - Mobalytics](https://mobalytics.gg/blog/diablo-4/world-tiers-guide/) - Area-gated currency drop progression
+- [Drop rate - PoE Wiki](https://www.poewiki.net/wiki/Drop_rate) - Quantitative drop rate testing patterns
+- [Path of Exile 2 affix pool dilution discussion](https://www.pathofexile.com/forum/view-thread/3659293) - Hybrid mod complexity pitfalls
+- [Loot drop best practices](https://www.gamedeveloper.com/design/loot-drop-best-practices) - Industry patterns for drop rate ramping, anchor-based tuning
 
-**Community Best Practices:**
-- [GDQuest GDScript Guidelines](https://gdquest.gitbook.io/gdquests-guidelines/godot-gdscript-guidelines) — Community conventions
-- [Best practices with Godot signals - GDQuest](https://www.gdquest.com/tutorial/godot/best-practices/signals/) — Signal patterns
-- [Event bus singleton - GDQuest](https://www.gdquest.com/tutorial/godot/design-patterns/event-bus-singleton/) — Event bus implementation
-- [Node communication (the right way) - Godot 4 Recipes](https://kidscancode.org/godot_recipes/4.x/basics/node_communication/) — Communication patterns
-- [When to Node, Resource, and Class in Godot](https://backat50ft.substack.com/p/when-to-node-resource-and-class-in) — Node vs Resource guidance
-- [MVC in Godot - Rads and Relics](https://radsandrelics.com/posts/godot-mvc/) — Model-View-Controller patterns
-
-**Stat System Architecture:**
-- [Modular Stat/Attribute System Tutorial for Godot 4](https://medium.com/@minoqi/modular-stat-attribute-system-tutorial-for-godot-4-0bac1c5062ce) — Modifier pipeline patterns
-- [Godot Tactics RPG – 09. Stats](https://theliquidfire.com/2024/10/10/godot-tactics-rpg-09-stats/) — Stat calculation approaches
-- [EnhancedStat addon - GitHub](https://github.com/Zennyth/EnhancedStat) — Existing stat system reference
-
-**Refactoring Practices:**
-- [GDScript refactoring exercise - Go, Go, Godot!](https://www.gogogodot.io/refactoring-in-godot/) — Practical refactoring walkthrough
-- [My Thresholds for Refactoring](https://coffeebraingames.wordpress.com/2017/11/06/my-thresholds-for-refactoring/) — When to refactor guidelines
-- [Refactoring: the Way to Perfection](https://www.gamedeveloper.com/programming/refactoring-the-way-to-perfection-) — Refactoring strategies
-
-### Tertiary (LOW confidence)
-
-**Anti-Pattern References:**
-- [The God Class Intervention](https://www.wayline.io/blog/god-class-intervention-avoiding-anti-pattern) — God object anti-pattern
-- [Software Anti-Patterns](https://www.bairesdev.com/blog/software-anti-patterns/) — General anti-patterns
-- [Catalogue of Game-Specific Anti-Patterns](https://dl.acm.org/doi/abs/10.1145/3511430.3511436) — Academic anti-pattern research
-
-**Current Codebase Analysis:**
-- Direct examination of 21 .gd files in project root
-- Identified Node-based data objects (Item, Weapon, Ring extend Node)
-- Found duplicate compute_dps() in weapon.gd (lines 18-64) and ring.gd (lines 13-35)
-- Observed get_node() paths in crafting_view.gd (lines 26, 34-54)
-- Confirmed flat file structure with spaces in filenames ("Gameplay view.tscn")
+### Tertiary (LOW confidence - needs validation)
+- [Weighted Random Selection With Godot](http://kehomsforge.com/tutorials/single/weighted-random-selection-godot/) - Validated existing LootTable pattern (tutorial matches implementation)
+- [Managing Virtual Economies: Inflation Domination](https://www.gamedeveloper.com/business/managing-virtual-economies-inflation-domination) - Currency scarcity principles (generic, not ARPG-specific)
 
 ---
-
-*Research completed: 2026-02-14*
+*Research completed: 2026-02-15*
 *Ready for roadmap: yes*

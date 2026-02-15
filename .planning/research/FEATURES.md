@@ -1,400 +1,164 @@
 # Feature Research
 
-**Domain:** GDScript Codebase Refactoring (ARPG Idle Game)
-**Researched:** 2026-02-14
-**Confidence:** MEDIUM
+**Domain:** ARPG Defensive Affixes, Expanded Affix Pools, and Currency/Item Drop Gating
+**Researched:** 2026-02-15
+**Confidence:** HIGH
 
 ## Feature Landscape
 
-### Table Stakes (Core Refactoring Patterns)
+### Table Stakes (Users Expect These)
 
-Features that any comprehensive refactoring needs to address. Missing these = incomplete refactoring.
+Features users assume exist. Missing these = product feels incomplete.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Unified Stat Calculation System | Eliminates duplicate compute_dps() logic across weapon.gd and ring.gd | MEDIUM | Resource-based stat modifiers with central calculation engine. Both Weapon and Ring call the same calculation pipeline. |
-| Tag System Separation of Concerns | Tag.gd currently serves dual purposes (affix filtering AND damage calculation routing) | LOW | Split into TagFilter (item eligibility) and DamageType/StatType enums. Clear single-responsibility per constant set. |
-| Proper Inheritance/Polymorphism Structure | Item subclasses share behavior but override methods inconsistently | LOW-MEDIUM | Define abstract update_value() contract in Item base class, standardize interface across all item types. |
-| Signal-Based UI Communication | UI views use direct get_node() references causing tight coupling | MEDIUM | Implement "call down, signal up" pattern. Items emit stat_changed signals, UI components listen without direct references. |
-| Directory Organization | All 21 .gd files in project root creates navigation/maintenance burden | LOW | Group by domain: items/, ui/, systems/, data/. Widely accepted as basic code hygiene. |
-| Resource-Based Item Data | Currently items are Nodes, should be Resources for data-driven design | MEDIUM-HIGH | Migrate item definitions to custom Resources. Separates data from logic, enables inspector editing. |
+| Defensive prefixes on armor items | ARPGs universally have flat/percent armor, evasion, energy shield on equipment slots. All 9 current prefixes require Tag.WEAPON - non-weapon items are prefix-less. | LOW | Add Tag.ARMOR, Tag.HELMET, Tag.BOOTS tags; create flat armor, %armor, flat evasion, %evasion, flat energy shield, %energy shield prefixes (6 new prefixes minimum) |
+| Hybrid defense prefixes | PoE, Last Epoch, and Diablo use hybrid mods (armor+evasion, armor+ES, evasion+ES) that take 1 affix slot but grant 2 stats - space-efficient defense stacking | MEDIUM | 3 hybrid prefixes (armor+evasion, armor+ES, evasion+ES); requires stat_types array to support multiple StatType values; only on body armor/helmet |
+| Elemental resistance suffixes | Resistances are suffixes in every major ARPG (PoE, D4, Last Epoch). Currently "Elemental Reduction" suffix exists but no fire/cold/lightning split | LOW | Add individual fire/cold/lightning resistance suffixes, plus "all resist" for space efficiency; 4 new suffixes |
+| Defense scaling with item level/tier | Defensive affixes must scale T1-T8 like offensive affixes do currently. Higher tier = better defense = competitive with damage scaling | LOW | Already have tier system in Affix class; new defensive affixes use same tier multiplier (9-tier) formula |
+| Currency drop rate progression by area | Diablo 4 World Tiers and PoE map tiers gate high-value currency to endgame areas. Currently all 6 hammers have equal chance across all 4 areas | MEDIUM | LootTable.roll_currency_drops() needs area-level-based chance scaling; lower areas drop basic hammers (Runic/Tack), higher areas add rare hammers (Grand/Tuning) |
+| Item rarity progression by area | Sacred/Ancestral items in D4, item level gates in PoE - endgame areas must drop better base rarities. LootTable.RARITY_WEIGHTS already does this (area 4 = 65% Rare vs area 1 = 2% Rare) | LOW | Already implemented; verify weights feel correct during playtesting |
 
-### Differentiators (Advanced Refactoring Patterns)
+### Differentiators (Competitive Advantage)
 
-Patterns that go beyond basic cleanup and improve architecture significantly.
+Features that set the product apart. Not required, but valuable.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Modifier Pipeline Architecture | Centralized stat modification system following order-of-operations (flat → increased → more) | HIGH | Industry-standard pattern from Path of Exile. Enables complex affix interactions without exponential code growth. Reference: Modular stat system with sequential modifier application. |
-| Strategy Pattern for Damage Calculations | Different damage types (physical, elemental, DOT) use strategy objects instead of inline tag checking | MEDIUM | Eliminates if-chains in compute_dps(). Each DamageCalculationStrategy handles its own type. More extensible than current tag-checking approach. |
-| Composition Over Deep Inheritance | Item behaviors defined by components/capabilities rather than rigid type hierarchy | HIGH | Prevents "weapon-that-is-also-armor" type problems. May be overkill for current scope. Godot community prefers pragmatic inheritance for simple cases. |
-| Event Bus for Global State | Centralized signal routing through autoload singleton for hero stats, inventory changes | LOW-MEDIUM | Recommended by GDQuest for cases where direct connections create coupling. Alternative to direct signal wiring. |
-| Stat Dependencies and Reactivity | Stats automatically recalculate when dependencies change (e.g., max_health affects health_percentage) | MEDIUM | Resource-based stats with getter properties. Prevents stale data bugs. Enables reactive UI updates. |
+| Deterministic currency gating | Instead of RNG-based rare currency drops, gate currencies to specific areas - "Grand Hammer unlocks in Cursed Woods (area 3)" makes progression transparent | LOW | Replace roll_currency_drops() independent chances with area thresholds: areas 1-2 (Runic/Tack only), areas 3-4 (add Forge/Grand), area 4 (add Claw/Tuning) |
+| Tag-based affix pool clarity | Item shows valid tags in tooltip - "This helmet can roll: DEFENSE, ARMOR, HELMET" - players know what's possible before wasting hammers | MEDIUM | Add Item.get_valid_tags_display() method; integrate into UI item tooltip; educates on crafting possibilities |
+| Visual prefix/suffix separation in UI | Color-code or section prefixes (offensive) vs suffixes (defensive) in item display - faster gear evaluation | LOW | Update views/item_view.gd to render prefixes/suffixes in separate sections with labels; improves readability |
+| Defense type specialization | Ring/boots/helmet have different valid tags - rings get ENERGY_SHIELD only, boots get MOVEMENT, helmets get hybrid options - creates slot identity | MEDIUM | Update Item subclasses' valid_tags arrays; prevents homogeneous gearing, adds build variety |
+| Currency tooltips show use cases | "Runic Hammer: Adds 1-2 mods to Normal items, making them Magic" with valid rarity transitions - reduces trial-and-error learning | LOW | Add Currency.get_tooltip() returning rich text with examples; integrate into views/crafting_view.gd |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Refactoring approaches that seem good but create problems.
+Features that seem good but create problems.
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Full Entity-Component-System (ECS) | Composition over inheritance is mentioned frequently in game dev | Massive architectural rewrite, overkill for 5 item types, GDScript lacks ECS performance benefits that C++ engines get | Pragmatic inheritance with component-like Resource attachments for variable behavior |
-| Over-Abstraction of Calculations | "Make everything configurable via data files" mentality | Premature generalization. Current game has ~10 affix types and 5 item types. Over-engineering before you understand requirements leads to wrong abstractions. | Start with shared base calculation, extract data when patterns emerge from real usage (Rule of Three) |
-| Traits/Mixins via Scripts | GitHub proposal #6416 for trait system in GDScript | Not yet implemented in Godot 4.5. Relying on proposed features creates maintenance burden and migration work if never added or implemented differently. | Use composition with Resources and standard single inheritance |
-| Immediate Type Safety Everywhere | Add type hints to all variables immediately | While valuable long-term, type hints don't provide performance benefits yet in GDScript. Refactoring for structure is higher priority than refactoring for types. | Add types to public APIs first (function parameters/returns), internal variables second |
+| Too many niche affixes | "Add 50+ affixes for build diversity like PoE" | Creates "useless affix" problem - players find 80% of affixes worthless, dilutes mod pool, frustrates crafting. PoE community constantly complains about dead mods on class-specific items. | Focus on 15-20 universally useful defensive affixes; every affix should be good for SOME build, not 5% of builds |
+| Per-monster currency drops | "Currency should drop from every kill like D4" | Floods economy, causes inflation, makes high-value currencies feel common. Research shows games need currency sinks to prevent devaluation. | Keep area-clear-based currency drops (current system); preserves scarcity, makes hammers feel valuable |
+| Unlimited affix rerolling | "Let me reroll specific affixes infinitely" | Removes crafting tension, makes perfect items trivial, exhausts endgame in hours. D4 faced backlash for making loot too deterministic. | Keep Tuning Hammer's reroll as rare currency; limit uses per item session; force trade-offs |
+| Complex hybrid affixes everywhere | "Every affix should be hybrid for efficiency" | Hybrid mods in PoE are complex (armor+evasion+stun recovery on one line) - reduces clarity, harder to evaluate items quickly. | Limit hybrids to defensive prefixes on body armor/helmet; suffixes stay single-stat for clarity |
+| Per-difficulty currency types | "Add D4-style torment-only currencies" | Fragments economy, confuses new players, creates 6+ parallel currency tracks. Mobile games avoid this by separating hard/soft currencies, not 10 tiers. | Use single currency set across all areas; gate by drop chance, not by creating new currency types |
+| Class-specific affixes | "Weapons should roll skill-specific mods" | Without class system, creates "wrong class" affix problem - Sentinel relics rolling Cold Damage when Sentinels can't use cold (Last Epoch complaint). | Tag system already prevents - weapons roll WEAPON tags, armor rolls ARMOR tags; no class-specific affixes |
 
 ## Feature Dependencies
 
 ```
-Directory Organization
-    └──enables──> Clear Module Boundaries
-                      └──enables──> Proper Encapsulation
+Defensive Prefix System
+    └──requires──> Tag Expansion (ARMOR, HELMET, BOOTS, ENERGY_SHIELD, EVASION)
+                       └──requires──> StatType Expansion (FLAT_EVASION, INCREASED_ARMOR, etc.)
 
-Tag System Separation
-    └──unlocks──> Damage Strategy Pattern
-                      └──requires──> Unified Stat Calculation
+Hybrid Defense Prefixes
+    └──requires──> Multi-StatType Support (stat_types array handles 2+ values)
+    └──requires──> StatCalculator.calculate_defense() update
 
-Unified Stat Calculation
-    └──requires──> Modifier Pipeline (order-of-operations)
-    └──enables──> Reactive Stat Updates
+Currency Area Gating
+    └──requires──> LootTable.roll_currency_drops() refactor
+    └──enhances──> Progression clarity (players know when new hammers unlock)
 
-Resource-Based Item Data
-    └──enables──> Data-Driven Design
-    └──conflicts──> Current Node-Based Architecture (requires migration)
+Elemental Resistance Split
+    └──requires──> New suffixes (fire_res, cold_res, lightning_res, all_res)
+    └──replaces──> Generic "Elemental Reduction" suffix
 
-Signal-Based UI
-    └──requires──> Event Emission Points in Systems
-    └──enhances──> Reactive Stat Updates
+Defense Specialization by Slot
+    └──requires──> Updated valid_tags per Item subclass
+    └──conflicts──> Homogeneous gearing (if all slots roll same mods)
 ```
 
 ### Dependency Notes
 
-- **Tag System Separation unlocks Damage Strategy:** Cannot cleanly implement strategy pattern while tags serve dual purposes. Separation allows damage strategies to reference DamageType enum without conflating with affix eligibility.
-- **Unified Stat Calculation requires Modifier Pipeline:** If weapon.gd and ring.gd both call shared calculate_dps(), that function needs to handle order-of-operations (flat bonuses before percentage bonuses). Otherwise moving logic to one place doesn't eliminate the complexity.
-- **Resource-Based Item Data conflicts with Node-Based:** Current Item extends Node. Resources can't be scene tree members. Migration path: Item becomes ItemData (Resource), ItemInstance wraps ItemData as Node where needed.
-- **Signal-Based UI requires Event Emission Points:** Hero.update_stats() must emit signals for UI to react. Dependency is not on refactored structure, but on instrumentation of existing systems.
+- **Defensive Prefix System requires Tag Expansion:** Cannot add defensive prefixes without ARMOR/EVASION/ENERGY_SHIELD tags - current Tag.gd has DEFENSE but no granular defense types. Must add tags before creating affixes.
+- **Hybrid Defense Prefixes require Multi-StatType Support:** Affix.stat_types is Array[int] - already supports multiple values. Need to verify StatCalculator aggregates multiple stat_types correctly (e.g., hybrid armor+evasion should add to both stats).
+- **Currency Area Gating enhances Progression clarity:** Current independent drop chances obscure when new hammers become available. Gating Grand Hammer to area 3+ tells players "reach Cursed Woods to unlock advanced crafting."
+- **Defense Specialization conflicts with Homogeneous gearing:** If all armor slots can roll all defensive affixes, build variety suffers (everyone stacks armor). Specialization forces choices - rings for ES, boots for movement+evasion, helmets for hybrid armor.
 
 ## MVP Definition
 
-### Launch With (Refactoring v1 - Core Cleanup)
+### Launch With (v1.1 Milestone)
 
-Essential refactoring to eliminate immediate pain points.
+Minimum viable expansion - what's needed to make non-weapon items craftable.
 
-- [x] **Directory Organization** — Creates clear boundaries before restructuring code. Foundational for all other work.
-- [x] **Tag System Separation** — Eliminates dual-purpose confusion. Low-effort, high-clarity gain.
-- [x] **Unified Stat Calculation System** — Primary goal: eliminate duplicate compute_dps() logic in weapon.gd and ring.gd. Core value of this refactoring milestone.
-- [x] **Standardized Item Interface** — Define abstract update_value() contract in Item base class. Ensures all item types calculate stats consistently.
-- [x] **Signal-Based UI Updates** — Break tight coupling between hero stats and UI. Enables testing and future UI changes.
+- [x] **6 Defensive Prefixes** - Flat armor, %armor, flat evasion, %evasion, flat ES, %ES; essential to unblock helmet/armor/boots crafting
+- [x] **Tag Expansion** - Add ARMOR, HELMET, BOOTS, ENERGY_SHIELD, EVASION to Tag.gd; update Item subclass valid_tags arrays
+- [x] **StatType Expansion** - Add FLAT_EVASION, INCREASED_ARMOR, INCREASED_EVASION, FLAT_ENERGY_SHIELD, INCREASED_ENERGY_SHIELD to Tag.StatType enum
+- [x] **Elemental Resistance Split** - Replace generic "Elemental Reduction" with fire_res, cold_res, lightning_res, all_res suffixes; aligns with ARPG standards
+- [x] **Currency Area Gating** - Refactor LootTable.roll_currency_drops() to gate currencies by area threshold: Runic/Tack (area 1+), Forge/Grand (area 3+), Claw/Tuning (area 4 only)
+- [x] **Drop Rate Rebalancing** - Test currency drop rates with gating; adjust RARITY_WEIGHTS if rare items drop too frequently in early areas
 
-### Add After Core Works (v1.x - Architectural Improvements)
+### Add After Validation (v1.2+)
 
-Features to add once basic refactoring is validated and tests pass.
+Features to add once defensive prefixes prove functional.
 
-- [ ] **Modifier Pipeline Architecture** — Once unified calculation works, formalize order-of-operations (flat → increased → more). Trigger: when adding new affix types that interact in complex ways.
-- [ ] **Strategy Pattern for Damage Types** — Once tag separation is done, implement strategies for physical/elemental/DOT. Trigger: when adding 3+ damage types with unique calculation rules.
-- [ ] **Event Bus Singleton** — After signal-based UI is working with direct connections, consider centralizing if connection management becomes burdensome. Trigger: more than 10 signal connections causing spaghetti.
+- [ ] **Hybrid Defense Prefixes** - Armor+Evasion, Armor+ES, Evasion+ES (trigger: if players complain about affix slot pressure on defensive items)
+- [ ] **Visual Prefix/Suffix Separation** - Color-code or section item display (trigger: when UI feels cluttered with 6 affixes on rare items)
+- [ ] **Defense Specialization by Slot** - Ring = ES only, Boots = Movement+Evasion, Helmet = Hybrid options (trigger: if all slots feel same-y during gearing)
+- [ ] **Tag-based Affix Pool Tooltips** - Show valid tags on item hover (trigger: if playtesters waste hammers on invalid crafting attempts)
+- [ ] **Currency Tooltips** - Rich text descriptions with use cases (trigger: if new players confused about hammer purposes)
 
-### Future Consideration (v2+ - Advanced Patterns)
+### Future Consideration (v2.0+)
 
-Defer until current refactoring is complete and new requirements emerge.
+Features to defer until core defensive system validated.
 
-- [ ] **Resource-Based Item Data** — Major migration from Node to Resource. Enables data-driven design and inspector editing. Defer: requires rewriting item instantiation, scene structure. Consider when adding item editor or external item definitions.
-- [ ] **Composition Over Inheritance** — Component-based item capabilities. Defer: current 5 item types don't justify complexity. Consider if requirements emerge like "weapon-armor hybrid" or "stackable equipment".
-- [ ] **Reactive Stat Dependencies** — Automatic recalculation when dependencies change. Defer: current manual update_stats() works. Consider when adding complex derived stats or performance issues from over-calculation.
+- [ ] **Suffix Expansion** - Life regen, mana regen, magic find, block chance (defer: focus on prefixes first, suffixes already have 15 types)
+- [ ] **Rarity-Specific Affixes** - T0 affixes that only roll on Rare items (defer: adds complexity, validate core system first)
+- [ ] **Crafting Benchmarks** - Guaranteed affix crafting at cost of currency (defer: requires economy balancing, might trivialize RNG)
+- [ ] **Multi-tier Rarity** - Sacred/Ancestral item bases like D4 (defer: requires area expansion beyond 4 zones)
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Unified Stat Calculation | HIGH | MEDIUM | P1 |
-| Tag System Separation | HIGH | LOW | P1 |
-| Directory Organization | MEDIUM | LOW | P1 |
-| Signal-Based UI | HIGH | MEDIUM | P1 |
-| Standardized Item Interface | HIGH | LOW | P1 |
-| Modifier Pipeline | MEDIUM | HIGH | P2 |
-| Damage Strategy Pattern | MEDIUM | MEDIUM | P2 |
-| Event Bus | LOW | LOW | P2 |
-| Resource-Based Items | MEDIUM | HIGH | P3 |
-| Composition Architecture | LOW | HIGH | P3 |
-| Reactive Stat System | LOW | MEDIUM | P3 |
+| Defensive prefixes (6 affixes) | HIGH | LOW | P1 |
+| Tag expansion (5 new tags) | HIGH | LOW | P1 |
+| StatType expansion (5 new enums) | HIGH | LOW | P1 |
+| Elemental resistance split (4 suffixes) | HIGH | LOW | P1 |
+| Currency area gating | HIGH | MEDIUM | P1 |
+| Drop rate rebalancing | MEDIUM | LOW | P1 |
+| Hybrid defense prefixes (3 affixes) | MEDIUM | MEDIUM | P2 |
+| Visual prefix/suffix separation | MEDIUM | LOW | P2 |
+| Defense specialization by slot | MEDIUM | MEDIUM | P2 |
+| Tag-based affix pool tooltips | LOW | MEDIUM | P2 |
+| Currency tooltips | LOW | LOW | P2 |
+| Suffix expansion (4-5 affixes) | LOW | LOW | P3 |
+| Rarity-specific affixes | LOW | HIGH | P3 |
+| Crafting benchmarks | MEDIUM | HIGH | P3 |
+| Multi-tier rarity (Sacred/Ancestral) | LOW | HIGH | P3 |
 
 **Priority key:**
-- P1: Must have for refactoring milestone completion
-- P2: Should have, add when patterns emerge
-- P3: Nice to have, future architectural evolution
-
-## Implementation Patterns
-
-### Pattern 1: Unified Stat Calculation
-
-**Current Problem:** weapon.gd lines 18-64 and ring.gd lines 13-35 have nearly identical compute_dps() implementations. weapon.gd has more sophisticated tag checking (PHYSICAL + FLAT, PHYSICAL + PERCENTAGE) while ring.gd uses simpler tag matching (ATTACK, SPEED, CRITICAL).
-
-**Solution Approach:**
-
-```gdscript
-# stat_calculator.gd (new system script)
-class_name StatCalculator extends Node
-
-static func calculate_dps(base_damage: int, base_speed: int, affixes: Array[Affix], base_crit_chance: float = 5.0, base_crit_damage: float = 150.0) -> float:
-    # Centralized calculation logic
-    # Order: flat damage → percentage damage → attack speed → crit
-    pass
-
-# weapon.gd (refactored)
-func compute_dps() -> float:
-    var affixes = self.prefixes + self.suffixes + [self.implicit]
-    return StatCalculator.calculate_dps(base_damage, base_speed, affixes, crit_chance, crit_damage)
-
-# ring.gd (refactored)
-func compute_dps() -> float:
-    var affixes = self.prefixes + self.suffixes + [self.implicit]
-    return StatCalculator.calculate_dps(base_damage, base_speed, affixes, crit_chance, crit_damage)
-```
-
-**Why:** Eliminates duplication, centralizes ARPG calculation rules, makes testing easier. Based on modular stat system pattern from Medium article and GDQuest separation of concerns.
-
-**Complexity:** MEDIUM - requires extracting logic, handling different tag interpretation between items, ensuring backward compatibility with current behavior.
-
-**Sources:**
-- [Modular Stat/Attribute System Tutorial for Godot 4](https://medium.com/@minoqi/modular-stat-attribute-system-tutorial-for-godot-4-0bac1c5062ce)
-- [Godot Tactics RPG – 09. Stats](https://theliquidfire.com/2024/10/10/godot-tactics-rpg-09-stats/)
-
-### Pattern 2: Tag System Separation
-
-**Current Problem:** Tag.gd defines constants used for both:
-1. Affix eligibility filtering (item.gd lines 74-77: "does this affix have a tag matching item.valid_tags?")
-2. Damage calculation routing (weapon.gd lines 33-39: "if PHYSICAL and FLAT in tags, add to base damage")
-
-**Solution Approach:**
-
-```gdscript
-# affix_tag.gd (affix eligibility)
-class_name AffixTag extends Node
-const WEAPON = "WEAPON"
-const ARMOR = "ARMOR"
-const DEFENSE = "DEFENSE"
-const ATTACK = "ATTACK"
-
-# stat_type.gd (calculation routing)
-class_name StatType extends Node
-const PHYSICAL_FLAT = "PHYSICAL_FLAT"
-const PHYSICAL_PERCENT = "PHYSICAL_PERCENT"
-const ATTACK_SPEED = "ATTACK_SPEED"
-const CRIT_CHANCE = "CRIT_CHANCE"
-const CRIT_DAMAGE = "CRIT_DAMAGE"
-
-# affix.gd (updated)
-var eligibility_tags: Array[String] = []  # for filtering
-var stat_modifications: Array[StatModifier] = []  # for calculations
-```
-
-**Why:** Single Responsibility Principle. Affix filtering is about "what can roll on this item base" while stat calculation is about "how does this affix modify stats". They change for different reasons (adding new item types vs. adding new damage mechanics).
-
-**Complexity:** LOW - mostly renaming and updating references. No algorithmic changes.
-
-**Sources:**
-- [GDScript Principles - Single Responsibility](https://this-is-envy.github.io/writing/gdscript.html)
-- [SOLID Principles prevention strategy](https://www.bairesdev.com/blog/software-anti-patterns/)
-
-### Pattern 3: Signal-Based UI Communication
-
-**Current Problem:** UI views likely use get_node() to access hero stats, creating tight coupling. Changes to scene hierarchy break at runtime only.
-
-**Solution Pattern: "Call Down, Signal Up"**
-
-```gdscript
-# hero.gd (emits changes)
-signal stats_updated(stats: Dictionary)
-signal health_changed(current: float, max: float)
-
-func update_stats():
-    calculate_dps()
-    calculate_defense()
-    calculate_crit_stats()
-    stats_updated.emit({
-        "dps": total_dps,
-        "defense": total_defense,
-        "crit_chance": total_crit_chance,
-        "crit_damage": total_crit_damage
-    })
-
-func take_damage(damage: float):
-    health -= damage
-    health = max(0, health)
-    health_changed.emit(health, max_health)
-    # ...
-
-# hero_view.gd (listens)
-@onready var hero: Hero = get_node("../../Hero")  # cache on ready
-
-func _ready():
-    hero.stats_updated.connect(_on_hero_stats_updated)
-    hero.health_changed.connect(_on_hero_health_changed)
-
-func _on_hero_stats_updated(stats: Dictionary):
-    dps_label.text = "DPS: %.1f" % stats.dps
-    # ...
-```
-
-**Why:** Loose coupling. UI doesn't need to poll for changes. Hero doesn't need to know about UI structure. Enables multiple listeners without hero knowing.
-
-**Complexity:** MEDIUM - requires adding signal emissions at all state change points, updating UI to listen instead of poll.
-
-**Sources:**
-- [Node communication (the right way) - Godot 4 Recipes](https://kidscancode.org/godot_recipes/4.x/basics/node_communication/index.html)
-- [Godot Signals Complete Guide: Scene Communication Mastery](https://generalistprogrammer.com/tutorials/godot-signals-complete-guide-scene-communication)
-- [Best practices with Godot signals - GDQuest](https://www.gdquest.com/tutorial/godot/best-practices/signals/)
-
-### Pattern 4: Modifier Pipeline (Advanced)
-
-**When to Implement:** After unified stat calculation is working, when adding affixes with complex interactions.
-
-**Order-of-Operations Pattern:**
-
-```gdscript
-# stat_modifier.gd
-class_name StatModifier extends Resource
-
-enum ModifierType {
-    FLAT,        # +50 damage
-    INCREASED,   # +25% increased damage (additive with other increased)
-    MORE,        # 30% more damage (multiplicative, separate)
-}
-
-var type: ModifierType
-var value: float
-var stat_name: String
-
-# stat_calculator.gd
-static func apply_modifiers(base_value: float, modifiers: Array[StatModifier]) -> float:
-    # Phase 1: Flat additions
-    var flat_sum = base_value
-    for mod in modifiers:
-        if mod.type == StatModifier.ModifierType.FLAT:
-            flat_sum += mod.value
-
-    # Phase 2: Increased (additive pool)
-    var increased_sum = 0.0
-    for mod in modifiers:
-        if mod.type == StatModifier.ModifierType.INCREASED:
-            increased_sum += mod.value
-    flat_sum *= (1.0 + increased_sum / 100.0)
-
-    # Phase 3: More (multiplicative)
-    var final_value = flat_sum
-    for mod in modifiers:
-        if mod.type == StatModifier.ModifierType.MORE:
-            final_value *= (1.0 + mod.value / 100.0)
-
-    return final_value
-```
-
-**Why:** Prevents exponential power creep from stacking multipliers. Industry-standard pattern from Path of Exile, Diablo-likes. Allows "+25% increased damage" and "+25% increased damage" to combine as 50% (additive) rather than 56.25% (multiplicative).
-
-**Complexity:** HIGH - requires refactoring affix system to emit StatModifiers instead of raw tags, updating all calculation paths to use pipeline.
-
-**Sources:**
-- [Modular Stat/Attribute System Tutorial for Godot 4](https://medium.com/@minoqi/modular-stat-attribute-system-tutorial-for-godot-4-0bac1c5062ce)
-- Path of Exile modifier mechanics (common game dev knowledge, multiplicative vs increased distinction)
-
-## Refactoring Threshold Rules
-
-### When to Extract Shared Logic
-
-**Rule of Three:** Don't abstract until code appears in 3 places. Currently weapon.gd and ring.gd = 2 instances. If a third damage-dealing item type is added, THEN extract. However, the duplication is substantial (47 lines in weapon.gd vs 23 in ring.gd covering same concepts), so extraction is justified.
-
-**Source:** [My Thresholds for Refactoring - Coffee Brain Games](https://coffeebraingames.wordpress.com/2017/11/06/my-thresholds-for-refactoring/)
-
-### When NOT to Refactor
-
-**Stable Code:** If armor.gd update_value() (lines 11-32) works correctly and hasn't changed in months, leave it alone even if structure differs from weapon/ring. "If it ain't broke, don't fix it" applies when code isn't causing maintenance burden.
-
-**Before Understanding:** Don't refactor calculation logic until you understand why weapon.gd uses `new_dps *= (1.0 + affix.value / 100.0)` (multiplicative) while ring.gd uses `new_spd += affix.value` (additive). Refactoring without understanding leads to breaking subtle intentional differences.
-
-**Source:** [Refactoring: the Way to Perfection](https://www.gamedeveloper.com/programming/refactoring-the-way-to-perfection-)
-
-## Anti-Pattern Warnings
-
-### God Class/Object
-
-**Risk:** Creating a CentralItemManager that handles item creation, stat calculation, affix rolling, display formatting, inventory management, etc.
-
-**Prevention:** Keep StatCalculator focused on stat calculation only. Item creation stays in item factory. Display logic stays in items. Inventory management is separate system.
-
-**Source:** [The God Class Intervention: Avoiding the All-Knowing Anti-Pattern in Game Development](https://www.wayline.io/blog/god-class-intervention-avoiding-anti-pattern)
-
-### Premature Abstraction
-
-**Risk:** Creating abstract "CalculationStrategy" interfaces before you have 3+ concrete strategies to learn from.
-
-**Prevention:** Start with concrete StatCalculator.calculate_dps(). If adding elemental damage reveals different calculation path, THEN extract strategy interface from 2 working implementations.
-
-**Source:** [Anti-patterns You Should Avoid in Your Code](https://www.freecodecamp.org/news/antipatterns-to-avoid-in-code/)
-
-### Reinventing the Wheel
-
-**Risk:** Creating custom modifier system when Godot Resource-based stats exist.
-
-**Prevention:** Check GitHub for existing Godot 4 stat systems (EnhancedStat addon, inventory-system by expressobits) before building from scratch. Adapt existing patterns to your needs.
-
-**Sources:**
-- [EnhancedStat addon for Godot 4](https://github.com/Zennyth/EnhancedStat)
-- [Modular inventory system for Godot 4](https://github.com/expressobits/inventory-system)
+- P1: Must have for launch - unblocks non-weapon crafting
+- P2: Should have, add when possible - improves UX after core works
+- P3: Nice to have, future consideration - requires economy/balance validation
+
+## Competitor Feature Analysis
+
+| Feature | Path of Exile | Diablo 4 | Last Epoch | Our Approach |
+|---------|---------------|----------|------------|--------------|
+| Defensive prefixes | Flat armor, %armor, flat evasion, %evasion, flat ES, %ES on all armor slots; hybrid mods common | Armor, damage reduction as primary stats; affixes scale with item power (925 max) | Prefixes are offense/utility, suffixes are defense; 2 prefix + 2 suffix limit | Follow PoE model - flat/percent split, hybrid mods for efficiency; 3 prefix + 3 suffix on Rare items already matches PoE |
+| Elemental resistances | Individual fire/cold/lightning suffixes, plus "all resist" hybrid; capped at 75% in endgame | Individual resistances as suffixes; World Tier gates max resistance values | Suffix-based; tier 1-7 scaling determines value range | Split "Elemental Reduction" into fire/cold/lightning/all_res; follow PoE/LE suffix model |
+| Currency gating | Map tiers gate Exalted/Divine orb drops; campaign areas drop Transmutation/Augmentation only | World Tiers gate Sacred/Ancestral item drops and high-tier currency; torment levels add complexity | Endgame monoliths drop more advanced currency; campaign has lower drop rates | Threshold-based gating (area 1-2 = basic, 3-4 = advanced) vs pure RNG; clearer than PoE, simpler than D4 torment system |
+| Item rarity progression | Normal/Magic/Rare/Unique; chaos/exalt spam for endgame crafting; very RNG-heavy | Normal/Magic/Rare/Legendary; Sacred/Ancestral tiers at World Tier 3-4; item power 925 cap | Normal/Magic/Rare/Unique/Set; Legendary system for target farming; less RNG than PoE | Normal/Magic/Rare (no Unique yet); area-based rarity weights already implemented; matches PoE structure without complexity |
+| Affix pool size | 100+ affixes per item slot; notorious for "dead mod" problem - 80% of affixes useless | 20-30 affixes per slot; streamlined vs PoE but still has useless affixes (life regen complaints) | 15-25 affixes per slot; focused pool avoids dead mods; best balance of depth/clarity | Start with 15-20 defensive affixes; avoid PoE's bloat, aim for LE's focused approach |
+| Hybrid affixes | Common on armor (armor+evasion, armor+ES, etc.); reduces affix slot pressure | Rare; most affixes single-stat for clarity | Hybrid mods noted with asterisk; displayed across 2 lines for readability | Limit to defensive prefixes on body armor/helmet; suffixes stay single-stat |
 
 ## Sources
 
-### Godot-Specific Resources
-- [GDScript style guide - Godot Engine](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html)
-- [A GDScript refactoring exercise - Go, Go, Godot!](https://www.gogogodot.io/refactoring-in-godot/)
-- [Godot GDScript guidelines - GDQuest](https://gdquest.gitbook.io/gdquests-guidelines/godot-gdscript-guidelines)
-- [Node communication (the right way) - Godot 4 Recipes](https://kidscancode.org/godot_recipes/4.x/basics/node_communication/index.html)
-- [Best practices with Godot signals - GDQuest](https://www.gdquest.com/tutorial/godot/best-practices/signals/)
-- [The Events bus singleton - GDQuest](https://www.gdquest.com/tutorial/godot/design-patterns/event-bus-singleton/)
-- [Godot Signals Complete Guide: Scene Communication Mastery](https://generalistprogrammer.com/tutorials/godot-signals-complete-guide-scene-communication)
-
-### Stat System Architecture
-- [Modular Stat/Attribute System Tutorial for Godot 4](https://medium.com/@minoqi/modular-stat-attribute-system-tutorial-for-godot-4-0bac1c5062ce)
-- [How is a complex RPG damage system typically done? - Godot Forum](https://forum.godotengine.org/t/how-is-a-complex-rpg-damage-system-typically-done/87174)
-- [Godot Tactics RPG – 09. Stats](https://theliquidfire.com/2024/10/10/godot-tactics-rpg-09-stats/)
-- [EnhancedStat addon - GitHub](https://github.com/Zennyth/EnhancedStat)
-
-### Resource-Based Design
-- [Resource-based architecture for Godot 4](https://medium.com/@sfmayke/resource-based-architecture-for-godot-4-25bd4b2d9018)
-- [Creating and Using Custom Resources - Data-Driven Design in Godot Engine](https://uhiyama-lab.com/en/notes/godot/custom-resource-data-driven/)
-- [Inventory System Design Fundamentals - Resource and Signals](https://uhiyama-lab.com/en/notes/godot/inventory-system/)
-- [Custom Resources are OP in Godot 4](https://ezcha.net/news/3-1-23-custom-resources-are-op-in-godot-4)
-- [Build Powerful and Scalable Inventories in Godot](https://dropc-gamestudio.com/concepts/build-powerful-and-scalable-inventories-in-godot/)
-
-### Object-Oriented Design Patterns
-- [Polymorphism in GDScript - Godot Forum](https://forum.godotengine.org/t/polymorphism-in-gdscript/27500)
-- [Godot's Node System, Part 1: An OOP Overview](https://willnationsdev.wordpress.com/2018/04/05/godots-node-system-a-paradigm-overview/)
-- [Inheritance, polymorphism, and more!](http://blog.moblcade.com/?p=59)
-- [Class Inheritance - Godot GDScript Tutorial](https://godottutorials.com/courses/introduction-to-gdscript/godot-tutorials-gdscript-17/)
-
-### Composition vs Inheritance
-- [OOP: Inheritance or Components for an Item System - GameDev.net](https://www.gamedev.net/forums/topic/704545-oop-inheritance-or-components-for-an-item-system/)
-- [Composition over Inheritance - Example in game development](https://www.ckhang.com/blog/2020/composition-over-inheritance/)
-- [Composition vs. Inheritance: Boosting Game Performance with Component-Based Design](https://www.wayline.io/blog/composition-vs-inheritance-game-performance)
-- [Prefer Composition over Implementation Inheritance](http://whats-in-a-game.com/prefer-composition-over-implementation-inheritance/)
-
-### Design Patterns for Damage/Stats
-- [Strategy Pattern - Composition over Inheritance](https://onewheelstudio.com/blog/2020/8/16/strategy-pattern-composition-over-inheritance)
-- [Designing a data driven crafting system using tags - GameDev.net](https://www.gamedev.net/forums/topic/715034-designing-a-data-driven-crafting-system-using-tags/)
-- [Essential Game Development Programming Patterns](https://medium.com/@chitranshnishad27/essential-game-development-programming-patterns-ebcf606d2ca9)
-- [Game Programming Patterns - Table of Contents](https://gameprogrammingpatterns.com/contents.html)
-
-### Refactoring Best Practices
-- [Code Refactor and Game Polishing Advice - Godot Tutorials](https://godottutorials.com/courses/pong-gdscript-series/pong-gdscript-tutorial-14/)
-- [Refactoring the Pong Game - Godot Tutorials](https://godottutorials.com/courses/pong-gdscript-series/pong-gdscript-tutorial-07/)
-- [My Thresholds for Refactoring - Coffee Brain Games](https://coffeebraingames.wordpress.com/2017/11/06/my-thresholds-for-refactoring/)
-- [Refactoring: the Way to Perfection - Game Developer](https://www.gamedeveloper.com/programming/refactoring-the-way-to-perfection-)
-
-### Anti-Patterns to Avoid
-- [The God Class Intervention: Avoiding the All-Knowing Anti-Pattern in Game Development](https://www.wayline.io/blog/god-class-intervention-avoiding-anti-pattern)
-- [A Catalogue of Game-Specific Anti-Patterns - ACM](https://dl.acm.org/doi/abs/10.1145/3511430.3511436)
-- [Top 5 Software Anti Patterns to Avoid](https://www.bairesdev.com/blog/software-anti-patterns/)
-- [Anti-patterns You Should Avoid in Your Code](https://www.freecodecamp.org/news/antipatterns-to-avoid-in-code/)
-- [6 Types of Anti Patterns to Avoid in Software Development](https://www.geeksforgeeks.org/blogs/types-of-anti-patterns-to-avoid-in-software-development/)
+- [Item Affixes for Gear - Diablo 4 Wowhead Guide](https://www.wowhead.com/diablo-4/guide/gear-items/affixes)
+- [Gear Walkthrough - Last Epoch Maxroll.gg](https://maxroll.gg/last-epoch/resources/gear-walkthrough)
+- [Defences - PoE Wiki](https://www.poewiki.net/wiki/Defences)
+- [Path of Exile 2 Defense and Resistance Guide](https://www.sportskeeda.com/mmo/exile-2-poe2-defense-resistance-guide-energy-shield-armor-evasion)
+- [Design Philosophy of Affixes - PoE Forum](http://www.pathofexile.com/forum/view-thread/544912)
+- [Defining Loot Tables in ARPG Game Design - Gamedeveloper.com](https://www.gamedeveloper.com/design/defining-loot-tables-in-arpg-game-design)
+- [Top ARPGs in 2026 - Tribality](https://www.tribality.com/articles/top-action-rpgs-arpgs-in-2026-the-best-isometric-loot-driven-games/)
+- [Drop rate - PoE Wiki](https://www.poewiki.net/wiki/Drop_rate)
+- [Diablo 4 World Tiers Guide - Mobalytics](https://mobalytics.gg/blog/diablo-4/world-tiers-guide/)
+- [PoE 2 Crafting for Beginners - Item Modifiers - Mobalytics](https://mobalytics.gg/poe-2/guides/crafting-basics-part-1)
+- [Prefixes - Body Armor - Last Epoch Database](https://www.lastepochtools.com/db/category/chest/prefixes)
+- [Useless Affixes Discussion - No Rest For The Wicked Forum](https://forum.norestforthewicked.com/t/some-affixes-are-useless/14131)
+- [Managing Virtual Economies: Inflation Domination - Gamedeveloper.com](https://www.gamedeveloper.com/business/managing-virtual-economies-inflation-domination)
 
 ---
-*Feature research for: Refactoring GDScript ARPG Codebase*
-*Researched: 2026-02-14*
+*Feature research for: ARPG Defensive Affixes & Currency Gating*
+*Researched: 2026-02-15*
