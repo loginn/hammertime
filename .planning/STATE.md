@@ -8,21 +8,22 @@
 
 **Current Milestone:** v1.0 Crafting Overhaul
 
-**Current Focus:** Phase 5 - Item Rarity System (not yet started)
+**Current Focus:** Phase 5 - Item Rarity System (in progress)
 
 ## Current Position
 
 **Phase:** 5 of 8 (v1.0 Crafting Overhaul)
 
-**Plan:** Not yet created
+**Plan:** 05-01 complete, 05-02 next
 
-**Status:** Awaiting planning
+**Status:** Executing Phase 5
 
 **Progress:**
 ```
-v1.0 Milestone Progress: [----] 0% (0/4 phases complete)
+[█████████░] 90%
+v1.0 Milestone Progress: [██--] 50% (1/2 plans complete in Phase 5)
 
-Phase 5: Item Rarity System        [----] Pending
+Phase 5: Item Rarity System        [██--] In progress (1/2 plans complete)
 Phase 6: Currency Behaviors         [----] Pending
 Phase 7: Drop Integration           [----] Pending
 Phase 8: UI Migration               [----] Pending
@@ -46,9 +47,12 @@ Phase 8: UI Migration               [----] Pending
 
 **Started:** 2026-02-15
 
-**Completed:** Not started
+**Completed:** In progress
 
 **Duration:** TBD
+
+**Current Phase Performance:**
+- Phase 5, Plan 1: 96s (2 tasks, 6 files)
 
 ### Previous Milestone: v0.1 Code Cleanup & Architecture
 
@@ -80,6 +84,8 @@ Phase 8: UI Migration               [----] Pending
 - StatCalculator singleton for unified calculations
 - Signal-based parent coordination (call down, signal up)
 - @onready caching over repeated get_node() calls
+- [Phase 05]: Used dictionary-based RARITY_LIMITS instead of match statement for configuration flexibility
+- [Phase 05]: Added custom_max_prefixes/suffixes override mechanism for future exotic bases
 
 ### Active TODOs
 
@@ -101,15 +107,16 @@ Phase 8: UI Migration               [----] Pending
 
 **What we're building:** v1.0 Crafting Overhaul replacing basic 3-hammer system with Normal/Magic/Rare items and 6 themed crafting hammers
 
-**Where we are:** Roadmap complete, Phase 5 (Item Rarity System) ready for planning
+**Where we are:** Phase 5, Plan 1 complete (rarity foundation). Plan 2 next (rarity display).
 
-**Next step:** Run `/gsd:plan-phase 5` to decompose rarity system into executable plans
+**Next step:** Run `/gsd:execute-plan 05-02` to implement rarity display in UI
 
 **Key context:**
-- Item model already Resource-based (v0.1 migration complete)
-- StatCalculator handles all DPS calculations
-- Rarity system must integrate with existing affix limits (3 prefix + 3 suffix max)
-- Success criteria focus on enforcing mod count limits per rarity tier
+- Rarity foundation complete: Item class has Rarity enum, configurable limits, enforcement
+- All base types default to Normal rarity (0 affixes allowed)
+- Magic items allow 1 prefix + 1 suffix, Rare items allow 3 + 3
+- Custom override mechanism exists for future exotic bases
+- add_prefix()/add_suffix() now return bool for caller feedback
 
 **Files to reference:**
 - `.planning/ROADMAP.md` - Phase 5 goals and success criteria
@@ -118,11 +125,11 @@ Phase 8: UI Migration               [----] Pending
 
 ## Session Continuity
 
-**Previous session:** v0.1 milestone completion and archive (2026-02-15)
+**Previous session:** v1.0 roadmap creation (2026-02-15)
 
-**This session:** v1.0 roadmap creation (2026-02-15)
+**This session:** Phase 5, Plan 1 execution (2026-02-15)
 
-**Next session:** Phase 5 planning and implementation
+**Next session:** Phase 5, Plan 2 execution
 
 **Handoff notes:**
 - All 22 v1.0 requirements mapped to phases
