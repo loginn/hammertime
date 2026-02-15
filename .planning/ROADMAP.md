@@ -90,10 +90,10 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md -- Rarity-weighted item drops (LootTable + gameplay integration)
-- [ ] 07-02-PLAN.md -- Currency drops from area clearing (6 hammer types)
+- [x] 07-01-PLAN.md -- Rarity-weighted item drops (LootTable + gameplay integration)
+- [x] 07-02-PLAN.md -- Currency drops from area clearing (6 hammer types)
 
-**Status:** Planned
+**Status:** ✓ Complete (2026-02-15)
 
 ---
 
@@ -125,9 +125,9 @@ Plans:
 | 4. Signal-Based Communication | v0.1 | 2/2 | ✓ Complete | 2026-02-15 |
 | 5. Item Rarity System | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 6. Currency Behaviors | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
-| 7. Drop Integration | v1.0 | 0/2 | Planned | - |
+| 7. Drop Integration | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 8. UI Migration | v1.0 | 0/? | Pending | - |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-15 (Phase 7 planned: 2 plans)*
+*Last updated: 2026-02-15 (Phase 7 complete: 2/2 plans)*
