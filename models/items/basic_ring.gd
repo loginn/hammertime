@@ -2,6 +2,7 @@ class_name BasicRing extends Ring
 
 
 func _init() -> void:
+	self.rarity = Rarity.NORMAL
 	self.item_name = "Basic Ring"
 	self.tier = 8
 	self.valid_tags = [Tag.ATTACK, Tag.CRITICAL, Tag.SPEED]

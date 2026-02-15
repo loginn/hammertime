@@ -2,6 +2,7 @@ class_name BasicBoots extends Boots
 
 
 func _init() -> void:
+	self.rarity = Rarity.NORMAL
 	self.item_name = "Basic Boots"
 	self.tier = 8
 	self.valid_tags = [Tag.DEFENSE, Tag.ARMOR, Tag.SPEED, Tag.ENERGY_SHIELD]

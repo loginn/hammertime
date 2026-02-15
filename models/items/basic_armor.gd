@@ -2,6 +2,7 @@ class_name BasicArmor extends Armor
 
 
 func _init() -> void:
+	self.rarity = Rarity.NORMAL
 	self.item_name = "Basic Armor"
 	self.tier = 8
 	self.valid_tags = [Tag.DEFENSE, Tag.ARMOR, Tag.ENERGY_SHIELD]
