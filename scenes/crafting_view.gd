@@ -389,13 +389,4 @@ func update_inventory_display() -> void:
 		else:
 			display_text += type_name + ": None\n"
 
-	# Add currency counts section
-	display_text += "\nCurrencies:\n"
-	display_text += "Runic Hammer: " + str(GameState.currency_counts.get("runic", 0)) + "\n"
-	display_text += "Forge Hammer: " + str(GameState.currency_counts.get("forge", 0)) + "\n"
-	display_text += "Tack Hammer: " + str(GameState.currency_counts.get("tack", 0)) + "\n"
-	display_text += "Grand Hammer: " + str(GameState.currency_counts.get("grand", 0)) + "\n"
-	display_text += "Claw Hammer: " + str(GameState.currency_counts.get("claw", 0)) + "\n"
-	display_text += "Tuning Hammer: " + str(GameState.currency_counts.get("tuning", 0)) + "\n"
-
 	inventory_label.text = display_text
