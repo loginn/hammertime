@@ -83,6 +83,7 @@ func equip_item(item: Item, slot: ItemSlot) -> bool:
 		update_stats_display()
 		update_item_stats_display()  # Update item stats display in case we're hovering
 		equipment_changed.emit()  # Notify gameplay view of DPS change
+		GameEvents.equipment_changed.emit(slot_name, item)
 		print("Equipped ", item.item_name, " to ", get_slot_name(slot))
 		return true
 	else:
@@ -97,6 +98,7 @@ func unequip_item(slot: ItemSlot) -> Item:
 	update_slot_display(slot)
 	update_stats_display()
 	equipment_changed.emit()  # Notify gameplay view of DPS change
+	GameEvents.equipment_changed.emit(slot_name, null)
 	if item:
 		print("Unequipped ", item.item_name, " from ", get_slot_name(slot))
 	return item

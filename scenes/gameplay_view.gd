@@ -107,6 +107,7 @@ func clear_area() -> void:
 
 		# Give the item base to crafting view
 		item_base_found.emit(item_base)
+		GameEvents.area_cleared.emit(area_level)
 
 		# Hero finds random hammers in the area
 		give_hammer_rewards()
