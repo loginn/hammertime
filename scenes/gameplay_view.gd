@@ -132,7 +132,27 @@ func get_random_item_base() -> Item:
 	# Randomly generate different item types
 	var item_types = [LightSword, BasicHelmet, BasicArmor, BasicBoots, BasicRing]
 	var random_type = item_types[randi() % item_types.size()]
-	return random_type.new()
+	var item = random_type.new()
+
+	# Roll rarity based on area level
+	var rarity = LootTable.roll_rarity(area_level)
+
+	# Apply rarity and mods
+	LootTable.spawn_item_with_mods(item, rarity)
+
+	# Print drop result
+	var rarity_name = ""
+	match rarity:
+		Item.Rarity.NORMAL:
+			rarity_name = "Normal"
+		Item.Rarity.MAGIC:
+			rarity_name = "Magic"
+		Item.Rarity.RARE:
+			rarity_name = "Rare"
+
+	print("Dropped: ", item.item_name, " (", rarity_name, ")")
+
+	return item
 
 
 func update_clearing_speed() -> void:
