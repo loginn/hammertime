@@ -120,9 +120,9 @@ Ring: None"
 [node name="ItemTypeButtons" type="Control" parent="."]
 layout_mode = 0
 offset_left = 170.0
-offset_top = 220.0
+offset_top = 410.0
 offset_right = 400.0
-offset_bottom = 320.0
+offset_bottom = 510.0
 
 [node name="WeaponButton" type="Button" parent="ItemTypeButtons"]
 layout_mode = 0
