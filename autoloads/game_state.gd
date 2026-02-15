@@ -14,14 +14,18 @@ func _ready() -> void:
 	hero.equipped_items["ring"] = null
 
 	# Initialize currency counts
+	var debug_hammers := OS.get_cmdline_args().has("--debug-hammers")
+	var start_count := 999 if debug_hammers else 0
 	currency_counts = {
-		"runic": 0,
-		"forge": 0,
-		"tack": 0,
-		"grand": 0,
-		"claw": 0,
-		"tuning": 0
+		"runic": start_count,
+		"forge": start_count,
+		"tack": start_count,
+		"grand": start_count,
+		"claw": start_count,
+		"tuning": start_count
 	}
+	if debug_hammers:
+		print("DEBUG: Spawned with 999 of each hammer")
 
 
 ## Adds currencies from a drops dictionary to the inventory
