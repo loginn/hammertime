@@ -192,13 +192,31 @@ func update_stats_display() -> void:
 	var total_dps = get_total_dps()
 	var total_crit_chance = get_total_crit_chance()
 	var total_crit_damage = get_total_crit_damage()
-	var total_defense = get_total_defense()
 
-	stats_label.text = "Hero Stats:\n"
+	# Offense section
+	stats_label.text = "Offense:\n"
 	stats_label.text += "Total DPS: %.1f\n" % total_dps
 	stats_label.text += "Crit Chance: %.1f%%\n" % total_crit_chance
 	stats_label.text += "Crit Damage: %.1f%%\n" % total_crit_damage
-	stats_label.text += "Defense: %d" % total_defense
+
+	# Defense section (only show non-zero types)
+	stats_label.text += "\nDefense:\n"
+	var total_armor = GameState.hero.get_total_armor()
+	var total_evasion = GameState.hero.get_total_evasion()
+	var total_es = GameState.hero.get_total_energy_shield()
+
+	var has_defense = false
+	if total_armor > 0:
+		stats_label.text += "Armor: %d\n" % total_armor
+		has_defense = true
+	if total_evasion > 0:
+		stats_label.text += "Evasion: %d\n" % total_evasion
+		has_defense = true
+	if total_es > 0:
+		stats_label.text += "Energy Shield: %d\n" % total_es
+		has_defense = true
+	if not has_defense:
+		stats_label.text += "(No defense equipped)\n"
 
 
 # Set the last crafted item (called from crafting view)
@@ -284,9 +302,103 @@ func get_item_stats_text(item: Item) -> String:
 			stats_text += "\nSuffixes:\n"
 			for suffix in weapon.suffixes:
 				stats_text += suffix.affix_name + ": " + str(suffix.value) + "\n"
+	elif item is Armor:
+		var armor_item = item as Armor
+		stats_text += "Armor: %d\n" % armor_item.base_armor
+		if armor_item.base_evasion > 0:
+			stats_text += "Evasion: %d\n" % armor_item.base_evasion
+		if armor_item.base_energy_shield > 0:
+			stats_text += "Energy Shield: %d\n" % armor_item.base_energy_shield
+		if armor_item.base_health > 0:
+			stats_text += "Health: %d\n" % armor_item.base_health
+
+		# Add affix information
+		if armor_item.implicit:
+			stats_text += "\nImplicit:\n"
+			stats_text += armor_item.implicit.affix_name + ": " + str(armor_item.implicit.value) + "\n"
+
+		if armor_item.prefixes.size() > 0:
+			stats_text += "\nPrefixes:\n"
+			for prefix in armor_item.prefixes:
+				stats_text += prefix.affix_name + ": " + str(prefix.value) + "\n"
+
+		if armor_item.suffixes.size() > 0:
+			stats_text += "\nSuffixes:\n"
+			for suffix in armor_item.suffixes:
+				stats_text += suffix.affix_name + ": " + str(suffix.value) + "\n"
+	elif item is Boots:
+		var boots_item = item as Boots
+		stats_text += "Armor: %d\n" % boots_item.base_armor
+		if boots_item.base_evasion > 0:
+			stats_text += "Evasion: %d\n" % boots_item.base_evasion
+		if boots_item.base_energy_shield > 0:
+			stats_text += "Energy Shield: %d\n" % boots_item.base_energy_shield
+		stats_text += "Movement Speed: %d\n" % boots_item.base_movement_speed
+		if boots_item.base_health > 0:
+			stats_text += "Health: %d\n" % boots_item.base_health
+
+		# Add affix information
+		if boots_item.implicit:
+			stats_text += "\nImplicit:\n"
+			stats_text += boots_item.implicit.affix_name + ": " + str(boots_item.implicit.value) + "\n"
+
+		if boots_item.prefixes.size() > 0:
+			stats_text += "\nPrefixes:\n"
+			for prefix in boots_item.prefixes:
+				stats_text += prefix.affix_name + ": " + str(prefix.value) + "\n"
+
+		if boots_item.suffixes.size() > 0:
+			stats_text += "\nSuffixes:\n"
+			for suffix in boots_item.suffixes:
+				stats_text += suffix.affix_name + ": " + str(suffix.value) + "\n"
+	elif item is Helmet:
+		var helmet_item = item as Helmet
+		stats_text += "Armor: %d\n" % helmet_item.base_armor
+		if helmet_item.base_evasion > 0:
+			stats_text += "Evasion: %d\n" % helmet_item.base_evasion
+		if helmet_item.base_energy_shield > 0:
+			stats_text += "Energy Shield: %d\n" % helmet_item.base_energy_shield
+		if helmet_item.base_mana > 0:
+			stats_text += "Mana: %d\n" % helmet_item.base_mana
+		if helmet_item.base_health > 0:
+			stats_text += "Health: %d\n" % helmet_item.base_health
+
+		# Add affix information
+		if helmet_item.implicit:
+			stats_text += "\nImplicit:\n"
+			stats_text += helmet_item.implicit.affix_name + ": " + str(helmet_item.implicit.value) + "\n"
+
+		if helmet_item.prefixes.size() > 0:
+			stats_text += "\nPrefixes:\n"
+			for prefix in helmet_item.prefixes:
+				stats_text += prefix.affix_name + ": " + str(prefix.value) + "\n"
+
+		if helmet_item.suffixes.size() > 0:
+			stats_text += "\nSuffixes:\n"
+			for suffix in helmet_item.suffixes:
+				stats_text += suffix.affix_name + ": " + str(suffix.value) + "\n"
+	elif item is Ring:
+		var ring_item = item as Ring
+		stats_text += "DPS: %.1f\n" % ring_item.dps
+		stats_text += "Crit Chance: %.1f%%\n" % ring_item.crit_chance
+		stats_text += "Crit Damage: %.1f%%\n" % ring_item.crit_damage
+
+		# Add affix information
+		if ring_item.implicit:
+			stats_text += "\nImplicit:\n"
+			stats_text += ring_item.implicit.affix_name + ": " + str(ring_item.implicit.value) + "\n"
+
+		if ring_item.prefixes.size() > 0:
+			stats_text += "\nPrefixes:\n"
+			for prefix in ring_item.prefixes:
+				stats_text += prefix.affix_name + ": " + str(prefix.value) + "\n"
+
+		if ring_item.suffixes.size() > 0:
+			stats_text += "\nSuffixes:\n"
+			for suffix in ring_item.suffixes:
+				stats_text += suffix.affix_name + ": " + str(suffix.value) + "\n"
 	else:
-		stats_text += "Defense: 0\n"  # Placeholder for future armor items
-		stats_text += "Other stats coming soon..."
+		stats_text += "(Unknown item type)"
 
 	return stats_text
 

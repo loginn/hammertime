@@ -9,6 +9,9 @@ var hero_name: String = "Adventurer"
 var equipped_items: Dictionary = {}
 var total_dps: float = 0.0
 var total_defense: int = 0
+var total_armor: int = 0
+var total_evasion: int = 0
+var total_energy_shield: int = 0
 var total_crit_chance: float = 5.0
 var total_crit_damage: float = 150.0
 
@@ -98,16 +101,29 @@ func calculate_dps() -> float:
 
 func calculate_defense() -> int:
 	"""Calculate total defense from equipped armor"""
-	total_defense = 0
+	total_armor = 0
+	total_evasion = 0
+	total_energy_shield = 0
 
 	# Add defense from armor pieces
 	for slot in ["helmet", "armor", "boots"]:
 		if slot in equipped_items and equipped_items[slot] != null:
 			var armor_item = equipped_items[slot]
-			if armor_item.has_method("get_total_defense"):
-				total_defense += armor_item.get_total_defense()
-			elif "total_defense" in armor_item:
-				total_defense += armor_item.total_defense
+
+			# Check for base_armor property
+			if "base_armor" in armor_item:
+				total_armor += armor_item.base_armor
+
+			# Check for base_evasion property
+			if "base_evasion" in armor_item:
+				total_evasion += armor_item.base_evasion
+
+			# Check for base_energy_shield property
+			if "base_energy_shield" in armor_item:
+				total_energy_shield += armor_item.base_energy_shield
+
+	# Backward compatibility - total_defense equals total_armor
+	total_defense = total_armor
 
 	return total_defense
 
@@ -150,6 +166,21 @@ func get_total_crit_chance() -> float:
 func get_total_crit_damage() -> float:
 	"""Get the hero's total crit damage"""
 	return total_crit_damage
+
+
+func get_total_armor() -> int:
+	"""Get the hero's total armor"""
+	return total_armor
+
+
+func get_total_evasion() -> int:
+	"""Get the hero's total evasion"""
+	return total_evasion
+
+
+func get_total_energy_shield() -> int:
+	"""Get the hero's total energy shield"""
+	return total_energy_shield
 
 
 func get_health_percentage() -> float:
