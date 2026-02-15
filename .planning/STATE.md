@@ -14,17 +14,17 @@
 
 **Phase:** 6 of 8 (v1.0 Crafting Overhaul)
 
-**Plan:** 06-01 complete (Plan 1 of 2)
+**Plan:** 06-02 complete (Plan 2 of 2)
 
-**Status:** Phase 6 in progress
+**Status:** Phase 6 complete
 
 **Progress:**
 ```
-[█████████░] 92%
-v1.0 Milestone Progress: [█████░] 50% (1/2 plans complete in Phase 6)
+[██████████] 100%
+v1.0 Milestone Progress: [██████----] 50% (2/2 plans complete in Phase 6)
 
 Phase 5: Item Rarity System        [████] Complete (2/2 plans complete)
-Phase 6: Currency Behaviors         [██--] In Progress (1/2 plans complete)
+Phase 6: Currency Behaviors         [████] Complete (2/2 plans complete)
 Phase 7: Drop Integration           [----] Pending
 Phase 8: UI Migration               [----] Pending
 ```
@@ -55,6 +55,7 @@ Phase 8: UI Migration               [----] Pending
 - Phase 5, Plan 1: 96s (2 tasks, 6 files)
 - Phase 5, Plan 2: 103s (2 tasks, 3 files)
 - Phase 6, Plan 1: 106s (2 tasks, 3 files)
+- Phase 6, Plan 2: 87s (2 tasks, 4 files)
 
 ### Previous Milestone: v0.1 Code Cleanup & Architecture
 
@@ -93,6 +94,9 @@ Phase 8: UI Migration               [----] Pending
 - [Phase 06]: Set rarity BEFORE calling add_prefix/add_suffix to ensure proper limit enforcement in upgrade hammers
 - [Phase 06]: Used template method pattern in base Currency.apply() to enforce consume-only-on-success (CRAFT-09)
 - [Phase 06]: Random mod selection uses 50/50 prefix/suffix choice with fallback to alternate type
+- [Phase 06]: TackHammer and GrandHammer use same 50/50 prefix/suffix logic as upgrade hammers
+- [Phase 06]: ClawHammer preserves rarity when removing mods per CRAFT-05
+- [Phase 06]: TuningHammer only rerolls explicit mods (not implicit) per CRAFT-06
 
 ### Active TODOs
 
@@ -102,7 +106,7 @@ Phase 8: UI Migration               [----] Pending
 
 **Implementation:**
 - [x] Phase 6, Plan 1: Currency foundation with upgrade hammers (06-01 complete)
-- [ ] Phase 6, Plan 2: Modifier hammers (Chaotic, Annulment, Exalted, Blessed)
+- [x] Phase 6, Plan 2: Modifier hammers (TackHammer, GrandHammer, ClawHammer, TuningHammer) (06-02 complete)
 
 ### Known Blockers
 
@@ -115,37 +119,41 @@ Phase 8: UI Migration               [----] Pending
 
 **What we're building:** v1.0 Crafting Overhaul replacing basic 3-hammer system with Normal/Magic/Rare items and 6 themed crafting hammers
 
-**Where we are:** Phase 6 in progress. Plan 06-01 complete (currency foundation), Plan 06-02 next (modifier hammers).
+**Where we are:** Phase 6 complete. All 6 crafting hammers implemented. Ready for Phase 7 (Drop Integration).
 
-**Next step:** Execute Phase 6 Plan 02 - Modifier hammers (Chaotic, Annulment, Exalted, Blessed)
+**Next step:** Plan Phase 7 - Drop Integration (hook hammer drops into enemy loot tables)
 
 **Key context:**
-- Rarity system complete: Enum, limits, enforcement, and visual display
-- Currency foundation established: Base Currency pattern with validate/apply/error separation
-- Upgrade hammers complete: RunicHammer (Normal→Magic), ForgeHammer (Normal→Rare)
-- Template method pattern enforces consume-only-on-success (CRAFT-09)
-- Rarity must be set BEFORE calling add_prefix/add_suffix for proper limit enforcement
-- add_prefix()/add_suffix() enforce rarity limits and return bool
+- Rarity system complete: Enum, limits, enforcement, and visual display (Phase 5)
+- Currency system complete: All 6 hammers implemented (Phase 6)
+  - RunicHammer: Normal → Magic (1-2 mods)
+  - ForgeHammer: Normal → Rare (4-6 mods)
+  - TackHammer: Add mod to Magic (respects 1+1)
+  - GrandHammer: Add mod to Rare (respects 3+3)
+  - ClawHammer: Remove random mod (any rarity)
+  - TuningHammer: Reroll mod values (any rarity)
+- All currencies use template method pattern with consume-only-on-success
+- All currencies validate before applying with descriptive error messages
 
 **Files to reference:**
-- `.planning/ROADMAP.md` - Phase 6 goals and requirements
-- `.planning/REQUIREMENTS.md` - CURRENCY-03 through CURRENCY-06 requirements
-- `models/currencies/currency.gd` - Base Currency pattern
-- `models/items/item.gd` - Item Resource with rarity system and affix methods
-- `.planning/phases/06-currency-behaviors/06-01-SUMMARY.md` - Currency foundation details
+- `.planning/ROADMAP.md` - Phase 7 goals and requirements
+- `.planning/REQUIREMENTS.md` - DROP-01 through DROP-03 requirements
+- `models/currencies/*.gd` - All 6 hammer implementations
+- `.planning/phases/06-currency-behaviors/06-01-SUMMARY.md` - Currency foundation
+- `.planning/phases/06-currency-behaviors/06-02-SUMMARY.md` - Modifier hammers
 
 ## Session Continuity
 
-**Previous session:** Phase 5, Plan 2 execution (2026-02-15)
+**Previous session:** Phase 6, Plan 1 execution (2026-02-15)
 
-**This session:** Phase 6, Plan 1 execution (2026-02-15)
+**This session:** Phase 6, Plan 2 execution (2026-02-15)
 
-**Next session:** Phase 6, Plan 2 execution
+**Next session:** Phase 7 planning and execution
 
 **Handoff notes:**
-- Phase 6, Plan 1 complete: Currency foundation with RunicHammer and ForgeHammer
-- 1/2 plans complete in Phase 6
-- Currency pattern established: validate → apply → error with consume-only-on-success
-- CRAFT-01, CRAFT-02, CRAFT-07, CRAFT-08, CRAFT-09 satisfied
-- Ready for modifier hammers: Chaotic, Annulment, Exalted, Blessed (06-02)
-- All upgrade hammers set rarity before adding mods to respect affix limits
+- Phase 6 complete: All 6 crafting hammers implemented
+- 2/2 plans complete in Phase 6
+- All crafting currency requirements satisfied (CRAFT-01 through CRAFT-09)
+- Full 6-hammer system: RunicHammer, ForgeHammer, TackHammer, GrandHammer, ClawHammer, TuningHammer
+- All hammers validate before applying, provide error messages, consume only on success
+- Ready for Phase 7: Drop Integration (hook hammers into enemy loot tables)
