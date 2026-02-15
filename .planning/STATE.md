@@ -1,6 +1,7 @@
 # Project State: Hammertime
 
 **Last updated:** 2026-02-15
+Last activity: 2026-02-15 - Completed quick task 1: Fix Light Sword item type button regenerating a free weapon while other types do not
 
 ## Project Reference
 
@@ -64,6 +65,12 @@ v1.0 Crafting Overhaul             [████] Shipped 2026-02-15
 - Unique item tier with fixed mods
 - Item salvage/melting system
 - Balance tuning and content expansion
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 1 | Fix Light Sword item type button regenerating a free weapon while other types do not | 2026-02-15 | c0bcfb8 | [1-fix-light-sword-item-type-button-regener](./quick/1-fix-light-sword-item-type-button-regener/) |
 
 ## Session Continuity
 
