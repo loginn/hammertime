@@ -34,12 +34,21 @@
 
 ---
 
-## v1.0 — Crafting Overhaul (planned)
+## v1.0 — Crafting Overhaul (Shipped: 2026-02-15)
 
-**Goal:** Replace basic hammer system with rarity tiers and 6 themed crafting hammers.
+**Goal:** Replace basic 3-hammer system with PoE-inspired rarity tiers and 6 themed crafting hammers.
 
-**Status:** Research complete, requirements defined — awaiting planning
+**Phases:** 4 phases (5-8), 7 plans, 14 tasks | **Timeline:** 1 day (2026-02-15)
+**Stats:** 39 files changed, 2,488 LOC GDScript
 
-**Phases:** TBD (will plan after v0.1 archive)
+**Key accomplishments:**
+- Item rarity system (Normal/Magic/Rare) with configurable affix limits and visual color coding
+- Base Currency Resource with template method pattern enforcing validate-before-mutate and consume-only-on-success
+- 6 themed crafting hammers (Runic, Forge, Tack, Grand, Claw, Tuning) with rarity-aware validation
+- Area-difficulty-driven LootTable with rarity-weighted item drops and mod spawning
+- Currency drop system with independent chances, area scaling, and guaranteed minimum drops
+- 6-button crafting UI replacing legacy 3-hammer system with direct Currency.apply() integration
+
+**Archives:** `.planning/milestones/v1.0-ROADMAP.md`, `.planning/milestones/v1.0-REQUIREMENTS.md`
 
 ---
