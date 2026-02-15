@@ -31,6 +31,18 @@ func max_suffixes() -> int:
 	return RARITY_LIMITS[rarity]["suffixes"]
 
 
+func get_rarity_color() -> Color:
+	match rarity:
+		Rarity.NORMAL:
+			return Color.WHITE
+		Rarity.MAGIC:
+			return Color("#6888F5")  # Soft blue, readable on dark
+		Rarity.RARE:
+			return Color("#FFD700")  # Gold yellow
+		_:
+			return Color.WHITE
+
+
 ## Recalculates item stats from current affixes.
 ## Override in subclasses. Called after any affix modification (reroll, add prefix/suffix).
 ## Implementations should delegate to StatCalculator for actual math.
