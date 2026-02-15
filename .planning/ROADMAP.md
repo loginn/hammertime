@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Format all code, establish folder structure, move files
 - [x] **Phase 2: Data Model Migration** - Migrate Item/Affix classes to Resource, create GameState/GameEvents autoloads
-- [ ] **Phase 3: Unified Calculations** - Consolidate stat calculation, separate tag system, standardize item interface
+- [x] **Phase 3: Unified Calculations** - Consolidate stat calculation, separate tag system, standardize item interface
 - [ ] **Phase 4: Signal-Based Communication** - Replace get_node() wiring with signals, enforce call down/signal up
 
 ## Phase Details
@@ -65,8 +65,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md -- Create StatType enum, StatCalculator class, and wire stat_types into all affix definitions
-- [ ] 03-02-PLAN.md -- Refactor all item types to delegate calculations to StatCalculator, remove duplicate compute_dps()
+- [x] 03-01-PLAN.md -- Create StatType enum, StatCalculator class, and wire stat_types into all affix definitions
+- [x] 03-02-PLAN.md -- Refactor all item types to delegate calculations to StatCalculator, remove duplicate compute_dps()
 
 ### Phase 4: Signal-Based Communication
 **Goal**: Views communicate through signals instead of direct node references, following Godot's call-down/signal-up pattern
@@ -92,7 +92,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | ✓ Complete | 2026-02-14 |
 | 2. Data Model Migration | 2/2 | ✓ Complete | 2026-02-15 |
-| 3. Unified Calculations | 0/2 | Planned | - |
+| 3. Unified Calculations | 2/2 | ✓ Complete | 2026-02-15 |
 | 4. Signal-Based Communication | 0/0 | Not started | - |
 
 ---
