@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** The crafting loop must feel rewarding -- finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Phase 3 -- Unified Calculations (v0.1 Code Cleanup & Architecture) - COMPLETE
+**Current focus:** Phase 4 -- Signal-Based Communication (v0.1 Code Cleanup & Architecture) - COMPLETE
 
 ## Current Position
 
 Phase: 4 of 4 (Signal-Based Communication)
-Plan: 1 of 2 completed
-Status: Phase 04 in progress
-Last activity: 2026-02-15 -- Phase 04-01 complete (Signal-Based View Communication)
+Plan: 2 of 2 completed
+Status: Phase 04 COMPLETE ✅
+Last activity: 2026-02-15 -- Phase 04-02 complete (Internal Node References with @onready)
 
-Progress: [█████-----] 50% (Phase 04)
+Progress: [██████████] 100% (Phase 04 COMPLETE)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 5.7 minutes
-- Total execution time: 0.67 hours
+- Total plans completed: 8
+- Average duration: 5.1 minutes
+- Total execution time: 0.68 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [█████-----] 50% (Phase 04)
 | 01-foundation | 2/2 | 17 min | 8.5 min |
 | 02-data-model-migration | 2/2 | 16 min | 8 min |
 | 03-unified-calculations | 2/2 | 13 min | 6.5 min |
-| 04-signal-based-communication | 1/2 | 3 min | 3 min |
+| 04-signal-based-communication | 2/2 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 15min, 2min, 11s (0.2min), 3min
-- Trend: Stabilizing (recent plans consistently fast)
+- Last 5 plans: 2min, 11s (0.2min), 3min, 3min (2.8min)
+- Trend: Fast and consistent (all recent plans under 3 minutes)
 
 *Updated after each plan completion*
 
@@ -69,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 03-02]: Added base update_value() method to Item.gd to make stat recalculation contract explicit
 - [Phase 04-01]: Use @onready for all node references in main_view instead of manual _ready() assignments
 - [Phase 04-01]: Wire GameEvents signals alongside local signals to eliminate unused signal warnings
+- [Phase 04-02]: Replace get_node_or_null with @onready for consistent null-handling pattern
+- [Phase 04-02]: Cache $ButtonControl.get_children() as @onready for performance optimization
+- [Phase 04-02]: Remove all has_node() guards when using @onready (reference guaranteed to exist or be null)
 
 ### Pending Todos
 
@@ -76,12 +79,12 @@ None yet.
 
 ### Blockers/Concerns
 
-None - Phase 04-01 complete, signal-based view communication in place, ready for 04-02
+None - Phase 04 COMPLETE. All 4 phases of v0.1 Code Cleanup & Architecture finished.
 
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 04-01-PLAN.md (Signal-Based View Communication)
+Stopped at: Completed 04-02-PLAN.md (Internal Node References with @onready) - PHASE 04 COMPLETE
 Resume file: None
 
 **Completed plans:**
@@ -92,3 +95,4 @@ Resume file: None
 - 03-01: Unified Calculation Infrastructure (2min) - 34349a4
 - 03-02: Unified Item Calculations (11s) - 091f4bb
 - 04-01: Signal-Based View Communication (3min) - 45674a6
+- 04-02: Internal Node References with @onready (2min 50s) - 6032a64
