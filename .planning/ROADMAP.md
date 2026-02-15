@@ -27,14 +27,14 @@ Full details: `.planning/milestones/v0.1-ROADMAP.md`
 
 **Dependencies:** v0.1 complete (Resource-based Item model, unified calculations)
 
-**Requirements:** RARITY-01, RARITY-02, RARITY-03, RARITY-04, RARITY-05, RARITY-06
+**Requirements:** RARITY-01, RARITY-02, RARITY-03, RARITY-04, RARITY-05
 
 **Success Criteria:**
 1. Every item has a rarity tier (Normal, Magic, or Rare) stored in its data model
 2. Normal items prevent explicit mod addition (implicit-only items work)
 3. Magic items enforce 1 prefix + 1 suffix maximum
 4. Rare items enforce 3 prefix + 3 suffix maximum
-5. Item display shows visual rarity distinction (white/blue/yellow) and mod count vs limit
+5. Item display shows visual rarity distinction (white/blue/yellow)
 
 **Plans:** 2 plans
 
