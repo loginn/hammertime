@@ -1,7 +1,7 @@
 # Project State: Hammertime
 
 **Last updated:** 2026-02-15
-Last activity: 2026-02-15 - Completed quick task 1: Fix Light Sword item type button regenerating a free weapon while other types do not
+Last activity: 2026-02-15 — Milestone v1.1 started
 
 ## Project Reference
 
@@ -9,16 +9,17 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Planning next milestone
+**Current Focus:** v1.1 Content & Balance — Defining requirements
 
 ## Current Position
 
-**Status:** Between milestones (v1.0 shipped, next TBD)
+**Status:** Defining requirements
 
 **Progress:**
 ```
 v0.1 Code Cleanup & Architecture  [████] Shipped 2026-02-15
 v1.0 Crafting Overhaul             [████] Shipped 2026-02-15
+v1.1 Content & Balance             [░░░░] Not started
 ```
 
 ## Performance Metrics
@@ -57,14 +58,14 @@ v1.0 Crafting Overhaul             [████] Shipped 2026-02-15
 
 **What exists:** Full crafting overhaul with rarity tiers, 6 hammers, area-scaled drops, and 6-button UI.
 
-**What's next:** `/gsd:new-milestone` to define next version goals.
+**What's next:** Define v1.1 requirements and create roadmap.
 
-**Potential directions:**
-- Defensive prefix affixes for non-weapon items
-- Save/load system (Resource model already supports serialization)
-- Unique item tier with fixed mods
-- Item salvage/melting system
-- Balance tuning and content expansion
+**v1.1 scope:**
+- Defensive prefix affixes for non-weapon items (armor, evasion, block chance)
+- New suffix types to expand affix variety
+- Currency area gating (hard gate + low initial drop chance)
+- Drop rate rebalancing (rare items harder to find)
+- Note: Defensive combat calculations deferred to mapping milestone
 
 ### Quick Tasks Completed
 
@@ -74,6 +75,6 @@ v1.0 Crafting Overhaul             [████] Shipped 2026-02-15
 
 ## Session Continuity
 
-**Previous session:** Quick fix 01 - Free Light Sword bug (2026-02-15)
+**Previous session:** v1.1 milestone initialization (2026-02-15)
 
-**Next session:** New milestone planning
+**Next session:** Requirements definition and roadmap creation

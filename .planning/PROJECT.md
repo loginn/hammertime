@@ -35,7 +35,17 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 
 <!-- Current scope. Building toward these. -->
 
-(None yet -- define in next milestone)
+**Current Milestone: v1.1 Content & Balance**
+
+**Goal:** Make all equipment slots meaningful through defensive prefixes, expand the affix pool, and tune drop/currency progression so rewards scale with area difficulty.
+
+**Target features:**
+- Defensive prefix affixes for non-weapon items (armor, evasion, block chance for helmet/armor/boots/ring)
+- New suffix types to expand affix variety beyond current 15
+- Currency area gating: hard gate preventing rare hammers from dropping before specific areas, with low initial drop chance ramping up
+- Drop rate rebalancing: rare items harder to find, advanced currencies rarer overall
+
+**Note:** Defensive stats will appear on items but combat damage reduction is deferred to a future mapping/combat milestone.
 
 ### Out of Scope
 
@@ -44,6 +54,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - Chaos-style full reroll -- deliberate design choice: no full rerolls, craft carefully or equip as-is
 - Drag-and-drop crafting UI -- select-and-click is sufficient
 - Save/load system -- Resource model enables it, but not yet scoped
+- Defensive combat calculations -- stats exist on items but damage reduction deferred to mapping milestone
 
 ## Context
 
@@ -82,4 +93,4 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Independent currency drop chances | Each hammer type rolls independently, not mutually exclusive | Good -- richer rewards in harder areas |
 
 ---
-*Last updated: 2026-02-15 after v1.0 milestone*
+*Last updated: 2026-02-15 after v1.1 milestone start*
