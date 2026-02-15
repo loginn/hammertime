@@ -3,6 +3,12 @@ extends Node2D
 signal item_base_found(item_base: Item)
 signal hammers_found(implicit_count: int, prefix_count: int, suffix_count: int)
 
+@onready var start_clearing_button: Button = $StartClearingButton
+@onready var next_area_button: Button = $NextAreaButton
+@onready var clearing_timer: Timer = $ClearingTimer
+@onready var materials_label: Label = $MaterialsLabel
+@onready var area_label: Label = $AreaLabel
+
 var hero_clearing: bool = false
 var current_area: String = "Forest"
 var item_bases_collected: Array = []
@@ -14,24 +20,11 @@ var area_difficulty_multiplier: float = 1.0
 
 
 func _ready() -> void:
-	# Initialize item bases collection
 	item_bases_collected = []
-
-	# Initialize area scaling
 	update_area_difficulty()
-
-	# Connect buttons
-	if has_node("StartClearingButton"):
-		$StartClearingButton.connect("pressed", _on_start_clearing_pressed)
-
-	if has_node("NextAreaButton"):
-		$NextAreaButton.connect("pressed", _on_next_area_pressed)
-
-	# Manually connect the timer signal to make sure it works
-	if has_node("ClearingTimer"):
-		$ClearingTimer.connect("timeout", _on_clearing_timer_timeout)
-		print("ClearingTimer signal connected manually")
-
+	start_clearing_button.pressed.connect(_on_start_clearing_pressed)
+	next_area_button.pressed.connect(_on_next_area_pressed)
+	clearing_timer.timeout.connect(_on_clearing_timer_timeout)
 	update_display()
 
 
@@ -59,12 +52,11 @@ func start_clearing() -> void:
 	update_clearing_speed()
 
 	# Start the clearing timer
-	$ClearingTimer.start()
-	print("Clearing timer started with wait time: ", $ClearingTimer.wait_time)
+	clearing_timer.start()
+	print("Clearing timer started with wait time: ", clearing_timer.wait_time)
 
 	# Update button text
-	if has_node("StartClearingButton"):
-		$StartClearingButton.text = "Stop Clearing"
+	start_clearing_button.text = "Stop Clearing"
 
 	update_display()
 
@@ -74,11 +66,10 @@ func stop_clearing() -> void:
 	print("Hero stopped clearing")
 
 	# Stop the clearing timer
-	$ClearingTimer.stop()
+	clearing_timer.stop()
 
 	# Update button text
-	if has_node("StartClearingButton"):
-		$StartClearingButton.text = "Start Clearing"
+	start_clearing_button.text = "Start Clearing"
 
 	update_display()
 
@@ -160,7 +151,7 @@ func update_clearing_speed() -> void:
 	clearing_time = max(clearing_time, 0.3)
 
 	# Update the timer
-	$ClearingTimer.wait_time = clearing_time
+	clearing_timer.wait_time = clearing_time
 
 	print(
 		"Area Level: ",
@@ -177,49 +168,47 @@ func update_clearing_speed() -> void:
 
 func update_display() -> void:
 	# Update item bases display
-	if has_node("MaterialsLabel"):
-		var display_text = "Item Bases Found:\n\n"
+	var display_text = "Item Bases Found:\n\n"
 
-		if item_bases_collected.size() > 0:
-			# Count each type of item base
-			var item_counts = {}
-			for item_base in item_bases_collected:
-				var item_name = item_base.item_name
-				if item_name in item_counts:
-					item_counts[item_name] += 1
-				else:
-					item_counts[item_name] = 1
+	if item_bases_collected.size() > 0:
+		# Count each type of item base
+		var item_counts = {}
+		for item_base in item_bases_collected:
+			var item_name = item_base.item_name
+			if item_name in item_counts:
+				item_counts[item_name] += 1
+			else:
+				item_counts[item_name] = 1
 
-			# Display counts
-			for item_name in item_counts:
-				display_text += item_name + ": " + str(item_counts[item_name]) + "\n"
-		else:
-			display_text += "No item bases found yet\n"
+		# Display counts
+		for item_name in item_counts:
+			display_text += item_name + ": " + str(item_counts[item_name]) + "\n"
+	else:
+		display_text += "No item bases found yet\n"
 
-		display_text += "\n"
+	display_text += "\n"
 
-		# Show hero health
-		display_text += (
-			"Hero Health: " + "%.0f" % GameState.hero.health + "/" + "%.0f" % GameState.hero.max_health + "\n"
-		)
-		display_text += "Area: " + current_area + " (Level " + str(area_level) + ")\n"
+	# Show hero health
+	display_text += (
+		"Hero Health: " + "%.0f" % GameState.hero.health + "/" + "%.0f" % GameState.hero.max_health + "\n"
+	)
+	display_text += "Area: " + current_area + " (Level " + str(area_level) + ")\n"
 
-		# Show monster damage info
-		var monster_damage = calculate_monster_damage()
-		display_text += "Monster Damage: " + "%.1f" % monster_damage + "\n\n"
+	# Show monster damage info
+	var monster_damage = calculate_monster_damage()
+	display_text += "Monster Damage: " + "%.1f" % monster_damage + "\n\n"
 
-		if hero_clearing:
-			var clearing_time = $ClearingTimer.wait_time
-			display_text += "Hero is clearing " + current_area + "...\n"
-			display_text += "Clearing time: " + "%.1f" % clearing_time + "s"
-		else:
-			display_text += "Hero is resting"
+	if hero_clearing:
+		var clearing_time = clearing_timer.wait_time
+		display_text += "Hero is clearing " + current_area + "...\n"
+		display_text += "Clearing time: " + "%.1f" % clearing_time + "s"
+	else:
+		display_text += "Hero is resting"
 
-		$MaterialsLabel.text = display_text
+	materials_label.text = display_text
 
 	# Update area display
-	if has_node("AreaLabel"):
-		$AreaLabel.text = "Current Area: " + current_area
+	area_label.text = "Current Area: " + current_area
 
 
 func refresh_clearing_speed() -> void:

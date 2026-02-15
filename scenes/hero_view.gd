@@ -4,40 +4,40 @@ signal equipment_changed()
 
 enum ItemSlot { NONE = -1, WEAPON, HELMET, ARMOR, BOOTS, RING }
 
-var stats_label: Label
+@onready var stats_label: Label = $StatsPanel/StatsLabel
+@onready var last_crafted_label: Label = $LastCraftedLabel
+@onready var item_stats_label: Label = $ItemStatsPanel/ItemStatsLabel
+@onready var crafted_item_stats_label: Label = $CraftedItemStatsPanel/CraftedItemStatsLabel
+@onready var weapon_slot: Button = $WeaponSlot
+@onready var helmet_slot: Button = $HelmetSlot
+@onready var armor_slot: Button = $ArmorSlot
+@onready var boots_slot: Button = $BootsSlot
+@onready var ring_slot: Button = $RingSlot
+
 var last_crafted_item: Item = null
-var last_crafted_label: Label
-var item_stats_label: Label
-var crafted_item_stats_label: Label
 var currently_hovered_slot: ItemSlot = ItemSlot.NONE
 
 
 func _ready() -> void:
-	# Get UI references
-	stats_label = $StatsPanel/StatsLabel
-	last_crafted_label = get_node_or_null("LastCraftedLabel")
-	item_stats_label = $ItemStatsPanel/ItemStatsLabel
-	crafted_item_stats_label = $CraftedItemStatsPanel/CraftedItemStatsLabel
-
 	# Connect item slot buttons
-	$WeaponSlot.connect("pressed", _on_item_slot_clicked.bind(ItemSlot.WEAPON))
-	$HelmetSlot.connect("pressed", _on_item_slot_clicked.bind(ItemSlot.HELMET))
-	$ArmorSlot.connect("pressed", _on_item_slot_clicked.bind(ItemSlot.ARMOR))
-	$BootsSlot.connect("pressed", _on_item_slot_clicked.bind(ItemSlot.BOOTS))
-	$RingSlot.connect("pressed", _on_item_slot_clicked.bind(ItemSlot.RING))
+	weapon_slot.pressed.connect(_on_item_slot_clicked.bind(ItemSlot.WEAPON))
+	helmet_slot.pressed.connect(_on_item_slot_clicked.bind(ItemSlot.HELMET))
+	armor_slot.pressed.connect(_on_item_slot_clicked.bind(ItemSlot.ARMOR))
+	boots_slot.pressed.connect(_on_item_slot_clicked.bind(ItemSlot.BOOTS))
+	ring_slot.pressed.connect(_on_item_slot_clicked.bind(ItemSlot.RING))
 
 	# Connect hover events for item slots
-	$WeaponSlot.connect("mouse_entered", _on_item_slot_hover_entered.bind(ItemSlot.WEAPON))
-	$HelmetSlot.connect("mouse_entered", _on_item_slot_hover_entered.bind(ItemSlot.HELMET))
-	$ArmorSlot.connect("mouse_entered", _on_item_slot_hover_entered.bind(ItemSlot.ARMOR))
-	$BootsSlot.connect("mouse_entered", _on_item_slot_hover_entered.bind(ItemSlot.BOOTS))
-	$RingSlot.connect("mouse_entered", _on_item_slot_hover_entered.bind(ItemSlot.RING))
+	weapon_slot.mouse_entered.connect(_on_item_slot_hover_entered.bind(ItemSlot.WEAPON))
+	helmet_slot.mouse_entered.connect(_on_item_slot_hover_entered.bind(ItemSlot.HELMET))
+	armor_slot.mouse_entered.connect(_on_item_slot_hover_entered.bind(ItemSlot.ARMOR))
+	boots_slot.mouse_entered.connect(_on_item_slot_hover_entered.bind(ItemSlot.BOOTS))
+	ring_slot.mouse_entered.connect(_on_item_slot_hover_entered.bind(ItemSlot.RING))
 
-	$WeaponSlot.connect("mouse_exited", _on_item_slot_hover_exited.bind(ItemSlot.WEAPON))
-	$HelmetSlot.connect("mouse_exited", _on_item_slot_hover_exited.bind(ItemSlot.HELMET))
-	$ArmorSlot.connect("mouse_exited", _on_item_slot_hover_exited.bind(ItemSlot.ARMOR))
-	$BootsSlot.connect("mouse_exited", _on_item_slot_hover_exited.bind(ItemSlot.BOOTS))
-	$RingSlot.connect("mouse_exited", _on_item_slot_hover_exited.bind(ItemSlot.RING))
+	weapon_slot.mouse_exited.connect(_on_item_slot_hover_exited.bind(ItemSlot.WEAPON))
+	helmet_slot.mouse_exited.connect(_on_item_slot_hover_exited.bind(ItemSlot.HELMET))
+	armor_slot.mouse_exited.connect(_on_item_slot_hover_exited.bind(ItemSlot.ARMOR))
+	boots_slot.mouse_exited.connect(_on_item_slot_hover_exited.bind(ItemSlot.BOOTS))
+	ring_slot.mouse_exited.connect(_on_item_slot_hover_exited.bind(ItemSlot.RING))
 
 	update_all_slots()
 	update_stats_display()
@@ -153,15 +153,15 @@ func update_slot_display(slot: ItemSlot) -> void:
 func get_slot_node(slot: ItemSlot) -> Button:
 	match slot:
 		ItemSlot.WEAPON:
-			return $WeaponSlot
+			return weapon_slot
 		ItemSlot.HELMET:
-			return $HelmetSlot
+			return helmet_slot
 		ItemSlot.ARMOR:
-			return $ArmorSlot
+			return armor_slot
 		ItemSlot.BOOTS:
-			return $BootsSlot
+			return boots_slot
 		ItemSlot.RING:
-			return $RingSlot
+			return ring_slot
 		_:
 			return null
 
