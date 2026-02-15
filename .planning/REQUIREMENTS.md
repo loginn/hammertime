@@ -1,0 +1,106 @@
+# Requirements: Hammertime
+
+**Defined:** 2026-02-15
+**Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
+
+## v1.1 Requirements
+
+Requirements for Content & Balance milestone. Each maps to roadmap phases.
+
+### Defensive Prefixes
+
+- [ ] **DPFX-01**: Non-weapon items (helmet, armor, boots, ring) can roll defensive prefix affixes
+- [ ] **DPFX-02**: 6 defensive prefixes available: flat armor, %armor, flat evasion, %evasion, flat ES, %ES
+- [ ] **DPFX-03**: Defensive prefixes use tag-based filtering (Tag.ARMOR, Tag.DEFENSE, etc.) to match appropriate item types
+- [ ] **DPFX-04**: StatCalculator handles new defensive stat types (FLAT_ARMOR, INCREASED_ARMOR, FLAT_EVASION, etc.)
+- [ ] **DPFX-05**: Defensive stats display on items but do not affect combat damage calculations (deferred to mapping milestone)
+
+### Elemental Resistances
+
+- [ ] **ERES-01**: Individual fire, cold, and lightning resistance suffixes replace generic Elemental Reduction
+- [ ] **ERES-02**: All-resistance suffix available as a space-efficient option
+- [ ] **ERES-03**: Resistance suffixes can roll on all item types that support suffixes
+
+### Currency Area Gating
+
+- [ ] **GATE-01**: Each currency type has a minimum area level required to drop
+- [ ] **GATE-02**: Tiered unlock: Runic/Tack at area 1+, Forge at area 100+, Grand at area 200+, Claw/Tuning at area 300+
+- [ ] **GATE-03**: Drop chance starts very low when a currency first becomes available and ramps up with higher area levels
+- [ ] **GATE-04**: Currencies that can't drop in an area are excluded from the drop pool entirely (hard gate)
+
+### Area Progression
+
+- [ ] **AREA-01**: Area difficulty levels spread to 1, 100, 200, 300 (Forest, Dark Forest, Cursed Woods, Shadow Realm)
+- [ ] **AREA-02**: Drop rate formulas scale smoothly across the wider area level range
+- [ ] **AREA-03**: Rarity weights progress gradually across area levels (not just 4 discrete tiers)
+
+### Drop Rate Rebalancing
+
+- [ ] **DROP-01**: Rare items are harder to find in early areas compared to v1.0
+- [ ] **DROP-02**: Advanced currencies (Grand, Claw, Tuning) are significantly rarer than basic currencies
+- [ ] **DROP-03**: Rarity weights and currency drop chances tuned for wider area level spread
+
+## v1.2+ Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Defensive Prefixes (Advanced)
+
+- **DPFX-06**: Hybrid defense prefixes (armor+evasion, armor+ES, evasion+ES) for body armor/helmet
+- **DPFX-07**: Defense type specialization by slot (ring=ES, boots=movement+evasion, helmet=hybrid)
+
+### UI Improvements
+
+- **UI-01**: Visual prefix/suffix separation in item display (color-coded or sectioned)
+- **UI-02**: Tag-based affix pool tooltips showing valid tags per item type
+- **UI-03**: Currency tooltips with rich text descriptions and use cases
+
+### Combat Integration
+
+- **CMBT-01**: Defensive stats affect combat damage reduction calculations
+- **CMBT-02**: Armor/evasion/ES reduce damage taken during area clearing
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Hybrid affixes everywhere | Reduces clarity, PoE-style complexity is an anti-feature for idle game |
+| Per-monster currency drops | Floods economy, causes inflation, makes hammers feel cheap |
+| 50+ niche affixes | Creates "dead mod" problem (80% useless), PoE lesson learned |
+| Unlimited affix rerolling | Removes crafting tension, trivializes endgame |
+| Per-difficulty currency types | Fragments economy, confuses new players |
+| Chaos-style full reroll | Deliberate design: no full rerolls, craft carefully or equip as-is |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| DPFX-01 | — | Pending |
+| DPFX-02 | — | Pending |
+| DPFX-03 | — | Pending |
+| DPFX-04 | — | Pending |
+| DPFX-05 | — | Pending |
+| ERES-01 | — | Pending |
+| ERES-02 | — | Pending |
+| ERES-03 | — | Pending |
+| GATE-01 | — | Pending |
+| GATE-02 | — | Pending |
+| GATE-03 | — | Pending |
+| GATE-04 | — | Pending |
+| AREA-01 | — | Pending |
+| AREA-02 | — | Pending |
+| AREA-03 | — | Pending |
+| DROP-01 | — | Pending |
+| DROP-02 | — | Pending |
+| DROP-03 | — | Pending |
+
+**Coverage:**
+- v1.1 requirements: 18 total
+- Mapped to phases: 0
+- Unmapped: 18 ⚠️
+
+---
+*Requirements defined: 2026-02-15*
+*Last updated: 2026-02-15 after initial definition*
