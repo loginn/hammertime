@@ -41,6 +41,12 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 **Dependencies:** None (extends existing ItemAffixes and StatCalculator patterns)
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Data layer: Tag enums, configurable tier ranges, 9 new prefixes, percentage stat calculation, defense item model updates
+- [ ] 09-02-PLAN.md — Display layer: Hero defense aggregation, Hero View offense/defense sections, item stats display for non-weapon items
+
 **Requirements:**
 - DPFX-01: Non-weapon items can roll defensive prefix affixes
 - DPFX-02: 6 defensive prefixes available (flat armor, %armor, flat evasion, %evasion, flat ES, %ES)
@@ -55,7 +61,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 4. User sees defensive stat totals on Hero View's equipped stats panel
 5. UI clearly indicates defensive stats are not yet functional in combat (grayed text or "(display only)" label)
 
-**Status:** Pending
+**Status:** Planned
 
 ---
 
@@ -141,7 +147,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 | 6. Currency Behaviors | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 7. Drop Integration | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 8. UI Migration | v1.0 | 1/1 | ✓ Complete | 2026-02-15 |
-| 9. Defensive Prefix Foundation | v1.1 | 0/? | Pending | — |
+| 9. Defensive Prefix Foundation | v1.1 | 0/2 | Planned | — |
 | 10. Elemental Resistance Split | v1.1 | 0/? | Pending | — |
 | 11. Currency Area Gating | v1.1 | 0/? | Pending | — |
 | 12. Drop Rate Rebalancing | v1.1 | 0/? | Pending | — |
@@ -163,4 +169,4 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-15 (v1.1 Content & Balance roadmap added)*
+*Last updated: 2026-02-15 (Phase 9 plans created)*
