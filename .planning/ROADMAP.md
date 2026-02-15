@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - Format all code, establish folder structure, move files
 - [x] **Phase 2: Data Model Migration** - Migrate Item/Affix classes to Resource, create GameState/GameEvents autoloads
 - [x] **Phase 3: Unified Calculations** - Consolidate stat calculation, separate tag system, standardize item interface
-- [ ] **Phase 4: Signal-Based Communication** - Replace get_node() wiring with signals, enforce call down/signal up
+- [x] **Phase 4: Signal-Based Communication** - Replace get_node() wiring with signals, enforce call down/signal up
 
 ## Phase Details
 
@@ -80,8 +80,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md -- Replace sibling get_node() calls with typed signals, wire main_view as parent coordinator
-- [ ] 04-02-PLAN.md -- Convert all $NodePath references to @onready cached variables across all views
+- [x] 04-01-PLAN.md -- Replace sibling get_node() calls with typed signals, wire main_view as parent coordinator
+- [x] 04-02-PLAN.md -- Convert all $NodePath references to @onready cached variables across all views
 
 ## Progress
 
@@ -93,7 +93,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Foundation | 2/2 | ✓ Complete | 2026-02-14 |
 | 2. Data Model Migration | 2/2 | ✓ Complete | 2026-02-15 |
 | 3. Unified Calculations | 2/2 | ✓ Complete | 2026-02-15 |
-| 4. Signal-Based Communication | 0/2 | Planning complete | - |
+| 4. Signal-Based Communication | 2/2 | ✓ Complete | 2026-02-15 |
 
 ---
 *Roadmap created: 2026-02-14*
