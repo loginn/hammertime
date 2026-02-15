@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** The crafting loop must feel rewarding -- finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Phase 2 -- Data Model Migration (v0.1 Code Cleanup & Architecture) - COMPLETE
+**Current focus:** Phase 3 -- Unified Calculations (v0.1 Code Cleanup & Architecture)
 
 ## Current Position
 
-Phase: 2 of 4 (Data Model Migration) - COMPLETE
-Plan: 2 of 2 completed
-Status: Phase 02 complete, ready for Phase 03
-Last activity: 2026-02-15 -- Phase 02 verified and complete
+Phase: 3 of 4 (Unified Calculations)
+Plan: 1 of 2 completed
+Status: Phase 03 Plan 01 complete
+Last activity: 2026-02-15 -- Completed 03-01 (Unified Calculation Infrastructure)
 
-Progress: [██████████] 100% (Phase 02)
+Progress: [█████░░░░░] 50% (Phase 03)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 8 minutes
-- Total execution time: 0.5 hours
+- Total plans completed: 5
+- Average duration: 7 minutes
+- Total execution time: 0.6 hours
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [██████████] 100% (Phase 02)
 |-------|-------|-------|----------|
 | 01-foundation | 2/2 | 17 min | 8.5 min |
 | 02-data-model-migration | 2/2 | 16 min | 8 min |
+| 03-unified-calculations | 1/2 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 6min, 11min, 1min, 15min
-- Trend: Steady progress
+- Last 5 plans: 11min, 1min, 15min, 2min
+- Trend: Accelerating (recent plans faster)
 
 *Updated after each plan completion*
 
@@ -58,6 +59,11 @@ Recent decisions affecting current work:
 - [02-02]: Equipment slot initialization moved to GameState._ready() as single source of truth
 - [02-02]: hero_view and gameplay_view no longer create their own Hero instances - all access via GameState.hero
 - [02-02]: Unused signal warnings expected for GameEvents until Phase 4 wires signal connections
+- [03-01]: StatType enum uses 10 entries (no MORE_DAMAGE, INCREASED_ARMOR, or elemental damage types - deferred per research)
+- [03-01]: p_stat_types placed last in Affix._init() for backward compatibility with existing Implicit.new() calls
+- [03-01]: StatCalculator uses untyped Array parameter to handle GDScript array concatenation behavior
+- [03-01]: Weighted-average crit formula (1 + c*(d-1)) is mathematically correct, replaces buggy double-crit in weapon.gd
+- [03-01]: 15 affixes with empty stat_types are legitimate (exist for filtering, not calculations)
 
 ### Pending Todos
 
@@ -70,7 +76,7 @@ None - Phase 02 complete, all data models Resource-based, autoloads created
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Phase 02 complete -- verified and roadmap updated
+Stopped at: Completed 03-01-PLAN.md (Unified Calculation Infrastructure)
 Resume file: None
 
 **Completed plans:**
@@ -78,3 +84,4 @@ Resume file: None
 - 01-02: File Organization & Naming Conventions (11min) - fbbf631
 - 02-01: Node to Resource Migration (1min) - 7db9eb0
 - 02-02: GameState and GameEvents Autoloads (15min) - 14ff59b
+- 03-01: Unified Calculation Infrastructure (2min) - 34349a4
