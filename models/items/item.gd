@@ -8,6 +8,13 @@ var tier: int
 var valid_tags: Array[String]
 
 
+## Recalculates item stats from current affixes.
+## Override in subclasses. Called after any affix modification (reroll, add prefix/suffix).
+## Implementations should delegate to StatCalculator for actual math.
+func update_value() -> void:
+	pass
+
+
 func display() -> void:
 	print("\n----")
 	print("name: %s" % self.item_name)

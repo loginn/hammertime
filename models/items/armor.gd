@@ -10,27 +10,22 @@ var original_base_health: int
 
 
 func update_value() -> void:
-	# Calculate total armor, energy shield, and health from affixes
-	var total_armor = original_base_armor
-	var total_energy_shield = original_base_energy_shield
-	var total_health = original_base_health
+	var all_affixes := self.prefixes + self.suffixes
+	all_affixes.append(self.implicit)
 
-	var affixes = self.prefixes + self.suffixes
-	affixes.append(self.implicit)
-
-	for affix: Affix in affixes:
-		if Tag.ARMOR in affix.tags:
-			total_armor += affix.value
-		elif Tag.ENERGY_SHIELD in affix.tags:
-			total_energy_shield += affix.value
-		elif Tag.DEFENSE in affix.tags and "Health" in affix.affix_name:
-			total_health += affix.value
-
-	# Store calculated values
-	self.base_armor = total_armor
-	self.base_energy_shield = total_energy_shield
-	self.base_health = total_health
-	self.total_defense = total_armor
+	self.base_armor = (
+		self.original_base_armor
+		+ int(StatCalculator.calculate_flat_stat(all_affixes, Tag.StatType.FLAT_ARMOR))
+	)
+	self.base_energy_shield = (
+		self.original_base_energy_shield
+		+ int(StatCalculator.calculate_flat_stat(all_affixes, Tag.StatType.FLAT_ENERGY_SHIELD))
+	)
+	self.base_health = (
+		self.original_base_health
+		+ int(StatCalculator.calculate_flat_stat(all_affixes, Tag.StatType.FLAT_HEALTH))
+	)
+	self.total_defense = self.base_armor
 
 
 func get_total_defense() -> int:

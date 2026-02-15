@@ -10,27 +10,22 @@ var original_base_energy_shield: int
 
 
 func update_value() -> void:
-	# Calculate total armor, movement speed, and energy shield from affixes
-	var total_armor = original_base_armor
-	var total_movement_speed = original_base_movement_speed
-	var total_energy_shield = original_base_energy_shield
+	var all_affixes := self.prefixes + self.suffixes
+	all_affixes.append(self.implicit)
 
-	var affixes = self.prefixes + self.suffixes
-	affixes.append(self.implicit)
-
-	for affix: Affix in affixes:
-		if Tag.ARMOR in affix.tags:
-			total_armor += affix.value
-		elif Tag.SPEED in affix.tags or Tag.MOVEMENT in affix.tags:
-			total_movement_speed += affix.value
-		elif Tag.ENERGY_SHIELD in affix.tags:
-			total_energy_shield += affix.value
-
-	# Store calculated values
-	self.base_armor = total_armor
-	self.base_movement_speed = total_movement_speed
-	self.base_energy_shield = total_energy_shield
-	self.total_defense = total_armor
+	self.base_armor = (
+		self.original_base_armor
+		+ int(StatCalculator.calculate_flat_stat(all_affixes, Tag.StatType.FLAT_ARMOR))
+	)
+	self.base_movement_speed = (
+		self.original_base_movement_speed
+		+ int(StatCalculator.calculate_flat_stat(all_affixes, Tag.StatType.MOVEMENT_SPEED))
+	)
+	self.base_energy_shield = (
+		self.original_base_energy_shield
+		+ int(StatCalculator.calculate_flat_stat(all_affixes, Tag.StatType.FLAT_ENERGY_SHIELD))
+	)
+	self.total_defense = self.base_armor
 
 
 func get_total_defense() -> int:
