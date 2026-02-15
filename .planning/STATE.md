@@ -14,16 +14,16 @@
 
 **Phase:** 5 of 8 (v1.0 Crafting Overhaul)
 
-**Plan:** 05-01 complete, 05-02 next
+**Plan:** 05-02 complete, Phase 5 complete
 
-**Status:** Executing Phase 5
+**Status:** Phase 5 complete, ready for Phase 6
 
 **Progress:**
 ```
-[█████████░] 90%
-v1.0 Milestone Progress: [██--] 50% (1/2 plans complete in Phase 5)
+[██████████] 100%
+v1.0 Milestone Progress: [████] 100% (2/2 plans complete in Phase 5)
 
-Phase 5: Item Rarity System        [██--] In progress (1/2 plans complete)
+Phase 5: Item Rarity System        [████] Complete (2/2 plans complete)
 Phase 6: Currency Behaviors         [----] Pending
 Phase 7: Drop Integration           [----] Pending
 Phase 8: UI Migration               [----] Pending
@@ -53,6 +53,7 @@ Phase 8: UI Migration               [----] Pending
 
 **Current Phase Performance:**
 - Phase 5, Plan 1: 96s (2 tasks, 6 files)
+- Phase 5, Plan 2: 103s (2 tasks, 3 files)
 
 ### Previous Milestone: v0.1 Code Cleanup & Architecture
 
@@ -86,6 +87,8 @@ Phase 8: UI Migration               [----] Pending
 - @onready caching over repeated get_node() calls
 - [Phase 05]: Used dictionary-based RARITY_LIMITS instead of match statement for configuration flexibility
 - [Phase 05]: Added custom_max_prefixes/suffixes override mechanism for future exotic bases
+- [Phase 05]: Applied rarity color via modulate property rather than BBCode for cleaner separation
+- [Phase 05]: Chose soft blue (#6888F5) and gold (#FFD700) for Magic/Rare for dark background readability
 
 ### Active TODOs
 
@@ -107,33 +110,36 @@ Phase 8: UI Migration               [----] Pending
 
 **What we're building:** v1.0 Crafting Overhaul replacing basic 3-hammer system with Normal/Magic/Rare items and 6 themed crafting hammers
 
-**Where we are:** Phase 5, Plan 1 complete (rarity foundation). Plan 2 next (rarity display).
+**Where we are:** Phase 5 complete (rarity system). Phase 6 next (currency behaviors).
 
-**Next step:** Run `/gsd:execute-plan 05-02` to implement rarity display in UI
+**Next step:** Plan Phase 6 - Currency Behaviors (6 themed hammers to upgrade rarity and modify affixes)
 
 **Key context:**
-- Rarity foundation complete: Item class has Rarity enum, configurable limits, enforcement
-- All base types default to Normal rarity (0 affixes allowed)
-- Magic items allow 1 prefix + 1 suffix, Rare items allow 3 + 3
-- Custom override mechanism exists for future exotic bases
-- add_prefix()/add_suffix() now return bool for caller feedback
+- Rarity system complete: Enum, limits, enforcement, and visual display
+- Item rarity shown via color coding: white (Normal), blue (Magic), gold (Rare)
+- Equipment slots and item displays use rarity colors
+- All items default to Normal rarity on creation
+- Clean Normal items drop from areas (no random affixes)
+- add_prefix()/add_suffix() enforce rarity limits and return bool
 
 **Files to reference:**
-- `.planning/ROADMAP.md` - Phase 5 goals and success criteria
-- `.planning/REQUIREMENTS.md` - RARITY-01 through RARITY-06 requirements
-- `models/items/item.gd` - Current Item Resource structure
+- `.planning/ROADMAP.md` - Phase 6 goals and Phase 5 success criteria
+- `.planning/REQUIREMENTS.md` - CURRENCY-01 through CURRENCY-09 requirements
+- `models/items/item.gd` - Item Resource with rarity system
+- `.planning/phases/05-item-rarity-system/05-01-SUMMARY.md` - Rarity foundation
+- `.planning/phases/05-item-rarity-system/05-02-SUMMARY.md` - Rarity display
 
 ## Session Continuity
 
-**Previous session:** v1.0 roadmap creation (2026-02-15)
+**Previous session:** Phase 5, Plan 1 execution (2026-02-15)
 
-**This session:** Phase 5, Plan 1 execution (2026-02-15)
+**This session:** Phase 5, Plan 2 execution (2026-02-15)
 
-**Next session:** Phase 5, Plan 2 execution
+**Next session:** Phase 6 planning and execution
 
 **Handoff notes:**
-- All 22 v1.0 requirements mapped to phases
-- 100% coverage validated
-- No orphaned requirements
-- Phase dependencies identified (5→6→7→8)
+- Phase 5 complete: Rarity system fully implemented with visual feedback
+- 2/2 plans complete in Phase 5
+- All rarity requirements (RARITY-01 through RARITY-06) satisfied
+- Ready for Phase 6: Currency behaviors that upgrade rarity and modify affixes
 - Research summary from v0.1 available but not directly applicable to v1.0 scope
