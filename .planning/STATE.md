@@ -8,24 +8,24 @@
 
 **Current Milestone:** v1.0 Crafting Overhaul
 
-**Current Focus:** Phase 6 - Currency Behaviors (in progress)
+**Current Focus:** Phase 7 - Drop Integration (in progress)
 
 ## Current Position
 
-**Phase:** 6 of 8 (v1.0 Crafting Overhaul)
+**Phase:** 7 of 8 (v1.0 Crafting Overhaul)
 
-**Plan:** 06-02 complete (Plan 2 of 2)
+**Plan:** 07-01 complete (Plan 1 of 2)
 
-**Status:** Phase 6 complete
+**Status:** Phase 7 in progress
 
 **Progress:**
 ```
-[██████████] 100%
-v1.0 Milestone Progress: [██████----] 50% (2/2 plans complete in Phase 6)
+[█████████░] 93%
+v1.0 Milestone Progress: [███████---] 64% (1/2 plans complete in Phase 7)
 
 Phase 5: Item Rarity System        [████] Complete (2/2 plans complete)
 Phase 6: Currency Behaviors         [████] Complete (2/2 plans complete)
-Phase 7: Drop Integration           [----] Pending
+Phase 7: Drop Integration           [██--] In Progress (1/2 plans complete)
 Phase 8: UI Migration               [----] Pending
 ```
 
@@ -56,6 +56,7 @@ Phase 8: UI Migration               [----] Pending
 - Phase 5, Plan 2: 103s (2 tasks, 3 files)
 - Phase 6, Plan 1: 106s (2 tasks, 3 files)
 - Phase 6, Plan 2: 87s (2 tasks, 4 files)
+- Phase 7, Plan 1: 83s (2 tasks, 2 files)
 
 ### Previous Milestone: v0.1 Code Cleanup & Architecture
 
@@ -97,6 +98,9 @@ Phase 8: UI Migration               [----] Pending
 - [Phase 06]: TackHammer and GrandHammer use same 50/50 prefix/suffix logic as upgrade hammers
 - [Phase 06]: ClawHammer preserves rarity when removing mods per CRAFT-05
 - [Phase 06]: TuningHammer only rerolls explicit mods (not implicit) per CRAFT-06
+- [Phase 07]: LootTable uses static methods (no instance needed, pure utility)
+- [Phase 07]: Duplicated mod-addition logic from RunicHammer/ForgeHammer intentionally (drop generation vs crafting)
+- [Phase 07]: Area levels beyond 5 use level-5 weights to prevent power creep ceiling
 
 ### Active TODOs
 
@@ -119,9 +123,9 @@ Phase 8: UI Migration               [----] Pending
 
 **What we're building:** v1.0 Crafting Overhaul replacing basic 3-hammer system with Normal/Magic/Rare items and 6 themed crafting hammers
 
-**Where we are:** Phase 6 complete. All 6 crafting hammers implemented. Ready for Phase 7 (Drop Integration).
+**Where we are:** Phase 7 in progress. LootTable implemented for rarity-weighted item drops. Ready for Plan 07-02 (currency drops).
 
-**Next step:** Plan Phase 7 - Drop Integration (hook hammer drops into enemy loot tables)
+**Next step:** Execute Phase 7, Plan 2 - Currency Drops (hook hammer drops into enemy loot tables)
 
 **Key context:**
 - Rarity system complete: Enum, limits, enforcement, and visual display (Phase 5)
@@ -139,21 +143,22 @@ Phase 8: UI Migration               [----] Pending
 - `.planning/ROADMAP.md` - Phase 7 goals and requirements
 - `.planning/REQUIREMENTS.md` - DROP-01 through DROP-03 requirements
 - `models/currencies/*.gd` - All 6 hammer implementations
-- `.planning/phases/06-currency-behaviors/06-01-SUMMARY.md` - Currency foundation
-- `.planning/phases/06-currency-behaviors/06-02-SUMMARY.md` - Modifier hammers
+- `models/loot/loot_table.gd` - Rarity-weighted drop system
+- `.planning/phases/07-drop-integration/07-01-SUMMARY.md` - LootTable implementation
 
 ## Session Continuity
 
-**Previous session:** Phase 6, Plan 1 execution (2026-02-15)
+**Previous session:** Phase 6, Plan 2 execution (2026-02-15)
 
-**This session:** Phase 6, Plan 2 execution (2026-02-15)
+**This session:** Phase 7, Plan 1 execution (2026-02-15)
 
-**Next session:** Phase 7 planning and execution
+**Next session:** Phase 7, Plan 2 execution
 
 **Handoff notes:**
-- Phase 6 complete: All 6 crafting hammers implemented
-- 2/2 plans complete in Phase 6
-- All crafting currency requirements satisfied (CRAFT-01 through CRAFT-09)
-- Full 6-hammer system: RunicHammer, ForgeHammer, TackHammer, GrandHammer, ClawHammer, TuningHammer
-- All hammers validate before applying, provide error messages, consume only on success
-- Ready for Phase 7: Drop Integration (hook hammers into enemy loot tables)
+- Phase 7 in progress: LootTable implemented for rarity-weighted item drops
+- 1/2 plans complete in Phase 7
+- DROP-01 and DROP-03 satisfied (area difficulty → rarity, rarity-appropriate mods)
+- LootTable uses static methods with weighted random selection
+- Forest: 80% Normal, Shadow Realm: 65% Rare
+- Magic items: 1-2 mods, Rare items: 4-6 mods
+- Ready for Plan 07-02: Currency Drops (hammer loot from enemies)
