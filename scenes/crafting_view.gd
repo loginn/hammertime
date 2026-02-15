@@ -1,12 +1,13 @@
 extends Node2D
 
+signal item_finished(item: Item)
+
 enum button { NONE, IMPLICIT, PREFIX, SUFFIX }
 
 var buttons
 var button_pressed: button
 var current_item: Item
 var item_label: Label
-var hero_view: Node = null
 var finished_item: Item = null
 var inventory_label: Label
 
@@ -26,11 +27,6 @@ func _ready() -> void:
 
 	# Initialize crafting inventory
 	initialize_crafting_inventory()
-
-	# Try to find the hero view
-	hero_view = get_node_or_null("../HeroView")
-	if hero_view == null:
-		hero_view = get_node_or_null("HeroView")
 
 	$ButtonControl/ImplicitHammer.connect("pressed", ImplicitHammer_toggled)
 	$ButtonControl/AddPrefixHammer.connect("pressed", AddPrefixHammer_toggled)
@@ -73,8 +69,7 @@ func _ready() -> void:
 	update_label()
 
 	# Initially no finished item is available
-	if hero_view:
-		hero_view.set_last_crafted_item(null)
+	item_finished.emit(null)
 
 
 func update_label() -> void:
@@ -199,8 +194,7 @@ func finish_item() -> void:
 	finished_item = current_item
 
 	# Update the last crafted item in hero view with the finished item
-	if hero_view:
-		hero_view.set_last_crafted_item(finished_item)
+	item_finished.emit(finished_item)
 
 	# Remove the finished item from inventory
 	var finished_item_type = get_item_type(current_item)

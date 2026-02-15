@@ -1,10 +1,11 @@
 extends Node2D
 
+signal item_base_found(item_base: Item)
+signal hammers_found(implicit_count: int, prefix_count: int, suffix_count: int)
+
 var hero_clearing: bool = false
 var current_area: String = "Forest"
 var item_bases_collected: Array = []
-var hero_view: Node = null
-var crafting_view: Node = null
 var base_clearing_time: float = 3.0  # Base time in seconds
 
 # Area scaling system
@@ -13,15 +14,6 @@ var area_difficulty_multiplier: float = 1.0
 
 
 func _ready() -> void:
-	# Try to find other views
-	hero_view = get_node_or_null("../HeroView")
-	if hero_view == null:
-		hero_view = get_node_or_null("HeroView")
-
-	crafting_view = get_node_or_null("../CraftingView")
-	if crafting_view == null:
-		crafting_view = get_node_or_null("CraftingView")
-
 	# Initialize item bases collection
 	item_bases_collected = []
 
@@ -114,8 +106,7 @@ func clear_area() -> void:
 		print("Hero cleared area and found: ", item_base.item_name)
 
 		# Give the item base to crafting view
-		if crafting_view:
-			crafting_view.set_new_item_base(item_base)
+		item_base_found.emit(item_base)
 
 		# Hero finds random hammers in the area
 		give_hammer_rewards()
@@ -133,8 +124,7 @@ func give_hammer_rewards() -> void:
 	var suffix_hammers = randi_range(1, 2)  # 1-2 suffix hammers
 
 	# Give hammers to crafting view
-	if crafting_view:
-		crafting_view.add_hammers(implicit_hammers, prefix_hammers, suffix_hammers)
+	hammers_found.emit(implicit_hammers, prefix_hammers, suffix_hammers)
 
 
 func check_area_progression() -> void:

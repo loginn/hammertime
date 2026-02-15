@@ -1,5 +1,7 @@
 extends Node2D
 
+signal equipment_changed()
+
 enum ItemSlot { NONE = -1, WEAPON, HELMET, ARMOR, BOOTS, RING }
 
 var stats_label: Label
@@ -80,7 +82,7 @@ func equip_item(item: Item, slot: ItemSlot) -> bool:
 		update_slot_display(slot)
 		update_stats_display()
 		update_item_stats_display()  # Update item stats display in case we're hovering
-		notify_gameplay_of_equipment_change()  # Notify gameplay view of DPS change
+		equipment_changed.emit()  # Notify gameplay view of DPS change
 		print("Equipped ", item.item_name, " to ", get_slot_name(slot))
 		return true
 	else:
@@ -94,7 +96,7 @@ func unequip_item(slot: ItemSlot) -> Item:
 	GameState.hero.unequip_item(slot_name)
 	update_slot_display(slot)
 	update_stats_display()
-	notify_gameplay_of_equipment_change()  # Notify gameplay view of DPS change
+	equipment_changed.emit()  # Notify gameplay view of DPS change
 	if item:
 		print("Unequipped ", item.item_name, " from ", get_slot_name(slot))
 	return item
@@ -280,16 +282,6 @@ func get_item_stats_text(item: Item) -> String:
 		stats_text += "Other stats coming soon..."
 
 	return stats_text
-
-
-# Notify gameplay view of equipment changes
-func notify_gameplay_of_equipment_change() -> void:
-	var gameplay_view = get_node_or_null("../GameplayView")
-	if gameplay_view == null:
-		gameplay_view = get_node_or_null("GameplayView")
-
-	if gameplay_view and gameplay_view.has_method("refresh_clearing_speed"):
-		gameplay_view.refresh_clearing_speed()
 
 
 # Test function to equip a weapon
