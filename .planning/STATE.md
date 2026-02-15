@@ -5,13 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** The crafting loop must feel rewarding -- finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Planning next milestone (v1.0 Crafting Overhaul)
+**Current focus:** v1.0 Crafting Overhaul -- Defining requirements
 
 ## Current Position
 
-Milestone: v0.1 Code Cleanup & Architecture -- SHIPPED 2026-02-15
-Next: v1.0 Crafting Overhaul -- not yet started
-Last activity: 2026-02-15 -- v0.1 milestone archived
+Phase: Not started (defining requirements)
+Plan: --
+Status: Defining requirements
+Last activity: 2026-02-15 -- Milestone v1.0 started
 
 ## Performance Metrics
 

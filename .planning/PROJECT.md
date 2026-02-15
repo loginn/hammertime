@@ -8,11 +8,16 @@ An ARPG-style crafting idle game built in Godot 4.5. Players send a hero to clea
 
 The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-## Current State
+## Current Milestone: v1.0 Crafting Overhaul
 
-Shipped v0.1 Code Cleanup & Architecture. Codebase is clean, organized, and follows Godot 4.5 best practices. Ready for v1.0 Crafting Overhaul.
+**Goal:** Replace the basic 3-hammer system with a PoE-inspired rarity and currency system — Normal/Magic/Rare items crafted with 6 themed hammers, with area difficulty driving drop quality.
 
-**Next milestone:** v1.0 Crafting Overhaul — replace basic hammer system with rarity tiers and 6 themed crafting hammers.
+**Target features:**
+- Item rarity tiers (Normal / Magic / Rare) with affix count limits
+- 6 crafting hammers replacing the old 3 (Runic, Forge, Tack, Grand, Claw, Tuning)
+- Area difficulty scaling affects item rarity drop weights
+- New UI with 6 currency buttons, select-and-click application
+- Full replacement of old implicit/prefix/suffix hammer system
 
 ## Requirements
 
@@ -37,7 +42,11 @@ Shipped v0.1 Code Cleanup & Architecture. Codebase is clean, organized, and foll
 
 <!-- Current scope. Building toward these. -->
 
-(None yet -- define with `/gsd:new-milestone`)
+- [ ] Item rarity tiers (Normal / Magic / Rare)
+- [ ] 6 crafting hammers with rarity-aware validation
+- [ ] Area difficulty influences rarity drop weights
+- [ ] New crafting UI with 6 currency buttons
+- [ ] Old 3-hammer system fully replaced
 
 ### Out of Scope
 
@@ -78,4 +87,4 @@ Shipped v0.1 Code Cleanup & Architecture. Codebase is clean, organized, and foll
 | @onready caching | Cache all node references at class level, eliminate repeated tree traversals | Good -- 33 cached refs, cleaner code |
 
 ---
-*Last updated: 2026-02-15 after v0.1 milestone*
+*Last updated: 2026-02-15 after v1.0 milestone start*
