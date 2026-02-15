@@ -2,14 +2,15 @@ extends Node2D
 
 signal item_finished(item: Item)
 
-enum button { NONE, IMPLICIT, PREFIX, SUFFIX }
-
 @onready var buttons = $ButtonControl.get_children()
 @onready var item_label: Label = $Label
 @onready var inventory_label: Label = $InventoryPanel/InventoryLabel
-@onready var implicit_hammer_btn: Button = $ButtonControl/ImplicitHammer
-@onready var prefix_hammer_btn: Button = $ButtonControl/AddPrefixHammer
-@onready var suffix_hammer_btn: Button = $ButtonControl/AddSuffixHammer
+@onready var runic_btn: Button = $ButtonControl/RunicHammerBtn
+@onready var forge_btn: Button = $ButtonControl/ForgeHammerBtn
+@onready var tack_btn: Button = $ButtonControl/TackHammerBtn
+@onready var grand_btn: Button = $ButtonControl/GrandHammerBtn
+@onready var claw_btn: Button = $ButtonControl/ClawHammerBtn
+@onready var tuning_btn: Button = $ButtonControl/TuningHammerBtn
 @onready var finish_item_btn: Button = $ButtonControl/FinishItemButton
 @onready var item_view: TextureRect = $ItemView
 @onready var weapon_type_btn: Button = $ItemTypeButtons/WeaponButton
@@ -18,7 +19,21 @@ enum button { NONE, IMPLICIT, PREFIX, SUFFIX }
 @onready var boots_type_btn: Button = $ItemTypeButtons/BootsButton
 @onready var ring_type_btn: Button = $ItemTypeButtons/RingButton
 
-var button_pressed: button
+# Currency instances
+var currencies: Dictionary = {
+	"runic": RunicHammer.new(),
+	"forge": ForgeHammer.new(),
+	"tack": TackHammer.new(),
+	"grand": GrandHammer.new(),
+	"claw": ClawHammer.new(),
+	"tuning": TuningHammer.new()
+}
+var selected_currency: Currency = null
+var selected_currency_type: String = ""
+
+# Button-to-currency mapping (initialized in _ready)
+var currency_buttons: Dictionary = {}
+
 var current_item: Item
 var finished_item: Item = null
 
@@ -27,17 +42,28 @@ var crafting_inventory: Dictionary = {}
 var inventory_types = ["weapon", "helmet", "armor", "boots", "ring"]
 var selected_item_type: String = "weapon"
 
-# Hammer limit system (initialized to 0, incremented from drops)
-var hammer_counts: Dictionary = {"implicit": 0, "prefix": 0, "suffix": 0}
-
 
 func _ready() -> void:
 	# Initialize crafting inventory
 	initialize_crafting_inventory()
 
-	implicit_hammer_btn.pressed.connect(ImplicitHammer_toggled)
-	prefix_hammer_btn.pressed.connect(AddPrefixHammer_toggled)
-	suffix_hammer_btn.pressed.connect(AddSuffixHammer_toggled)
+	# Initialize currency button mapping
+	currency_buttons = {
+		"runic": runic_btn,
+		"forge": forge_btn,
+		"tack": tack_btn,
+		"grand": grand_btn,
+		"claw": claw_btn,
+		"tuning": tuning_btn
+	}
+
+	# Connect currency button signals
+	runic_btn.pressed.connect(_on_currency_selected.bind("runic"))
+	forge_btn.pressed.connect(_on_currency_selected.bind("forge"))
+	tack_btn.pressed.connect(_on_currency_selected.bind("tack"))
+	grand_btn.pressed.connect(_on_currency_selected.bind("grand"))
+	claw_btn.pressed.connect(_on_currency_selected.bind("claw"))
+	tuning_btn.pressed.connect(_on_currency_selected.bind("tuning"))
 	finish_item_btn.pressed.connect(_on_finish_item_button_pressed)
 	item_view.gui_input.connect(update_item)
 	weapon_type_btn.pressed.connect(_on_item_type_selected.bind("weapon"))
@@ -65,7 +91,7 @@ func _ready() -> void:
 
 	update_inventory_display()
 	update_item_type_button_states()
-	update_hammer_button_states()
+	update_currency_button_states()
 	update_label()
 
 	# Initially no finished item is available
@@ -88,41 +114,33 @@ func update_item(event: InputEvent) -> void:
 	):
 		return
 
-	# Check if there's a current item to work with
-	if current_item == null:
-		print("No item selected for crafting")
+	# Guard: if no currency selected
+	if selected_currency == null:
+		print("No currency selected")
 		return
 
-	print("click")
-	if self.button_pressed == button.IMPLICIT:
-		if hammer_counts["implicit"] <= 0:
-			print("No implicit hammers remaining!")
-			return
-		self.current_item.reroll_affix(self.current_item.implicit)
-		hammer_counts["implicit"] -= 1
-		print("Implicit hammers remaining: ", hammer_counts["implicit"])
-	elif self.button_pressed == button.PREFIX:
-		if hammer_counts["prefix"] <= 0:
-			print("No prefix hammers remaining!")
-			return
-		self.current_item.add_prefix()
-		hammer_counts["prefix"] -= 1
-		print("Prefix hammers remaining: ", hammer_counts["prefix"])
-	elif self.button_pressed == button.SUFFIX:
-		if hammer_counts["suffix"] <= 0:
-			print("No suffix hammers remaining!")
-			return
-		self.current_item.add_suffix()
-		hammer_counts["suffix"] -= 1
-		print("Suffix hammers remaining: ", hammer_counts["suffix"])
-	else:
-		print("no button selected")
+	# Guard: if no item selected
+	if current_item == null:
+		print("No item selected")
+		return
 
-	self.current_item.update_value()
-	self.update_label()
-	update_hammer_button_states()
+	# Check if currency can be applied to the item
+	if not selected_currency.can_apply(current_item):
+		print(selected_currency.get_error_message(current_item))
+		return
 
-	# Don't update the hero view until item is finished
+	# Try to spend the currency
+	if not GameState.spend_currency(selected_currency_type):
+		print("No " + selected_currency.currency_name + " remaining!")
+		return
+
+	# Apply the currency effect
+	selected_currency.apply(current_item)
+	print("Applied " + selected_currency.currency_name)
+
+	# Update UI
+	update_label()
+	update_currency_button_states()
 	current_item.display()
 
 
@@ -132,55 +150,47 @@ func untoggle_all_other_buttons(pressed_button: Button) -> void:
 			btn.button_pressed = false
 
 
-func update_hammer_button_states() -> void:
-	# Update hammer button states based on remaining counts
-	implicit_hammer_btn.disabled = (hammer_counts["implicit"] <= 0)
-	prefix_hammer_btn.disabled = (hammer_counts["prefix"] <= 0)
-	suffix_hammer_btn.disabled = (hammer_counts["suffix"] <= 0)
+func update_currency_button_states() -> void:
+	# Update each currency button based on counts from GameState
+	for currency_type in currency_buttons:
+		var count = GameState.currency_counts.get(currency_type, 0)
+		var button = currency_buttons[currency_type]
 
-	# Update button text to show remaining counts
-	implicit_hammer_btn.text = "Implicit (" + str(hammer_counts["implicit"]) + ")"
-	prefix_hammer_btn.text = "Add Prefix (" + str(hammer_counts["prefix"]) + ")"
-	suffix_hammer_btn.text = "Add Suffix (" + str(hammer_counts["suffix"]) + ")"
+		# Disable button if no currency available
+		button.disabled = (count <= 0)
 
+		# Update button text with currency name and count
+		button.text = currencies[currency_type].currency_name + " (" + str(count) + ")"
 
-func ImplicitHammer_toggled() -> void:
-	# Check if implicit hammers are available
-	if hammer_counts["implicit"] <= 0:
-		print("No implicit hammers remaining!")
-		implicit_hammer_btn.button_pressed = false
-		return
-
-	self.untoggle_all_other_buttons(implicit_hammer_btn)
-	if implicit_hammer_btn.button_pressed:
-		self.button_pressed = button.IMPLICIT
-		print("implicit")
+	# If selected currency count is 0, deselect it
+	if selected_currency != null:
+		var selected_count = GameState.currency_counts.get(selected_currency_type, 0)
+		if selected_count <= 0:
+			selected_currency = null
+			selected_currency_type = ""
+			# Untoggle the button
+			for currency_type in currency_buttons:
+				currency_buttons[currency_type].button_pressed = false
 
 
-func AddPrefixHammer_toggled() -> void:
-	# Check if prefix hammers are available
-	if hammer_counts["prefix"] <= 0:
-		print("No prefix hammers remaining!")
-		prefix_hammer_btn.button_pressed = false
-		return
+func _on_currency_selected(currency_type: String) -> void:
+	var button = currency_buttons[currency_type]
 
-	self.untoggle_all_other_buttons(prefix_hammer_btn)
-	if prefix_hammer_btn.button_pressed:
-		self.button_pressed = button.PREFIX
-		print("prefix")
+	if button.button_pressed:
+		# Currency selected
+		selected_currency = currencies[currency_type]
+		selected_currency_type = currency_type
+		print("Selected: ", selected_currency.currency_name)
 
-
-func AddSuffixHammer_toggled() -> void:
-	# Check if suffix hammers are available
-	if hammer_counts["suffix"] <= 0:
-		print("No suffix hammers remaining!")
-		suffix_hammer_btn.button_pressed = false
-		return
-
-	self.untoggle_all_other_buttons(suffix_hammer_btn)
-	if suffix_hammer_btn.button_pressed:
-		self.button_pressed = button.SUFFIX
-		print("suffix")
+		# Untoggle all other currency buttons
+		for other_type in currency_buttons:
+			if other_type != currency_type:
+				currency_buttons[other_type].button_pressed = false
+	else:
+		# Currency deselected
+		selected_currency = null
+		selected_currency_type = ""
+		print("Deselected currency")
 
 
 func _on_finish_item_button_pressed() -> void:
@@ -190,7 +200,10 @@ func _on_finish_item_button_pressed() -> void:
 func finish_item() -> void:
 	# Untoggle all buttons
 	untoggle_all_other_buttons(null)
-	self.button_pressed = button.NONE
+
+	# Clear currency selection
+	selected_currency = null
+	selected_currency_type = ""
 
 	# Store the finished item
 	finished_item = current_item
@@ -207,6 +220,7 @@ func finish_item() -> void:
 	# Clear the current item - no automatic item generation
 	current_item = null
 	update_inventory_display()
+	update_currency_button_states()
 	update_label()
 
 	print("Item finished! No new item generated.")
@@ -219,25 +233,13 @@ func set_new_item_base(item_base: Item) -> void:
 
 
 func on_currencies_found(drops: Dictionary) -> void:
-	# Map currency drops to old hammer counts for backward compatibility
-	# Tuning/Claw -> implicit
-	hammer_counts["implicit"] += drops.get("tuning", 0) + drops.get("claw", 0)
-
-	# Runic/Tack/Forge -> prefix
-	hammer_counts["prefix"] += (
-		drops.get("runic", 0) + drops.get("tack", 0) + drops.get("forge", 0)
-	)
-
-	# Runic/Grand/Forge -> suffix
-	hammer_counts["suffix"] += (
-		drops.get("runic", 0) + drops.get("grand", 0) + drops.get("forge", 0)
-	)
-
+	# Currency counts are already updated in GameState
+	# Just refresh UI to show new counts
 	print("Currencies received: ", drops)
 
 	# Update UI
 	update_inventory_display()
-	update_hammer_button_states()
+	update_currency_button_states()
 
 
 func initialize_crafting_inventory() -> void:

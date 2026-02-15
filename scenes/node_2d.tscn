@@ -39,34 +39,58 @@ offset_right = 40.0
 offset_bottom = 40.0
 metadata/_edit_use_anchors_ = true
 
-[node name="ImplicitHammer" type="Button" parent="ButtonControl"]
+[node name="RunicHammerBtn" type="Button" parent="ButtonControl"]
 layout_mode = 0
 offset_right = 150.0
-offset_bottom = 80.0
+offset_bottom = 50.0
 toggle_mode = true
-text = "Implicit"
+text = "Runic (0)"
 
-[node name="AddPrefixHammer" type="Button" parent="ButtonControl"]
+[node name="ForgeHammerBtn" type="Button" parent="ButtonControl"]
 layout_mode = 0
-offset_top = 80.0
+offset_top = 55.0
+offset_right = 150.0
+offset_bottom = 105.0
+toggle_mode = true
+text = "Forge (0)"
+
+[node name="TackHammerBtn" type="Button" parent="ButtonControl"]
+layout_mode = 0
+offset_top = 110.0
 offset_right = 150.0
 offset_bottom = 160.0
 toggle_mode = true
-text = "Add Prefix"
+text = "Tack (0)"
 
-[node name="AddSuffixHammer" type="Button" parent="ButtonControl"]
+[node name="GrandHammerBtn" type="Button" parent="ButtonControl"]
 layout_mode = 0
-offset_top = 160.0
+offset_top = 165.0
 offset_right = 150.0
-offset_bottom = 240.0
+offset_bottom = 215.0
 toggle_mode = true
-text = "Add Suffix"
+text = "Grand (0)"
+
+[node name="ClawHammerBtn" type="Button" parent="ButtonControl"]
+layout_mode = 0
+offset_top = 220.0
+offset_right = 150.0
+offset_bottom = 270.0
+toggle_mode = true
+text = "Claw (0)"
+
+[node name="TuningHammerBtn" type="Button" parent="ButtonControl"]
+layout_mode = 0
+offset_top = 275.0
+offset_right = 150.0
+offset_bottom = 325.0
+toggle_mode = true
+text = "Tuning (0)"
 
 [node name="FinishItemButton" type="Button" parent="ButtonControl"]
 layout_mode = 0
-offset_top = 240.0
+offset_top = 340.0
 offset_right = 150.0
-offset_bottom = 320.0
+offset_bottom = 390.0
 text = "Finish Item"
 
 [node name="InventoryPanel" type="Panel" parent="."]
