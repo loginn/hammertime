@@ -89,7 +89,7 @@ anchor_left = 1.0
 anchor_right = 1.0
 offset_left = 884.0
 offset_right = 1200.0
-offset_bottom = 150.0
+offset_bottom = 280.0
 
 [node name="StatsLabel" type="Label" parent="StatsPanel"]
 layout_mode = 0
@@ -101,7 +101,6 @@ offset_right = -10.0
 offset_bottom = -10.0
 text = "Hero Stats:
 Total DPS: 0.0"
-vertical_alignment = 1
 
 [node name="CraftedItemStatsPanel" type="Panel" parent="."]
 anchors_preset = 0
@@ -127,7 +126,7 @@ anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = 884.0
-offset_top = 150.0
+offset_top = 290.0
 offset_right = 1200.0
 offset_bottom = 600.0
 

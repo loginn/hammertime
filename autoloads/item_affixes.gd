@@ -37,7 +37,7 @@ var prefixes: Array[Affix] = [
 	),
 	# Defensive prefixes (30-tier range)
 	Affix.new(
-		"Armored",
+		"Flat Armor",
 		Affix.AffixType.PREFIX,
 		2,
 		5,
@@ -46,7 +46,7 @@ var prefixes: Array[Affix] = [
 		Vector2i(1, 30)
 	),
 	Affix.new(
-		"Reinforced",
+		"%Armor",
 		Affix.AffixType.PREFIX,
 		1,
 		3,
@@ -55,7 +55,7 @@ var prefixes: Array[Affix] = [
 		Vector2i(1, 30)
 	),
 	Affix.new(
-		"Evasive",
+		"Evasion",
 		Affix.AffixType.PREFIX,
 		2,
 		5,
@@ -64,7 +64,7 @@ var prefixes: Array[Affix] = [
 		Vector2i(1, 30)
 	),
 	Affix.new(
-		"Swift",
+		"%Evasion",
 		Affix.AffixType.PREFIX,
 		1,
 		3,
@@ -73,7 +73,7 @@ var prefixes: Array[Affix] = [
 		Vector2i(1, 30)
 	),
 	Affix.new(
-		"Warded",
+		"Energy Shield",
 		Affix.AffixType.PREFIX,
 		3,
 		6,
@@ -82,7 +82,7 @@ var prefixes: Array[Affix] = [
 		Vector2i(1, 30)
 	),
 	Affix.new(
-		"Arcane",
+		"%Energy Shield",
 		Affix.AffixType.PREFIX,
 		1,
 		3,
@@ -92,7 +92,7 @@ var prefixes: Array[Affix] = [
 	),
 	# Utility prefixes (30-tier range)
 	Affix.new(
-		"Healthy",
+		"Health",
 		Affix.AffixType.PREFIX,
 		3,
 		8,
@@ -101,7 +101,7 @@ var prefixes: Array[Affix] = [
 		Vector2i(1, 30)
 	),
 	Affix.new(
-		"Vital",
+		"%Health",
 		Affix.AffixType.PREFIX,
 		1,
 		3,
@@ -110,7 +110,7 @@ var prefixes: Array[Affix] = [
 		Vector2i(1, 30)
 	),
 	Affix.new(
-		"Mystic",
+		"Mana",
 		Affix.AffixType.PREFIX,
 		2,
 		6,
