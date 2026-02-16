@@ -83,33 +83,35 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PACK-01 | — | Pending |
-| PACK-02 | — | Pending |
-| PACK-03 | — | Pending |
-| PACK-04 | — | Pending |
-| COMBAT-01 | — | Pending |
-| COMBAT-02 | — | Pending |
-| COMBAT-03 | — | Pending |
-| COMBAT-04 | — | Pending |
-| COMBAT-05 | — | Pending |
-| COMBAT-06 | — | Pending |
-| DEF-01 | — | Pending |
-| DEF-02 | — | Pending |
-| DEF-03 | — | Pending |
-| DEF-04 | — | Pending |
-| DEF-05 | — | Pending |
-| DROP-01 | — | Pending |
-| DROP-02 | — | Pending |
-| DROP-03 | — | Pending |
-| UI-01 | — | Pending |
-| UI-02 | — | Pending |
-| UI-03 | — | Pending |
+| PACK-01 | Phase 14 | Pending |
+| PACK-02 | Phase 14 | Pending |
+| PACK-03 | Phase 14 | Pending |
+| PACK-04 | Phase 14 | Pending |
+| COMBAT-01 | Phase 15 | Pending |
+| COMBAT-02 | Phase 15 | Pending |
+| COMBAT-03 | Phase 15 | Pending |
+| COMBAT-04 | Phase 16 | Pending |
+| COMBAT-05 | Phase 15 | Pending |
+| COMBAT-06 | Phase 15 | Pending |
+| DEF-01 | Phase 13 | Pending |
+| DEF-02 | Phase 13 | Pending |
+| DEF-03 | Phase 13 | Pending |
+| DEF-04 | Phase 13 | Pending |
+| DEF-05 | Phase 13 | Pending |
+| DROP-01 | Phase 16 | Pending |
+| DROP-02 | Phase 16 | Pending |
+| DROP-03 | Phase 16 | Pending |
+| UI-01 | Phase 17 | Pending |
+| UI-02 | Phase 17 | Pending |
+| UI-03 | Phase 17 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 21 total
-- Mapped to phases: 0
-- Unmapped: 21
+- Mapped to phases: 21
+- Unmapped: 0
+
+**Coverage validation:** 100% ✓
 
 ---
 *Requirements defined: 2026-02-16*
-*Last updated: 2026-02-16 after initial definition*
+*Last updated: 2026-02-16 after roadmap creation*

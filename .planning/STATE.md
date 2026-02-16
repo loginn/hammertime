@@ -9,16 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Defining requirements for v1.2.
+**Current Focus:** Phase 13 - Defensive Stat Foundation
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication, 3,161 LOC across ~30 files.
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-16 — Milestone v1.2 started
+Phase: 13 of 17 (Defensive Stat Foundation)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-02-16 — v1.2 milestone roadmap created
+
+Progress: [████████████░░░░░░░░] 70% (12 phases complete, 5 remaining)
 
 ## Performance Metrics
 
@@ -40,6 +42,15 @@ Last activity: 2026-02-16 — Milestone v1.2 started
 - Final LOC: 1,953 GDScript
 
 ## Accumulated Context
+
+### Decisions
+
+Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting v1.2 work:
+
+- Phase 9: Implicit stat_types architecture - base stats flow through StatCalculator
+- Phase 11: Hard currency gating by area - clearer progression than pure RNG
+- Phase 12: Logarithmic rarity interpolation - smooth progression between anchor points
 
 ### Known Issues
 
@@ -63,11 +74,13 @@ Last activity: 2026-02-16 — Milestone v1.2 started
 ## Session Continuity
 
 **Last session:** 2026-02-16
-- Started v1.2 milestone: Pack-Based Mapping
-- Scope: monster packs, sequential combat, death mechanic, drop split, defensive combat calculations
+- Created v1.2 milestone roadmap: 5 phases (13-17)
+- 21 requirements mapped: PACK (4), COMBAT (6), DEF (5), DROP (3), UI (3)
+- All requirements covered, 100% coverage validated
 
 **For next session:**
-- Continue v1.2 workflow: research → requirements → roadmap
+- Begin Phase 13 planning: Defensive Stat Foundation
+- Use `/gsd:plan-phase 13`
 
 ---
 *State initialized: 2026-02-15*
