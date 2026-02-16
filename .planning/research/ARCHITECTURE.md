@@ -1,723 +1,799 @@
-# Architecture Integration: v1.1 Content & Balance
+# Architecture Research
 
-**Domain:** ARPG crafting idle game (Godot 4.5 GDScript)
-**Researched:** 2026-02-15
+**Domain:** Pack-Based Combat Integration for ARPG Idle Game
+**Researched:** 2026-02-16
 **Confidence:** HIGH
 
 ## Executive Summary
 
-The v1.1 milestone adds defensive prefixes, expanded affixes, currency area gating, and drop rate rebalancing to an existing tag-based affix system. **All four features integrate cleanly through extension, not modification.** The existing architecture already supports these features through its tag-filtering system (ItemAffixes), area-aware drop generation (LootTable), and Resource-based data model. No architectural changes required — only data additions and parameter tuning.
+The v1.2 milestone adds pack-based combat, monster packs, death mechanics, and defensive calculations to an existing Resource-based ARPG crafting game built on Godot 4.5. The existing architecture is well-suited for this integration with minimal disruption:
 
-**Key Integration Points:**
-1. **Defensive Prefixes:** Add to ItemAffixes.prefixes[] with new tags (Tag.ARMOR, Tag.ENERGY_SHIELD, Tag.JEWELRY)
-2. **Expanded Suffixes:** Add to ItemAffixes.suffixes[] (unlimited expansion)
-3. **Currency Area Gating:** Add min_area_level field to Currency Resources, enforce in LootTable.roll_currency_drops()
-4. **Drop Rate Rebalancing:** Tune RARITY_WEIGHTS and currency_rules dictionaries in LootTable
+- **NEW Resources**: MonsterPack, Map (replacing area-as-integer)
+- **MODIFIED Resources**: Hero (add defensive calculation methods), StatCalculator (add damage reduction functions)
+- **MODIFIED Autoloads**: GameState (pack tracking, death state), GameEvents (new combat signals)
+- **MAJOR REWORK**: gameplay_view (from time-based area clearing to pack-based combat loop)
+- **MODIFIED System**: LootTable (split drops: packs→currency, maps→items)
 
-**Build Order:** Defensive Prefixes → Expanded Suffixes → Currency Gating → Drop Rebalancing (each feature independent)
+The architecture follows Godot's Resource pattern for data, signal bus for events, and StatCalculator service for calculations. New combat features integrate cleanly without restructuring the existing feature-based folder organization or scene hierarchy.
 
-## System Overview
+## Current Architecture (v1.1)
 
-### Current Architecture (v1.0)
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      UI Layer (Scenes)                       │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                   │
-│  │ Hero     │  │ Crafting │  │ Gameplay │                   │
-│  │ View     │  │ View     │  │ View     │                   │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘                   │
-│       │ signals     │              │                         │
-├───────┴─────────────┴──────────────┴─────────────────────────┤
-│                   Autoloads (Singletons)                     │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐             │
-│  │ GameState  │  │ GameEvents │  │ItemAffixes │             │
-│  │ (Hero+inv) │  │ (signals)  │  │ (defs)     │             │
-│  └────┬───────┘  └────────────┘  └────┬───────┘             │
-├───────┴──────────────────────────────────┴───────────────────┤
-│                   Data Layer (Resources)                     │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐     │
-│  │ Item     │  │ Affix    │  │ Currency │  │ LootTable│     │
-│  │ (base)   │  │ (data)   │  │ (behav.) │  │ (drops)  │     │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘     │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### v1.1 Integration Points
+### System Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    NEW: Defensive Stats                      │
-│  Armor/Evasion/Block prefixes for helmet/armor/boots/ring   │
-│                           ↓                                  │
-│  ┌────────────────────────────────────────────────────────┐  │
-│  │ ItemAffixes.prefixes[] — ADD defensive definitions    │  │
-│  │ Tag constants — ADD JEWELRY, keep ARMOR/ES existing   │  │
-│  │ Item.valid_tags[] — ALREADY contains required tags    │  │
-│  └────────────────────────────────────────────────────────┘  │
+│                      Scene Layer                             │
 ├─────────────────────────────────────────────────────────────┤
-│                  NEW: Expanded Suffix Pool                   │
-│           More variety in suffix affixes available          │
-│                           ↓                                  │
-│  ┌────────────────────────────────────────────────────────┐  │
-│  │ ItemAffixes.suffixes[] — ADD new definitions          │  │
-│  │ StatCalculator — ADD methods for new stat types       │  │
-│  └────────────────────────────────────────────────────────┘  │
+│  main.tscn                                                   │
+│    └─ main_view (coordinator)                                │
+│         ├─ crafting_view (Item creation)                     │
+│         ├─ hero_view (Equipment, stats display)              │
+│         └─ gameplay_view (Area clearing, drops) ← REWORK     │
 ├─────────────────────────────────────────────────────────────┤
-│                NEW: Currency Area Gating                     │
-│      Rare hammers don't drop until specific areas           │
-│                           ↓                                  │
-│  ┌────────────────────────────────────────────────────────┐  │
-│  │ Currency.min_area_level — ADD field (default 1)       │  │
-│  │ LootTable.roll_currency_drops() — ADD gating logic    │  │
-│  │ GameState.current_area_level — ADD field              │  │
-│  └────────────────────────────────────────────────────────┘  │
+│                    Service Layer                             │
 ├─────────────────────────────────────────────────────────────┤
-│                  NEW: Drop Rate Rebalancing                  │
-│       Rare items harder, advanced currencies rarer          │
-│                           ↓                                  │
-│  ┌────────────────────────────────────────────────────────┐  │
-│  │ LootTable.RARITY_WEIGHTS — MODIFY weights             │  │
-│  │ LootTable.currency_rules — MODIFY chances/quantities  │  │
-│  └────────────────────────────────────────────────────────┘  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │StatCalculator│  │  LootTable   │  │   Currency   │       │
+│  │(DPS/defense) │  │ (rarity/qty) │  │ (template)   │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
+├─────────────────────────────────────────────────────────────┤
+│                    Data Layer (Resources)                    │
+├─────────────────────────────────────────────────────────────┤
+│  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐│
+│  │  Hero  │  │  Item  │  │ Affix  │  │Currency│  │Implicit││
+│  └────────┘  └────────┘  └────────┘  └────────┘  └────────┘│
+├─────────────────────────────────────────────────────────────┤
+│                    Global State (Autoloads)                  │
+│  ┌────────────────────────┐  ┌────────────────────────┐     │
+│  │      GameState         │  │      GameEvents        │     │
+│  │ - hero: Hero singleton │  │  - equipment_changed   │     │
+│  │ - currency_counts: {}  │  │  - item_crafted        │     │
+│  │                        │  │  - area_cleared        │     │
+│  └────────────────────────┘  └────────────────────────┘     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Integration Analysis
+### Component Responsibilities
 
-### 1. Defensive Prefixes
+| Component | Responsibility | Pattern |
+|-----------|----------------|---------|
+| **GameState** | Hero singleton, currency inventory | Autoload singleton |
+| **GameEvents** | Cross-scene signal bus | Event bus pattern |
+| **StatCalculator** | DPS/defense calculations (static service) | Stateless service |
+| **LootTable** | Rarity weights, drop counts (static service) | Stateless service |
+| **Resource classes** | Item, Affix, Implicit, Hero, Currency data | Data objects extending Resource |
+| **Currency** | Template method for validation/application | Template method pattern |
+| **Views** | Scene-specific UI, coordinated by main_view | MVC-style views |
 
-**Current State:**
-- 9 prefixes in ItemAffixes.prefixes[], ALL have Tag.WEAPON
-- Item.add_prefix() filters by has_valid_tag(affix) — checks affix.tags[] against item.valid_tags[]
-- Non-weapon items (Helmet, Armor, Boots, Ring) have valid_tags but NO matching prefixes
+### Current Data Flow (v1.1)
 
-**Integration Method:** **EXTEND** ItemAffixes.prefixes[] with new definitions
-
-**Required Changes:**
-
-| Component | Change Type | Detail |
-|-----------|-------------|--------|
-| ItemAffixes.prefixes[] | ADD | New Affix definitions with Tag.ARMOR, Tag.ENERGY_SHIELD, Tag.JEWELRY |
-| Tag.gd constants | VERIFY | Tag.ARMOR, Tag.ENERGY_SHIELD already exist (lines 17-18) |
-| Tag.gd constants | ADD | Tag.JEWELRY for ring-specific prefixes |
-| Tag.StatType enum | ADD | INCREASED_ARMOR, INCREASED_ENERGY_SHIELD, BLOCK_CHANCE, DODGE_CHANCE |
-| StatCalculator | ADD | calculate_defense() method for aggregating defense multipliers |
-| Armor/Helmet/Boots/Ring | MODIFY | update_value() calls StatCalculator.calculate_defense() |
-
-**Data Flow:**
 ```
-1. Item.add_prefix() called (existing method)
-   ↓
-2. ItemAffixes.prefixes filtered by has_valid_tag() (existing logic)
-   ↓
-3. NEW defensive prefixes now match non-weapon items
-   ↓
-4. Affix added to item.prefixes[] (existing)
-   ↓
-5. Item.update_value() called → StatCalculator.calculate_defense() (NEW)
-   ↓
-6. Defense stats recalculated with new affixes
+CRAFTING FLOW:
+User clicks hammer → crafting_view → Currency.apply(item) → item.update_value()
+→ StatCalculator → item_finished signal → hero_view updates display
+
+COMBAT FLOW (v1.1 - time-based):
+Timer timeout → gameplay_view.clear_area()
+  ├─ LootTable.get_item_drop_count(area_level) → spawn items
+  ├─ LootTable.roll_currency_drops(area_level) → add currencies to GameState
+  ├─ GameEvents.area_cleared.emit(area_level)
+  ├─ Hero.take_damage() → simple armor formula
+  └─ If dead: stop clearing, auto-revive
+
+EQUIPMENT FLOW:
+hero_view.equip_item() → Hero.equip_item() → Hero.update_stats()
+→ GameEvents.equipment_changed → gameplay_view.refresh_clearing_speed()
 ```
 
-**No Breaking Changes:**
-- Existing weapon prefixes still work (Tag.WEAPON filtering unchanged)
-- Item.add_prefix() already supports tag filtering
-- Armor/Helmet/Boots already have total_defense field (line 6 in armor.gd)
+## New Architecture for v1.2 (Pack-Based Combat)
 
-### 2. Expanded Suffixes
+### New Resources
 
-**Current State:**
-- 15 suffixes in ItemAffixes.suffixes[]
-- 7 have stat_types[] defined (routed to StatCalculator)
-- 8 have empty stat_types[] (display-only, not calculated)
+#### MonsterPack Resource
+```gdscript
+class_name MonsterPack extends Resource
 
-**Integration Method:** **EXTEND** ItemAffixes.suffixes[]
+var pack_name: String = "Goblin Pack"
+var current_hp: float = 100.0
+var max_hp: float = 100.0
+var damage: float = 10.0
+var damage_type: String = "physical"  # "physical", "fire", "cold", "lightning"
+var pack_size: int = 5  # Visual only, affects HP
+var area_level: int = 1
 
-**Required Changes:**
+func is_alive() -> bool:
+    return current_hp > 0
 
-| Component | Change Type | Detail |
-|-----------|-------------|--------|
-| ItemAffixes.suffixes[] | ADD | New suffix definitions with appropriate tags |
-| Tag.StatType enum | ADD | New stat types as needed (e.g., LIFE_REGEN, ELEMENTAL_RESIST) |
-| StatCalculator | ADD | Methods for new stat types if they affect DPS/defense |
+func take_damage(damage: float) -> void:
+    current_hp -= damage
+    current_hp = max(0, current_hp)
+```
 
-**Design Decision: Display vs Calculated Stats**
+**Why Resource**: Follows existing pattern (Hero, Item, Currency all extend Resource). Pack instances are runtime state, not saved data, but Resource provides structure and inspector visibility for debugging.
 
-**Current pattern:**
-- stat_types[] NOT EMPTY → StatCalculator handles aggregation
-- stat_types[] EMPTY → Display-only (shown in tooltip, not calculated)
+#### Map Resource
+```gdscript
+class_name Map extends Resource
 
-**For v1.1 expanded suffixes:**
-- **Defensive stats** (resistances, regen, etc.) → Add stat_types[], implement in StatCalculator
-- **Flavor stats** (item quantity, rarity, etc.) → Leave stat_types[] empty, display-only until mapping milestone
+var map_name: String = "Forest Clearing"
+var area_level: int = 1
+var total_packs: int = 10
+var packs_cleared: int = 0
+var current_pack: MonsterPack = null
 
-**No Breaking Changes:**
-- Item.add_suffix() already supports unlimited suffix types
-- Empty stat_types[] is valid (8 existing suffixes use this pattern)
+func generate_next_pack() -> MonsterPack:
+    # Creates MonsterPack with HP/damage scaled by area_level
+    pass
 
-### 3. Currency Area Gating
+func is_complete() -> bool:
+    return packs_cleared >= total_packs
+```
 
-**Current State:**
-- LootTable.roll_currency_drops() has flat probability per currency type
-- No area-level awareness for WHICH currencies can drop
-- Area level only affects QUANTITY (bonus_drops = area_level - 1)
+**Why Resource**: Replaces current area_level integer. Encapsulates map progression state. Area tier names ("Forest", "Dark Forest") become map types.
 
-**Integration Method:** **EXTEND** Currency with min_area_level, **MODIFY** LootTable gating logic
+### Modified Resources
 
-**Required Changes:**
+#### Hero (models/hero.gd)
 
-| Component | Change Type | Detail |
-|-----------|-------------|--------|
-| Currency base class | ADD | var min_area_level: int = 1 field |
-| RunicHammer, etc. | SET | Override min_area_level in _init() (Runic: 1, Forge: 2, Grand: 3, Claw: 4) |
-| GameState | ADD | var current_area_level: int = 1 field |
-| GameplayView | MODIFY | Set GameState.current_area_level when area changes |
-| LootTable.roll_currency_drops() | MODIFY | Add area_level gating before probability roll |
-
-**Recommended Gating Logic:**
+**ADD defensive calculation methods:**
 
 ```gdscript
-# In LootTable.roll_currency_drops(area_level: int)
+# NEW method: Calculate damage reduction from armor/evasion/ES/resistances
+func calculate_damage_taken(incoming_damage: float, damage_type: String) -> float:
+    # Delegate to StatCalculator for actual formulas
+    return StatCalculator.calculate_damage_taken(
+        incoming_damage,
+        damage_type,
+        total_armor,
+        total_evasion,
+        total_energy_shield,
+        total_fire_resistance,
+        total_cold_resistance,
+        total_lightning_resistance
+    )
 
-const CURRENCY_CONFIGS = {
-    "runic": {"class": RunicHammer, "chance": 0.7, "min_qty": 1, "max_qty": 2},
-    "forge": {"class": ForgeHammer, "chance": 0.3, "min_qty": 1, "max_qty": 1},
-    "tack": {"class": TackHammer, "chance": 0.5, "min_qty": 1, "max_qty": 2},
-    "grand": {"class": GrandHammer, "chance": 0.2, "min_qty": 1, "max_qty": 1},
-    "claw": {"class": ClawHammer, "chance": 0.4, "min_qty": 1, "max_qty": 2},
-    "tuning": {"class": TuningHammer, "chance": 0.4, "min_qty": 1, "max_qty": 2},
-}
-
-for currency_name in CURRENCY_CONFIGS:
-    var config = CURRENCY_CONFIGS[currency_name]
-    var currency_instance = config["class"].new()
-
-    # AREA GATING: Skip if area too low
-    if area_level < currency_instance.min_area_level:
-        continue
-
-    # Existing probability logic
-    if randf() < config["chance"]:
-        var quantity = randi_range(config["min_qty"], config["max_qty"])
-        drops[currency_name] = quantity
+# EXISTING: calculate_defense() already sums armor/evasion/ES/resistances from affixes
+# NO CHANGE needed to stat aggregation logic
 ```
 
-**Ramping Drop Chance (Optional Enhancement):**
+**Why modify**: Hero already aggregates defensive stats (armor, evasion, ES, resistances). Adding damage calculation method keeps defensive logic centralized in Hero, matching existing DPS pattern (Hero.get_total_dps()).
 
-For "low initial drop chance ramping up" requirement:
+#### StatCalculator (models/stats/stat_calculator.gd)
+
+**ADD damage reduction functions:**
 
 ```gdscript
-# After gating check, before probability roll:
-var adjusted_chance = config["chance"]
+## Calculate final damage after defensive layers
+## Order: Armor → Evasion → Energy Shield → Resistances
+static func calculate_damage_taken(
+    incoming_damage: float,
+    damage_type: String,
+    armor: int,
+    evasion: int,
+    energy_shield: int,
+    fire_res: int,
+    cold_res: int,
+    lightning_res: int
+) -> float:
+    var damage := incoming_damage
 
-# Ramp up chance if just unlocked (within 2 levels of min_area_level)
-var levels_past_unlock = area_level - currency_instance.min_area_level
-if levels_past_unlock >= 0 and levels_past_unlock <= 2:
-    # Start at 20% of base chance, ramp to 100% over 2 levels
-    var ramp_multiplier = 0.2 + (levels_past_unlock / 2.0) * 0.8
-    adjusted_chance *= ramp_multiplier
+    # Layer 1: Armor (physical only, diminishing returns)
+    if damage_type == "physical":
+        damage = _apply_armor_reduction(damage, armor)
 
-if randf() < adjusted_chance:
-    # ... award currency
+    # Layer 2: Evasion (chance to avoid, entropy system)
+    if _roll_evasion(evasion):
+        return 0.0  # Attack evaded
+
+    # Layer 3: Energy Shield (absorbs before life)
+    # Handled separately in Hero.take_damage() since ES is a pool
+
+    # Layer 4: Elemental Resistance (elemental damage only)
+    if damage_type in ["fire", "cold", "lightning"]:
+        var resistance := 0
+        match damage_type:
+            "fire": resistance = fire_res
+            "cold": resistance = cold_res
+            "lightning": resistance = lightning_res
+        damage = _apply_resistance(damage, resistance)
+
+    return max(1.0, damage)  # Minimum 1 damage
+
+static func _apply_armor_reduction(damage: float, armor: int) -> float:
+    # Formula: Damage * (1 - Armor/(Armor + 10*Damage))
+    # More effective vs small hits, less vs large hits
+    var reduction_factor := float(armor) / (float(armor) + 10.0 * damage)
+    return damage * (1.0 - reduction_factor)
+
+static func _apply_resistance(damage: float, resistance: int) -> float:
+    # Cap resistance at 75% (standard ARPG cap)
+    var capped_res := min(resistance, 75)
+    return damage * (1.0 - capped_res / 100.0)
+
+static func _roll_evasion(evasion: int) -> bool:
+    # Simplified: higher evasion = higher avoid chance (cap at 75%)
+    var avoid_chance := min(float(evasion) / 500.0, 0.75)
+    return randf() < avoid_chance
 ```
 
-**No Breaking Changes:**
-- Existing currency_rules structure can be replaced with CURRENCY_CONFIGS
-- min_area_level defaults to 1 (no change for areas 1+)
+**Why StatCalculator**: Matches existing pattern (DPS calculation uses StatCalculator.calculate_dps()). Defense formulas are complex, tested independently. Stateless service keeps calculation logic separate from state.
 
-### 4. Drop Rate Rebalancing
+### Modified Autoloads
 
-**Current State:**
-- RARITY_WEIGHTS: Area 1 has 80% normal, 18% magic, 2% rare
-- currency_rules: Runic 70%, Tack 50%, Tuning 40%, Claw 40%, Forge 30%, Grand 20%
+#### GameState (autoloads/game_state.gd)
 
-**Integration Method:** **MODIFY** existing constants
-
-**Required Changes:**
-
-| Component | Change Type | Detail |
-|-----------|-------------|--------|
-| LootTable.RARITY_WEIGHTS | MODIFY | Reduce rare% at low levels, increase magic% gap |
-| LootTable.currency_rules | MODIFY | Reduce advanced currency chances |
-
-**Recommended Tuning:**
+**ADD pack/map tracking:**
 
 ```gdscript
-# BEFORE (v1.0):
-const RARITY_WEIGHTS = {
-    1: { NORMAL: 80, MAGIC: 18, RARE: 2 },   # 2% rare at area 1
-    2: { NORMAL: 50, MAGIC: 40, RARE: 10 },  # 10% rare at area 2
-    3: { NORMAL: 20, MAGIC: 45, RARE: 35 },
-    4: { NORMAL: 5, MAGIC: 30, RARE: 65 },
-}
+# NEW: Current map/pack state
+var current_map: Map = null
+var current_pack: MonsterPack = null
 
-# AFTER (v1.1 — rare items harder to find):
-const RARITY_WEIGHTS = {
-    1: { NORMAL: 90, MAGIC: 10, RARE: 0 },   # No rares at area 1
-    2: { NORMAL: 70, MAGIC: 25, RARE: 5 },   # 5% rare at area 2 (was 10%)
-    3: { NORMAL: 40, MAGIC: 40, RARE: 20 },  # 20% rare at area 3 (was 35%)
-    4: { NORMAL: 10, MAGIC: 35, RARE: 55 },  # 55% rare at area 4 (was 65%)
-    5: { NORMAL: 5, MAGIC: 30, RARE: 65 },   # Endgame unchanged
-}
+# NEW: Death state tracking
+var hero_death_count: int = 0
+
+# NEW: Generate/progress maps
+func start_new_map(area_level: int) -> void:
+    current_map = Map.new()
+    current_map.area_level = area_level
+    current_map.total_packs = 10  # Could scale with area_level
+    current_map.packs_cleared = 0
+    current_pack = current_map.generate_next_pack()
+    GameEvents.map_started.emit(current_map)
+
+func advance_to_next_pack() -> void:
+    if current_map.is_complete():
+        # Map finished, generate new one
+        start_new_map(current_map.area_level + 1)
+    else:
+        current_pack = current_map.generate_next_pack()
+        GameEvents.pack_spawned.emit(current_pack)
 ```
+
+**Why GameState**: Already owns hero singleton and currency inventory. Current map/pack are runtime singletons (only one active). Centralizes game progression state.
+
+#### GameEvents (autoloads/game_events.gd)
+
+**ADD combat signals:**
 
 ```gdscript
-# BEFORE (v1.0):
-var currency_rules = {
-    "runic": {"chance": 0.7, "min_qty": 1, "max_qty": 2},
-    "forge": {"chance": 0.3, "min_qty": 1, "max_qty": 1},
-    "grand": {"chance": 0.2, "min_qty": 1, "max_qty": 1},
-}
-
-# AFTER (v1.1 — advanced currencies rarer):
-var currency_rules = {
-    "runic": {"chance": 0.6, "min_qty": 1, "max_qty": 2},  # -10%
-    "forge": {"chance": 0.2, "min_qty": 1, "max_qty": 1},  # -33% (0.3 → 0.2)
-    "grand": {"chance": 0.1, "min_qty": 1, "max_qty": 1},  # -50% (0.2 → 0.1)
-    "claw": {"chance": 0.25, "min_qty": 1, "max_qty": 1},  # -37.5% (0.4 → 0.25)
-    "tuning": {"chance": 0.25, "min_qty": 1, "max_qty": 1},# -37.5% (0.4 → 0.25)
-}
+# NEW signals
+signal map_started(map: Map)
+signal pack_spawned(pack: MonsterPack)
+signal pack_defeated(pack: MonsterPack)
+signal hero_death()
+signal combat_damage_dealt(damage: float, target: MonsterPack)
+signal combat_damage_taken(damage: float, source: MonsterPack)
 ```
 
-**No Breaking Changes:**
-- Same data structure, different values
-- Areas 1-4 already implemented
+**Why GameEvents**: Existing pattern for cross-scene communication. Views listen to events, don't poll state. Decouples combat logic from UI updates.
 
-## Data Flow Changes
+### Modified Services
 
-### Affix Selection (Defensive Prefixes)
+#### LootTable (models/loot/loot_table.gd)
 
-**BEFORE (v1.0):**
-```
-Item.add_prefix()
-  ↓
-Filter ItemAffixes.prefixes by has_valid_tag()
-  ↓
-Non-weapon items: valid_prefixes = [] (no matches)
-  ↓
-Return false (cannot add prefix)
-```
+**SPLIT drop generation:**
 
-**AFTER (v1.1):**
-```
-Item.add_prefix()
-  ↓
-Filter ItemAffixes.prefixes by has_valid_tag()
-  ↓
-Non-weapon items: valid_prefixes = [defensive options] (NEW matches)
-  ↓
-Pick random, add to item.prefixes[]
-  ↓
-Item.update_value() → StatCalculator.calculate_defense() (NEW)
-```
+```gdscript
+# EXISTING: roll_currency_drops(area_level) → Dictionary
+# NO CHANGE: Packs drop currency (called on pack death)
 
-### Currency Drop Generation (Area Gating)
+# NEW: Roll item drops for completed maps
+static func roll_map_item_drops(area_level: int) -> Array[Item]:
+    var items: Array[Item] = []
+    var item_count := get_item_drop_count(area_level)
 
-**BEFORE (v1.0):**
-```
-LootTable.roll_currency_drops(area_level)
-  ↓
-For each currency type:
-  Roll probability → award if successful
-  ↓
-Add (area_level - 1) bonus drops
+    for i in range(item_count):
+        var item := _spawn_random_item_base()
+        var rarity := roll_rarity(area_level)
+        spawn_item_with_mods(item, rarity)
+        items.append(item)
+
+    return items
+
+# EXISTING methods used by both:
+# - get_item_drop_count(area_level) → int
+# - roll_rarity(area_level) → Rarity
+# - spawn_item_with_mods(item, rarity) → void
 ```
 
-**AFTER (v1.1):**
+**Why split**: Drop sources change (packs vs maps), but formulas remain identical. Existing rarity/quantity logic reused. Clarifies when items vs currency drop.
+
+### Major Rework: gameplay_view
+
+**CURRENT (v1.1 - time-based):**
+```gdscript
+# Timer-based clearing with auto-progression
+var area_level: int = 1
+var clearing_timer: Timer
+
+func clear_area():
+    # Drop items immediately
+    # Drop currency immediately
+    # Take damage once
+    # Maybe advance area_level
 ```
-LootTable.roll_currency_drops(area_level)
-  ↓
-For each currency type:
-  Check currency.min_area_level ≤ area_level (NEW gating)
-    ↓ (skip if too low)
-  Apply ramp multiplier if just unlocked (NEW)
+
+**NEW (v1.2 - pack-based):**
+```gdscript
+# Combat loop with explicit pack progression
+var combat_timer: Timer  # Attacks every X seconds based on DPS
+var current_map: Map = null  # Reference to GameState.current_map
+var current_pack: MonsterPack = null  # Reference to GameState.current_pack
+
+func _ready():
+    GameEvents.map_started.connect(_on_map_started)
+    GameEvents.pack_spawned.connect(_on_pack_spawned)
+    GameEvents.pack_defeated.connect(_on_pack_defeated)
+    GameEvents.hero_death.connect(_on_hero_death)
+
+    # Start first map
+    GameState.start_new_map(1)
+
+func start_combat():
+    combat_timer.start()
+
+func stop_combat():
+    combat_timer.stop()
+
+func _on_combat_timer_timeout():
+    # Hero attacks pack
+    var hero_dps := GameState.hero.get_total_dps()
+    var damage_per_hit := hero_dps * combat_timer.wait_time
+    current_pack.take_damage(damage_per_hit)
+    GameEvents.combat_damage_dealt.emit(damage_per_hit, current_pack)
+
+    if not current_pack.is_alive():
+        _on_pack_killed()
+        return
+
+    # Pack attacks hero
+    var pack_damage := current_pack.damage
+    var damage_taken := GameState.hero.calculate_damage_taken(
+        pack_damage,
+        current_pack.damage_type
+    )
+    GameState.hero.take_damage(damage_taken)
+    GameEvents.combat_damage_taken.emit(damage_taken, current_pack)
+
+    if not GameState.hero.is_alive:
+        _on_hero_died()
+
+func _on_pack_killed():
+    # Currency drops from pack
+    var currency_drops := LootTable.roll_currency_drops(current_map.area_level)
+    GameState.add_currencies(currency_drops)
+    currencies_found.emit(currency_drops)
+
+    # Advance to next pack
+    current_map.packs_cleared += 1
+    GameEvents.pack_defeated.emit(current_pack)
+
+    if current_map.is_complete():
+        _on_map_completed()
+    else:
+        GameState.advance_to_next_pack()
+
+func _on_map_completed():
+    # Item drops from completed map
+    var item_drops := LootTable.roll_map_item_drops(current_map.area_level)
+    for item in item_drops:
+        item_base_found.emit(item)
+
+    # Start next map (higher area level)
+    GameState.start_new_map(current_map.area_level + 1)
+
+func _on_hero_died():
+    stop_combat()
+    GameState.hero_death_count += 1
+    GameState.hero.revive()
+    GameEvents.hero_death.emit()
+    # Auto-restart combat (idle game design)
+    start_combat()
+```
+
+**Why rework**: Current design is timer-based with area as integer. New design requires pack state, combat loop, split drop timing (packs vs maps). Rewrite is cleaner than bolting pack logic onto time-based system.
+
+**What stays the same**:
+- Signal emissions to crafting_view/hero_view
+- Display update methods
+- Button connections (Start/Stop clearing)
+- Currency/item emission patterns
+
+## Integration Points
+
+### Data Flow Changes
+
+```
+OLD (v1.1):
+Timer → clear_area() → drops items + currency → signals
+
+NEW (v1.2):
+Combat Timer → attack pack → pack dies → currency drops
+                    ↓
+              pack attacks hero → defensive calculations
+                    ↓
+          all packs dead → map complete → item drops
+```
+
+### Cross-Component Dependencies
+
+| New Component | Depends On | Used By |
+|---------------|------------|---------|
+| MonsterPack | (none - data class) | GameState, gameplay_view |
+| Map | MonsterPack | GameState, gameplay_view |
+| Hero.calculate_damage_taken() | StatCalculator | gameplay_view |
+| StatCalculator damage functions | Tag.StatType (existing) | Hero |
+| GameState pack tracking | Map, MonsterPack | gameplay_view |
+| GameEvents combat signals | (none - bus) | gameplay_view, hero_view (future) |
+| LootTable.roll_map_item_drops() | Existing item/rarity logic | gameplay_view |
+
+### Signal Flow (New)
+
+```
+GameState.start_new_map()
     ↓
-  Roll adjusted probability → award if successful
-  ↓
-Add (area_level - 1) bonus drops (unchanged)
+GameEvents.map_started → gameplay_view updates display
+    ↓
+GameState.advance_to_next_pack()
+    ↓
+GameEvents.pack_spawned → gameplay_view updates display
+    ↓
+(combat loop)
+    ↓
+GameEvents.pack_defeated → gameplay_view advances pack count
+    ↓
+GameEvents.map_completed (NEW, optional)
+    ↓
+gameplay_view emits item_base_found → crafting_view
 ```
 
-## Component Changes Summary
+## Architectural Patterns in v1.2
 
-### NEW Components
+### Pattern 1: Resource-Based State Objects
 
-**None.** All features integrate through existing components.
+**What:** Game entities (Hero, Item, MonsterPack, Map) extend Godot's Resource class
+**When to use:** Data that needs structure, inspector visibility, potential serialization
+**Trade-offs:**
+- PRO: Type-safe, editor integration, matches existing codebase pattern
+- CON: Resources are reference types (shared state risk), but GameState enforces single ownership
 
-### MODIFIED Components
-
-| Component | Modification | Reason |
-|-----------|--------------|--------|
-| ItemAffixes.gd | Add defensive prefix definitions, expanded suffix definitions | Core feature: defensive prefixes + expanded affixes |
-| Tag.gd | Add Tag.JEWELRY constant, add StatType entries | Support new prefix tags and stat routing |
-| StatCalculator.gd | Add calculate_defense() method | Aggregate defense multipliers (same pattern as calculate_dps) |
-| Currency.gd | Add var min_area_level: int = 1 | Enable area gating per currency type |
-| RunicHammer.gd, etc. | Set min_area_level in _init() | Define unlock areas (Runic: 1, Forge: 2, Grand: 3, Claw: 4) |
-| LootTable.gd | Add area gating logic to roll_currency_drops(), modify RARITY_WEIGHTS and currency_rules | Currency gating + drop rebalancing |
-| GameState.gd | Add var current_area_level: int = 1 | Track current area for currency gating |
-| Armor/Helmet/Boots/Ring.gd | Call StatCalculator.calculate_defense() in update_value() | Apply defensive prefix effects |
-
-### UNCHANGED Components (Key)
-
-| Component | Why Unchanged |
-|-----------|---------------|
-| Item.gd | add_prefix()/add_suffix() already support tag filtering |
-| Affix.gd | Data structure supports any tags/stat_types |
-| GameEvents.gd | No new signals needed |
-| All UI views | Display already reads item.total_defense, item.prefixes[] |
-
-## Build Order
-
-### Recommended Sequence
-
-1. **Defensive Prefixes** (1-2 hours)
-   - Add Tag.JEWELRY constant
-   - Add StatType entries (INCREASED_ARMOR, etc.)
-   - Add defensive prefix definitions to ItemAffixes.prefixes[]
-   - Add StatCalculator.calculate_defense()
-   - Modify Armor/Helmet/Boots/Ring.update_value()
-   - **Test:** Craft non-weapon items, verify defensive prefixes appear
-
-2. **Expanded Suffixes** (30 min - 1 hour)
-   - Add new suffix definitions to ItemAffixes.suffixes[]
-   - Add StatType entries if needed
-   - Add StatCalculator methods if stats are calculated (not display-only)
-   - **Test:** Verify new suffixes appear on all item types
-
-3. **Currency Area Gating** (1-2 hours)
-   - Add Currency.min_area_level field
-   - Set min_area_level in each Currency subclass _init()
-   - Add GameState.current_area_level field
-   - Modify GameplayView to set current_area_level on area change
-   - Modify LootTable.roll_currency_drops() with gating logic
-   - **Test:** Clear area 1, verify no Grand/Claw/Forge drops; clear area 3, verify Grand drops
-
-4. **Drop Rate Rebalancing** (15-30 min)
-   - Modify LootTable.RARITY_WEIGHTS
-   - Modify LootTable.currency_rules
-   - **Test:** Clear each area 20 times, log drop counts, verify new distributions
-
-**Dependencies:**
-- None between features (fully independent)
-- Within Defensive Prefixes: Tag constants → ItemAffixes definitions → StatCalculator → Item subclasses
-- Within Currency Gating: Currency.min_area_level → GameState.current_area_level → LootTable logic
-
-## Testing Integration Points
-
-### Per-Feature Tests
-
-**Defensive Prefixes:**
+**Example:**
 ```gdscript
-# Test non-weapon items can receive defensive prefixes
-var helmet = BasicHelmet.new()
-helmet.rarity = Item.Rarity.RARE
-helmet.add_prefix()  # Should succeed with defensive prefix
-assert(helmet.prefixes.size() > 0)
-assert(Tag.ARMOR in helmet.prefixes[0].tags or Tag.ENERGY_SHIELD in helmet.prefixes[0].tags)
+# MonsterPack follows same pattern as Hero/Item
+class_name MonsterPack extends Resource
 
-# Test defensive stats are calculated
-helmet.update_value()
-assert(helmet.total_defense > helmet.original_base_armor)  # Affixes increased defense
+var max_hp: float = 100.0
+var current_hp: float = 100.0
+
+func take_damage(damage: float) -> void:
+    current_hp = max(0, current_hp - damage)
 ```
 
-**Currency Area Gating:**
+### Pattern 2: Stateless Service Layer
+
+**What:** StatCalculator and LootTable are static classes with pure functions
+**When to use:** Complex calculations that don't depend on instance state
+**Trade-offs:**
+- PRO: Testable in isolation, no state leakage, reusable
+- CON: Can't be mocked (static), but GDScript testing is limited anyway
+
+**Example:**
 ```gdscript
-# Test Grand Hammer doesn't drop in area 1
-GameState.current_area_level = 1
-var drops = LootTable.roll_currency_drops(1)
-assert(not drops.has("grand"))
-
-# Test Grand Hammer can drop in area 3
-GameState.current_area_level = 3
-drops = LootTable.roll_currency_drops(3)
-# May or may not drop (probability), but should be in pool
-# Run 100 times, verify Grand appears at least once
-```
-
-**Drop Rebalancing:**
-```gdscript
-# Test rare items are harder to find in early areas
-var rare_count = 0
-for i in range(100):
-    var rarity = LootTable.roll_rarity(1)
-    if rarity == Item.Rarity.RARE:
-        rare_count += 1
-assert(rare_count == 0)  # Should be 0% at area 1 with new weights
-```
-
-### Cross-Feature Integration Tests
-
-```gdscript
-# Test defensive prefix on rare helmet from area 3 drop
-var helmet = LootTable.spawn_item_with_mods(BasicHelmet.new(), LootTable.roll_rarity(3))
-# Helmet may have defensive prefix if rare
-if helmet.rarity == Item.Rarity.RARE and helmet.prefixes.size() > 0:
-    # Verify defensive prefix works
-    var has_defensive = false
-    for prefix in helmet.prefixes:
-        if Tag.ARMOR in prefix.tags or Tag.ENERGY_SHIELD in prefix.tags:
-            has_defensive = true
-            break
-    # At least one defensive prefix should exist with new pool
-```
-
-## Architectural Patterns (Reused)
-
-### Pattern 1: Tag-Based Filtering (EXISTING, EXTENDED)
-
-**What:** Affixes have tags[], items have valid_tags[]. Filtering matches tags to determine eligible affixes.
-
-**Already Implemented:**
-```gdscript
-# Item.gd, line 133-137
-func has_valid_tag(affix: Affix) -> bool:
-    for tag in self.valid_tags:
-        if tag in affix.tags:
-            return true
-    return false
-```
-
-**v1.1 Extension:**
-```gdscript
-# ItemAffixes.gd — NEW defensive prefix
-Affix.new(
-    "Armor",
-    Affix.AffixType.PREFIX,
-    5,
-    20,
-    [Tag.ARMOR, Tag.DEFENSE],  # Tag.ARMOR matches Helmet/Armor/Boots valid_tags
-    [Tag.StatType.INCREASED_ARMOR]
+# StatCalculator doesn't hold state, just does math
+var damage_taken := StatCalculator.calculate_damage_taken(
+    100.0, "fire", armor, evasion, es, fire_res, cold_res, lightning_res
 )
 ```
 
-**Why this works:** Helmet/Armor/Boots already have Tag.ARMOR in valid_tags (set during item creation). Adding prefixes with Tag.ARMOR makes them eligible for selection.
+### Pattern 3: Event Bus for Decoupling
 
-### Pattern 2: Template Method (Currency) (EXISTING, EXTENDED)
+**What:** GameEvents autoload emits signals, views/systems subscribe
+**When to use:** Cross-scene communication, avoiding direct references
+**Trade-offs:**
+- PRO: Loose coupling, views don't need references to each other
+- CON: Harder to trace flow (signal connections), but signals are debuggable in Godot
 
-**What:** Base Currency.apply() enforces validation, subclasses override _do_apply() for behavior.
-
-**Already Implemented:**
+**Example:**
 ```gdscript
-# Currency.gd, lines 12-21
+# gameplay_view emits event
+GameEvents.pack_defeated.emit(current_pack)
+
+# hero_view listens (future feature)
+GameEvents.pack_defeated.connect(_on_pack_defeated)
+func _on_pack_defeated(pack: MonsterPack):
+    update_combat_stats_display()
+```
+
+### Pattern 4: Template Method (Currency)
+
+**What:** Currency base class defines apply() skeleton, subclasses override _do_apply()
+**When to use:** Shared validation/consumption logic, varied behavior
+**Trade-offs:**
+- PRO: Enforces consumption-on-success rule (CRAFT-09), reduces duplication
+- CON: Inheritance over composition, but only one level deep
+
+**EXISTING - no changes for v1.2:**
+```gdscript
+class_name Currency extends Resource
+
 func apply(item: Item) -> bool:
     if not can_apply(item):
         return false
-    _do_apply(item)
+    _do_apply(item)  # Subclass implements
     return true
 ```
 
-**v1.1 Extension:**
+### Pattern 5: Combat Loop State Machine
+
+**What:** gameplay_view manages combat state (idle → fighting → pack_dead → map_complete)
+**When to use:** State transitions with different behaviors per state
+**Trade-offs:**
+- PRO: Clear state progression, prevents invalid transitions
+- CON: Could use formal FSM, but simple flags suffice for linear progression
+
+**Example:**
 ```gdscript
-# Grand Hammer with area gating
-class_name GrandHammer extends Currency
+enum CombatState { IDLE, FIGHTING, PACK_TRANSITION, MAP_COMPLETE }
+var state: CombatState = CombatState.IDLE
 
-var min_area_level: int = 3  # NEW field
-
-func can_apply(item: Item) -> bool:
-    return item.rarity == Item.Rarity.MAGIC and item.prefixes.size() < 1
-    # Area gating enforced in LootTable, not here
-    # (Currency doesn't know GameState.current_area_level)
-
-func _do_apply(item: Item) -> void:
-    if item.add_prefix():
-        item.update_value()
+func _on_combat_timer_timeout():
+    match state:
+        CombatState.FIGHTING:
+            _process_combat()
+        CombatState.PACK_TRANSITION:
+            _spawn_next_pack()
+        # etc.
 ```
 
-**Why this works:** Area gating is a drop restriction, not an application restriction. LootTable.roll_currency_drops() checks min_area_level BEFORE awarding currency. Once awarded, Currency.apply() works as before.
+## Build Order (Dependency-Driven)
 
-### Pattern 3: Static Utility (LootTable) (EXISTING, MODIFIED)
+### Phase 1: Data Foundation (No Dependencies)
+1. **MonsterPack Resource** (models/combat/monster_pack.gd)
+   - New file, extends Resource
+   - No dependencies
+   - Needed by: Map, GameState
 
-**What:** LootTable provides static methods for drop generation. No instance required.
+2. **Map Resource** (models/combat/map.gd)
+   - New file, extends Resource
+   - Depends: MonsterPack
+   - Needed by: GameState
 
-**Already Implemented:**
-```gdscript
-# LootTable.gd, line 53
-static func roll_currency_drops(area_level: int) -> Dictionary:
+### Phase 2: Calculation Extensions (Depends on Data)
+3. **StatCalculator defensive functions** (models/stats/stat_calculator.gd)
+   - Modify existing file
+   - Depends: Tag.StatType (existing)
+   - Needed by: Hero
+
+4. **Hero damage calculation** (models/hero.gd)
+   - Modify existing file
+   - Depends: StatCalculator (modified)
+   - Needed by: gameplay_view
+
+### Phase 3: State Management (Depends on Data + Calcs)
+5. **GameState pack tracking** (autoloads/game_state.gd)
+   - Modify existing autoload
+   - Depends: Map, MonsterPack
+   - Needed by: gameplay_view
+
+6. **GameEvents combat signals** (autoloads/game_events.gd)
+   - Modify existing autoload
+   - No dependencies (just signal definitions)
+   - Needed by: gameplay_view
+
+### Phase 4: Drop Logic Split (Depends on Data)
+7. **LootTable map drops** (models/loot/loot_table.gd)
+   - Modify existing file
+   - Depends: Item (existing), LootTable existing methods
+   - Needed by: gameplay_view
+
+### Phase 5: View Integration (Depends on Everything)
+8. **gameplay_view rework** (scenes/gameplay_view.gd)
+   - Major rewrite of existing file
+   - Depends: GameState (modified), GameEvents (modified), LootTable (modified), Hero (modified)
+   - Last to implement, integrates all new systems
+
+**Rationale**: Bottom-up dependency order. Data layer → calculation layer → state layer → view layer. Each phase is testable before moving to next. gameplay_view last because it orchestrates everything.
+
+## What NOT to Restructure
+
+### Keep Feature-Based Folders
 ```
-
-**v1.1 Modification:**
-```gdscript
-# Add gating logic while preserving static pattern
-static func roll_currency_drops(area_level: int) -> Dictionary:
-    var drops: Dictionary = {}
-
-    for currency_name in CURRENCY_CONFIGS:
-        var currency_class = CURRENCY_CONFIGS[currency_name]["class"]
-        var temp_instance = currency_class.new()  # Temporary for min_area_level check
-
-        if area_level < temp_instance.min_area_level:
-            continue  # Area gating
-
-        # Existing probability logic...
+models/
+  items/
+  affixes/
+  currencies/
+  stats/
+  loot/
+  combat/  ← NEW folder for MonsterPack, Map
 ```
+**Why**: Existing organization is clear. Combat is a new feature domain, gets its own folder. Don't flatten to "data/" or "resources/" - feature-based is more maintainable.
 
-**Trade-off:** Creates temporary Currency instances for min_area_level check. Alternative would be hardcoding area requirements in LootTable, but that duplicates data (min_area_level would exist in two places).
+### Keep Autoload Pattern for Singletons
+GameState and GameEvents remain autoloads. Don't move to scene instances.
+**Why**: Global state (hero, currency) is legitimately singleton. Event bus needs global access. Autoloads are Godot's idiomatic pattern for this.
 
-**Recommendation:** Use temporary instances. GDScript object creation is cheap, and it keeps area requirements defined in Currency subclasses (single source of truth).
+### Keep main_view Coordination Pattern
+main_view remains the coordinator, views remain siblings.
+**Why**: Existing signal wiring (crafting_view → hero_view) works. Don't introduce parent-child view nesting - keeps views reusable.
+
+### Keep Resource Pattern (Don't Switch to Dictionaries)
+MonsterPack/Map extend Resource, not plain Dictionaries.
+**Why**: Consistency with Hero/Item/Currency. Type safety. Inspector visibility for debugging. Resources are Godot's idiomatic data pattern.
+
+### Keep StatCalculator Stateless
+Don't make StatCalculator an autoload or instance.
+**Why**: Pure functions are testable, no side effects. Static class prevents accidental state leakage.
+
+### Keep Currency Template Method
+Don't refactor Currency to composition or delegate pattern.
+**Why**: Works well, only one level of inheritance, enforces consumption rules. Not broken, don't fix.
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Hardcoding Area Requirements in LootTable
+### Anti-Pattern 1: Tight Coupling gameplay_view → Hero
 
 **What people might do:**
 ```gdscript
-# LootTable.gd — WRONG
-const AREA_REQUIREMENTS = {
-    "runic": 1,
-    "forge": 2,
-    "grand": 3,
-    "claw": 4,
-}
-
-static func roll_currency_drops(area_level: int) -> Dictionary:
-    for currency_name in currency_rules:
-        if area_level < AREA_REQUIREMENTS[currency_name]:
-            continue
+# gameplay_view directly modifying Hero internal state
+GameState.hero.health -= 50
+GameState.hero.is_alive = false
 ```
 
-**Why it's wrong:**
-- Duplicates min_area_level data (Currency subclass AND LootTable)
-- If Currency.min_area_level changes, LootTable must also change
-- Violates single source of truth
+**Why it's wrong:** Breaks encapsulation, bypasses Hero's take_damage() logic, skips death signals
 
 **Do this instead:**
 ```gdscript
-# Get min_area_level from Currency subclass (authoritative source)
-var currency_class = CURRENCY_CONFIGS[currency_name]["class"]
-var temp = currency_class.new()
-if area_level < temp.min_area_level:
-    continue
+# Use Hero's public interface
+GameState.hero.take_damage(50)
+# Hero handles health clamping, death state, signals internally
 ```
 
-### Anti-Pattern 2: Adding Defensive Stats to StatCalculator.calculate_dps()
+### Anti-Pattern 2: Polling State Instead of Signals
 
 **What people might do:**
 ```gdscript
-# StatCalculator.gd — WRONG
-static func calculate_dps(...):
-    # ... existing DPS logic
-
-    # Add armor calculation here
-    var armor = base_armor
-    for affix in affixes:
-        if Tag.StatType.INCREASED_ARMOR in affix.stat_types:
-            armor *= (1.0 + affix.value / 100.0)
-    return dps  # But armor isn't part of DPS!
+# gameplay_view checking state every frame
+func _process(delta):
+    if current_pack.current_hp <= 0:
+        _on_pack_killed()
 ```
 
-**Why it's wrong:**
-- DPS and defense are separate concerns
-- Defense items don't have dps field
-- Breaks single responsibility principle
+**Why it's wrong:** Misses exact moment of death, runs logic multiple times, doesn't notify other systems
 
 **Do this instead:**
 ```gdscript
-# StatCalculator.gd — CORRECT (separate method)
-static func calculate_defense(base_armor: float, affixes: Array) -> float:
-    var armor = base_armor
-    for affix in affixes:
-        if Tag.StatType.INCREASED_ARMOR in affix.stat_types:
-            armor *= (1.0 + affix.value / 100.0)
-    return armor
-
-# Armor.gd — call appropriate method
-func update_value() -> void:
-    self.base_armor = StatCalculator.calculate_defense(
-        self.original_base_armor,
-        self.prefixes + self.suffixes + [self.implicit]
-    )
+# Event-driven flow
+func _on_combat_timer_timeout():
+    current_pack.take_damage(damage)
+    if not current_pack.is_alive():
+        _on_pack_killed()
+        GameEvents.pack_defeated.emit(current_pack)
 ```
 
-### Anti-Pattern 3: Creating New Autoloads for v1.1 Features
+### Anti-Pattern 3: Mixing Drop Logic in gameplay_view
 
 **What people might do:**
-- Create DefensiveAffixes.gd autoload for defensive prefixes
-- Create CurrencyGating.gd autoload for area restrictions
-
-**Why it's wrong:**
-- ItemAffixes already exists for affix definitions
-- LootTable already handles drop logic
-- Creates unnecessary singletons
-
-**Do this instead:**
-- Add defensive prefixes to existing ItemAffixes.prefixes[]
-- Add gating logic to existing LootTable.roll_currency_drops()
-
-## Risk Assessment
-
-### Low Risk
-
-**Defensive Prefixes:**
-- Risk: Existing weapon prefixes break
-- Mitigation: Tag filtering unchanged. Weapon items still match Tag.WEAPON, non-weapon items now match Tag.ARMOR/JEWELRY
-- Test: Verify weapon prefixes still work after adding defensive prefixes
-
-**Expanded Suffixes:**
-- Risk: Minimal — suffix pool is already heterogeneous (15 types with different tags)
-- Mitigation: Follow existing pattern (some have stat_types, some don't)
-
-### Medium Risk
-
-**Currency Area Gating:**
-- Risk: Off-by-one errors in area_level comparisons (< vs <=)
-- Mitigation: Use clear inequality (area_level < min_area_level means "not unlocked yet")
-- Test: Boundary testing (area 2 with min_area_level=2 should allow drops)
-
-**Drop Rate Rebalancing:**
-- Risk: Over-tuning makes progression too slow/fast
-- Mitigation: Start conservative (small adjustments), playtest, iterate
-- Test: Log drop counts over 100 area clears, measure actual vs intended distribution
-
-### High Risk
-
-**None.** All changes are additive or parameter tuning. No core architecture modifications.
-
-## Performance Considerations
-
-### Temporary Currency Instance Creation
-
-**Impact:** LootTable.roll_currency_drops() creates 6 temporary Currency instances per call (one per currency type for min_area_level check).
-
-**Frequency:** Once per area clear (not per frame).
-
-**Cost:** Negligible. GDScript object instantiation is ~microseconds. Area clears happen every few seconds.
-
-**Optimization (if needed):** Cache min_area_level in static dictionary:
-
 ```gdscript
-# LootTable.gd
-const CURRENCY_MIN_LEVELS = {
-    "runic": 1,
-    "forge": 2,
-    "tack": 1,
-    "grand": 3,
-    "claw": 4,
-    "tuning": 1,
-}
-
-# Use in roll_currency_drops() instead of temp instances
-if area_level < CURRENCY_MIN_LEVELS[currency_name]:
-    continue
+# gameplay_view rolling its own rarity/quantity
+func _on_pack_killed():
+    var currency_amount = randi_range(1, 5)
+    GameState.currency_counts["runic"] += currency_amount
 ```
 
-**Trade-off:** Duplicates data (anti-pattern 1), but eliminates object creation. Only optimize if profiling shows bottleneck (unlikely).
+**Why it's wrong:** Duplicates LootTable logic, inconsistent with existing system, not area-scaled
+
+**Do this instead:**
+```gdscript
+# Delegate to LootTable service
+func _on_pack_killed():
+    var drops := LootTable.roll_currency_drops(current_map.area_level)
+    GameState.add_currencies(drops)
+```
+
+### Anti-Pattern 4: Energy Shield as Instant Mitigation
+
+**What people might do:**
+```gdscript
+# Treating ES like armor (% reduction)
+var es_reduction = energy_shield / (energy_shield + 100)
+damage *= (1.0 - es_reduction)
+```
+
+**Why it's wrong:** Energy Shield in ARPGs is a damage buffer (like extra HP), not mitigation
+
+**Do this instead:**
+```gdscript
+# ES absorbs damage before life (in Hero.take_damage())
+func take_damage(damage: float):
+    if total_energy_shield > 0:
+        var absorbed = min(damage, total_energy_shield)
+        total_energy_shield -= absorbed
+        damage -= absorbed
+    health -= damage
+```
+
+### Anti-Pattern 5: Storing Pack State in gameplay_view
+
+**What people might do:**
+```gdscript
+# gameplay_view owns pack instances
+var current_pack: MonsterPack = MonsterPack.new()
+```
+
+**Why it's wrong:** Pack state isn't view state. Other systems (future: minimap, achievements) need pack access. View gets destroyed/recreated.
+
+**Do this instead:**
+```gdscript
+# GameState owns single source of truth
+var current_pack: MonsterPack = null  # Reference to GameState.current_pack
+
+func _on_pack_spawned(pack: MonsterPack):
+    current_pack = pack  # Store reference, don't own
+```
+
+## Defensive Stat Formulas (Path of Exile-Inspired)
+
+The defensive calculation architecture follows ARPG standards, specifically Path of Exile's layered defense system. Sources: [Path of Exile 2 Defense Guide](https://www.sportskeeda.com/mmo/exile-2-poe2-defense-resistance-guide-energy-shield-armor-evasion), [Maxroll Defense Layering](https://maxroll.gg/poe/resources/defenses-and-defensive-layering), [PoE Wiki Armor](https://www.poewiki.net/wiki/Armour).
+
+### Armor Formula
+```
+Damage Reduction = Armor / (Armor + 10 * Incoming Damage)
+Final Damage = Incoming Damage * (1 - Damage Reduction)
+```
+**Characteristics**: Diminishing returns against large hits, very effective vs many small hits. Physical damage only.
+
+### Evasion Formula
+```
+Avoid Chance = min(Evasion / 500, 0.75)  # Simplified, cap at 75%
+```
+**Characteristics**: Entropy-based (prevents lucky/unlucky streaks), downgrade crits to normal hits, works vs attacks not spells.
+
+### Resistance Formula
+```
+Final Damage = Elemental Damage * (1 - min(Resistance, 75) / 100)
+```
+**Characteristics**: Linear reduction, hard cap at 75%, applies to fire/cold/lightning damage types.
+
+### Energy Shield
+Not a mitigation layer - acts as damage buffer before life. Absorbed in Hero.take_damage() before applying to health.
+
+**Layer Order**: Armor → Evasion (chance to avoid) → Resistances → ES absorbs → Life damage
+
+## Scaling Considerations
+
+| Scale | Combat Architecture |
+|-------|---------------------|
+| **MVP (10 areas)** | Simple pack HP scaling (HP = base * area_level). Single damage type (physical). Basic combat loop. |
+| **Mid (100 areas)** | Elemental damage types per pack. Resistance becomes valuable. Evasion entropy system. Pack variety (fast/slow packs). |
+| **Late (300+ areas)** | All defensive layers required. Boss packs (unique modifiers). Map modifiers (increased pack damage/size). Multiple packs per screen (future). |
+
+**First bottleneck**: Defensive calculations become complex (4+ layers). Mitigation: StatCalculator caches resistance caps, armor formula precomputed for common values.
+
+**Second bottleneck**: Combat feels same across 300 areas. Mitigation: Pack modifiers ("Elemental", "Fast", "Armored"), boss encounters, map affixes.
 
 ## Sources
 
-**Project Codebase Analysis:**
-- `/var/home/travelboi/Programming/hammertime/autoloads/tag.gd` — Tag constants and StatType enum
-- `/var/home/travelboi/Programming/hammertime/autoloads/item_affixes.gd` — Affix definitions and filtering
-- `/var/home/travelboi/Programming/hammertime/models/items/item.gd` — Tag-based affix selection (add_prefix/add_suffix)
-- `/var/home/travelboi/Programming/hammertime/models/loot/loot_table.gd` — Drop generation and rarity weights
-- `/var/home/travelboi/Programming/hammertime/models/currencies/currency.gd` — Template method pattern
-- `/var/home/travelboi/Programming/hammertime/models/stats/stat_calculator.gd` — Stat aggregation patterns
-- `/var/home/travelboi/Programming/hammertime/.planning/PROJECT.md` — v1.1 requirements and constraints
+**Godot Architecture Patterns:**
+- [Game Development Patterns with Godot 4](https://www.packtpub.com/en-us/product/game-development-patterns-with-godot-4-9781835880296)
+- [Top Game Development Patterns in Godot Engine](https://www.manuelsanchezdev.com/blog/game-development-patterns)
+- [GDQuest: Design patterns in Godot](https://www.gdquest.com/tutorial/godot/design-patterns/intro-to-design-patterns/)
+- [Godot Finite State Machine Tutorial](https://www.gdquest.com/tutorial/godot/design-patterns/finite-state-machine/)
 
-**Architecture Patterns:**
-- Existing codebase patterns (tag filtering, template method, static utilities)
-- Godot 4.5 Resource system (no external sources needed — built-in engine feature)
+**State Management:**
+- [Godot Resource Pattern for State Management](https://forum.godotengine.org/t/autoload-resource-singleton-for-keeping-and-saving-game-state/78981)
+- [State Management in Godot with Vue.js Twist](https://tumeo.space/gamedev/2023/10/18/godot-states/)
+
+**ARPG Defense Mechanics:**
+- [Path of Exile 2 Defense and Resistance Guide](https://www.sportskeeda.com/mmo/exile-2-poe2-defense-resistance-guide-energy-shield-armor-evasion)
+- [Path of Exile 2 Defences Explained](https://vulkk.com/2025/06/12/path-of-exile-2-defences-explained/)
+- [Defenses and Defensive Layering in Path of Exile](https://maxroll.gg/poe/resources/defenses-and-defensive-layering)
+- [PoE Wiki: Armour](https://www.poewiki.net/wiki/Armour)
+
+**Damage Calculation Patterns:**
+- [RPG Stats: Implementing Character Stats](https://howtomakeanrpg.com/r/a/how-to-make-an-rpg-stats.html)
+- [RPG Damage Formula Wiki](https://rpg.fandom.com/wiki/Damage_Formula)
 
 ---
-*Architecture integration research for: Hammertime v1.1 Content & Balance*
-*Researched: 2026-02-15*
-*Confidence: HIGH (all integration points verified in existing codebase)*
+*Architecture research for: Hammertime v1.2 pack-based combat integration*
+*Researched: 2026-02-16*
