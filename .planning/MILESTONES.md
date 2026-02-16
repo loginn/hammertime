@@ -52,3 +52,23 @@
 **Archives:** `.planning/milestones/v1.0-ROADMAP.md`, `.planning/milestones/v1.0-REQUIREMENTS.md`
 
 ---
+
+## v1.1 — Content & Balance (Shipped: 2026-02-16)
+
+**Goal:** Make all equipment slots meaningful through defensive prefixes, expand the affix pool, and tune drop/currency progression so rewards scale with area difficulty.
+
+**Phases:** 4 phases (9-12), 7 plans, 13 tasks | **Timeline:** 2 days (2026-02-15 → 2026-02-16)
+**Stats:** 3,161 LOC GDScript (up from 2,488)
+
+**Key accomplishments:**
+- 9 defensive prefix affixes for non-weapon items with tag-based filtering and StatCalculator integration
+- Hero View offense/defense sections displaying armor, evasion, energy shield, and resistance totals
+- Elemental resistance suffixes (fire/cold/lightning/all) replacing generic Elemental Reduction
+- Currency area gating with hard gates at 1/100/200/300 and linear ramping for newly unlocked currencies
+- Logarithmic rarity interpolation with multi-item drops (1→4-5 items/clear) across expanded area range
+- Gap closures: Runic Hammer 70/30 mod bias, implicit stat_types architecture for intuitive stat math
+
+**Archives:** `.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`
+
+---
+
