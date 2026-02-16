@@ -25,9 +25,10 @@
 **Milestone v1.1:**
 - Phases completed: 4/4 (Phase 9, 10, 11, 12 complete)
 - Requirements delivered: 18/18 (defensive prefixes, utility prefixes, percentage stats, tier ranges, stat calculation, item updates, defense aggregation, hero view sections, item stats display, ring prefixes, elemental resistance split, all-resistance option, resistance display, currency area gating, drop simulation, drop rate rebalancing)
+- Gap closures: 2 (mod count distribution, implicit stat flow)
 - Time elapsed: 1 day
-- Plans executed: 6
-- Tasks completed: 11
+- Plans executed: 7
+- Tasks completed: 13
 
 | Phase | Plan | Duration | Tasks | Files | Date |
 |-------|------|----------|-------|-------|------|
@@ -54,6 +55,7 @@
 - Final LOC: 1,953 GDScript
 | Phase 11 P01 | 125 | 2 tasks | 2 files |
 | Phase 12 P01 | 117s | 2 tasks | 3 files |
+| Phase 09 P03 | 115 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -78,6 +80,9 @@
 - Defense section filters to non-zero values only
 - Rename defensive prefixes to descriptive stat names (Flat Armor, % Armor, etc.)
 - Add Tag.WEAPON to BasicRing to enable weapon prefix rolling
+- Weighted 70/30 distribution for Magic mod count makes TackHammer meaningful on majority of items
+- Zero hardcoded base stats forces all base values through implicit->StatCalculator path
+- Consistency fix: added stat_types to weapon and ring implicits for uniform architecture
 
 **Phase 10 Implementation (2026-02-16):**
 - Individual resistance suffixes (fire/cold/lightning) replace generic Elemental Reduction for granular defense control
@@ -128,6 +133,8 @@
 - ~~Rings cannot roll any prefixes~~ - Fixed in Phase 09-02 (2026-02-16) - added Tag.WEAPON to BasicRing
 - ~~Defensive prefix names unclear (Armored, Healthy, Evasive)~~ - Fixed in Phase 09-02 (2026-02-16) - renamed to stat names
 - ~~UI panel overlap with long stat lists~~ - Fixed in Phase 09-02 (2026-02-16) - increased panel spacing
+- ~~Runic Hammer 50/50 mod distribution makes TackHammer useless 50% of the time~~ - Fixed in Phase 09-03 (2026-02-16) - biased to 70/30
+- ~~Armor stat display shows 46 when expecting ~25 due to dual stat sources~~ - Fixed in Phase 09-03 (2026-02-16) - zeroed hardcoded bases
 
 ### Blockers
 
@@ -149,20 +156,19 @@ None currently. All dependencies validated during research phase.
 
 ## Session Continuity
 
-**Last session:** 2026-02-16
-- Executed Phase 12 Plan 01 - Drop Rate Rebalancing
-- Replaced discrete rarity weights with logarithmic interpolation (RARITY_ANCHORS)
-- Added get_item_drop_count() for multi-item drops (1 at area 1, ~4.5 at area 300)
-- Tuned currency rates: grand 0.1, claw/tuning 0.15 (down from 0.2-0.4)
-- Fixed bonus drops formula from linear to logarithmic (299 -> ~11 at area 300)
-- Updated drop simulator with item quantity validation
-- Committed 2 tasks with atomic commits (a3d6a7c, b5ac126)
-- Phase 12 complete (1/1 plan) - v1.1 milestone fully executed (4/4 phases)
+**Last session:** 2026-02-16T10:11:34.747Z
+- Executed Phase 09 Plan 03 - Gap Closure (UAT fixes)
+- Fixed Runic Hammer mod count bias (70% single-mod, 30% double-mod distribution)
+- Removed hardcoded base stats from armor items (zeroed original_base_armor)
+- Added stat_types to all implicits (FLAT_ARMOR, MOVEMENT_SPEED, INCREASED_SPEED, CRIT_CHANCE)
+- Base stats now flow entirely through implicit->StatCalculator path
+- Committed 2 tasks with atomic commits (c2851a1, 94d0482)
+- Phase 09 complete (3/3 plans) - gap closure for v1.1 UAT issues
 
 **For next session:**
-- Phase 12 (Drop Rate Rebalancing) complete
+- Phase 09 (Defensive Prefix Foundation) complete with gap closure
 - v1.1 Content & Balance milestone complete (all 18/18 requirements delivered)
-- Playtest recommended to validate drop feel (budget 2-3 iteration passes per CONTEXT.md)
+- Playtest recommended to validate currency feel and stat display with fixes
 - Next: /gsd:complete-milestone or next milestone planning
 
 ---
