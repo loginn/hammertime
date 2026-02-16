@@ -46,7 +46,18 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 
 <!-- Current scope. Building toward these. -->
 
-(No active milestone — run `/gsd:new-milestone` to plan next)
+## Current Milestone: v1.2 Pack-Based Mapping
+
+**Goal:** Replace time-based area clearing with pack-based map runs, adding real combat stakes and defensive stat integration.
+
+**Target features:**
+- Monster packs with HP, damage, and elemental damage types (physical/fire/cold/lightning)
+- Sequential idle combat — hero auto-attacks packs, packs hit back, hero can die
+- Death mechanic — lose map progress, keep earned currency from killed packs
+- Random pack count per biome within a range
+- Drop split — packs drop currency, map completion drops items
+- Biome damage distributions (Forest = mostly physical, later biomes = more elemental)
+- Defensive combat calculations — armor, evasion, energy shield, and resistances actually reduce incoming damage
 
 ### Out of Scope
 
@@ -55,9 +66,10 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - Chaos-style full reroll -- deliberate design choice: no full rerolls, craft carefully or equip as-is
 - Drag-and-drop crafting UI -- select-and-click is sufficient
 - Save/load system -- Resource model enables it, but not yet scoped
-- Defensive combat calculations -- stats exist on items but damage reduction deferred to mapping milestone
-- Hybrid defense prefixes (armor+evasion single-slot) -- v1.2+ scope
-- Visual prefix/suffix separation in UI (color-coded or sectioned) -- v1.2+ scope
+- Defensive combat calculations -- now in scope for v1.2 (pack-based mapping)
+- Hybrid defense prefixes (armor+evasion single-slot) -- v1.3+ scope
+- Visual prefix/suffix separation in UI (color-coded or sectioned) -- v1.3+ scope
+- Totem system (forge god shrine with slottable pieces, favor mechanic, map modifiers) -- v1.3+ scope, builds on pack-based mapping
 
 ## Context
 
@@ -105,4 +117,4 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Multi-item drops at high areas | Endgame loot shower (4-5 items) compensates per-roll rare scarcity | Good -- rewarding endgame |
 
 ---
-*Last updated: 2026-02-16 after v1.1 milestone complete*
+*Last updated: 2026-02-16 after v1.2 milestone started*

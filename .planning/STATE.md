@@ -1,7 +1,7 @@
 # Project State: Hammertime
 
 **Updated:** 2026-02-16
-**Milestone:** Between milestones (v1.1 shipped)
+**Milestone:** v1.2 Pack-Based Mapping
 
 ## Project Reference
 
@@ -9,17 +9,16 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Planning next milestone.
+**Current Focus:** Defining requirements for v1.2.
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication, 3,161 LOC across ~30 files.
 
 ## Current Position
 
-**Phase:** None — between milestones
-**Status:** v1.1 shipped, ready for next milestone
-**Progress:** [██████████] 100%
-
-**Next Action:** `/gsd:new-milestone` to plan next version.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-16 — Milestone v1.2 started
 
 ## Performance Metrics
 
@@ -48,11 +47,11 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 ### Deferred Items
 
-**v1.2+ scope:**
+**v1.3+ scope:**
+- Totem system (forge god shrine with slottable pieces, favor mechanic, map modifiers)
 - Hybrid defense prefixes (armor+evasion single-slot affixes)
 - Visual prefix/suffix separation in UI (color-coded or sectioned)
 - Tag-based affix pool tooltips
-- Defensive combat integration (damage reduction calculations)
 - Save/load system
 
 ### Quick Tasks Completed
@@ -64,14 +63,11 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 ## Session Continuity
 
 **Last session:** 2026-02-16
-- Completed v1.1 milestone archival
-- All 18/18 requirements delivered across 4 phases (9-12)
-- Milestone audit passed (18/18 requirements, 4/4 phases, 4/4 E2E flows)
-- Archived to .planning/milestones/v1.1-ROADMAP.md, v1.1-REQUIREMENTS.md
+- Started v1.2 milestone: Pack-Based Mapping
+- Scope: monster packs, sequential combat, death mechanic, drop split, defensive combat calculations
 
 **For next session:**
-- Run `/gsd:new-milestone` to plan v1.2 or v2.0
-- Playtest recommended to validate v1.1 changes before planning next work
+- Continue v1.2 workflow: research → requirements → roadmap
 
 ---
 *State initialized: 2026-02-15*
