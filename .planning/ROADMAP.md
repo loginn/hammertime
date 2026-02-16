@@ -71,10 +71,11 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   3. Hero with elemental resistances takes less fire/cold/lightning damage (capped at 75%)
   4. Hero with energy shield absorbs damage to ES before losing life HP
   5. Hero's energy shield recharges a percentage of total ES between pack fights
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 13-01: TBD
+- [ ] 13-01-PLAN.md — DefenseCalculator + Hero ES tracking
+- [ ] 13-02-PLAN.md — Wire defense into gameplay loop + ES display
 
 ### Phase 14: Monster Pack Data Model
 **Goal**: Monster packs exist as Resources with HP, damage, and elemental damage types that scale with area level
@@ -153,7 +154,7 @@ Phases execute in numeric order: 13 → 14 → 15 → 16 → 17
 | 10. Elemental Resistance Split | v1.1 | 1/1 | ✓ Complete | 2026-02-16 |
 | 11. Currency Area Gating | v1.1 | 2/2 | ✓ Complete | 2026-02-16 |
 | 12. Drop Rate Rebalancing | v1.1 | 1/1 | ✓ Complete | 2026-02-16 |
-| 13. Defensive Stat Foundation | v1.2 | 0/? | Not started | - |
+| 13. Defensive Stat Foundation | v1.2 | 0/2 | Planned | - |
 | 14. Monster Pack Data Model | v1.2 | 0/? | Not started | - |
 | 15. Pack-Based Combat Loop | v1.2 | 0/? | Not started | - |
 | 16. Drop System Split | v1.2 | 0/? | Not started | - |
