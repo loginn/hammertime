@@ -41,11 +41,12 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 **Dependencies:** None (extends existing ItemAffixes and StatCalculator patterns)
 
-**Plans:** 2 plans
+**Plans:** 3 plans
 
 Plans:
 - [ ] 09-01-PLAN.md — Data layer: Tag enums, configurable tier ranges, 9 new prefixes, percentage stat calculation, defense item model updates
 - [ ] 09-02-PLAN.md — Display layer: Hero defense aggregation, Hero View offense/defense sections, item stats display for non-weapon items
+- [ ] 09-03-PLAN.md — Gap closure: Runic Hammer mod count bias + armor implicit stat_types fix
 
 **Requirements:**
 - DPFX-01: Non-weapon items can roll defensive prefix affixes
@@ -163,7 +164,7 @@ Plans:
 | 6. Currency Behaviors | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 7. Drop Integration | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 8. UI Migration | v1.0 | 1/1 | ✓ Complete | 2026-02-15 |
-| 9. Defensive Prefix Foundation | v1.1 | 0/2 | Planned | — |
+| 9. Defensive Prefix Foundation | v1.1 | 0/3 | Gap closure | — |
 | 10. Elemental Resistance Split | v1.1 | Complete    | 2026-02-16 | — |
 | 11. Currency Area Gating | v1.1 | Complete    | 2026-02-16 | — |
 | 12. Drop Rate Rebalancing | 1/1 | Complete   | 2026-02-16 | — |
@@ -185,4 +186,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-16 (Phase 12 plan created)*
+*Last updated: 2026-02-16 (Phase 09 gap closure plan added)*
