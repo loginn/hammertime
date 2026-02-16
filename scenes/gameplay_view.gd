@@ -88,23 +88,29 @@ func clear_area() -> void:
 	if not GameState.hero.is_healthy():
 		return
 
-	# Simulate clearing an area and getting an item base
-	var item_base = get_random_item_base()
+	# Determine how many items drop this clear (scales with area level)
+	var item_count: int = LootTable.get_item_drop_count(area_level)
 
-	if item_base != null:
-		# Add item base to collection
-		item_bases_collected.append(item_base)
-		print("Hero cleared area and found: ", item_base.item_name)
+	for i in range(item_count):
+		# Generate and drop an item base
+		var item_base: Item = get_random_item_base()
 
-		# Give the item base to crafting view
-		item_base_found.emit(item_base)
-		GameEvents.area_cleared.emit(area_level)
+		if item_base != null:
+			# Add item base to collection
+			item_bases_collected.append(item_base)
+			print("Hero cleared area and found: ", item_base.item_name)
 
-		# Hero finds random hammers in the area
-		give_hammer_rewards()
+			# Give the item base to crafting view (emits per item)
+			item_base_found.emit(item_base)
 
-		# Chance to advance to next area level
-		check_area_progression()
+	# Emit area cleared signal once per clear (not per item)
+	GameEvents.area_cleared.emit(area_level)
+
+	# Hero finds random hammers in the area (once per clear)
+	give_hammer_rewards()
+
+	# Chance to advance to next area level
+	check_area_progression()
 
 	update_display()
 
