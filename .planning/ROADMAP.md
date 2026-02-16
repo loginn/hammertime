@@ -55,7 +55,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
 - [x] **Phase 13: Defensive Stat Foundation** - Armor, evasion, resistance, and energy shield calculations (completed 2026-02-16)
 - [x] **Phase 14: Monster Pack Data Model** - Pack Resources with HP, damage, elemental types (completed 2026-02-16)
-- [ ] **Phase 15: Pack-Based Combat Loop** - Sequential idle auto-combat with death mechanics
+- [x] **Phase 15: Pack-Based Combat Loop** - Sequential idle auto-combat with death mechanics (completed 2026-02-16)
 - [ ] **Phase 16: Drop System Split** - Packs drop currency, maps drop items
 - [ ] **Phase 17: UI and Combat Feedback** - Combat state display and pack progress
 
@@ -158,7 +158,7 @@ Phases execute in numeric order: 13 → 14 → 15 → 16 → 17
 | 12. Drop Rate Rebalancing | v1.1 | 1/1 | ✓ Complete | 2026-02-16 |
 | 13. Defensive Stat Foundation | v1.2 | Complete    | 2026-02-16 | - |
 | 14. Monster Pack Data Model | v1.2 | Complete    | 2026-02-16 | - |
-| 15. Pack-Based Combat Loop | v1.2 | 0/? | Not started | - |
+| 15. Pack-Based Combat Loop | v1.2 | Complete    | 2026-02-16 | - |
 | 16. Drop System Split | v1.2 | 0/? | Not started | - |
 | 17. UI and Combat Feedback | v1.2 | 0/? | Not started | - |
 
