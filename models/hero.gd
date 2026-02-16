@@ -15,6 +15,7 @@ var total_energy_shield: int = 0
 var total_fire_resistance: int = 0
 var total_cold_resistance: int = 0
 var total_lightning_resistance: int = 0
+var current_energy_shield: float = 0.0
 var total_crit_chance: float = 5.0
 var total_crit_damage: float = 150.0
 
@@ -54,8 +55,9 @@ func die() -> void:
 
 
 func revive() -> void:
-	"""Revive the hero with full health"""
+	"""Revive the hero with full health and full ES"""
 	health = max_health
+	current_energy_shield = float(total_energy_shield)
 	is_alive = true
 	print("Hero revived with full health!")
 
@@ -80,6 +82,7 @@ func update_stats() -> void:
 	"""Recalculate all hero stats based on equipped items"""
 	calculate_dps()
 	calculate_defense()
+	current_energy_shield = float(total_energy_shield)
 	calculate_crit_stats()
 
 
@@ -221,6 +224,30 @@ func get_total_cold_resistance() -> int:
 func get_total_lightning_resistance() -> int:
 	"""Get the hero's total lightning resistance"""
 	return total_lightning_resistance
+
+
+func get_current_energy_shield() -> float:
+	"""Get the hero's current energy shield"""
+	return current_energy_shield
+
+
+func apply_damage(life_damage: float, es_damage: float) -> void:
+	"""Apply pre-calculated defense-aware damage split to hero.
+	Called by gameplay_view after DefenseCalculator computes the split."""
+	current_energy_shield = maxf(0.0, current_energy_shield - es_damage)
+	health -= life_damage
+	health = maxf(0.0, health)
+	if health <= 0:
+		die()
+
+
+func recharge_energy_shield() -> void:
+	"""Recharge 33% of max ES between pack fights.
+	Called by combat system between area clears."""
+	var recharge_amount := float(total_energy_shield) * 0.33
+	current_energy_shield = minf(
+		current_energy_shield + recharge_amount, float(total_energy_shield)
+	)
 
 
 func get_health_percentage() -> float:
