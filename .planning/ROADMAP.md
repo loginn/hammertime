@@ -59,7 +59,7 @@ Plans:
 2. User sees armor, evasion, and energy shield values displayed on non-weapon items
 3. User can craft items with both defensive prefixes and existing suffixes (e.g., helmet with +armor and +life)
 4. User sees defensive stat totals on Hero View's equipped stats panel
-5. UI clearly indicates defensive stats are not yet functional in combat (grayed text or "(display only)" label)
+5. Defensive stats display normally without visual distinction (per user decision: no gray text or display-only labels)
 
 **Status:** Planned
 
