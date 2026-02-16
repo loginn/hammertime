@@ -71,7 +71,7 @@ Plans:
 
 **Dependencies:** Phase 9 (uses StatCalculator expansion patterns)
 
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 10-01-PLAN.md — Resistance data layer (enums, suffixes, hero aggregation, item tags) and Hero View display
@@ -153,7 +153,7 @@ Plans:
 | 7. Drop Integration | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 8. UI Migration | v1.0 | 1/1 | ✓ Complete | 2026-02-15 |
 | 9. Defensive Prefix Foundation | v1.1 | 0/2 | Planned | — |
-| 10. Elemental Resistance Split | v1.1 | 0/1 | Planned | — |
+| 10. Elemental Resistance Split | v1.1 | Complete    | 2026-02-16 | — |
 | 11. Currency Area Gating | v1.1 | 0/? | Pending | — |
 | 12. Drop Rate Rebalancing | v1.1 | 0/? | Pending | — |
 

@@ -15,7 +15,7 @@
 
 **Phase:** 10 - Elemental Resistance Split
 **Plan:** 1/1
-**Status:** Phase complete
+**Status:** Milestone complete
 **Progress:** [██████████] 100%
 
 **Next Action:** Begin Phase 11 (Drop Rate Rebalancing) or Phase 12 (Area-Gated Currency Drops) - both are independent of each other.
