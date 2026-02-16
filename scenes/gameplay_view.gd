@@ -88,6 +88,9 @@ func clear_area() -> void:
 	if not GameState.hero.is_healthy():
 		return
 
+	# Recharge ES between fights (33% of max)
+	GameState.hero.recharge_energy_shield()
+
 	# Determine how many items drop this clear (scales with area level)
 	var item_count: int = LootTable.get_item_drop_count(area_level)
 
@@ -226,9 +229,33 @@ func update_display() -> void:
 	)
 	display_text += "Area: " + current_area + " (Level " + str(area_level) + ")\n"
 
-	# Show monster damage info
-	var monster_damage = calculate_monster_damage()
-	display_text += "Monster Damage: " + "%.1f" % monster_damage + "\n\n"
+	# Show monster damage and defense info
+	var base_monster_damage := 10.0 * area_difficulty_multiplier
+	display_text += "Monster Damage: " + "%.1f" % base_monster_damage + " (raw)\n"
+
+	# Show defense summary
+	var hero := GameState.hero
+	if hero.get_total_armor() > 0:
+		var armor_red := DefenseCalculator.calculate_armor_reduction(
+			hero.get_total_armor(), base_monster_damage
+		)
+		display_text += (
+			"Armor: " + str(hero.get_total_armor()) + " (%.0f%% vs current hits)\n" % [armor_red * 100.0]
+		)
+	if hero.get_total_evasion() > 0:
+		var dodge := DefenseCalculator.calculate_dodge_chance(hero.get_total_evasion())
+		display_text += (
+			"Evasion: " + str(hero.get_total_evasion()) + " (%.0f%% dodge)\n" % [dodge * 100.0]
+		)
+	if hero.get_total_energy_shield() > 0:
+		display_text += (
+			"ES: "
+			+ "%.0f" % hero.get_current_energy_shield()
+			+ "/"
+			+ str(hero.get_total_energy_shield())
+			+ "\n"
+		)
+	display_text += "\n"
 
 	if hero_clearing:
 		var clearing_time = clearing_timer.wait_time
@@ -278,32 +305,57 @@ func update_area_difficulty() -> void:
 	)
 
 
-func calculate_monster_damage() -> float:
-	# Get hero's total defense from the hero instance
-	var hero_defense = GameState.hero.get_total_defense()
+func calculate_and_apply_damage() -> void:
+	# Base monster damage scales with area difficulty
+	var base_monster_damage := 10.0 * area_difficulty_multiplier
 
-	# Calculate monster damage based on area level and hero defense
-	# Base monster damage increases with area level
-	var base_monster_damage = 10.0 * area_difficulty_multiplier
+	# For now, all damage is physical attacks (Phase 14 adds elemental types)
+	var damage_type := "physical"
+	var is_spell := false
 
-	# Calculate damage reduction percentage based on armor
-	# Formula: Damage Reduction = Armor / (Armor + 100)
-	# This gives diminishing returns - more armor is always better, but each point is less effective
-	var damage_reduction_percent = hero_defense / (hero_defense + 100.0)
+	# Get hero defense stats
+	var hero := GameState.hero
+	var result := DefenseCalculator.calculate_damage_taken(
+		base_monster_damage,
+		damage_type,
+		is_spell,
+		hero.get_total_armor(),
+		hero.get_total_evasion(),
+		hero.get_total_energy_shield(),
+		hero.get_total_fire_resistance(),
+		hero.get_total_cold_resistance(),
+		hero.get_total_lightning_resistance(),
+		hero.get_current_energy_shield()
+	)
 
-	# Apply damage reduction
-	var damage_after_defense = base_monster_damage * (1.0 - damage_reduction_percent)
+	if result["dodged"]:
+		print("Hero dodged the attack!")
+		return
 
-	# Ensure minimum damage of 1
-	damage_after_defense = max(1.0, damage_after_defense)
+	# Apply defense-aware damage split
+	hero.apply_damage(result["life_damage"], result["es_damage"])
 
-	return damage_after_defense
+	# Print combat feedback
+	if result["es_damage"] > 0.0:
+		print(
+			"Hero took %.1f life damage and %.1f ES damage (%.1f total mitigated from %.1f raw)"
+			% [
+				result["life_damage"],
+				result["es_damage"],
+				result["life_damage"] + result["es_damage"],
+				base_monster_damage,
+			]
+		)
+	else:
+		print(
+			"Hero took %.1f damage (mitigated from %.1f raw)"
+			% [result["life_damage"], base_monster_damage]
+		)
 
 
 func take_damage() -> void:
 	# Hero takes damage from monsters while clearing
-	var damage = calculate_monster_damage()
-	GameState.hero.take_damage(damage)
+	calculate_and_apply_damage()
 
 	# Check if hero died
 	if not GameState.hero.is_healthy():
