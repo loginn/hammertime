@@ -87,10 +87,11 @@ Plans:
   3. Packs deal damage that scales with area level (higher areas = harder hits)
   4. Forest biome packs deal mostly physical damage while Shadow Realm packs deal mostly elemental damage
   5. Each pack has a specific elemental damage type (physical/fire/cold/lightning)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 14-01: TBD
+- [ ] 14-01-PLAN.md — MonsterType, MonsterPack, BiomeConfig Resources
+- [ ] 14-02-PLAN.md — PackGenerator with scaling and element selection
 
 ### Phase 15: Pack-Based Combat Loop
 **Goal**: Hero fights monster packs sequentially in idle auto-combat where both hero and packs can die
@@ -155,7 +156,7 @@ Phases execute in numeric order: 13 → 14 → 15 → 16 → 17
 | 11. Currency Area Gating | v1.1 | 2/2 | ✓ Complete | 2026-02-16 |
 | 12. Drop Rate Rebalancing | v1.1 | 1/1 | ✓ Complete | 2026-02-16 |
 | 13. Defensive Stat Foundation | v1.2 | Complete    | 2026-02-16 | - |
-| 14. Monster Pack Data Model | v1.2 | 0/? | Not started | - |
+| 14. Monster Pack Data Model | v1.2 | 0/2 | Planned | - |
 | 15. Pack-Based Combat Loop | v1.2 | 0/? | Not started | - |
 | 16. Drop System Split | v1.2 | 0/? | Not started | - |
 | 17. UI and Combat Feedback | v1.2 | 0/? | Not started | - |
