@@ -213,7 +213,10 @@ func update_stats_display() -> void:
 		stats_label.text += "Evasion: %d\n" % total_evasion
 		has_defense = true
 	if total_es > 0:
-		stats_label.text += "Energy Shield: %d\n" % total_es
+		stats_label.text += (
+			"Energy Shield: %.0f/%d\n"
+			% [GameState.hero.get_current_energy_shield(), total_es]
+		)
 		has_defense = true
 
 	var total_fire_res = GameState.hero.get_total_fire_resistance()
