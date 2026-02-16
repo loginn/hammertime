@@ -4,17 +4,30 @@ class_name LootTable extends Resource
 # Higher area levels have higher chance for better rarity items
 const RARITY_WEIGHTS: Dictionary = {
 	1: { Item.Rarity.NORMAL: 80, Item.Rarity.MAGIC: 18, Item.Rarity.RARE: 2 },
-	2: { Item.Rarity.NORMAL: 50, Item.Rarity.MAGIC: 40, Item.Rarity.RARE: 10 },
-	3: { Item.Rarity.NORMAL: 20, Item.Rarity.MAGIC: 45, Item.Rarity.RARE: 35 },
-	4: { Item.Rarity.NORMAL: 5, Item.Rarity.MAGIC: 30, Item.Rarity.RARE: 65 },
-	5: { Item.Rarity.NORMAL: 2, Item.Rarity.MAGIC: 28, Item.Rarity.RARE: 70 },  # For area_level >= 5
+	100: { Item.Rarity.NORMAL: 50, Item.Rarity.MAGIC: 40, Item.Rarity.RARE: 10 },
+	200: { Item.Rarity.NORMAL: 20, Item.Rarity.MAGIC: 45, Item.Rarity.RARE: 35 },
+	300: { Item.Rarity.NORMAL: 5, Item.Rarity.MAGIC: 30, Item.Rarity.RARE: 65 },
+	500: { Item.Rarity.NORMAL: 2, Item.Rarity.MAGIC: 28, Item.Rarity.RARE: 70 },
+}
+
+# Currency unlock thresholds by area level
+const CURRENCY_AREA_GATES: Dictionary = {
+	"runic": 1,
+	"tack": 1,
+	"forge": 100,
+	"grand": 200,
+	"claw": 300,
+	"tuning": 300,
 }
 
 
 ## Returns the rarity weight distribution for a given area level
 static func get_rarity_weights(area_level: int) -> Dictionary:
-	# For area levels beyond 4, use level 5's weights
-	var lookup_level = min(area_level, 5)
+	var lookup_level = 1
+	for threshold in [500, 300, 200, 100, 1]:
+		if area_level >= threshold:
+			lookup_level = threshold
+			break
 	return RARITY_WEIGHTS[lookup_level]
 
 
@@ -47,6 +60,24 @@ static func roll_rarity(area_level: int) -> Item.Rarity:
 	return Item.Rarity.RARE
 
 
+## Calculates currency drop chance with ramping for newly unlocked currencies
+## Starts at 10% of base chance at unlock, linearly ramps to 100% over ramp_duration levels
+static func _calculate_currency_chance(
+	base_chance: float,
+	area_level: int,
+	unlock_level: int,
+	ramp_duration: int = 50
+) -> float:
+	if area_level < unlock_level:
+		return 0.0
+	var levels_since_unlock = area_level - unlock_level
+	if levels_since_unlock >= ramp_duration:
+		return base_chance
+	var ramp_progress = float(levels_since_unlock) / float(ramp_duration)
+	var ramp_multiplier = 0.1 + (0.9 * ramp_progress)
+	return base_chance * ramp_multiplier
+
+
 ## Rolls currency drops for area clear based on area level
 ## Returns dictionary mapping currency name to drop count
 ## Currency names: "runic", "forge", "tack", "grand", "claw", "tuning"
@@ -66,18 +97,31 @@ static func roll_currency_drops(area_level: int) -> Dictionary:
 
 	# Roll each currency
 	for currency_name in currency_rules:
+		var unlock_level = CURRENCY_AREA_GATES[currency_name]
+		if area_level < unlock_level:
+			continue
+
 		var rule = currency_rules[currency_name]
-		if randf() < rule["chance"]:
+		var adjusted_chance = rule["chance"]
+		if unlock_level > 1:
+			adjusted_chance = _calculate_currency_chance(rule["chance"], area_level, unlock_level, 50)
+		if randf() < adjusted_chance:
 			var quantity = randi_range(rule["min_qty"], rule["max_qty"])
 			drops[currency_name] = quantity
 
-	# Area level bonus: (area_level - 1) bonus drops distributed to currencies that dropped
+	# Area level bonus: (area_level - 1) bonus drops distributed to all eligible currencies
 	var bonus_drops = area_level - 1
-	if bonus_drops > 0 and drops.size() > 0:
-		var dropped_currencies = drops.keys()
+	if bonus_drops > 0:
+		var eligible_currencies = []
+		for currency_name_check in currency_rules:
+			if area_level >= CURRENCY_AREA_GATES[currency_name_check]:
+				eligible_currencies.append(currency_name_check)
 		for i in range(bonus_drops):
-			var random_currency = dropped_currencies[randi() % dropped_currencies.size()]
-			drops[random_currency] += 1
+			var random_currency = eligible_currencies[randi() % eligible_currencies.size()]
+			if random_currency in drops:
+				drops[random_currency] += 1
+			else:
+				drops[random_currency] = 1
 
 	# Guarantee at least 1 runic hammer if nothing dropped
 	if drops.is_empty():
