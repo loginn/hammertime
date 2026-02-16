@@ -140,7 +140,7 @@ Plans:
 3. User observes that Grand/Claw/Tuning hammers drop significantly less frequently than Runic/Tack/Forge
 4. User can progress through areas without currency/loot drought (minimum guaranteed drops still functional)
 
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 12-01-PLAN.md — Rarity weight rebalancing, item quantity scaling, currency rate tuning, drop simulator update
@@ -166,7 +166,7 @@ Plans:
 | 9. Defensive Prefix Foundation | v1.1 | 0/2 | Planned | — |
 | 10. Elemental Resistance Split | v1.1 | Complete    | 2026-02-16 | — |
 | 11. Currency Area Gating | v1.1 | Complete    | 2026-02-16 | — |
-| 12. Drop Rate Rebalancing | v1.1 | 0/1 | Planned | — |
+| 12. Drop Rate Rebalancing | 1/1 | Complete   | 2026-02-16 | — |
 
 **v1.1 Coverage:** 18/18 requirements mapped (100%)
 

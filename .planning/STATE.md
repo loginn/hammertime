@@ -13,21 +13,21 @@
 
 ## Current Position
 
-**Phase:** 11 - Currency Area Gating
-**Plan:** 2/2
+**Phase:** 12 - Drop Rate Rebalancing
+**Plan:** 1/1
 **Status:** Milestone complete
 **Progress:** [██████████] 100%
 
-**Next Action:** Begin Phase 12 or next milestone planning.
+**Next Action:** Complete v1.1 milestone or begin next milestone planning.
 
 ## Performance Metrics
 
 **Milestone v1.1:**
-- Phases completed: 3/3 (Phase 9, 10, 11 complete)
-- Requirements delivered: 18/18 (defensive prefixes, utility prefixes, percentage stats, tier ranges, stat calculation, item updates, defense aggregation, hero view sections, item stats display, ring prefixes, elemental resistance split, all-resistance option, resistance display, currency area gating, drop simulation)
+- Phases completed: 4/4 (Phase 9, 10, 11, 12 complete)
+- Requirements delivered: 18/18 (defensive prefixes, utility prefixes, percentage stats, tier ranges, stat calculation, item updates, defense aggregation, hero view sections, item stats display, ring prefixes, elemental resistance split, all-resistance option, resistance display, currency area gating, drop simulation, drop rate rebalancing)
 - Time elapsed: 1 day
-- Plans executed: 5
-- Tasks completed: 9
+- Plans executed: 6
+- Tasks completed: 11
 
 | Phase | Plan | Duration | Tasks | Files | Date |
 |-------|------|----------|-------|-------|------|
@@ -36,6 +36,7 @@
 | 10 | 01 | 130s | 2 | 6 | 2026-02-16 |
 | 11 | 01 | 125s | 2 | 2 | 2026-02-16 |
 | 11 | 02 | 65s | 1 | 1 | 2026-02-16 |
+| 12 | 01 | 117s | 2 | 3 | 2026-02-16 |
 
 **Previous milestone (v1.0):**
 - Duration: 1 day (2026-02-15)
@@ -52,6 +53,7 @@
 - Files changed: 109
 - Final LOC: 1,953 GDScript
 | Phase 11 P01 | 125 | 2 tasks | 2 files |
+| Phase 12 P01 | 117s | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -91,6 +93,14 @@
 - Map area tiers to 1/100/200/300 thresholds for meaningful progression gates
 - Hero View displays fire/cold/lightning resistance totals after base defenses (non-zero only)
 
+**Phase 12 Implementation (2026-02-16):**
+- Logarithmic interpolation for rarity weights with 4 anchor points (1/100/200/300) — smooth progression, no discrete jumps
+- Multi-item drops scaling from 1 to 4-5 items/clear with logarithmic curve (endgame loot shower)
+- Reduce advanced currency chances: grand 0.2->0.1, claw/tuning 0.4->0.15 for meaningful rarity
+- Fix bonus drops from linear (area_level - 1 = 299 at area 300) to log(area_level)*2 (~11 at area 300)
+- Magic items dominant at area 300 (75% per roll) with rare at 5% per roll (multi-item compensates)
+- Tier boundary bumps: +2% rare and +0.3 items at areas 100/200/300, fading over 10 levels
+
 ### Active TODOs
 
 **Phase 9 preparation:**
@@ -103,8 +113,8 @@
 - [x] Test area bonus drop distribution with reduced eligible currency pool - COMPLETE
 
 **Phase 12 preparation:**
-- [ ] Document baseline drop rates before any changes (current: 1.2 items/clear at area 1, 0.18 magic, 0.02 rare)
-- [ ] Define target metrics (goal: 1 rare per 30 clears at area 1)
+- [x] Document baseline drop rates before any changes (current: 1.2 items/clear at area 1, 0.18 magic, 0.02 rare) - COMPLETE
+- [x] Define target metrics (goal: 1 rare per 50 clears at area 1, 1 per 5 at area 300) - COMPLETE
 
 ### Known Issues
 
@@ -139,22 +149,23 @@ None currently. All dependencies validated during research phase.
 
 ## Session Continuity
 
-**Last session:** 2026-02-16T03:02:19.085Z
-- Executed Phase 11 Plan 02 - Drop Simulator
-- Created tools/drop_simulator.gd for currency and rarity distribution validation
-- Implemented simulate_currency_drops() with 1000 clears across 15 test levels
-- Implemented simulate_rarity_distribution() with 1000 rolls across 9 test levels
-- Implemented validate_hard_gates() with 10000 clears at 3 boundary levels
-- Committed 1 task with atomic commit (4ea67b8)
-- Created 11-02-SUMMARY.md documenting simulator design and usage
-- Phase 11 Plan 02 complete - Phase 11 fully executed (2/2 plans)
+**Last session:** 2026-02-16
+- Executed Phase 12 Plan 01 - Drop Rate Rebalancing
+- Replaced discrete rarity weights with logarithmic interpolation (RARITY_ANCHORS)
+- Added get_item_drop_count() for multi-item drops (1 at area 1, ~4.5 at area 300)
+- Tuned currency rates: grand 0.1, claw/tuning 0.15 (down from 0.2-0.4)
+- Fixed bonus drops formula from linear to logarithmic (299 -> ~11 at area 300)
+- Updated drop simulator with item quantity validation
+- Committed 2 tasks with atomic commits (a3d6a7c, b5ac126)
+- Phase 12 complete (1/1 plan) - v1.1 milestone fully executed (4/4 phases)
 
 **For next session:**
-- Phase 11 (Currency Area Gating) complete
-- Phase 12 or next milestone planning
-- All v1.1 milestone requirements delivered (18/18)
+- Phase 12 (Drop Rate Rebalancing) complete
+- v1.1 Content & Balance milestone complete (all 18/18 requirements delivered)
+- Playtest recommended to validate drop feel (budget 2-3 iteration passes per CONTEXT.md)
+- Next: /gsd:complete-milestone or next milestone planning
 
 ---
 *State initialized: 2026-02-15*
 *Last updated: 2026-02-16*
-*Stopped at: Completed 11-02-PLAN.md*
+*Stopped at: Completed 12-01-PLAN.md*
