@@ -248,21 +248,18 @@ func refresh_clearing_speed() -> void:
 
 func update_area_difficulty() -> void:
 	# Calculate area difficulty multiplier based on area level
-	# Each level increases difficulty by 1.5x
-	area_difficulty_multiplier = 1.0 + (area_level - 1) * 0.5
+	# Gentler scaling for expanded 1-300+ area range
+	area_difficulty_multiplier = 1.0 + (area_level - 1) * 0.02
 
-	# Update area name based on level
-	match area_level:
-		1:
-			current_area = "Forest"
-		2:
-			current_area = "Dark Forest"
-		3:
-			current_area = "Cursed Woods"
-		4:
-			current_area = "Shadow Realm"
-		_:
-			current_area = "Area Level " + str(area_level)
+	# Update area name based on tier thresholds
+	if area_level < 100:
+		current_area = "Forest"
+	elif area_level < 200:
+		current_area = "Dark Forest"
+	elif area_level < 300:
+		current_area = "Cursed Woods"
+	else:
+		current_area = "Shadow Realm"
 
 	print(
 		"Area difficulty updated: Level ",
