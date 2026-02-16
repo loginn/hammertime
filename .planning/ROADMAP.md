@@ -103,10 +103,11 @@ Plans:
   3. When hero HP reaches 0, combat stops and hero is marked as dead
   4. After hero dies, hero can revive and start a new map run
   5. When all packs in a map are cleared, hero advances to the next map
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 15-01: TBD
+- [ ] 15-01-PLAN.md — CombatEngine core + weapon attack speed + combat signals
+- [ ] 15-02-PLAN.md — Wire CombatEngine into gameplay_view, replace timer-based clearing
 
 ### Phase 16: Drop System Split
 **Goal**: Packs drop currency when killed, map completion drops items, death keeps currency earned
