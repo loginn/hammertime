@@ -71,6 +71,11 @@ Plans:
 
 **Dependencies:** Phase 9 (uses StatCalculator expansion patterns)
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 10-01-PLAN.md — Resistance data layer (enums, suffixes, hero aggregation, item tags) and Hero View display
+
 **Requirements:**
 - ERES-01: Individual fire, cold, lightning resistance suffixes replace generic Elemental Reduction
 - ERES-02: All-resistance suffix available as space-efficient option
@@ -82,7 +87,7 @@ Plans:
 3. User sees resistance values displayed on item tooltips and Hero View stats panel
 4. User observes that old "Elemental Reduction" affix no longer appears on new items
 
-**Status:** Pending
+**Status:** Planned
 
 ---
 
@@ -148,7 +153,7 @@ Plans:
 | 7. Drop Integration | v1.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 8. UI Migration | v1.0 | 1/1 | ✓ Complete | 2026-02-15 |
 | 9. Defensive Prefix Foundation | v1.1 | 0/2 | Planned | — |
-| 10. Elemental Resistance Split | v1.1 | 0/? | Pending | — |
+| 10. Elemental Resistance Split | v1.1 | 0/1 | Planned | — |
 | 11. Currency Area Gating | v1.1 | 0/? | Pending | — |
 | 12. Drop Rate Rebalancing | v1.1 | 0/? | Pending | — |
 
@@ -169,4 +174,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-15 (Phase 9 plans created)*
+*Last updated: 2026-02-16 (Phase 10 plan created)*
