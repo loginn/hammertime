@@ -113,7 +113,7 @@ Plans:
 4. User clearing Shadow Realm (area 300) can receive all 6 hammer types, with advanced hammers still rarer than basic
 5. User observes currency drop rates increasing gradually as they clear higher area levels within same tier
 
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 11-01-PLAN.md — LootTable gating, ramping, rarity weights + area level expansion
@@ -160,7 +160,7 @@ Plans:
 | 8. UI Migration | v1.0 | 1/1 | ✓ Complete | 2026-02-15 |
 | 9. Defensive Prefix Foundation | v1.1 | 0/2 | Planned | — |
 | 10. Elemental Resistance Split | v1.1 | Complete    | 2026-02-16 | — |
-| 11. Currency Area Gating | v1.1 | 0/2 | Planned | — |
+| 11. Currency Area Gating | v1.1 | Complete    | 2026-02-16 | — |
 | 12. Drop Rate Rebalancing | v1.1 | 0/? | Pending | — |
 
 **v1.1 Coverage:** 18/18 requirements mapped (100%)
