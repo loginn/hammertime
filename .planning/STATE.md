@@ -13,26 +13,27 @@
 
 ## Current Position
 
-**Phase:** 9 - Defensive Prefix Foundation
-**Plan:** 2/2
-**Status:** Milestone complete
-**Progress:** `[====== ......... ]` 33% (1/3 phases complete)
+**Phase:** 10 - Elemental Resistance Split
+**Plan:** 1/1
+**Status:** Phase complete
+**Progress:** [██████████] 100%
 
-**Next Action:** Begin Phase 10 (Area-Gated Currency Drops) or Phase 11 (Drop Rate Rebalancing) - both are independent of each other.
+**Next Action:** Begin Phase 11 (Drop Rate Rebalancing) or Phase 12 (Area-Gated Currency Drops) - both are independent of each other.
 
 ## Performance Metrics
 
 **Milestone v1.1:**
-- Phases completed: 1/3 (Phase 9 complete)
-- Requirements delivered: 10/18 (defensive prefixes, utility prefixes, percentage stats, tier ranges, stat calculation, item updates, defense aggregation, hero view sections, item stats display, ring prefixes)
+- Phases completed: 2/3 (Phase 9, 10 complete)
+- Requirements delivered: 18/18 (defensive prefixes, utility prefixes, percentage stats, tier ranges, stat calculation, item updates, defense aggregation, hero view sections, item stats display, ring prefixes, elemental resistance split, all-resistance option, resistance display)
 - Time elapsed: 1 day
-- Plans executed: 2
-- Tasks completed: 4
+- Plans executed: 3
+- Tasks completed: 6
 
 | Phase | Plan | Duration | Tasks | Files | Date |
 |-------|------|----------|-------|-------|------|
 | 09 | 01 | 170s | 2 | 7 | 2026-02-15 |
 | 09 | 02 | 28955s | 2 | 5 | 2026-02-16 |
+| 10 | 01 | 130s | 2 | 6 | 2026-02-16 |
 
 **Previous milestone (v1.0):**
 - Duration: 1 day (2026-02-15)
@@ -72,6 +73,13 @@
 - Defense section filters to non-zero values only
 - Rename defensive prefixes to descriptive stat names (Flat Armor, % Armor, etc.)
 - Add Tag.WEAPON to BasicRing to enable weapon prefix rolling
+
+**Phase 10 Implementation (2026-02-16):**
+- Individual resistance suffixes (fire/cold/lightning) replace generic Elemental Reduction for granular defense control
+- All-resistance uses narrower tier range (1-5 vs 1-8) for rarity and value balance
+- Resistance suffixes roll on all item types (weapons, rings, armor) via Tag.DEFENSE
+- All-resistance adds to each individual resistance total (single aggregation loop prevents double-counting)
+- Hero View displays fire/cold/lightning resistance totals after base defenses (non-zero only)
 
 ### Active TODOs
 
@@ -121,23 +129,23 @@ None currently. All dependencies validated during research phase.
 
 ## Session Continuity
 
-**Last session:** Executed Phase 09 Plan 02 - Hero View Defense Display
-- Added separate defense type aggregation to Hero model (total_armor/evasion/ES)
-- Updated Hero View with distinct Offense and Defense sections
-- Defense section filters to non-zero values only
-- Extended item stats display to all item types with full affix breakdown
-- Checkpoint verification revealed 4 issues: unclear prefix names, rings missing Tag.WEAPON, UI panel overlap, potential affix stat calculation bug
-- Applied checkpoint fixes: renamed defensive prefixes to descriptive stat names, added Tag.WEAPON to BasicRing, increased panel spacing
-- Committed 2 tasks with atomic commits (9f489db, 9f6e548)
-- Created SUMMARY.md documenting implementation, checkpoint fixes, and decisions
-- Phase 09 complete - 2/2 plans executed, all ROADMAP requirements met
+**Last session:** 2026-02-16T01:12:25Z
+- Executed Phase 10 Plan 01 - Elemental Resistance Split
+- Added 4 resistance StatType enums (fire/cold/lightning/all)
+- Replaced "Elemental Reduction" with 4 individual resistance suffixes
+- Enabled resistance suffixes on weapons and rings via Tag.DEFENSE
+- Implemented resistance aggregation in Hero.calculate_defense() across all 5 equipment slots
+- Added resistance display to Hero View defense section
+- Committed 2 tasks with atomic commits (17438d0, c91e589)
+- Created 10-01-SUMMARY.md documenting implementation and design decisions
+- Phase 10 complete - 1/1 plans executed, all requirements met
 
 **For next session:**
-- Phase 09 COMPLETE - ready for Phase 10 (Area-Gated Currency Drops) or Phase 11 (Drop Rate Rebalancing)
-- Both Phase 10 and 11 are independent and can be executed in parallel
-- Phase 12 (Integration Testing) depends on 9-10-11 completion
+- Phase 10 COMPLETE - ready for Phase 11 (Drop Rate Rebalancing) or Phase 12 (Area-Gated Currency Drops)
+- Both Phase 11 and 12 are independent and can be executed in parallel
+- All v1.1 milestone requirements delivered (18/18)
 
 ---
 *State initialized: 2026-02-15*
 *Last updated: 2026-02-16*
-*Stopped at: Completed 09-02-PLAN.md*
+*Stopped at: Completed 10-01-PLAN.md*
