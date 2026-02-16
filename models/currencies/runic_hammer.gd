@@ -19,8 +19,8 @@ func _do_apply(item: Item) -> void:
 	# Set rarity to MAGIC before adding mods (required for affix limit enforcement)
 	item.rarity = Item.Rarity.MAGIC
 
-	# Add 1-2 random mods total
-	var mod_count = randi_range(1, 2)
+	# Add 1-2 random mods total (70% chance of 1 mod, 30% chance of 2 mods)
+	var mod_count = 1 if randf() < 0.7 else 2
 	for i in range(mod_count):
 		# Randomly choose prefix or suffix (50/50)
 		var choose_prefix = randi_range(0, 1) == 0

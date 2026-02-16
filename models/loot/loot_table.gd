@@ -206,8 +206,8 @@ static func spawn_item_with_mods(item: Item, rarity: Item.Rarity) -> void:
 		# Set rarity first (required for affix limit enforcement)
 		item.rarity = Item.Rarity.MAGIC
 
-		# Add 1-2 random mods (same logic as RunicHammer)
-		var mod_count: int = randi_range(1, 2)
+		# Add 1-2 random mods (70% chance of 1 mod, 30% chance of 2 mods)
+		var mod_count: int = 1 if randf() < 0.7 else 2
 		for i in range(mod_count):
 			# Randomly choose prefix or suffix (50/50)
 			var choose_prefix: bool = randi_range(0, 1) == 0
