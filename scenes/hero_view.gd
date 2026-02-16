@@ -215,6 +215,21 @@ func update_stats_display() -> void:
 	if total_es > 0:
 		stats_label.text += "Energy Shield: %d\n" % total_es
 		has_defense = true
+
+	var total_fire_res = GameState.hero.get_total_fire_resistance()
+	var total_cold_res = GameState.hero.get_total_cold_resistance()
+	var total_lightning_res = GameState.hero.get_total_lightning_resistance()
+
+	if total_fire_res > 0:
+		stats_label.text += "Fire Resistance: %d\n" % total_fire_res
+		has_defense = true
+	if total_cold_res > 0:
+		stats_label.text += "Cold Resistance: %d\n" % total_cold_res
+		has_defense = true
+	if total_lightning_res > 0:
+		stats_label.text += "Lightning Resistance: %d\n" % total_lightning_res
+		has_defense = true
+
 	if not has_defense:
 		stats_label.text += "(No defense equipped)\n"
 
