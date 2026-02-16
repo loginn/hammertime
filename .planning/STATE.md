@@ -13,27 +13,28 @@
 
 ## Current Position
 
-**Phase:** 10 - Elemental Resistance Split
-**Plan:** 1/1
-**Status:** Milestone complete
-**Progress:** [██████████] 100%
+**Phase:** 11 - Currency Area Gating
+**Plan:** 1/2
+**Status:** In progress
+**Progress:** [██████████] 95%
 
-**Next Action:** Begin Phase 11 (Drop Rate Rebalancing) or Phase 12 (Area-Gated Currency Drops) - both are independent of each other.
+**Next Action:** Continue Phase 11 Plan 02 (Drop rate rebalancing and simulation).
 
 ## Performance Metrics
 
 **Milestone v1.1:**
-- Phases completed: 2/3 (Phase 9, 10 complete)
+- Phases completed: 2/3 (Phase 9, 10 complete; Phase 11 in progress)
 - Requirements delivered: 18/18 (defensive prefixes, utility prefixes, percentage stats, tier ranges, stat calculation, item updates, defense aggregation, hero view sections, item stats display, ring prefixes, elemental resistance split, all-resistance option, resistance display)
 - Time elapsed: 1 day
-- Plans executed: 3
-- Tasks completed: 6
+- Plans executed: 4
+- Tasks completed: 8
 
 | Phase | Plan | Duration | Tasks | Files | Date |
 |-------|------|----------|-------|-------|------|
 | 09 | 01 | 170s | 2 | 7 | 2026-02-15 |
 | 09 | 02 | 28955s | 2 | 5 | 2026-02-16 |
 | 10 | 01 | 130s | 2 | 6 | 2026-02-16 |
+| 11 | 01 | 125s | 2 | 2 | 2026-02-16 |
 
 **Previous milestone (v1.0):**
 - Duration: 1 day (2026-02-15)
@@ -49,6 +50,7 @@
 - Plans: 8
 - Files changed: 109
 - Final LOC: 1,953 GDScript
+| Phase 11 P01 | 125 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -79,6 +81,13 @@
 - All-resistance uses narrower tier range (1-5 vs 1-8) for rarity and value balance
 - Resistance suffixes roll on all item types (weapons, rings, armor) via Tag.DEFENSE
 - All-resistance adds to each individual resistance total (single aggregation loop prevents double-counting)
+
+**Phase 11 Implementation (2026-02-16):**
+- Hard gate currencies by area level (1/100/200/300) instead of pure RNG for clearer progression
+- Ramp newly unlocked currencies from 10% to 100% over 50 levels to prevent instant abundance
+- Distribute bonus drops uniformly to all eligible currencies (not just dropped ones) to prevent starter currency dominance
+- Use 0.02 difficulty scaling for expanded 1-300+ area range (prevents absurd multipliers)
+- Map area tiers to 1/100/200/300 thresholds for meaningful progression gates
 - Hero View displays fire/cold/lightning resistance totals after base defenses (non-zero only)
 
 ### Active TODOs
@@ -129,20 +138,21 @@ None currently. All dependencies validated during research phase.
 
 ## Session Continuity
 
-**Last session:** 2026-02-16T01:12:25Z
-- Executed Phase 10 Plan 01 - Elemental Resistance Split
-- Added 4 resistance StatType enums (fire/cold/lightning/all)
-- Replaced "Elemental Reduction" with 4 individual resistance suffixes
-- Enabled resistance suffixes on weapons and rings via Tag.DEFENSE
-- Implemented resistance aggregation in Hero.calculate_defense() across all 5 equipment slots
-- Added resistance display to Hero View defense section
-- Committed 2 tasks with atomic commits (17438d0, c91e589)
-- Created 10-01-SUMMARY.md documenting implementation and design decisions
-- Phase 10 complete - 1/1 plans executed, all requirements met
+**Last session:** 2026-02-16T01:33:31Z
+- Executed Phase 11 Plan 01 - Currency Area Gating
+- Added CURRENCY_AREA_GATES constant mapping currencies to unlock levels (1/100/200/300)
+- Implemented _calculate_currency_chance() ramping helper (10% → 100% over 50 levels)
+- Applied hard gating and ramping to roll_currency_drops() with uniform bonus distribution
+- Expanded RARITY_WEIGHTS from 1-5 to 1/100/200/300/500 thresholds
+- Updated area naming to tier-based system (Forest/Dark Forest/Cursed Woods/Shadow Realm)
+- Adjusted difficulty scaling from 0.5 to 0.02 for expanded 1-300+ area range
+- Committed 2 tasks with atomic commits (8ef163b, b5e2c0c)
+- Created 11-01-SUMMARY.md documenting implementation and design decisions
+- Phase 11 Plan 01 complete - 1/2 plans executed
 
 **For next session:**
-- Phase 10 COMPLETE - ready for Phase 11 (Drop Rate Rebalancing) or Phase 12 (Area-Gated Currency Drops)
-- Both Phase 11 and 12 are independent and can be executed in parallel
+- Continue Phase 11 Plan 02 (Drop rate rebalancing and simulation)
+- Phase 11 has 1 remaining plan
 - All v1.1 milestone requirements delivered (18/18)
 
 ---
