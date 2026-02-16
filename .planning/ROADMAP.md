@@ -53,7 +53,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 - Integer phases (13-17): Planned milestone work
 - Decimal phases (13.1, 13.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 13: Defensive Stat Foundation** - Armor, evasion, resistance, and energy shield calculations
+- [x] **Phase 13: Defensive Stat Foundation** - Armor, evasion, resistance, and energy shield calculations (completed 2026-02-16)
 - [ ] **Phase 14: Monster Pack Data Model** - Pack Resources with HP, damage, elemental types
 - [ ] **Phase 15: Pack-Based Combat Loop** - Sequential idle auto-combat with death mechanics
 - [ ] **Phase 16: Drop System Split** - Packs drop currency, maps drop items
@@ -154,7 +154,7 @@ Phases execute in numeric order: 13 → 14 → 15 → 16 → 17
 | 10. Elemental Resistance Split | v1.1 | 1/1 | ✓ Complete | 2026-02-16 |
 | 11. Currency Area Gating | v1.1 | 2/2 | ✓ Complete | 2026-02-16 |
 | 12. Drop Rate Rebalancing | v1.1 | 1/1 | ✓ Complete | 2026-02-16 |
-| 13. Defensive Stat Foundation | v1.2 | 0/2 | Planned | - |
+| 13. Defensive Stat Foundation | v1.2 | Complete    | 2026-02-16 | - |
 | 14. Monster Pack Data Model | v1.2 | 0/? | Not started | - |
 | 15. Pack-Based Combat Loop | v1.2 | 0/? | Not started | - |
 | 16. Drop System Split | v1.2 | 0/? | Not started | - |
