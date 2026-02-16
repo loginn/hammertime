@@ -71,3 +71,37 @@ static func generate_packs(area_level: int) -> Array[MonsterPack]:
 		packs.append(pack)
 
 	return packs
+
+
+## Debug method for development-time verification.
+## Prints a formatted summary of generated packs for a given area level.
+static func debug_generate(area_level: int) -> void:
+	var biome := BiomeConfig.get_biome_for_level(area_level)
+	var multiplier := get_level_multiplier(area_level)
+	var packs := generate_packs(area_level)
+
+	print("=== Pack Generation: Area Level %d (%s) ===" % [area_level, biome.biome_name])
+	print("Multiplier: %.1fx" % multiplier)
+	print("Packs: %d" % packs.size())
+	print("---")
+
+	var element_counts := {"physical": 0, "fire": 0, "cold": 0, "lightning": 0}
+	for i in range(packs.size()):
+		var pack := packs[i]
+		print(
+			"Pack %d: %s | HP: %.0f | DMG: %.1f | SPD: %.1f/s | %s"
+			% [i + 1, pack.pack_name, pack.hp, pack.damage, pack.attack_speed, pack.element]
+		)
+		if pack.element in element_counts:
+			element_counts[pack.element] += 1
+
+	print("---")
+	print(
+		"Element distribution: physical=%d, fire=%d, cold=%d, lightning=%d"
+		% [
+			element_counts["physical"],
+			element_counts["fire"],
+			element_counts["cold"],
+			element_counts["lightning"],
+		]
+	)
