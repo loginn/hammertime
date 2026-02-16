@@ -12,6 +12,6 @@ func _init() -> void:
 	self.crit_chance = 5.0
 	self.crit_damage = 150.0
 	self.implicit = Implicit.new(
-		"Crit Chance", Affix.AffixType.IMPLICIT, 1, 2, [Tag.CRITICAL, Tag.ATTACK]
+		"Crit Chance", Affix.AffixType.IMPLICIT, 1, 2, [Tag.CRITICAL, Tag.ATTACK], [Tag.StatType.CRIT_CHANCE]
 	)
 	self.update_value()

@@ -8,7 +8,7 @@ func _init() -> void:
 	self.valid_tags = [Tag.PHYSICAL, Tag.ATTACK, Tag.CRITICAL, Tag.DEFENSE]
 	self.base_damage_type = Tag.PHYSICAL
 	self.implicit = Implicit.new(
-		"Attack Speed", Affix.AffixType.IMPLICIT, 2, 5, [Tag.SPEED, Tag.ATTACK]
+		"Attack Speed", Affix.AffixType.IMPLICIT, 2, 5, [Tag.SPEED, Tag.ATTACK], [Tag.StatType.INCREASED_SPEED]
 	)
 	self.base_damage = 10
 	self.base_speed = 1
