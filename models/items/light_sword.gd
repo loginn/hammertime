@@ -12,4 +12,5 @@ func _init() -> void:
 	)
 	self.base_damage = 10
 	self.base_speed = 1
+	self.base_attack_speed = 1.8  # Fast sword: ~0.56s between hits
 	self.update_value()

@@ -11,6 +11,7 @@ var cold_dps: int
 var fire_dps: int
 var crit_chance: float = 5.0  # Base 5% crit chance
 var crit_damage: float = 150.0  # Base 150% crit damage
+var base_attack_speed: float = 1.0  # Attacks per second for combat timer (separate from base_speed DPS multiplier)
 
 
 func update_value() -> void:
