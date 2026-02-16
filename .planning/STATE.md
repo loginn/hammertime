@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Phase 14 - Monster Pack Data Model
+**Current Focus:** Phase 16 - Drop System Split
 
-**Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication, ~3,300 LOC across ~31 files.
+**Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication, ~3,671 LOC across ~39 files.
 
 ## Current Position
 
-Phase: 14 of 17 (Monster Pack Data Model)
+Phase: 16 of 17 (Drop System Split)
 Plan: 0 of ? in current phase
 Status: Ready to plan
-Last activity: 2026-02-16 — Phase 13 complete (Defensive Stat Foundation)
+Last activity: 2026-02-16 — Phase 15 complete (Pack-Based Combat Loop)
 
-Progress: [█████████████░░░░░░░] 76% (13 phases complete, 4 remaining)
+Progress: [████████████████░░░░] 88% (15 phases complete, 2 remaining)
 
 ## Performance Metrics
 
@@ -48,9 +48,12 @@ Progress: [█████████████░░░░░░░] 76% (13
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting v1.2 work:
 
-- Phase 9: Implicit stat_types architecture - base stats flow through StatCalculator
-- Phase 11: Hard currency gating by area - clearer progression than pure RNG
-- Phase 12: Logarithmic rarity interpolation - smooth progression between anchor points
+- Phase 13: DefenseCalculator 4-stage pipeline (evasion -> resistance -> armor -> ES/life split)
+- Phase 14: MonsterPack Resources with biome-weighted element selection
+- Phase 15: CombatEngine dual-timer architecture with state machine lifecycle
+- Phase 15: base_attack_speed separate from base_speed (combat cadence vs DPS multiplier)
+- Phase 15: DPS / attack_speed for per-hit damage, per-hit crit rolls in combat
+- Phase 15: Auto-retry after death, deterministic area progression (area_level += 1)
 
 ### Known Issues
 
@@ -73,15 +76,15 @@ Recent decisions affecting v1.2 work:
 
 ## Session Continuity
 
-**Last session:** 2026-02-16T17:07:48.721Z
-- Completed Phase 13: Defensive Stat Foundation (2 plans, 4 tasks)
-- Created DefenseCalculator with 4-stage damage pipeline
-- Wired defense into gameplay loop with ES tracking and recharge
-- All 5 DEF requirements verified (5/5 must-haves passed)
+**Last session:** 2026-02-16
+- Completed Phase 15: Pack-Based Combat Loop (2 plans, 4 tasks)
+- Created CombatEngine with dual-timer state machine combat
+- Replaced timer-based area clearing with pack-by-pack combat in gameplay_view
+- All 5 COMBAT requirements verified (5/5 must-haves passed)
 
 **For next session:**
-- Begin Phase 14 planning: Monster Pack Data Model
-- Use `/gsd:discuss-phase 14` or `/gsd:plan-phase 14`
+- Begin Phase 16 planning: Drop System Split
+- Use `/gsd:discuss-phase 16` or `/gsd:plan-phase 16`
 
 ---
 *State initialized: 2026-02-15*

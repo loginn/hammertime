@@ -41,6 +41,12 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - Advanced currencies (Grand, Claw, Tuning) significantly rarer than basic -- v1.1
 - Runic Hammer 70/30 mod bias making TackHammer meaningful -- v1.1
 - Implicit stat_types architecture: base stats flow through StatCalculator, not hardcoded -- v1.1
+- DefenseCalculator with 4-stage damage pipeline (evasion, resistance, armor, ES/life split) -- v1.2
+- MonsterPack/MonsterType Resources with biome-weighted element selection -- v1.2
+- PackGenerator produces 8-15 packs per map with area-level scaling -- v1.2
+- CombatEngine with state machine, dual attack timers, and auto-retry -- v1.2
+- 7 combat signals on GameEvents for decoupled UI observation -- v1.2
+- Pack-based idle combat replacing timer-based area clearing -- v1.2
 
 ### Active
 
@@ -66,7 +72,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - Chaos-style full reroll -- deliberate design choice: no full rerolls, craft carefully or equip as-is
 - Drag-and-drop crafting UI -- select-and-click is sufficient
 - Save/load system -- Resource model enables it, but not yet scoped
-- Defensive combat calculations -- now in scope for v1.2 (pack-based mapping)
+- ~~Defensive combat calculations~~ -- shipped in v1.2 Phase 13 (DefenseCalculator)
 - Hybrid defense prefixes (armor+evasion single-slot) -- v1.3+ scope
 - Visual prefix/suffix separation in UI (color-coded or sectioned) -- v1.3+ scope
 - Totem system (forge god shrine with slottable pieces, favor mechanic, map modifiers) -- v1.3+ scope, builds on pack-based mapping
@@ -74,7 +80,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 ## Context
 
 - Built with Godot 4.5 (GDScript), targeting mobile renderer
-- 3,161 LOC GDScript across ~30 files
+- 3,671 LOC GDScript across ~39 files
 - Feature-based folder structure: models/, scenes/, autoloads/, utils/, tools/
 - Autoloads: ItemAffixes, Tag, GameState (Hero singleton + currency inventory), GameEvents (event bus)
 - Scene structure: main.tscn with main_view coordinating hero_view, crafting_view, gameplay_view via signals
@@ -85,6 +91,9 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - Drop simulator (tools/drop_simulator.gd) validates currency gating, rarity distribution, and item quantity
 - Implicit stat_types flow: all item base stats derive from implicits through StatCalculator (no hardcoded bases)
 - 18 prefix types (9 offensive + 9 defensive) and 19 suffix types (15 original + 4 resistance)
+- CombatEngine handles all pack-by-pack combat with state machine lifecycle
+- BiomeConfig defines biome element weight arrays and pack count ranges
+- Hero base_attack_speed property on Weapon (e.g., LightSword at 1.8 hits/sec)
 
 ## Constraints
 
@@ -115,6 +124,14 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Hard currency gating by area | Clearer progression than pure RNG, prevents early-game clutter | Good -- meaningful gates |
 | Logarithmic rarity interpolation | Smooth progression between 4 anchor points, no discrete jumps | Good -- natural feeling |
 | Multi-item drops at high areas | Endgame loot shower (4-5 items) compensates per-roll rare scarcity | Good -- rewarding endgame |
+| DefenseCalculator 4-stage pipeline | Evasion -> Resistance -> Armor -> ES/Life split for all incoming damage | Good -- clean damage flow |
+| MonsterPack Resources with biome weighting | Packs use BiomeConfig weight arrays for element selection per biome | Good -- thematic biome identity |
+| CombatEngine dual-timer architecture | Independent hero/pack attack timers with state machine lifecycle | Good -- clean combat loop |
+| base_attack_speed separate from base_speed | Combat timer cadence (hits/sec) vs DPS multiplier are distinct concepts | Good -- no double-counting |
+| DPS / attack_speed for per-hit damage | Removes speed factor from DPS formula to get correct per-hit value | Good -- mathematically correct |
+| Per-hit crit rolls in combat | randf() each hit vs expected-value in DPS display -- more exciting gameplay | Good -- combat variance |
+| Auto-retry after death | Hero immediately starts new attempt on same level, no regression | Good -- idle-friendly |
+| Deterministic area progression | area_level += 1 on map clear, not RNG-based | Good -- clear goal posts |
 
 ---
-*Last updated: 2026-02-16 after v1.2 milestone started*
+*Last updated: 2026-02-16 after Phase 15*
