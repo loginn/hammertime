@@ -12,6 +12,9 @@ var total_defense: int = 0
 var total_armor: int = 0
 var total_evasion: int = 0
 var total_energy_shield: int = 0
+var total_fire_resistance: int = 0
+var total_cold_resistance: int = 0
+var total_lightning_resistance: int = 0
 var total_crit_chance: float = 5.0
 var total_crit_damage: float = 150.0
 
@@ -104,8 +107,11 @@ func calculate_defense() -> int:
 	total_armor = 0
 	total_evasion = 0
 	total_energy_shield = 0
+	total_fire_resistance = 0
+	total_cold_resistance = 0
+	total_lightning_resistance = 0
 
-	# Add defense from armor pieces
+	# Add defense from armor pieces (base stats only from armor slots)
 	for slot in ["helmet", "armor", "boots"]:
 		if slot in equipped_items and equipped_items[slot] != null:
 			var armor_item = equipped_items[slot]
@@ -121,6 +127,25 @@ func calculate_defense() -> int:
 			# Check for base_energy_shield property
 			if "base_energy_shield" in armor_item:
 				total_energy_shield += armor_item.base_energy_shield
+
+	# Add resistance from suffixes on ALL equipment slots
+	for slot in ["helmet", "armor", "boots", "weapon", "ring"]:
+		if slot in equipped_items and equipped_items[slot] != null:
+			var item = equipped_items[slot]
+
+			# Process suffixes for resistance stats
+			if "suffixes" in item:
+				for suffix in item.suffixes:
+					if Tag.StatType.FIRE_RESISTANCE in suffix.stat_types:
+						total_fire_resistance += suffix.value
+					if Tag.StatType.COLD_RESISTANCE in suffix.stat_types:
+						total_cold_resistance += suffix.value
+					if Tag.StatType.LIGHTNING_RESISTANCE in suffix.stat_types:
+						total_lightning_resistance += suffix.value
+					if Tag.StatType.ALL_RESISTANCE in suffix.stat_types:
+						total_fire_resistance += suffix.value
+						total_cold_resistance += suffix.value
+						total_lightning_resistance += suffix.value
 
 	# Backward compatibility - total_defense equals total_armor
 	total_defense = total_armor
@@ -181,6 +206,21 @@ func get_total_evasion() -> int:
 func get_total_energy_shield() -> int:
 	"""Get the hero's total energy shield"""
 	return total_energy_shield
+
+
+func get_total_fire_resistance() -> int:
+	"""Get the hero's total fire resistance"""
+	return total_fire_resistance
+
+
+func get_total_cold_resistance() -> int:
+	"""Get the hero's total cold resistance"""
+	return total_cold_resistance
+
+
+func get_total_lightning_resistance() -> int:
+	"""Get the hero's total lightning resistance"""
+	return total_lightning_resistance
 
 
 func get_health_percentage() -> float:

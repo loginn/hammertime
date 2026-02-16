@@ -139,7 +139,42 @@ var suffixes: Array[Affix] = [
 	Affix.new("Armor", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE], [Tag.StatType.FLAT_ARMOR]),
 	Affix.new("Physical Reduction", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE], []),
 	Affix.new("Magical Reduction", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE], []),
-	Affix.new("Elemental Reduction", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE], []),
+	Affix.new(
+		"Fire Resistance",
+		Affix.AffixType.SUFFIX,
+		5,
+		12,
+		[Tag.DEFENSE],
+		[Tag.StatType.FIRE_RESISTANCE],
+		Vector2i(1, 8)
+	),
+	Affix.new(
+		"Cold Resistance",
+		Affix.AffixType.SUFFIX,
+		5,
+		12,
+		[Tag.DEFENSE],
+		[Tag.StatType.COLD_RESISTANCE],
+		Vector2i(1, 8)
+	),
+	Affix.new(
+		"Lightning Resistance",
+		Affix.AffixType.SUFFIX,
+		5,
+		12,
+		[Tag.DEFENSE],
+		[Tag.StatType.LIGHTNING_RESISTANCE],
+		Vector2i(1, 8)
+	),
+	Affix.new(
+		"All Resistances",
+		Affix.AffixType.SUFFIX,
+		3,
+		8,
+		[Tag.DEFENSE],
+		[Tag.StatType.ALL_RESISTANCE],
+		Vector2i(1, 5)
+	),
 	Affix.new("Dodge Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE], []),
 	Affix.new("Dmg Suppression Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE], []),
 	Affix.new(
