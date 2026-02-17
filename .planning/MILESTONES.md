@@ -72,3 +72,27 @@
 
 ---
 
+
+## v1.2 — Pack-Based Mapping (Shipped: 2026-02-17)
+
+**Goal:** Replace time-based area clearing with pack-based map runs, adding real combat stakes and defensive stat integration.
+
+**Phases:** 5 phases (13-17), 11 plans | **Timeline:** 2 days (2026-02-16 → 2026-02-17)
+**Stats:** 17 code files changed (+1,163/-265 lines), 3,943 LOC GDScript (up from 3,161)
+
+**Key accomplishments:**
+- DefenseCalculator with 4-stage damage pipeline (evasion → resistance → armor → ES/life split)
+- MonsterPack/MonsterType/BiomeConfig Resources with 22 named monster types and biome-weighted element selection
+- CombatEngine state machine with dual attack timers and 7 combat signals on GameEvents
+- Drop system split: per-pack currency drops + map completion item drops + architecture-enforced death penalty
+- ProgressBar-based combat UI with floating damage numbers, crit styling, and ES overlay
+- Pack-by-pack idle combat replacing timer-based area clearing
+
+**Known Gaps:**
+- Level 1 difficulty may be too high for fresh heroes (balance tuning deferred to v1.3+)
+- Deprecated LootTable methods kept for drop_simulator tool
+
+**Archives:** `.planning/milestones/v1.2-ROADMAP.md`, `.planning/milestones/v1.2-REQUIREMENTS.md`
+
+---
+

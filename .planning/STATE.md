@@ -1,28 +1,35 @@
 # Project State: Hammertime
 
 **Updated:** 2026-02-17
-**Milestone:** v1.2 Pack-Based Mapping
+**Milestone:** v1.2 Pack-Based Mapping (SHIPPED)
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-16)
+See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Phase 17 - UI and Combat Feedback
+**Current Focus:** Planning next milestone
 
-**Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication, ~3,671 LOC across ~39 files.
+**Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication, ~3,943 LOC across ~42 files.
 
 ## Current Position
 
-Phase: 17 of 17 (UI and Combat Feedback)
-Plan: 3 of 3 in current phase
-Status: All plans complete, ready for verification
-Last activity: 2026-02-17 — Plan 17-03 complete (CanvasLayer mouse blocking and visibility fixes)
+Phase: All complete
+Status: v1.2 shipped, ready for next milestone
+Last activity: 2026-02-17 — Milestone v1.2 archived
 
-Progress: [████████████████████] 100% (17 phases complete, 0 remaining)
+Progress: [████████████████████] 100% (17 phases complete across 4 milestones)
 
 ## Performance Metrics
+
+**Milestone v1.2 (shipped 2026-02-17):**
+- Phases: 5 (13-17)
+- Plans executed: 11
+- Requirements delivered: 21/21
+- Gap closures: 1 (17-03 CanvasLayer fixes)
+- Timeline: 2 days (2026-02-16 → 2026-02-17)
+- Final LOC: 3,943 GDScript
 
 **Milestone v1.1 (shipped 2026-02-16):**
 - Phases: 4 (9-12)
@@ -46,22 +53,13 @@ Progress: [████████████████████] 100% (1
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting v1.2 work:
-
-- Phase 13: DefenseCalculator 4-stage pipeline (evasion -> resistance -> armor -> ES/life split)
-- Phase 14: MonsterPack Resources with biome-weighted element selection
-- Phase 15: CombatEngine dual-timer architecture with state machine lifecycle
-- Phase 15: base_attack_speed separate from base_speed (combat cadence vs DPS multiplier)
-- Phase 15: DPS / attack_speed for per-hit damage, per-hit crit rolls in combat
-- Phase 15: Auto-retry after death, deterministic area progression (area_level += 1)
-- Phase 17: Stacked ProgressBar ES overlay (PoE blue-over-red pattern)
-- Phase 17: State guards after await create_timer to prevent stale transitions
-- Phase 17: Explicit mouse_filter=IGNORE on non-interactive UI containers (Godot defaults to STOP)
-- Phase 17: Explicit CanvasLayer visibility management (CanvasLayer ignores parent visibility)
+All v1.2 decisions marked ✓ Good.
 
 ### Known Issues
 
 - debug_hammers flag in game_state.gd (currently false)
+- Deprecated LootTable methods kept for drop_simulator tool (get_item_drop_count, roll_currency_drops)
+- Level 1 difficulty may be too high for fresh heroes (balance tuning deferred)
 
 ### Deferred Items
 
@@ -71,26 +69,23 @@ Recent decisions affecting v1.2 work:
 - Visual prefix/suffix separation in UI (color-coded or sectioned)
 - Tag-based affix pool tooltips
 - Save/load system
+- Level 1 balance tuning for fresh heroes
 
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 1 | Fix Light Sword item type button regenerating a free weapon while other types do not | 2026-02-15 | c0bcfb8 | [1-fix-light-sword-item-type-button-regener](./quick/1-fix-light-sword-item-type-button-regener/) |
-| Phase 17 P03 | 76 | 2 tasks | 2 files |
 
 ## Session Continuity
 
 **Last session:** 2026-02-17
-- Phase 17 execution complete: UI and Combat Feedback (3 plans, 6 tasks)
-- Plan 17-01: ProgressBar-based combat UI with HP/ES/pack bars and state transitions
-- Plan 17-02: Floating damage numbers with crit styling and dodge text
-- Plan 17-03: Fixed CanvasLayer mouse blocking and visibility (gap closure)
-- All combat UI now visible and functional, tab navigation working
-- Ready for phase verification
+- Milestone v1.2 Pack-Based Mapping shipped and archived
+- All 21 requirements satisfied, audit passed
+- Archives: milestones/v1.2-ROADMAP.md, milestones/v1.2-REQUIREMENTS.md
 
 **For next session:**
-- Verify Phase 17 and complete milestone v1.2
+- Start next milestone with `/gsd:new-milestone`
 
 ---
 *State initialized: 2026-02-15*
