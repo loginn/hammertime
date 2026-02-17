@@ -63,7 +63,7 @@ Full details: `.planning/milestones/v1.2-ROADMAP.md`
 
 **Milestone Goal:** Persist full game state across sessions and fix UX pain points — side-by-side hero/crafting layout, item safety, stats overflow, crafting feedback, and level 1 balance.
 
-- [ ] **Phase 18: Save/Load Foundation** - Implement core persistence with auto-save and version tracking
+- [x] **Phase 18: Save/Load Foundation** - Implement core persistence with auto-save and version tracking
 - [ ] **Phase 19: Side-by-Side Layout** - Restructure UI to show hero equipment and crafting simultaneously
 - [ ] **Phase 20: Crafting UX Enhancements** - Add tooltips, stat comparison, per-type slots, and safety confirmations
 - [ ] **Phase 21: Save Import/Export** - Enable save string export and import for backup/sharing
@@ -83,8 +83,8 @@ Full details: `.planning/milestones/v1.2-ROADMAP.md`
 **Plans**: 2 plans
 
 Plans:
-- [ ] 18-01-PLAN.md — Core save/load infrastructure (serialization, SaveManager, state centralization)
-- [ ] 18-02-PLAN.md — Auto-save, event triggers, toast UI, settings menu, startup flow
+- [x] 18-01-PLAN.md — Core save/load infrastructure (serialization, SaveManager, state centralization)
+- [x] 18-02-PLAN.md — Auto-save, event triggers, toast UI, settings menu, startup flow
 
 ### Phase 19: Side-by-Side Layout
 **Goal**: Hero equipment and crafting views display simultaneously so players can craft while viewing their gear
@@ -171,7 +171,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 15. Pack-Based Combat Loop | v1.2 | 2/2 | ✓ Complete | 2026-02-16 |
 | 16. Drop System Split | v1.2 | 2/2 | ✓ Complete | 2026-02-17 |
 | 17. UI and Combat Feedback | v1.2 | 3/3 | ✓ Complete | 2026-02-17 |
-| 18. Save/Load Foundation | v1.3 | 0/2 | Planned | - |
+| 18. Save/Load Foundation | v1.3 | 2/2 | ✓ Complete | 2026-02-17 |
 | 19. Side-by-Side Layout | v1.3 | 0/0 | Not started | - |
 | 20. Crafting UX Enhancements | v1.3 | 0/0 | Not started | - |
 | 21. Save Import/Export | v1.3 | 0/0 | Not started | - |

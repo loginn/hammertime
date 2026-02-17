@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Phase 18 - Save/Load Foundation
+**Current Focus:** Phase 19 - Side-by-Side Layout
 
-**Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication, ~3,943 LOC across ~42 files.
+**Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 18 of 22 (Save/Load Foundation)
+Phase: 19 of 22 (Side-by-Side Layout)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-02-17 — v1.3 roadmap created
+Last activity: 2026-02-17 — Phase 18 complete
 
-Progress: [████████████████░░░░] 77% (17/22 phases)
+Progress: [█████████████████░░░] 82% (18/22 phases)
 
 ## Performance Metrics
 
@@ -57,7 +57,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 All v1.2 decisions marked ✓ Good.
 
 Recent decisions affecting v1.3 work:
-- Resource-based data model enables save/load via ResourceSaver/ResourceLoader
+- JSON save/load chosen over ResourceSaver (Phase 21 needs export strings)
+- SaveManager autoload registered before GameState in autoload order
+- Crafting inventory and area progress centralized in GameState for persistence
 - Explicit CanvasLayer visibility management (v1.2) informs side-by-side layout approach
 
 ### v1.3 Requirements Coverage
@@ -80,7 +82,7 @@ Recent decisions affecting v1.3 work:
 
 ### Known Issues
 
-- debug_hammers flag in game_state.gd (currently false)
+- debug_hammers flag in game_state.gd (currently true)
 - Deprecated LootTable methods kept for drop_simulator tool (get_item_drop_count, roll_currency_drops)
 - Level 1 difficulty may be too high for fresh heroes (addressing in Phase 22)
 
@@ -106,14 +108,14 @@ Recent decisions affecting v1.3 work:
 
 ## Session Continuity
 
-**Last session:** 2026-02-17T10:24:53.389Z
-- Milestone v1.3 roadmap created
-- 5 phases identified (18-22)
-- All 13 requirements mapped to phases
-- 100% coverage validated
+**Last session:** 2026-02-17
+- Phase 18 (Save/Load Foundation) completed — both plans executed
+- SaveManager autoload with JSON persistence, auto-save timer, event-driven saves
+- Toast notifications, settings menu with New Game, startup auto-load flow
+- State centralized in GameState (crafting inventory, area progress)
 
-**Next step:** `/gsd:plan-phase 18` to begin Save/Load Foundation
+**Next step:** `/gsd:plan-phase 19` to begin Side-by-Side Layout
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-17 — v1.3 roadmap complete*
+*Last updated: 2026-02-17 — Phase 18 complete*
