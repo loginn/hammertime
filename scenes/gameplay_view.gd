@@ -6,11 +6,28 @@ signal currencies_found(drops: Dictionary)
 @onready var start_clearing_button: Button = $StartClearingButton
 @onready var next_area_button: Button = $NextAreaButton
 @onready var combat_engine: CombatEngine = $CombatEngine
-@onready var materials_label: Label = $MaterialsLabel
 @onready var area_label: Label = $AreaLabel
+
+# Combat UI bar references
+@onready var hero_hp_bar: ProgressBar = $CombatUI/UIRoot/HeroHealthContainer/HeroHPBar
+@onready var hero_es_bar: ProgressBar = $CombatUI/UIRoot/HeroHealthContainer/HeroESBar
+@onready var hero_hp_label: Label = $CombatUI/UIRoot/HeroHealthContainer/HeroHPLabel
+@onready var pack_hp_bar: ProgressBar = $CombatUI/UIRoot/PackHealthContainer/PackHPBar
+@onready var pack_hp_label: Label = $CombatUI/UIRoot/PackHealthContainer/PackHPLabel
+@onready var pack_progress_bar: ProgressBar = $CombatUI/UIRoot/PackProgressContainer/PackProgressBar
+@onready var pack_progress_label: Label = $CombatUI/UIRoot/PackProgressContainer/PackProgressLabel
+@onready var combat_state_label: Label = $CombatUI/UIRoot/CombatStateLabel
+@onready var hero_health_container: Control = $CombatUI/UIRoot/HeroHealthContainer
+@onready var pack_health_container: Control = $CombatUI/UIRoot/PackHealthContainer
+@onready var pack_progress_container: Control = $CombatUI/UIRoot/PackProgressContainer
+@onready var floating_text_container: Control = $CombatUI/UIRoot/FloatingTextContainer
 
 var is_combat_active: bool = false
 var item_bases_collected: Array = []
+var combat_started_once: bool = false
+
+## Default state label color
+var default_label_color := Color(1.0, 1.0, 1.0)
 
 
 func _ready() -> void:
@@ -31,7 +48,44 @@ func _ready() -> void:
 	GameEvents.items_dropped.connect(_on_items_dropped)
 	GameEvents.currency_dropped.connect(_on_currency_dropped)
 
+	_setup_bar_styles()
 	update_display()
+
+
+func _setup_bar_styles() -> void:
+	# Hero HP bar — red fill, dark red background
+	var hp_fill := StyleBoxFlat.new()
+	hp_fill.bg_color = Color(0.8, 0.0, 0.0)
+	hero_hp_bar.add_theme_stylebox_override("fill", hp_fill)
+	var hp_bg := StyleBoxFlat.new()
+	hp_bg.bg_color = Color(0.2, 0.0, 0.0)
+	hero_hp_bar.add_theme_stylebox_override("background", hp_bg)
+
+	# Hero ES bar — blue fill, transparent dark blue background (stacked on top)
+	var es_fill := StyleBoxFlat.new()
+	es_fill.bg_color = Color(0.0, 0.5, 1.0)
+	hero_es_bar.add_theme_stylebox_override("fill", es_fill)
+	var es_bg := StyleBoxFlat.new()
+	es_bg.bg_color = Color(0.0, 0.1, 0.3, 0.3)
+	hero_es_bar.add_theme_stylebox_override("background", es_bg)
+
+	# Pack HP bar — orange-red fill, dark background
+	var pack_fill := StyleBoxFlat.new()
+	pack_fill.bg_color = Color(0.85, 0.3, 0.1)
+	pack_hp_bar.add_theme_stylebox_override("fill", pack_fill)
+	var pack_bg := StyleBoxFlat.new()
+	pack_bg.bg_color = Color(0.2, 0.1, 0.05)
+	pack_hp_bar.add_theme_stylebox_override("background", pack_bg)
+
+	# Pack progress bar — green fill, dark green background
+	var progress_fill := StyleBoxFlat.new()
+	progress_fill.bg_color = Color(0.2, 0.7, 0.2)
+	pack_progress_bar.add_theme_stylebox_override("fill", progress_fill)
+	var progress_bg := StyleBoxFlat.new()
+	progress_bg.bg_color = Color(0.1, 0.2, 0.1)
+	pack_progress_bar.add_theme_stylebox_override("background", progress_bg)
+
+	# All bars: show_percentage already false in .tscn
 
 
 func _on_start_combat_pressed() -> void:
@@ -63,14 +117,19 @@ func refresh_clearing_speed() -> void:
 	update_display()
 
 
-# --- Combat signal handlers (display updates only) ---
+# --- Combat signal handlers ---
 
 
 func _on_combat_started(_area_level: int, _pack_count: int) -> void:
+	combat_started_once = true
+	combat_state_label.text = "Fighting..."
+	combat_state_label.add_theme_color_override("font_color", default_label_color)
 	update_display()
 
 
 func _on_pack_killed(_pack_index: int, _total_packs: int) -> void:
+	combat_state_label.text = "Pack cleared!"
+	combat_state_label.add_theme_color_override("font_color", default_label_color)
 	update_display()
 
 
@@ -83,19 +142,26 @@ func _on_pack_attacked(_result: Dictionary) -> void:
 
 
 func _on_hero_died() -> void:
+	combat_state_label.text = "Hero died! Retrying..."
+	combat_state_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
 	if not combat_engine.auto_retry:
 		is_combat_active = false
 		start_clearing_button.text = "Start Combat"
+		combat_state_label.text = "Hero died! Click Start Combat to retry."
 	update_display()
 
 
 func _on_map_completed(completed_level: int) -> void:
+	combat_state_label.text = "Map Clear!"
+	combat_state_label.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2))
 	# Emit area_cleared for existing systems (preserve backward compatibility)
 	GameEvents.area_cleared.emit(completed_level)
 	update_display()
 
 
 func _on_combat_stopped() -> void:
+	combat_state_label.text = "Combat stopped."
+	combat_state_label.add_theme_color_override("font_color", default_label_color)
 	update_display()
 
 
@@ -110,8 +176,8 @@ func _on_items_dropped(completed_level: int, item_count: int) -> void:
 			item_base_found.emit(item_base)
 
 
-func _on_currency_dropped(drops: Dictionary) -> void:
-	currencies_found.emit(drops)
+func _on_currency_dropped(_drops: Dictionary) -> void:
+	currencies_found.emit(_drops)
 	update_display()
 
 
@@ -120,50 +186,58 @@ func _on_currency_dropped(drops: Dictionary) -> void:
 
 func update_display() -> void:
 	var hero := GameState.hero
-	var display_text := ""
 
 	# Area info
 	var biome := BiomeConfig.get_biome_for_level(combat_engine.area_level)
-	area_label.text = "Current Area: %s (Level %d)" % [biome.biome_name, combat_engine.area_level]
+	area_label.text = "%s — Level %d" % [biome.biome_name, combat_engine.area_level]
 
-	# Hero health
-	display_text += "Hero HP: %.0f/%.0f\n" % [hero.health, hero.max_health]
+	# Hero HP bar
+	hero_hp_bar.max_value = hero.max_health
+	hero_hp_bar.value = hero.health
 
-	# ES display
-	if hero.get_total_energy_shield() > 0:
-		display_text += (
-			"ES: %.0f/%d\n" % [hero.get_current_energy_shield(), hero.get_total_energy_shield()]
-		)
+	# Hero ES bar (stacked on top of HP bar, PoE style)
+	var total_es := hero.get_total_energy_shield()
+	var current_es := hero.get_current_energy_shield()
+	if total_es > 0:
+		hero_es_bar.visible = true
+		hero_es_bar.max_value = total_es
+		hero_es_bar.value = current_es
+	else:
+		hero_es_bar.visible = false
 
-	display_text += "\n"
+	# Hero HP label with ES info
+	if total_es > 0:
+		hero_hp_label.text = "%.0f/%.0f  ES: %.0f/%d" % [
+			hero.health, hero.max_health, current_es, total_es
+		]
+	else:
+		hero_hp_label.text = "%.0f/%.0f" % [hero.health, hero.max_health]
 
-	# Combat state
+	# Hero health container: visible once combat has started at least once
+	hero_health_container.visible = combat_started_once
+
+	# Pack HP bar
 	if combat_engine.state == CombatEngine.State.FIGHTING:
 		var pack := combat_engine.get_current_pack()
 		if pack != null:
-			display_text += "Fighting: %s (%s)\n" % [pack.pack_name, pack.element]
-			display_text += "Pack HP: %.0f/%.0f\n" % [pack.hp, pack.max_hp]
-			display_text += (
-				"Pack %d of %d\n"
-				% [combat_engine.current_pack_index + 1, combat_engine.current_packs.size()]
-			)
-		display_text += "\n"
-		display_text += "Hero DPS: %.1f\n" % hero.total_dps
-	elif combat_engine.state == CombatEngine.State.HERO_DEAD and not combat_engine.auto_retry:
-		display_text += "Hero died! Click Start Combat to retry.\n"
-	elif combat_engine.state == CombatEngine.State.IDLE:
-		display_text += "Ready to fight.\n"
-		display_text += "Hero DPS: %.1f\n" % hero.total_dps
+			pack_health_container.visible = true
+			pack_hp_bar.max_value = pack.max_hp
+			pack_hp_bar.value = pack.hp
+			pack_hp_label.text = "%.0f/%.0f" % [pack.hp, pack.max_hp]
+		else:
+			pack_health_container.visible = false
+	else:
+		pack_health_container.visible = false
 
-	# Defense summary
-	display_text += "\n"
-	if hero.get_total_armor() > 0:
-		display_text += "Armor: %d\n" % hero.get_total_armor()
-	if hero.get_total_evasion() > 0:
-		var dodge := DefenseCalculator.calculate_dodge_chance(hero.get_total_evasion())
-		display_text += "Evasion: %d (%.0f%% dodge)\n" % [hero.get_total_evasion(), dodge * 100.0]
-
-	materials_label.text = display_text
+	# Pack progress bar
+	if combat_engine.state == CombatEngine.State.FIGHTING or combat_engine.state == CombatEngine.State.MAP_COMPLETE:
+		pack_progress_container.visible = true
+		var total_packs := combat_engine.current_packs.size()
+		pack_progress_bar.max_value = total_packs
+		pack_progress_bar.value = combat_engine.current_pack_index
+		pack_progress_label.text = "%d/%d" % [combat_engine.current_pack_index, total_packs]
+	else:
+		pack_progress_container.visible = combat_started_once and combat_engine.state == CombatEngine.State.HERO_DEAD
 
 
 # --- Item generation ---
