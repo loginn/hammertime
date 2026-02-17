@@ -76,7 +76,7 @@ Recent decisions affecting v1.2 work:
 
 ## Session Continuity
 
-**Last session:** 2026-02-16
+**Last session:** 2026-02-17T03:10:00.785Z
 - Completed Phase 15: Pack-Based Combat Loop (2 plans, 4 tasks)
 - Created CombatEngine with dual-timer state machine combat
 - Replaced timer-based area clearing with pack-by-pack combat in gameplay_view
