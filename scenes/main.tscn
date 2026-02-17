@@ -4,6 +4,8 @@
 [ext_resource type="PackedScene" uid="uid://2pgqludcf00k" path="res://scenes/node_2d.tscn" id="2_tbgi4"]
 [ext_resource type="PackedScene" uid="uid://cptle7svpjrex" path="res://scenes/hero_view.tscn" id="3_tefeu"]
 [ext_resource type="PackedScene" uid="uid://b8x7k2nan4p5q" path="res://scenes/gameplay_view.tscn" id="4_o6xl0"]
+[ext_resource type="PackedScene" path="res://scenes/save_toast.tscn" id="5_toast"]
+[ext_resource type="PackedScene" path="res://scenes/settings_menu.tscn" id="6_settings"]
 
 [node name="MainView" type="Node2D" unique_id=1862265633]
 script = ExtResource("1_jyhfs")
@@ -47,6 +49,16 @@ offset_right = 250.0
 offset_bottom = 50.0
 text = "Adventure"
 
+[node name="SettingsButton" type="Button" parent="NavigationPanel"]
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -130.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 50.0
+text = "Settings"
+
 [node name="HelpLabel" type="Label" parent="NavigationPanel" unique_id=117625805]
 layout_mode = 0
 anchor_top = 1.0
@@ -63,3 +75,10 @@ horizontal_alignment = 1
 [node name="HeroView" parent="." unique_id=1048714341 instance=ExtResource("3_tefeu")]
 
 [node name="GameplayView" parent="." unique_id=1443059399 instance=ExtResource("4_o6xl0")]
+
+[node name="OverlayLayer" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="SaveToast" parent="OverlayLayer" instance=ExtResource("5_toast")]
+
+[node name="SettingsMenu" parent="OverlayLayer" instance=ExtResource("6_settings")]

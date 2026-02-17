@@ -2,6 +2,25 @@ extends Node
 
 const SAVE_PATH = "user://hammertime_save.json"
 const SAVE_VERSION = 1
+const AUTO_SAVE_INTERVAL = 300.0  # 5 minutes
+
+var auto_save_timer: Timer
+var _save_pending: bool = false
+
+
+func _ready() -> void:
+	# Auto-save timer
+	auto_save_timer = Timer.new()
+	auto_save_timer.wait_time = AUTO_SAVE_INTERVAL
+	auto_save_timer.one_shot = false
+	auto_save_timer.timeout.connect(_on_auto_save)
+	add_child(auto_save_timer)
+	auto_save_timer.start()
+
+	# Event-driven save triggers
+	GameEvents.item_crafted.connect(_on_save_trigger)
+	GameEvents.equipment_changed.connect(_on_equipment_save_trigger)
+	GameEvents.area_cleared.connect(_on_area_save_trigger)
 
 
 ## Saves the full game state to a JSON file. Returns true on success.
@@ -149,3 +168,40 @@ func _migrate_save(data: Dictionary) -> Dictionary:
 
 	data["version"] = SAVE_VERSION
 	return data
+
+
+# --- Auto-save and event-driven save triggers ---
+
+
+func _on_auto_save() -> void:
+	_trigger_save()
+
+
+func _on_save_trigger(_arg = null) -> void:
+	_trigger_save()
+
+
+func _on_equipment_save_trigger(_slot: String, _item: Item) -> void:
+	_trigger_save()
+
+
+func _on_area_save_trigger(_level: int) -> void:
+	_trigger_save()
+
+
+## Debounced save trigger — prevents multiple saves in the same frame.
+func _trigger_save() -> void:
+	if _save_pending:
+		return
+	_save_pending = true
+	call_deferred("_deferred_save")
+
+
+## Executes the save after the current frame completes.
+func _deferred_save() -> void:
+	_save_pending = false
+	var success := save_game()
+	if success:
+		GameEvents.save_completed.emit()
+	else:
+		GameEvents.save_failed.emit()

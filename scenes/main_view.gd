@@ -7,7 +7,9 @@ var current_view: String = "crafting"
 @onready var crafting_button: Button = $NavigationPanel/CraftingButton
 @onready var hero_button: Button = $NavigationPanel/HeroButton
 @onready var gameplay_button: Button = $NavigationPanel/GameplayButton
+@onready var settings_button: Button = $NavigationPanel/SettingsButton
 @onready var combat_ui: CanvasLayer = $GameplayView/CombatUI
+@onready var settings_menu: PanelContainer = $OverlayLayer/SettingsMenu
 
 
 func _ready() -> void:
@@ -15,6 +17,10 @@ func _ready() -> void:
 	crafting_button.pressed.connect(_on_crafting_button_pressed)
 	hero_button.pressed.connect(_on_hero_button_pressed)
 	gameplay_button.pressed.connect(_on_gameplay_button_pressed)
+	settings_button.pressed.connect(_on_settings_pressed)
+
+	# Connect settings menu signals
+	settings_menu.new_game_started.connect(_on_new_game_started)
 
 	# Child-to-sibling communication via parent coordination
 	crafting_view.item_finished.connect(hero_view.set_last_crafted_item)
@@ -56,6 +62,14 @@ func _on_hero_button_pressed() -> void:
 
 func _on_gameplay_button_pressed() -> void:
 	show_view("gameplay")
+
+
+func _on_settings_pressed() -> void:
+	settings_menu.open_menu()
+
+
+func _on_new_game_started() -> void:
+	get_tree().reload_current_scene()
 
 
 func show_view(view_name: String) -> void:
