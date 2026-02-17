@@ -22,7 +22,7 @@ enum ItemSlot { NONE = -1, WEAPON, HELMET, ARMOR, BOOTS, RING }
 # Display references
 @onready var item_image: TextureRect = $ItemGraphicsPanel/ItemImage
 @onready var item_stats_label: Label = $ItemStatsPanel/ItemStatsLabel
-@onready var hero_stats_label: Label = $HeroStatsPanel/HeroStatsLabel
+@onready var hero_stats_label: RichTextLabel = $HeroStatsPanel/HeroStatsLabel
 @onready var inventory_label: Label = $HammerSidebar/InventoryLabel
 @onready var melt_button: Button = $ItemStatsPanel/MeltButton
 @onready var equip_button: Button = $ItemStatsPanel/EquipButton
@@ -52,6 +52,7 @@ var equip_timer: Timer
 
 # Hero display state
 var currently_hovered_type: String = ""
+var equip_hover_active: bool = false
 
 # Hammer icon textures
 var hammer_icons: Dictionary = {
@@ -117,6 +118,10 @@ func _ready() -> void:
 	# Connect melt/equip buttons
 	melt_button.pressed.connect(_on_melt_pressed)
 	equip_button.pressed.connect(_on_equip_pressed)
+
+	# Connect equip button hover for stat comparison
+	equip_button.mouse_entered.connect(_on_equip_hover_entered)
+	equip_button.mouse_exited.connect(_on_equip_hover_exited)
 
 	# Create equip confirmation timer
 	equip_timer = Timer.new()
@@ -329,6 +334,19 @@ func _on_type_hover_exited(_item_type: String) -> void:
 	update_hero_stats_display()
 
 
+# --- Equip button hover for stat comparison ---
+
+
+func _on_equip_hover_entered() -> void:
+	equip_hover_active = true
+	update_hero_stats_display()
+
+
+func _on_equip_hover_exited() -> void:
+	equip_hover_active = false
+	update_hero_stats_display()
+
+
 # --- Melt / Equip ---
 
 
@@ -500,6 +518,11 @@ func update_hero_stats_display() -> void:
 	if hero_stats_label == null:
 		return
 
+	# If hovering the Equip button, show stat comparison
+	if equip_hover_active and current_item != null:
+		hero_stats_label.text = get_stat_comparison_text()
+		return
+
 	# If hovering an item type button, show equipped item of that type for comparison
 	if currently_hovered_type != "":
 		var equipped_item: Item = GameState.hero.equipped_items.get(currently_hovered_type)
@@ -514,7 +537,7 @@ func update_hero_stats_display() -> void:
 			)
 		return
 
-	# Default: show aggregate hero stats
+	# Default: show aggregate hero stats (no BBCode needed for default view)
 	var hero: Hero = GameState.hero
 
 	# Offense section
@@ -560,6 +583,200 @@ func update_hero_stats_display() -> void:
 
 	if not has_defense:
 		hero_stats_label.text += "(No defense equipped)\n"
+
+
+func format_stat_delta(label: String, current_val: float, new_val: float, fmt: String = "%.1f") -> String:
+	var delta: float = new_val - current_val
+	var line: String = label + ": " + fmt % current_val
+	if abs(delta) < 0.05:
+		return line  # No meaningful change, no delta shown
+	if delta > 0:
+		line += " [color=#55ff55]+" + fmt % delta + "[/color]"
+	else:
+		line += " [color=#ff5555]" + fmt % delta + "[/color]"
+	return line
+
+
+func format_stat_delta_int(label: String, current_val: int, new_val: int) -> String:
+	var delta: int = new_val - current_val
+	var line: String = label + ": " + str(current_val)
+	if delta == 0:
+		return line
+	if delta > 0:
+		line += " [color=#55ff55]+" + str(delta) + "[/color]"
+	else:
+		line += " [color=#ff5555]" + str(delta) + "[/color]"
+	return line
+
+
+func get_stat_comparison_text() -> String:
+	if current_item == null:
+		return ""
+	var slot_name: String = get_item_type(current_item)
+	if slot_name == "None":
+		return ""
+
+	var equipped: Item = GameState.hero.equipped_items.get(slot_name)
+	var text: String = "Stat Comparison:\n"
+	text += current_item.item_name + " vs "
+	if equipped != null:
+		text += equipped.item_name
+	else:
+		text += "(empty slot)"
+	text += "\n\n"
+
+	# Weapon stats
+	if current_item is Weapon:
+		var crafted: Weapon = current_item as Weapon
+		var eq_dps: float = 0.0
+		var eq_base_dmg: int = 0
+		var eq_crit_chance: float = 5.0
+		var eq_crit_damage: float = 150.0
+		if equipped != null and equipped is Weapon:
+			var eq_weapon: Weapon = equipped as Weapon
+			eq_dps = eq_weapon.dps
+			eq_base_dmg = eq_weapon.base_damage
+			eq_crit_chance = eq_weapon.crit_chance
+			eq_crit_damage = eq_weapon.crit_damage
+		text += format_stat_delta("DPS", eq_dps, crafted.dps) + "\n"
+		text += format_stat_delta_int("Base Damage", eq_base_dmg, crafted.base_damage) + "\n"
+		text += format_stat_delta("Crit Chance", eq_crit_chance, crafted.crit_chance, "%.1f%%") + "\n"
+		text += format_stat_delta("Crit Damage", eq_crit_damage, crafted.crit_damage, "%.1f%%") + "\n"
+
+	# Ring stats (same as weapon — DPS and crit)
+	elif current_item is Ring:
+		var crafted: Ring = current_item as Ring
+		var eq_dps: float = 0.0
+		var eq_crit_chance: float = 5.0
+		var eq_crit_damage: float = 150.0
+		if equipped != null and equipped is Ring:
+			var eq_ring: Ring = equipped as Ring
+			eq_dps = eq_ring.dps
+			eq_crit_chance = eq_ring.crit_chance
+			eq_crit_damage = eq_ring.crit_damage
+		text += format_stat_delta("DPS", eq_dps, crafted.dps) + "\n"
+		text += format_stat_delta("Crit Chance", eq_crit_chance, crafted.crit_chance, "%.1f%%") + "\n"
+		text += format_stat_delta("Crit Damage", eq_crit_damage, crafted.crit_damage, "%.1f%%") + "\n"
+
+	# Armor stats
+	elif current_item is Armor:
+		var crafted: Armor = current_item as Armor
+		var eq_armor: int = 0
+		var eq_evasion: int = 0
+		var eq_es: int = 0
+		var eq_health: int = 0
+		if equipped != null and equipped is Armor:
+			var eq_item: Armor = equipped as Armor
+			eq_armor = eq_item.base_armor
+			eq_evasion = eq_item.base_evasion
+			eq_es = eq_item.base_energy_shield
+			eq_health = eq_item.base_health
+		text += format_stat_delta_int("Armor", eq_armor, crafted.base_armor) + "\n"
+		if crafted.base_evasion > 0 or eq_evasion > 0:
+			text += format_stat_delta_int("Evasion", eq_evasion, crafted.base_evasion) + "\n"
+		if crafted.base_energy_shield > 0 or eq_es > 0:
+			text += format_stat_delta_int("Energy Shield", eq_es, crafted.base_energy_shield) + "\n"
+		if crafted.base_health > 0 or eq_health > 0:
+			text += format_stat_delta_int("Health", eq_health, crafted.base_health) + "\n"
+
+	# Helmet stats
+	elif current_item is Helmet:
+		var crafted: Helmet = current_item as Helmet
+		var eq_armor: int = 0
+		var eq_evasion: int = 0
+		var eq_es: int = 0
+		var eq_health: int = 0
+		var eq_mana: int = 0
+		if equipped != null and equipped is Helmet:
+			var eq_item: Helmet = equipped as Helmet
+			eq_armor = eq_item.base_armor
+			eq_evasion = eq_item.base_evasion
+			eq_es = eq_item.base_energy_shield
+			eq_health = eq_item.base_health
+			eq_mana = eq_item.base_mana
+		text += format_stat_delta_int("Armor", eq_armor, crafted.base_armor) + "\n"
+		if crafted.base_evasion > 0 or eq_evasion > 0:
+			text += format_stat_delta_int("Evasion", eq_evasion, crafted.base_evasion) + "\n"
+		if crafted.base_energy_shield > 0 or eq_es > 0:
+			text += format_stat_delta_int("Energy Shield", eq_es, crafted.base_energy_shield) + "\n"
+		if crafted.base_health > 0 or eq_health > 0:
+			text += format_stat_delta_int("Health", eq_health, crafted.base_health) + "\n"
+		if crafted.base_mana > 0 or eq_mana > 0:
+			text += format_stat_delta_int("Mana", eq_mana, crafted.base_mana) + "\n"
+
+	# Boots stats
+	elif current_item is Boots:
+		var crafted: Boots = current_item as Boots
+		var eq_armor: int = 0
+		var eq_evasion: int = 0
+		var eq_es: int = 0
+		var eq_health: int = 0
+		var eq_ms: int = 0
+		if equipped != null and equipped is Boots:
+			var eq_item: Boots = equipped as Boots
+			eq_armor = eq_item.base_armor
+			eq_evasion = eq_item.base_evasion
+			eq_es = eq_item.base_energy_shield
+			eq_health = eq_item.base_health
+			eq_ms = eq_item.base_movement_speed
+		text += format_stat_delta_int("Armor", eq_armor, crafted.base_armor) + "\n"
+		if crafted.base_evasion > 0 or eq_evasion > 0:
+			text += format_stat_delta_int("Evasion", eq_evasion, crafted.base_evasion) + "\n"
+		if crafted.base_energy_shield > 0 or eq_es > 0:
+			text += format_stat_delta_int("Energy Shield", eq_es, crafted.base_energy_shield) + "\n"
+		if crafted.base_movement_speed > 0 or eq_ms > 0:
+			text += format_stat_delta_int("Movement Speed", eq_ms, crafted.base_movement_speed) + "\n"
+		if crafted.base_health > 0 or eq_health > 0:
+			text += format_stat_delta_int("Health", eq_health, crafted.base_health) + "\n"
+
+	# Add resistance comparison for all item types (resistances come from suffixes)
+	text += _get_resistance_comparison_text(current_item, equipped)
+
+	return text
+
+
+func _get_resistance_comparison_text(crafted: Item, equipped: Item) -> String:
+	var text: String = ""
+
+	# Sum resistance values from suffixes
+	var crafted_fire: int = _sum_suffix_stat(crafted, Tag.StatType.FIRE_RESISTANCE)
+	var crafted_cold: int = _sum_suffix_stat(crafted, Tag.StatType.COLD_RESISTANCE)
+	var crafted_lightning: int = _sum_suffix_stat(crafted, Tag.StatType.LIGHTNING_RESISTANCE)
+
+	# Add ALL_RESISTANCE to each element
+	var crafted_all: int = _sum_suffix_stat(crafted, Tag.StatType.ALL_RESISTANCE)
+	crafted_fire += crafted_all
+	crafted_cold += crafted_all
+	crafted_lightning += crafted_all
+
+	var eq_fire: int = 0
+	var eq_cold: int = 0
+	var eq_lightning: int = 0
+	if equipped != null:
+		eq_fire = _sum_suffix_stat(equipped, Tag.StatType.FIRE_RESISTANCE)
+		eq_cold = _sum_suffix_stat(equipped, Tag.StatType.COLD_RESISTANCE)
+		eq_lightning = _sum_suffix_stat(equipped, Tag.StatType.LIGHTNING_RESISTANCE)
+		var eq_all: int = _sum_suffix_stat(equipped, Tag.StatType.ALL_RESISTANCE)
+		eq_fire += eq_all
+		eq_cold += eq_all
+		eq_lightning += eq_all
+
+	if crafted_fire > 0 or eq_fire > 0:
+		text += format_stat_delta_int("Fire Res", eq_fire, crafted_fire) + "\n"
+	if crafted_cold > 0 or eq_cold > 0:
+		text += format_stat_delta_int("Cold Res", eq_cold, crafted_cold) + "\n"
+	if crafted_lightning > 0 or eq_lightning > 0:
+		text += format_stat_delta_int("Lightning Res", eq_lightning, crafted_lightning) + "\n"
+
+	return text
+
+
+func _sum_suffix_stat(item: Item, stat_type: int) -> int:
+	var total: int = 0
+	for suffix in item.suffixes:
+		if stat_type in suffix.stat_types:
+			total += suffix.value
+	return total
 
 
 func get_item_stats_text(item: Item) -> String:
