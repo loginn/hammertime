@@ -1,6 +1,6 @@
 # Project State: Hammertime
 
-**Updated:** 2026-02-16
+**Updated:** 2026-02-17
 **Milestone:** v1.2 Pack-Based Mapping
 
 ## Project Reference
@@ -16,11 +16,11 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 ## Current Position
 
 Phase: 17 of 17 (UI and Combat Feedback)
-Plan: 2 of 2 in current phase
+Plan: 3 of 3 in current phase
 Status: All plans complete, ready for verification
-Last activity: 2026-02-17 — Plan 17-02 complete (Floating damage numbers)
+Last activity: 2026-02-17 — Plan 17-03 complete (CanvasLayer mouse blocking and visibility fixes)
 
-Progress: [██████████████████░░] 94% (16 phases complete, 1 remaining)
+Progress: [████████████████████] 100% (17 phases complete, 0 remaining)
 
 ## Performance Metrics
 
@@ -56,6 +56,8 @@ Recent decisions affecting v1.2 work:
 - Phase 15: Auto-retry after death, deterministic area progression (area_level += 1)
 - Phase 17: Stacked ProgressBar ES overlay (PoE blue-over-red pattern)
 - Phase 17: State guards after await create_timer to prevent stale transitions
+- Phase 17: Explicit mouse_filter=IGNORE on non-interactive UI containers (Godot defaults to STOP)
+- Phase 17: Explicit CanvasLayer visibility management (CanvasLayer ignores parent visibility)
 
 ### Known Issues
 
@@ -75,18 +77,21 @@ Recent decisions affecting v1.2 work:
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 1 | Fix Light Sword item type button regenerating a free weapon while other types do not | 2026-02-15 | c0bcfb8 | [1-fix-light-sword-item-type-button-regener](./quick/1-fix-light-sword-item-type-button-regener/) |
+| Phase 17 P03 | 76 | 2 tasks | 2 files |
 
 ## Session Continuity
 
 **Last session:** 2026-02-17
-- Phase 17 execution complete: UI and Combat Feedback (2 plans, 4 tasks)
+- Phase 17 execution complete: UI and Combat Feedback (3 plans, 6 tasks)
 - Plan 17-01: ProgressBar-based combat UI with HP/ES/pack bars and state transitions
 - Plan 17-02: Floating damage numbers with crit styling and dodge text
+- Plan 17-03: Fixed CanvasLayer mouse blocking and visibility (gap closure)
+- All combat UI now visible and functional, tab navigation working
 - Ready for phase verification
 
 **For next session:**
-- Verify Phase 17 or complete milestone v1.2
+- Verify Phase 17 and complete milestone v1.2
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-16*
+*Last updated: 2026-02-17*
