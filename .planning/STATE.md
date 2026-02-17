@@ -16,9 +16,9 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 ## Current Position
 
 Phase: 17 of 17 (UI and Combat Feedback)
-Plan: 1 of 2 in current phase
-Status: Plan 17-01 complete, executing 17-02
-Last activity: 2026-02-17 — Plan 17-01 complete (Combat UI bars and state transitions)
+Plan: 2 of 2 in current phase
+Status: All plans complete, ready for verification
+Last activity: 2026-02-17 — Plan 17-02 complete (Floating damage numbers)
 
 Progress: [██████████████████░░] 94% (16 phases complete, 1 remaining)
 
@@ -79,13 +79,13 @@ Recent decisions affecting v1.2 work:
 ## Session Continuity
 
 **Last session:** 2026-02-17
-- Executing Phase 17: UI and Combat Feedback
-- Plan 17-01 complete: ProgressBar-based combat UI with HP/ES/pack bars and state transitions
-- Added pack transition delay (0.5s) and death retry delay (2.5s) to CombatEngine
-- Executing Plan 17-02: Floating damage numbers
+- Phase 17 execution complete: UI and Combat Feedback (2 plans, 4 tasks)
+- Plan 17-01: ProgressBar-based combat UI with HP/ES/pack bars and state transitions
+- Plan 17-02: Floating damage numbers with crit styling and dodge text
+- Ready for phase verification
 
 **For next session:**
-- Continue Phase 17-02 or verify phase completion
+- Verify Phase 17 or complete milestone v1.2
 
 ---
 *State initialized: 2026-02-15*
