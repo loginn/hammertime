@@ -37,16 +37,11 @@ var currency_buttons: Dictionary = {}
 var current_item: Item
 var finished_item: Item = null
 
-# Crafting inventory system
-var crafting_inventory: Dictionary = {}
+# Item type list for iteration
 var inventory_types = ["weapon", "helmet", "armor", "boots", "ring"]
-var selected_item_type: String = "weapon"
 
 
 func _ready() -> void:
-	# Initialize crafting inventory
-	initialize_crafting_inventory()
-
 	# Initialize currency button mapping
 	currency_buttons = {
 		"runic": runic_btn,
@@ -72,22 +67,40 @@ func _ready() -> void:
 	boots_type_btn.pressed.connect(_on_item_type_selected.bind("boots"))
 	ring_type_btn.pressed.connect(_on_item_type_selected.bind("ring"))
 
-	# Start with one basic item of each type for testing
-	var starting_weapon = LightSword.new()
-	var starting_helmet = BasicHelmet.new()
-	var starting_armor = BasicArmor.new()
-	var starting_boots = BasicBoots.new()
-	var starting_ring = BasicRing.new()
+	# Check if crafting inventory has any items (from save load)
+	var has_saved_items := false
+	for type_name in inventory_types:
+		if GameState.crafting_inventory.get(type_name) != null:
+			has_saved_items = true
+			break
 
-	add_item_to_inventory(starting_weapon)
-	add_item_to_inventory(starting_helmet)
-	add_item_to_inventory(starting_armor)
-	add_item_to_inventory(starting_boots)
-	add_item_to_inventory(starting_ring)
+	# Only create starting items if inventory is empty (fresh game, no save)
+	if not has_saved_items:
+		var starting_weapon = LightSword.new()
+		var starting_helmet = BasicHelmet.new()
+		var starting_armor = BasicArmor.new()
+		var starting_boots = BasicBoots.new()
+		var starting_ring = BasicRing.new()
 
-	# Set weapon as the initial selected type and current item
-	selected_item_type = "weapon"
-	current_item = starting_weapon
+		add_item_to_inventory(starting_weapon)
+		add_item_to_inventory(starting_helmet)
+		add_item_to_inventory(starting_armor)
+		add_item_to_inventory(starting_boots)
+		add_item_to_inventory(starting_ring)
+
+	# Set current item from saved bench type or default to weapon
+	var selected_type: String = GameState.crafting_bench_type
+	if GameState.crafting_inventory.get(selected_type) != null:
+		current_item = GameState.crafting_inventory[selected_type]
+	else:
+		# Fall back to first available item
+		current_item = null
+		for type_name in inventory_types:
+			if GameState.crafting_inventory.get(type_name) != null:
+				selected_type = type_name
+				current_item = GameState.crafting_inventory[type_name]
+				break
+	GameState.crafting_bench_type = selected_type
 
 	update_inventory_display()
 	update_item_type_button_states()
@@ -211,10 +224,13 @@ func finish_item() -> void:
 	# Update the last crafted item in hero view with the finished item
 	item_finished.emit(finished_item)
 
+	# Emit global crafted signal for save triggers
+	GameEvents.item_crafted.emit(finished_item)
+
 	# Remove the finished item from inventory
 	var finished_item_type = get_item_type(current_item)
 	if finished_item_type != null:
-		crafting_inventory[finished_item_type] = null
+		GameState.crafting_inventory[finished_item_type] = null
 		print("Removed finished ", finished_item_type, " from inventory")
 
 	# Clear the current item - no automatic item generation
@@ -242,12 +258,6 @@ func on_currencies_found(drops: Dictionary) -> void:
 	update_currency_button_states()
 
 
-func initialize_crafting_inventory() -> void:
-	# Initialize empty inventory for each item type
-	for item_type in inventory_types:
-		crafting_inventory[item_type] = null
-
-
 func add_item_to_inventory(item: Item) -> void:
 	# Determine the item type
 	var item_type = get_item_type(item)
@@ -257,9 +267,9 @@ func add_item_to_inventory(item: Item) -> void:
 		return
 
 	# Check if we should replace the existing item
-	var existing_item = crafting_inventory[item_type]
+	var existing_item = GameState.crafting_inventory[item_type]
 	if existing_item == null or is_item_better(item, existing_item):
-		crafting_inventory[item_type] = item
+		GameState.crafting_inventory[item_type] = item
 		print("Added ", item.item_name, " to ", item_type, " slot")
 
 		# Update inventory display
@@ -301,8 +311,8 @@ func update_current_item() -> void:
 	# Use the currently selected item type
 	var selected_type = get_selected_item_type()
 
-	if selected_type != null and crafting_inventory[selected_type] != null:
-		current_item = crafting_inventory[selected_type]
+	if selected_type != null and GameState.crafting_inventory.get(selected_type) != null:
+		current_item = GameState.crafting_inventory[selected_type]
 		print("Selected ", current_item.item_name, " for crafting")
 	else:
 		current_item = null
@@ -313,17 +323,17 @@ func update_current_item() -> void:
 
 func get_selected_item_type() -> String:
 	# Return the currently selected item type
-	return selected_item_type
+	return GameState.crafting_bench_type
 
 
 func _on_item_type_selected(item_type: String) -> void:
 	# Check if there's an item of this type in the inventory
-	if crafting_inventory[item_type] == null:
+	if GameState.crafting_inventory.get(item_type) == null:
 		print("No ", item_type, " in inventory - selection ignored")
 		return
 
 	# Update selected item type
-	selected_item_type = item_type
+	GameState.crafting_bench_type = item_type
 	print("Selected item type: ", item_type)
 
 	# Update current item to use the selected type
@@ -344,7 +354,7 @@ func update_item_type_button_states() -> void:
 	}
 
 	for item_type in button_map.keys():
-		button_map[item_type].button_pressed = (item_type == selected_item_type)
+		button_map[item_type].button_pressed = (item_type == GameState.crafting_bench_type)
 
 
 func update_inventory_display() -> void:
@@ -354,7 +364,7 @@ func update_inventory_display() -> void:
 	var display_text = "Crafting Inventory:\n\n"
 
 	for item_type in inventory_types:
-		var item = crafting_inventory[item_type]
+		var item = GameState.crafting_inventory.get(item_type)
 		var type_name = item_type.capitalize()
 
 		if item != null:

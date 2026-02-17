@@ -43,6 +43,85 @@ func get_rarity_color() -> Color:
 			return Color.WHITE
 
 
+## Returns the type string for serialization. Override in concrete subclasses.
+func get_item_type_string() -> String:
+	return ""
+
+
+## Serializes this item to a dictionary for save/load.
+func to_dict() -> Dictionary:
+	var prefix_dicts: Array = []
+	for p in prefixes:
+		prefix_dicts.append(p.to_dict())
+
+	var suffix_dicts: Array = []
+	for s in suffixes:
+		suffix_dicts.append(s.to_dict())
+
+	return {
+		"item_type": get_item_type_string(),
+		"item_name": item_name,
+		"tier": tier,
+		"rarity": int(rarity),
+		"valid_tags": Array(valid_tags),
+		"implicit": implicit.to_dict() if implicit != null else {},
+		"prefixes": prefix_dicts,
+		"suffixes": suffix_dicts,
+	}
+
+
+## Registry of concrete item types for deserialization.
+const ITEM_TYPE_STRINGS: PackedStringArray = [
+	"LightSword", "BasicArmor", "BasicHelmet", "BasicBoots", "BasicRing"
+]
+
+
+## Creates an item from a serialized dictionary. Returns null if type unknown.
+static func create_from_dict(data: Dictionary) -> Item:
+	var item_type_str: String = data.get("item_type", "")
+
+	var item: Item = null
+	match item_type_str:
+		"LightSword":
+			item = LightSword.new()
+		"BasicArmor":
+			item = BasicArmor.new()
+		"BasicHelmet":
+			item = BasicHelmet.new()
+		"BasicBoots":
+			item = BasicBoots.new()
+		"BasicRing":
+			item = BasicRing.new()
+		_:
+			push_warning("Unknown item type for deserialization: " + item_type_str)
+			return null
+
+	# Restore rarity
+	item.rarity = int(data.get("rarity", 0)) as Rarity
+
+	# Restore implicit
+	var implicit_data: Dictionary = data.get("implicit", {})
+	if not implicit_data.is_empty():
+		item.implicit = Implicit.from_dict(implicit_data)
+
+	# Restore prefixes
+	item.prefixes.clear()
+	var prefix_dicts: Array = data.get("prefixes", [])
+	for p_dict in prefix_dicts:
+		item.prefixes.append(Affix.from_dict(p_dict))
+
+	# Restore suffixes
+	item.suffixes.clear()
+	var suffix_dicts: Array = data.get("suffixes", [])
+	for s_dict in suffix_dicts:
+		item.suffixes.append(Affix.from_dict(s_dict))
+
+	# Recalculate derived stats from restored affixes
+	item.update_value()
+
+	return item
+
+
 ## Recalculates item stats from current affixes.
 ## Override in subclasses. Called after any affix modification (reroll, add prefix/suffix).
 ## Implementations should delegate to StatCalculator for actual math.

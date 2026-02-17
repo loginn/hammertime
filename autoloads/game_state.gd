@@ -1,12 +1,42 @@
 extends Node
 
-@export var debug_hammers: bool = false
+var debug_hammers: bool = true  # Set to false when done testing
 
 var hero: Hero
 var currency_counts: Dictionary = {}
 
+# Crafting state (centralized for persistence)
+var crafting_inventory: Dictionary = {}
+var crafting_bench_item: Item = null
+var crafting_bench_type: String = "weapon"
+
+# Area progress (centralized for persistence)
+var max_unlocked_level: int = 1
+var area_level: int = 1
+
+# Save corruption flag — checked by toast on scene ready
+var save_was_corrupted: bool = false
+
 
 func _ready() -> void:
+	initialize_fresh_game()
+
+	# Attempt to load saved game
+	var loaded := SaveManager.load_game()
+	if not loaded and SaveManager.has_save():
+		# Save file exists but couldn't be loaded (corrupted)
+		save_was_corrupted = true
+		push_warning("GameState: Save file appears corrupted, starting fresh")
+
+	# Debug override: always give hammers regardless of save state
+	if debug_hammers:
+		for key in currency_counts:
+			currency_counts[key] = 999
+		print("DEBUG: Spawned with 999 of each hammer")
+
+
+## Sets up a completely fresh game state. Called before load attempts and by New Game.
+func initialize_fresh_game() -> void:
 	hero = Hero.new()
 	# Initialize empty equipment slots
 	hero.equipped_items["weapon"] = null
@@ -16,17 +46,32 @@ func _ready() -> void:
 	hero.equipped_items["ring"] = null
 
 	# Initialize currency counts
-	var start_count := 999 if debug_hammers else 0
 	currency_counts = {
-		"runic": start_count,
-		"forge": start_count,
-		"tack": start_count,
-		"grand": start_count,
-		"claw": start_count,
-		"tuning": start_count
+		"runic": 0,
+		"forge": 0,
+		"tack": 0,
+		"grand": 0,
+		"claw": 0,
+		"tuning": 0
 	}
-	if debug_hammers:
-		print("DEBUG: Spawned with 999 of each hammer")
+
+	# Initialize crafting state
+	crafting_inventory = {
+		"weapon": null,
+		"helmet": null,
+		"armor": null,
+		"boots": null,
+		"ring": null,
+	}
+	crafting_bench_item = null
+	crafting_bench_type = "weapon"
+
+	# Initialize area progress
+	max_unlocked_level = 1
+	area_level = 1
+
+	# Reset corruption flag
+	save_was_corrupted = false
 
 
 ## Adds currencies from a drops dictionary to the inventory

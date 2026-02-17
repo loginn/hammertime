@@ -9,8 +9,6 @@ enum State { IDLE, FIGHTING, MAP_COMPLETE, HERO_DEAD }
 var state: State = State.IDLE
 var current_packs: Array[MonsterPack] = []
 var current_pack_index: int = 0
-var area_level: int = 1
-var max_unlocked_level: int = 1
 var auto_retry: bool = true  # Default on — player retries automatically after death
 var pack_transition_delay_sec: float = 0.5  # Visual pause between pack fights
 var death_retry_delay_sec: float = 2.5  # Delay before auto-retry after death
@@ -35,12 +33,12 @@ func _ready() -> void:
 
 ## Starts a new map at the given area level. Generates fresh packs and begins combat.
 func start_combat(level: int) -> void:
-	area_level = level
+	GameState.area_level = level
 	run_currency_earned = {}
-	current_packs = PackGenerator.generate_packs(area_level)
+	current_packs = PackGenerator.generate_packs(GameState.area_level)
 	current_pack_index = 0
 	state = State.FIGHTING
-	GameEvents.combat_started.emit(area_level, current_packs.size())
+	GameEvents.combat_started.emit(GameState.area_level, current_packs.size())
 	_start_pack_fight()
 
 
@@ -133,7 +131,7 @@ func _on_pack_killed() -> void:
 	_stop_timers()
 
 	# Currency drops on pack kill (Phase 16)
-	var drops := LootTable.roll_pack_currency_drop(area_level, killed_pack.difficulty_bonus)
+	var drops := LootTable.roll_pack_currency_drop(GameState.area_level, killed_pack.difficulty_bonus)
 	if not drops.is_empty():
 		GameState.add_currencies(drops)
 		_accumulate_run_currency(drops)
@@ -163,16 +161,16 @@ func _on_map_completed() -> void:
 	GameState.hero.current_energy_shield = float(GameState.hero.total_energy_shield)
 
 	# Item drops on map completion (1-3 items scaled by area)
-	var item_count := LootTable.get_map_item_count(area_level)
-	GameEvents.items_dropped.emit(area_level, item_count)
+	var item_count := LootTable.get_map_item_count(GameState.area_level)
+	GameEvents.items_dropped.emit(GameState.area_level, item_count)
 
 	# Deterministic progression: always current_level + 1
-	area_level += 1
-	max_unlocked_level = maxi(max_unlocked_level, area_level)
+	GameState.area_level += 1
+	GameState.max_unlocked_level = maxi(GameState.max_unlocked_level, GameState.area_level)
 	# Emit the level that was completed (before increment)
-	GameEvents.map_completed.emit(area_level - 1)
+	GameEvents.map_completed.emit(GameState.area_level - 1)
 	# Auto-advance: start next map immediately
-	start_combat(area_level)
+	start_combat(GameState.area_level)
 
 
 ## Hero died. Revive with full HP + ES. Retry or wait based on auto_retry.
@@ -189,7 +187,7 @@ func _on_hero_died() -> void:
 		# Guard: state may have changed during delay (e.g., combat stopped)
 		if state != State.HERO_DEAD:
 			return
-		start_combat(area_level)
+		start_combat(GameState.area_level)
 
 
 ## Gets hero attack speed from equipped weapon, or default 1.0 unarmed.

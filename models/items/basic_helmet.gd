@@ -1,6 +1,10 @@
 class_name BasicHelmet extends Helmet
 
 
+func get_item_type_string() -> String:
+	return "BasicHelmet"
+
+
 func _init() -> void:
 	self.rarity = Rarity.NORMAL
 	self.item_name = "Basic Helmet"

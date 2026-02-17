@@ -1,6 +1,10 @@
 class_name LightSword extends Weapon
 
 
+func get_item_type_string() -> String:
+	return "LightSword"
+
+
 func _init() -> void:
 	self.rarity = Rarity.NORMAL
 	self.item_name = "Light Sword"

@@ -97,7 +97,7 @@ func _setup_bar_styles() -> void:
 func _on_start_combat_pressed() -> void:
 	if not is_combat_active:
 		is_combat_active = true
-		combat_engine.start_combat(combat_engine.area_level)
+		combat_engine.start_combat(GameState.area_level)
 		start_clearing_button.text = "Stop Combat"
 	else:
 		is_combat_active = false
@@ -107,13 +107,13 @@ func _on_start_combat_pressed() -> void:
 
 
 func _on_next_area_pressed() -> void:
-	combat_engine.area_level += 1
-	combat_engine.max_unlocked_level = maxi(
-		combat_engine.max_unlocked_level, combat_engine.area_level
+	GameState.area_level += 1
+	GameState.max_unlocked_level = maxi(
+		GameState.max_unlocked_level, GameState.area_level
 	)
 	if is_combat_active:
 		combat_engine.stop_combat()
-		combat_engine.start_combat(combat_engine.area_level)
+		combat_engine.start_combat(GameState.area_level)
 	update_display()
 
 
@@ -215,8 +215,8 @@ func update_display() -> void:
 	var hero := GameState.hero
 
 	# Area info
-	var biome := BiomeConfig.get_biome_for_level(combat_engine.area_level)
-	area_label.text = "%s — Level %d" % [biome.biome_name, combat_engine.area_level]
+	var biome := BiomeConfig.get_biome_for_level(GameState.area_level)
+	area_label.text = "%s — Level %d" % [biome.biome_name, GameState.area_level]
 
 	# Hero HP bar
 	hero_hp_bar.max_value = hero.max_health

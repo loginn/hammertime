@@ -47,5 +47,55 @@ func reroll() -> void:
 	print("reroll ", self.value)
 
 
+func to_dict() -> Dictionary:
+	return {
+		"affix_name": affix_name,
+		"type": int(type),
+		"value": value,
+		"tier": tier,
+		"tags": Array(tags),
+		"stat_types": Array(stat_types),
+		"tier_range_x": tier_range.x,
+		"tier_range_y": tier_range.y,
+		"base_min": base_min,
+		"base_max": base_max,
+		"min_value": min_value,
+		"max_value": max_value,
+	}
+
+
+static func from_dict(data: Dictionary) -> Affix:
+	var tags_array: Array[String] = []
+	for t in data.get("tags", []):
+		tags_array.append(str(t))
+
+	var stat_types_array: Array[int] = []
+	for s in data.get("stat_types", []):
+		stat_types_array.append(int(s))
+
+	var tier_range_vec := Vector2i(
+		int(data.get("tier_range_x", 1)),
+		int(data.get("tier_range_y", 8))
+	)
+
+	var affix := Affix.new(
+		str(data.get("affix_name", "")),
+		int(data.get("type", 0)) as AffixType,
+		int(data.get("base_min", 0)),
+		int(data.get("base_max", 0)),
+		tags_array,
+		stat_types_array,
+		tier_range_vec
+	)
+
+	# Overwrite randomized fields with saved values
+	affix.tier = int(data.get("tier", affix.tier))
+	affix.value = int(data.get("value", affix.value))
+	affix.min_value = int(data.get("min_value", affix.min_value))
+	affix.max_value = int(data.get("max_value", affix.max_value))
+
+	return affix
+
+
 func display() -> void:
 	pass
