@@ -16,9 +16,9 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 19 of 22 (Side-by-Side Layout)
-Plan: 4 of 4 complete
-Status: Phase complete
-Last activity: 2026-02-17 — Completed 19-04-PLAN.md (navigation and viewport fixes)
+Plan: 3 of 4 complete
+Status: In progress
+Last activity: 2026-02-17 — Completed 19-03-PLAN.md (ForgeView visual fixes)
 
 Progress: [██████████████████░░] 86% (19/22 phases)
 
@@ -64,6 +64,9 @@ Recent decisions affecting v1.3 work:
 - [Phase 19]: TAB key now only toggles between forge and combat views (settings accessible via tab button only)
 - [Phase 19]: Combat tab renamed to Adventure for user-facing clarity
 - [Phase 19]: Viewport clear color set to dark gray matching theme background
+- [Phase 19]: Use theme_override_font_sizes/font_size = 11 for all ForgeView UI text to prevent overflow in 1280x670 viewport
+- [Phase 19]: Set item type buttons to 86px width with zero gaps to eliminate hover flicker
+- [Phase 19]: Restore rarity color via modulate property matching Item.get_rarity_color() design
 
 ### v1.3 Requirements Coverage
 
@@ -108,18 +111,20 @@ Recent decisions affecting v1.3 work:
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 1 | Fix Light Sword item type button regenerating a free weapon while other types do not | 2026-02-15 | c0bcfb8 | [1-fix-light-sword-item-type-button-regener](./quick/1-fix-light-sword-item-type-button-regener/) |
+| Phase 19 P03 | 3 | 2 tasks | 2 files |
 
 ## Session Continuity
 
-**Last session:** 2026-02-17T14:59:00.169Z
-- Phase 19 (Side-by-Side Layout) complete — all 4 plans executed
-- Plan 19-04: Fixed navigation shortcuts (removed KEY_3, TAB toggles forge/combat only)
-- Plan 19-04: Renamed Combat tab to "Adventure" for user-facing clarity
-- Plan 19-04: Removed misplaced title label from gameplay view
-- Plan 19-04: Set viewport clear color to dark gray matching theme background
-- UAT gaps 2, 3, 10 resolved
+**Last session:** 2026-02-17
+- Phase 19 (Side-by-Side Layout) in progress — 3 of 4 plans executed
+- Plan 19-03: Fixed ForgeView visual issues (hammer icons, font sizes, button gaps, rarity colors)
+- UAT gaps 1, 4, 5, 10-partial resolved
+- Hammer buttons now display icons with left-aligned text
+- All UI text reduced to font_size 11 to prevent overflow
+- Item type buttons have zero gaps to eliminate hover flicker
+- Rarity colors restored for magic/rare items in ForgeView
 
-**Next step:** `/gsd:plan-phase 20` to begin Crafting UX Enhancements
+**Next step:** Execute plan 19-04 or `/gsd:plan-phase 20` to begin Crafting UX Enhancements
 
 ---
 *State initialized: 2026-02-15*
