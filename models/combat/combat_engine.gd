@@ -12,6 +12,8 @@ var current_pack_index: int = 0
 var area_level: int = 1
 var max_unlocked_level: int = 1
 var auto_retry: bool = true  # Default on — player retries automatically after death
+var pack_transition_delay_sec: float = 0.5  # Visual pause between pack fights
+var death_retry_delay_sec: float = 2.5  # Delay before auto-retry after death
 var hero_attack_speed: float = 1.0  # Cached from weapon at fight start
 var run_currency_earned: Dictionary = {}  # Accumulated currency this run for display
 
@@ -146,7 +148,11 @@ func _on_pack_killed() -> void:
 
 	# ES recharges 33% between packs
 	GameState.hero.recharge_energy_shield()
-	# Instant transition — start next fight immediately
+	# Brief visual pause so player notices pack change
+	await get_tree().create_timer(pack_transition_delay_sec).timeout
+	# Guard: state may have changed during delay (e.g., combat stopped)
+	if state != State.FIGHTING:
+		return
 	_start_pack_fight()
 
 
@@ -179,6 +185,10 @@ func _on_hero_died() -> void:
 	GameEvents.hero_died.emit()
 	# Hero stays at same area level — retry until cleared or gear up
 	if auto_retry:
+		await get_tree().create_timer(death_retry_delay_sec).timeout
+		# Guard: state may have changed during delay (e.g., combat stopped)
+		if state != State.HERO_DEAD:
+			return
 		start_combat(area_level)
 
 
