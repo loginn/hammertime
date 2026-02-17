@@ -36,13 +36,9 @@ func _input(event) -> void:
 				show_view("forge")
 			KEY_2:
 				show_view("combat")
-			KEY_3:
-				show_view("settings")
 			KEY_TAB:
 				if current_view == "forge":
 					show_view("combat")
-				elif current_view == "combat":
-					show_view("settings")
 				else:
 					show_view("forge")
 
