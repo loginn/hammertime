@@ -59,12 +59,12 @@ Full details: `.planning/milestones/v1.2-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.3 Save/Load & Polish (In Progress)
+### v1.3 Save/Load & Polish (In Progress)
 
 **Milestone Goal:** Persist full game state across sessions and fix UX pain points — side-by-side hero/crafting layout, item safety, stats overflow, crafting feedback, and level 1 balance.
 
 - [x] **Phase 18: Save/Load Foundation** - Implement core persistence with auto-save and version tracking
-- [x] **Phase 19: Side-by-Side Layout** - Restructure UI to show hero equipment and crafting simultaneously
+- [ ] **Phase 19: Side-by-Side Layout** - Restructure UI to show hero equipment and crafting simultaneously
 - [ ] **Phase 20: Crafting UX Enhancements** - Add tooltips, stat comparison, per-type slots, and safety confirmations
 - [ ] **Phase 21: Save Import/Export** - Enable save string export and import for backup/sharing
 - [ ] **Phase 22: Balance & Polish** - Tune level 1 difficulty, add starter gear, fix stat overflow
@@ -94,12 +94,14 @@ Plans:
   1. Hero equipment displays on the left half and crafting inventory displays on the right half of the same screen
   2. Player can view equipped gear and crafting inventory without switching tabs
   3. Gameplay/combat view remains a separate full-width screen toggled from the side-by-side view
-  4. Layout fits within 1200x700 viewport with proper spacing and no overlapping elements
-**Plans**: 2 plans
+  4. Layout fits within 1280x720 viewport with proper spacing and no overlapping elements
+**Plans**: 4 plans
 
 Plans:
 - [x] 19-01-PLAN.md — Create ForgeView scene and script (viewport, layout, merged crafting+hero logic)
 - [x] 19-02-PLAN.md — Wire MainView with top tab bar, SettingsView, and update GameplayView
+- [ ] 19-03-PLAN.md — Gap closure: ForgeView visual fixes (hammer icons, font sizes, button gaps, rarity colors)
+- [ ] 19-04-PLAN.md — Gap closure: Navigation shortcuts, tab rename, title removal, viewport clear color
 
 ### Phase 20: Crafting UX Enhancements
 **Goal**: Crafting workflow provides clear feedback through tooltips, stat comparisons, dedicated slots, and safety confirmations
@@ -172,11 +174,11 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 16. Drop System Split | v1.2 | 2/2 | ✓ Complete | 2026-02-17 |
 | 17. UI and Combat Feedback | v1.2 | 3/3 | ✓ Complete | 2026-02-17 |
 | 18. Save/Load Foundation | v1.3 | 2/2 | ✓ Complete | 2026-02-17 |
-| 19. Side-by-Side Layout | v1.3 | 2/2 | ✓ Complete | 2026-02-17 |
+| 19. Side-by-Side Layout | v1.3 | 2/4 | Gap closure | - |
 | 20. Crafting UX Enhancements | v1.3 | 0/0 | Not started | - |
 | 21. Save Import/Export | v1.3 | 0/0 | Not started | - |
 | 22. Balance & Polish | v1.3 | 0/0 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-17 — v1.3 roadmap added*
+*Last updated: 2026-02-17 — Phase 19 gap closure plans added*
