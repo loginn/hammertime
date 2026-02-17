@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Phase 16 - Drop System Split
+**Current Focus:** Phase 17 - UI and Combat Feedback
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication, ~3,671 LOC across ~39 files.
 
 ## Current Position
 
-Phase: 16 of 17 (Drop System Split)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-02-16 — Phase 15 complete (Pack-Based Combat Loop)
+Phase: 17 of 17 (UI and Combat Feedback)
+Plan: 1 of 2 in current phase
+Status: Plan 17-01 complete, executing 17-02
+Last activity: 2026-02-17 — Plan 17-01 complete (Combat UI bars and state transitions)
 
-Progress: [████████████████░░░░] 88% (15 phases complete, 2 remaining)
+Progress: [██████████████████░░] 94% (16 phases complete, 1 remaining)
 
 ## Performance Metrics
 
@@ -54,6 +54,8 @@ Recent decisions affecting v1.2 work:
 - Phase 15: base_attack_speed separate from base_speed (combat cadence vs DPS multiplier)
 - Phase 15: DPS / attack_speed for per-hit damage, per-hit crit rolls in combat
 - Phase 15: Auto-retry after death, deterministic area progression (area_level += 1)
+- Phase 17: Stacked ProgressBar ES overlay (PoE blue-over-red pattern)
+- Phase 17: State guards after await create_timer to prevent stale transitions
 
 ### Known Issues
 
@@ -76,15 +78,14 @@ Recent decisions affecting v1.2 work:
 
 ## Session Continuity
 
-**Last session:** 2026-02-17T03:55:52.003Z
-- Completed Phase 15: Pack-Based Combat Loop (2 plans, 4 tasks)
-- Created CombatEngine with dual-timer state machine combat
-- Replaced timer-based area clearing with pack-by-pack combat in gameplay_view
-- All 5 COMBAT requirements verified (5/5 must-haves passed)
+**Last session:** 2026-02-17
+- Executing Phase 17: UI and Combat Feedback
+- Plan 17-01 complete: ProgressBar-based combat UI with HP/ES/pack bars and state transitions
+- Added pack transition delay (0.5s) and death retry delay (2.5s) to CombatEngine
+- Executing Plan 17-02: Floating damage numbers
 
 **For next session:**
-- Begin Phase 16 planning: Drop System Split
-- Use `/gsd:discuss-phase 16` or `/gsd:plan-phase 16`
+- Continue Phase 17-02 or verify phase completion
 
 ---
 *State initialized: 2026-02-15*
