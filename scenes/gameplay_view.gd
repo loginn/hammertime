@@ -27,6 +27,10 @@ func _ready() -> void:
 	GameEvents.map_completed.connect(_on_map_completed)
 	GameEvents.combat_stopped.connect(_on_combat_stopped)
 
+	# Connect drop system signals (Phase 16)
+	GameEvents.items_dropped.connect(_on_items_dropped)
+	GameEvents.currency_dropped.connect(_on_currency_dropped)
+
 	update_display()
 
 
@@ -86,26 +90,28 @@ func _on_hero_died() -> void:
 
 
 func _on_map_completed(completed_level: int) -> void:
-	# Emit area_cleared for existing systems
+	# Emit area_cleared for existing systems (preserve backward compatibility)
 	GameEvents.area_cleared.emit(completed_level)
+	update_display()
 
-	# Temporary item drops on map completion (Phase 16 splits drops properly)
-	var item_count := LootTable.get_item_drop_count(completed_level)
+
+func _on_combat_stopped() -> void:
+	update_display()
+
+
+# --- Drop signal handlers (Phase 16) ---
+
+
+func _on_items_dropped(completed_level: int, item_count: int) -> void:
 	for i in range(item_count):
 		var item_base := get_random_item_base(completed_level)
 		if item_base != null:
 			item_bases_collected.append(item_base)
 			item_base_found.emit(item_base)
 
-	# Temporary currency drops on map completion (Phase 16 moves to per-pack)
-	var drops := LootTable.roll_currency_drops(completed_level)
-	GameState.add_currencies(drops)
+
+func _on_currency_dropped(drops: Dictionary) -> void:
 	currencies_found.emit(drops)
-
-	update_display()
-
-
-func _on_combat_stopped() -> void:
 	update_display()
 
 
@@ -160,7 +166,7 @@ func update_display() -> void:
 	materials_label.text = display_text
 
 
-# --- Item generation (temporary, Phase 16 moves drops) ---
+# --- Item generation ---
 
 
 func get_random_item_base(level: int = 1) -> Item:

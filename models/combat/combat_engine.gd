@@ -150,11 +150,16 @@ func _on_pack_killed() -> void:
 	_start_pack_fight()
 
 
-## All packs cleared. Full ES recharge, advance area level, auto-start next map.
+## All packs cleared. Full ES recharge, drop items, advance area level, auto-start next map.
 func _on_map_completed() -> void:
 	state = State.MAP_COMPLETE
 	# Full ES recharge between maps
 	GameState.hero.current_energy_shield = float(GameState.hero.total_energy_shield)
+
+	# Item drops on map completion (1-3 items scaled by area)
+	var item_count := LootTable.get_map_item_count(area_level)
+	GameEvents.items_dropped.emit(area_level, item_count)
+
 	# Deterministic progression: always current_level + 1
 	area_level += 1
 	max_unlocked_level = maxi(max_unlocked_level, area_level)
@@ -165,6 +170,8 @@ func _on_map_completed() -> void:
 
 
 ## Hero died. Revive with full HP + ES. Retry or wait based on auto_retry.
+## Currency already in inventory from per-pack drops — no clawback.
+## No item drops — death penalty (items only drop on map completion).
 func _on_hero_died() -> void:
 	state = State.HERO_DEAD
 	_stop_timers()
