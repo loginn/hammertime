@@ -118,10 +118,11 @@ Plans:
   2. Map completion (all packs cleared) awards item drops
   3. Hero death ends the current map without item drops but keeps all currency earned from killed packs
   4. Currency earned from partial progress is visible and preserved through death
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 16-01: TBD
+- [ ] 16-01-PLAN.md — Per-pack currency drops with area scaling and difficulty bonus
+- [ ] 16-02-PLAN.md — Map completion item drops, remove old drop code, enforce death penalty
 
 ### Phase 17: UI and Combat Feedback
 **Goal**: Players can observe pack-based combat state, HP changes, and progression through the map
@@ -159,7 +160,7 @@ Phases execute in numeric order: 13 → 14 → 15 → 16 → 17
 | 13. Defensive Stat Foundation | v1.2 | Complete    | 2026-02-16 | - |
 | 14. Monster Pack Data Model | v1.2 | Complete    | 2026-02-16 | - |
 | 15. Pack-Based Combat Loop | v1.2 | Complete    | 2026-02-16 | - |
-| 16. Drop System Split | v1.2 | 0/? | Not started | - |
+| 16. Drop System Split | v1.2 | 0/2 | Planned | - |
 | 17. UI and Combat Feedback | v1.2 | 0/? | Not started | - |
 
 ---
