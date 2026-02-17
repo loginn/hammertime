@@ -9,7 +9,7 @@ func _init() -> void:
 	self.rarity = Rarity.NORMAL
 	self.item_name = "Light Sword"
 	self.tier = 8  # Light Sword is tier 8 (weakest)
-	self.valid_tags = [Tag.PHYSICAL, Tag.ATTACK, Tag.CRITICAL, Tag.DEFENSE]
+	self.valid_tags = [Tag.PHYSICAL, Tag.ATTACK, Tag.CRITICAL, Tag.WEAPON]
 	self.base_damage_type = Tag.PHYSICAL
 	self.implicit = Implicit.new(
 		"Attack Speed", Affix.AffixType.IMPLICIT, 2, 5, [Tag.SPEED, Tag.ATTACK], [Tag.StatType.INCREASED_SPEED]

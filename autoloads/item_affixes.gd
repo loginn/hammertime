@@ -133,18 +133,18 @@ var suffixes: Array[Affix] = [
 	Affix.new(
 		"Bleed Damage", Affix.AffixType.SUFFIX, 2, 10, [Tag.DOT, Tag.PHYSICAL, Tag.WEAPON], []
 	),
-	Affix.new("Life", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE], [Tag.StatType.FLAT_HEALTH]),
+	Affix.new("Life", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], [Tag.StatType.FLAT_HEALTH]),
 	Affix.new("Sigil", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.MAGIC], []),
-	Affix.new("Evade", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE], []),
-	Affix.new("Armor", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE], [Tag.StatType.FLAT_ARMOR]),
-	Affix.new("Physical Reduction", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE], []),
-	Affix.new("Magical Reduction", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE], []),
+	Affix.new("Evade", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
+	Affix.new("Armor", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], [Tag.StatType.FLAT_ARMOR]),
+	Affix.new("Physical Reduction", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
+	Affix.new("Magical Reduction", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
 	Affix.new(
 		"Fire Resistance",
 		Affix.AffixType.SUFFIX,
 		5,
 		12,
-		[Tag.DEFENSE],
+		[Tag.DEFENSE, Tag.WEAPON],
 		[Tag.StatType.FIRE_RESISTANCE],
 		Vector2i(1, 8)
 	),
@@ -153,7 +153,7 @@ var suffixes: Array[Affix] = [
 		Affix.AffixType.SUFFIX,
 		5,
 		12,
-		[Tag.DEFENSE],
+		[Tag.DEFENSE, Tag.WEAPON],
 		[Tag.StatType.COLD_RESISTANCE],
 		Vector2i(1, 8)
 	),
@@ -162,7 +162,7 @@ var suffixes: Array[Affix] = [
 		Affix.AffixType.SUFFIX,
 		5,
 		12,
-		[Tag.DEFENSE],
+		[Tag.DEFENSE, Tag.WEAPON],
 		[Tag.StatType.LIGHTNING_RESISTANCE],
 		Vector2i(1, 8)
 	),
@@ -171,12 +171,12 @@ var suffixes: Array[Affix] = [
 		Affix.AffixType.SUFFIX,
 		3,
 		8,
-		[Tag.DEFENSE],
+		[Tag.DEFENSE, Tag.WEAPON],
 		[Tag.StatType.ALL_RESISTANCE],
 		Vector2i(1, 5)
 	),
-	Affix.new("Dodge Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE], []),
-	Affix.new("Dmg Suppression Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE], []),
+	Affix.new("Dodge Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
+	Affix.new("Dmg Suppression Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
 	Affix.new(
 		"Critical Strike Chance",
 		Affix.AffixType.SUFFIX,
