@@ -10,6 +10,7 @@ var max_hp: float = 0.0
 var damage: float = 0.0
 var attack_speed: float = 1.0  # Attacks per second (from MonsterType, not scaled)
 var element: String = "physical"  # "physical", "fire", "cold", "lightning"
+var difficulty_bonus: float = 1.0  # Drop rate multiplier based on pack toughness (1.0 normal, 1.5 tough)
 
 
 func is_alive() -> bool:

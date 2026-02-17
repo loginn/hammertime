@@ -41,8 +41,9 @@ static func roll_element(biome: BiomeConfig) -> String:
 ## Creates a single MonsterPack scaled to the given area level.
 ## HP and damage scale with level multiplier. Attack speed is NOT scaled
 ## (preserves type identity: fast imps stay fast, slow bears stay slow).
+## Difficulty bonus set based on monster type HP relative to biome average (for drop scaling).
 static func create_pack(
-	monster_type: MonsterType, area_level: int, element: String
+	monster_type: MonsterType, area_level: int, element: String, biome: BiomeConfig = null
 ) -> MonsterPack:
 	var multiplier := get_level_multiplier(area_level)
 	var pack := MonsterPack.new()
@@ -52,6 +53,15 @@ static func create_pack(
 	pack.damage = monster_type.base_damage * multiplier
 	pack.attack_speed = monster_type.base_attack_speed
 	pack.element = element
+
+	# Calculate difficulty bonus based on monster type's base_hp relative to biome average
+	if biome != null and biome.monster_types.size() > 0:
+		var avg_hp := 0.0
+		for mt in biome.monster_types:
+			avg_hp += mt.base_hp
+		avg_hp /= float(biome.monster_types.size())
+		pack.difficulty_bonus = 1.5 if monster_type.base_hp > avg_hp else 1.0
+
 	return pack
 
 
@@ -67,7 +77,7 @@ static func generate_packs(area_level: int) -> Array[MonsterPack]:
 	for i in range(pack_count):
 		var monster_type: MonsterType = biome.monster_types.pick_random()
 		var element := roll_element(biome)
-		var pack := create_pack(monster_type, area_level, element)
+		var pack := create_pack(monster_type, area_level, element, biome)
 		packs.append(pack)
 
 	return packs
