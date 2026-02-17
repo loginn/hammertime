@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Phase 19 - Side-by-Side Layout
+**Current Focus:** Phase 20 - Crafting UX Enhancements
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 19 of 22 (Side-by-Side Layout)
+Phase: 20 of 22 (Crafting UX Enhancements)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-02-17 — Phase 18 complete
+Last activity: 2026-02-17 — Phase 19 complete
 
-Progress: [█████████████████░░░] 82% (18/22 phases)
+Progress: [██████████████████░░] 86% (19/22 phases)
 
 ## Performance Metrics
 
@@ -108,13 +108,15 @@ Recent decisions affecting v1.3 work:
 
 ## Session Continuity
 
-**Last session:** 2026-02-17T13:38:04.715Z
-- Phase 18 (Save/Load Foundation) completed — both plans executed
-- SaveManager autoload with JSON persistence, auto-save timer, event-driven saves
-- Toast notifications, settings menu with New Game, startup auto-load flow
-- State centralized in GameState (crafting inventory, area progress)
+**Last session:** 2026-02-17
+- Phase 19 (Side-by-Side Layout) completed — both plans executed
+- ForgeView scene merging hero+crafting with Melt/Equip workflow
+- Top tab bar navigation (The Forge, Combat, Settings) replacing bottom NavigationPanel
+- Full-screen SettingsView replacing modal settings overlay
+- All cross-view signal wiring (equipment_changed, item_base_found, currencies_found)
+- Viewport updated to 1280x720
 
-**Next step:** `/gsd:plan-phase 19` to begin Side-by-Side Layout
+**Next step:** `/gsd:plan-phase 20` to begin Crafting UX Enhancements
 
 ---
 *State initialized: 2026-02-15*
