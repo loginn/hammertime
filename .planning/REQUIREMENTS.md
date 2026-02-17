@@ -73,25 +73,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SAVE-01 | — | Pending |
-| SAVE-02 | — | Pending |
-| SAVE-03 | — | Pending |
-| SAVE-04 | — | Pending |
-| LAYOUT-01 | — | Pending |
-| LAYOUT-02 | — | Pending |
-| CRAFT-01 | — | Pending |
-| CRAFT-02 | — | Pending |
-| CRAFT-03 | — | Pending |
-| CRAFT-04 | — | Pending |
-| BAL-01 | — | Pending |
-| BAL-02 | — | Pending |
-| UI-01 | — | Pending |
+| SAVE-01 | Phase 18 | Pending |
+| SAVE-02 | Phase 18 | Pending |
+| SAVE-03 | Phase 18 | Pending |
+| SAVE-04 | Phase 21 | Pending |
+| LAYOUT-01 | Phase 19 | Pending |
+| LAYOUT-02 | Phase 19 | Pending |
+| CRAFT-01 | Phase 20 | Pending |
+| CRAFT-02 | Phase 20 | Pending |
+| CRAFT-03 | Phase 20 | Pending |
+| CRAFT-04 | Phase 20 | Pending |
+| BAL-01 | Phase 22 | Pending |
+| BAL-02 | Phase 22 | Pending |
+| UI-01 | Phase 22 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13 (awaiting roadmap)
+- Mapped to phases: 13 (100%)
+- Unmapped: 0
+
+**Phase distribution:**
+- Phase 18 (Save/Load Foundation): 3 requirements
+- Phase 19 (Side-by-Side Layout): 2 requirements
+- Phase 20 (Crafting UX Enhancements): 4 requirements
+- Phase 21 (Save Import/Export): 1 requirement
+- Phase 22 (Balance & Polish): 3 requirements
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-17 after initial definition*
+*Last updated: 2026-02-17 — v1.3 traceability complete (100% coverage)*
