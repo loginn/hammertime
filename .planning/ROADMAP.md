@@ -133,10 +133,11 @@ Plans:
   2. Current pack HP and hero HP are visible and update during combat
   3. Pack progress is shown clearly (e.g., "Pack 3 of 7 cleared")
   4. Combat state changes are visible (fighting, pack transition, death, map complete)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 17-01: TBD
+- [ ] 17-01-PLAN.md — Combat UI bars (HP, ES overlay, pack HP, pack progress) and state transitions
+- [ ] 17-02-PLAN.md — Floating damage numbers with crit styling and dodge text
 
 ## Progress
 
