@@ -51,6 +51,16 @@ var inventory_types: Array = ["weapon", "helmet", "armor", "boots", "ring"]
 # Hero display state
 var currently_hovered_type: String = ""
 
+# Hammer icon textures
+var hammer_icons: Dictionary = {
+	"runic": preload("res://assets/runic_hammer.png"),
+	"forge": preload("res://assets/forge_hammer.png"),
+	"tack": preload("res://assets/tack_hammer.png"),
+	"grand": preload("res://assets/grand_hammer.png"),
+	"claw": preload("res://assets/claw_hammer.png"),
+	"tuning": preload("res://assets/tuning_hammer.png")
+}
+
 
 func _ready() -> void:
 	# Initialize currency button mapping
@@ -214,6 +224,7 @@ func update_currency_button_states() -> void:
 
 		# Update button text with currency name and count
 		button.text = currencies[currency_type].currency_name + " (" + str(count) + ")"
+		button.icon = hammer_icons.get(currency_type)
 
 	# If selected currency count is 0, deselect it
 	if selected_currency != null:
@@ -454,10 +465,13 @@ func update_item_stats_display() -> void:
 
 	if finished_item != null:
 		item_stats_label.text = "Finished Item:\n\n" + get_item_stats_text(finished_item)
+		item_stats_label.modulate = finished_item.get_rarity_color()
 	elif current_item != null:
 		item_stats_label.text = "Crafting:\n\n" + get_item_stats_text(current_item)
+		item_stats_label.modulate = current_item.get_rarity_color()
 	else:
 		item_stats_label.text = "Item Stats:\n\nNo item on crafting bench"
+		item_stats_label.modulate = Color.WHITE
 
 
 func update_hero_stats_display() -> void:
