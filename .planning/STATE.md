@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Phase 20 - Crafting UX Enhancements
+**Current Focus:** Phase 21 - Save Import/Export
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 19 of 22 (Side-by-Side Layout)
-Plan: 3 of 4 complete
-Status: In progress
-Last activity: 2026-02-17 — Completed 19-03-PLAN.md (ForgeView visual fixes)
+Phase: 20 of 22 (Crafting UX Enhancements)
+Plan: 2 of 2 complete
+Status: Complete
+Last activity: 2026-02-17 — Completed 20-02-PLAN.md (stat comparison display on equip hover)
 
-Progress: [██████████████████░░] 86% (19/22 phases)
+Progress: [████████████████████░] 91% (20/22 phases)
 
 ## Performance Metrics
 
@@ -67,6 +67,11 @@ Recent decisions affecting v1.3 work:
 - [Phase 19]: Use theme_override_font_sizes/font_size = 11 for all ForgeView UI text to prevent overflow in 1280x670 viewport
 - [Phase 19]: Set item type buttons to 86px width with zero gaps to eliminate hover flicker
 - [Phase 19]: Restore rarity color via modulate property matching Item.get_rarity_color() design
+- [Phase 20]: Use Godot built-in tooltip_text for hammer tooltips (auto show/hide behavior)
+- [Phase 20]: Equip and Melt operate directly on current_item, removing finished_item state
+- [Phase 20]: Two-click equip confirmation with 3-second Timer auto-reset
+- [Phase 20]: RichTextLabel with BBCode for colored stat comparison deltas (green #55ff55 / red #ff5555)
+- [Phase 20]: Stat comparison shows item-level contribution differences, not total hero stat changes
 
 ### v1.3 Requirements Coverage
 
@@ -115,17 +120,14 @@ Recent decisions affecting v1.3 work:
 
 ## Session Continuity
 
-**Last session:** 2026-02-17T16:20:38.811Z
-- Phase 19 (Side-by-Side Layout) in progress — 3 of 4 plans executed
-- Plan 19-03: Fixed ForgeView visual issues (hammer icons, font sizes, button gaps, rarity colors)
-- UAT gaps 1, 4, 5, 10-partial resolved
-- Hammer buttons now display icons with left-aligned text
-- All UI text reduced to font_size 11 to prevent overflow
-- Item type buttons have zero gaps to eliminate hover flicker
-- Rarity colors restored for magic/rare items in ForgeView
+**Last session:** 2026-02-17
+- Phase 20 (Crafting UX Enhancements) complete — 2 of 2 plans executed
+- Plan 20-01: Added hammer tooltips, removed Finish Item workflow, added two-click equip confirmation
+- Plan 20-02: Added stat comparison display on equip hover with green/red BBCode-colored deltas
+- Requirements CRAFT-01, CRAFT-02, CRAFT-03, CRAFT-04 all delivered
 
-**Next step:** Execute plan 19-04 or `/gsd:plan-phase 20` to begin Crafting UX Enhancements
+**Next step:** `/gsd:plan-phase 21` to begin Save Import/Export
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-17 — Phase 18 complete*
+*Last updated: 2026-02-17 — Phase 20 complete*
