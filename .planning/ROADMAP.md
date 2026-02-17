@@ -80,11 +80,11 @@ Full details: `.planning/milestones/v1.2-ROADMAP.md`
   2. Game automatically saves every 5 minutes and after item crafting, area completion, or item equipping events
   3. Save file includes version number that supports future migration when game schema changes
   4. Loading a save from an earlier session restores hero stats and DPS calculations correctly
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 18-01: TBD
-- [ ] 18-02: TBD
+- [ ] 18-01-PLAN.md — Core save/load infrastructure (serialization, SaveManager, state centralization)
+- [ ] 18-02-PLAN.md — Auto-save, event triggers, toast UI, settings menu, startup flow
 
 ### Phase 19: Side-by-Side Layout
 **Goal**: Hero equipment and crafting views display simultaneously so players can craft while viewing their gear
@@ -171,7 +171,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 15. Pack-Based Combat Loop | v1.2 | 2/2 | ✓ Complete | 2026-02-16 |
 | 16. Drop System Split | v1.2 | 2/2 | ✓ Complete | 2026-02-17 |
 | 17. UI and Combat Feedback | v1.2 | 3/3 | ✓ Complete | 2026-02-17 |
-| 18. Save/Load Foundation | v1.3 | 0/0 | Not started | - |
+| 18. Save/Load Foundation | v1.3 | 0/2 | Planned | - |
 | 19. Side-by-Side Layout | v1.3 | 0/0 | Not started | - |
 | 20. Crafting UX Enhancements | v1.3 | 0/0 | Not started | - |
 | 21. Save Import/Export | v1.3 | 0/0 | Not started | - |
