@@ -15,10 +15,10 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 ## Current Position
 
-Phase: 20 of 22 (Crafting UX Enhancements)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-02-17 — Phase 19 complete
+Phase: 19 of 22 (Side-by-Side Layout)
+Plan: 4 of 4 complete
+Status: Phase complete
+Last activity: 2026-02-17 — Completed 19-04-PLAN.md (navigation and viewport fixes)
 
 Progress: [██████████████████░░] 86% (19/22 phases)
 
@@ -61,6 +61,9 @@ Recent decisions affecting v1.3 work:
 - SaveManager autoload registered before GameState in autoload order
 - Crafting inventory and area progress centralized in GameState for persistence
 - Explicit CanvasLayer visibility management (v1.2) informs side-by-side layout approach
+- [Phase 19]: TAB key now only toggles between forge and combat views (settings accessible via tab button only)
+- [Phase 19]: Combat tab renamed to Adventure for user-facing clarity
+- [Phase 19]: Viewport clear color set to dark gray matching theme background
 
 ### v1.3 Requirements Coverage
 
@@ -108,13 +111,13 @@ Recent decisions affecting v1.3 work:
 
 ## Session Continuity
 
-**Last session:** 2026-02-17
-- Phase 19 (Side-by-Side Layout) completed — both plans executed
-- ForgeView scene merging hero+crafting with Melt/Equip workflow
-- Top tab bar navigation (The Forge, Combat, Settings) replacing bottom NavigationPanel
-- Full-screen SettingsView replacing modal settings overlay
-- All cross-view signal wiring (equipment_changed, item_base_found, currencies_found)
-- Viewport updated to 1280x720
+**Last session:** 2026-02-17T14:59:00.169Z
+- Phase 19 (Side-by-Side Layout) complete — all 4 plans executed
+- Plan 19-04: Fixed navigation shortcuts (removed KEY_3, TAB toggles forge/combat only)
+- Plan 19-04: Renamed Combat tab to "Adventure" for user-facing clarity
+- Plan 19-04: Removed misplaced title label from gameplay view
+- Plan 19-04: Set viewport clear color to dark gray matching theme background
+- UAT gaps 2, 3, 10 resolved
 
 **Next step:** `/gsd:plan-phase 20` to begin Crafting UX Enhancements
 
