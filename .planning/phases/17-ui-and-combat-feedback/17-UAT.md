@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 17-ui-and-combat-feedback
 source: [17-01-SUMMARY.md, 17-02-SUMMARY.md, 17-03-SUMMARY.md]
 started: 2026-02-17T14:00:00Z
@@ -71,17 +71,20 @@ skipped: 0
   reason: "User reported: ES should be slightly transparent"
   severity: cosmetic
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "ES fill StyleBoxFlat uses Color(0.0, 0.5, 1.0) which is fully opaque (alpha=1.0). The ES bar stacks on top of the HP bar but the fill completely hides the red underneath. Need alpha on the fill color so red HP shows through."
+  artifacts:
+    - path: "scenes/gameplay_view.gd"
+      issue: "Line 72: es_fill.bg_color = Color(0.0, 0.5, 1.0) — no alpha, fully opaque"
+  missing:
+    - "Add alpha to ES fill color, e.g., Color(0.0, 0.5, 1.0, 0.7) for 70% opacity"
   debug_session: ""
 
 - truth: "Map Clear state label visible in green after clearing all packs"
-  status: failed
+  status: deferred
   reason: "User reported: I've not been able to clear a map yet. Difficulty is too high at level 1"
   severity: minor
   test: 7
-  root_cause: ""
+  root_cause: "Balance issue — packs deal ~12 DPS against 100 HP hero with minimal gear. Not a Phase 17 UI bug. The Map Clear label code exists and works; user just can't reach that state due to combat balance. This is v1.3+ tuning scope."
   artifacts: []
   missing: []
   debug_session: ""
