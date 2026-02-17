@@ -172,7 +172,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 16. Drop System Split | v1.2 | 2/2 | ✓ Complete | 2026-02-17 |
 | 17. UI and Combat Feedback | v1.2 | 3/3 | ✓ Complete | 2026-02-17 |
 | 18. Save/Load Foundation | v1.3 | 2/2 | ✓ Complete | 2026-02-17 |
-| 19. Side-by-Side Layout | v1.3 | 0/0 | Not started | - |
+| 19. Side-by-Side Layout | 1/2 | In Progress|  | - |
 | 20. Crafting UX Enhancements | v1.3 | 0/0 | Not started | - |
 | 21. Save Import/Export | v1.3 | 0/0 | Not started | - |
 | 22. Balance & Polish | v1.3 | 0/0 | Not started | - |
