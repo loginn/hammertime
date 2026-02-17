@@ -1,71 +1,62 @@
 extends Node2D
 
-var current_view: String = "crafting"
-@onready var crafting_view: Node2D = $CraftingView
-@onready var hero_view: Node2D = $HeroView
-@onready var gameplay_view: Node2D = $GameplayView
-@onready var crafting_button: Button = $NavigationPanel/CraftingButton
-@onready var hero_button: Button = $NavigationPanel/HeroButton
-@onready var gameplay_button: Button = $NavigationPanel/GameplayButton
-@onready var settings_button: Button = $NavigationPanel/SettingsButton
-@onready var combat_ui: CanvasLayer = $GameplayView/CombatUI
-@onready var settings_menu: PanelContainer = $OverlayLayer/SettingsMenu
+var current_view: String = "forge"
+
+@onready var forge_view: Node2D = $ContentArea/ForgeView
+@onready var gameplay_view: Node2D = $ContentArea/GameplayView
+@onready var settings_view: Node2D = $ContentArea/SettingsView
+@onready var forge_tab: Button = $TabBar/ForgeTab
+@onready var combat_tab: Button = $TabBar/CombatTab
+@onready var settings_tab: Button = $TabBar/SettingsTab
+@onready var combat_ui: CanvasLayer = $ContentArea/GameplayView/CombatUI
 
 
 func _ready() -> void:
-	# Connect navigation buttons
-	crafting_button.pressed.connect(_on_crafting_button_pressed)
-	hero_button.pressed.connect(_on_hero_button_pressed)
-	gameplay_button.pressed.connect(_on_gameplay_button_pressed)
-	settings_button.pressed.connect(_on_settings_pressed)
+	# Connect tab buttons
+	forge_tab.pressed.connect(_on_forge_tab_pressed)
+	combat_tab.pressed.connect(_on_combat_tab_pressed)
+	settings_tab.pressed.connect(_on_settings_tab_pressed)
 
-	# Connect settings menu signals
-	settings_menu.new_game_started.connect(_on_new_game_started)
+	# Connect settings view signals
+	settings_view.new_game_started.connect(_on_new_game_started)
 
-	# Child-to-sibling communication via parent coordination
-	crafting_view.item_finished.connect(hero_view.set_last_crafted_item)
-	hero_view.equipment_changed.connect(gameplay_view.refresh_clearing_speed)
-	gameplay_view.item_base_found.connect(crafting_view.set_new_item_base)
-	gameplay_view.currencies_found.connect(crafting_view.on_currencies_found)
+	# Cross-view signal wiring (ForgeView <-> GameplayView)
+	forge_view.equipment_changed.connect(gameplay_view.refresh_clearing_speed)
+	gameplay_view.item_base_found.connect(forge_view.set_new_item_base)
+	gameplay_view.currencies_found.connect(forge_view.on_currencies_found)
 
-	# Show crafting view by default
-	show_view("crafting")
+	# Show forge view by default
+	show_view("forge")
 
 
 func _input(event) -> void:
-	# Keyboard shortcuts for navigation
 	if event is InputEventKey and event.pressed:
 		match event.keycode:
 			KEY_1:
-				show_view("crafting")
+				show_view("forge")
 			KEY_2:
-				show_view("hero")
+				show_view("combat")
 			KEY_3:
-				show_view("gameplay")
+				show_view("settings")
 			KEY_TAB:
-				# Toggle between views
-				if current_view == "crafting":
-					show_view("hero")
-				elif current_view == "hero":
-					show_view("gameplay")
+				if current_view == "forge":
+					show_view("combat")
+				elif current_view == "combat":
+					show_view("settings")
 				else:
-					show_view("crafting")
+					show_view("forge")
 
 
-func _on_crafting_button_pressed() -> void:
-	show_view("crafting")
+func _on_forge_tab_pressed() -> void:
+	show_view("forge")
 
 
-func _on_hero_button_pressed() -> void:
-	show_view("hero")
+func _on_combat_tab_pressed() -> void:
+	show_view("combat")
 
 
-func _on_gameplay_button_pressed() -> void:
-	show_view("gameplay")
-
-
-func _on_settings_pressed() -> void:
-	settings_menu.open_menu()
+func _on_settings_tab_pressed() -> void:
+	show_view("settings")
 
 
 func _on_new_game_started() -> void:
@@ -74,30 +65,33 @@ func _on_new_game_started() -> void:
 
 func show_view(view_name: String) -> void:
 	# Hide all views
-	crafting_view.visible = false
-	hero_view.visible = false
+	forge_view.visible = false
 	gameplay_view.visible = false
+	settings_view.visible = false
 
-	# Show the selected view
+	# Reset settings state when leaving
+	if current_view == "settings" and view_name != "settings":
+		settings_view.reset_state()
+
 	match view_name:
-		"crafting":
-			crafting_view.visible = true
-			crafting_button.disabled = true
-			hero_button.disabled = false
-			gameplay_button.disabled = false
-		"hero":
-			hero_view.visible = true
-			crafting_button.disabled = false
-			hero_button.disabled = true
-			gameplay_button.disabled = false
-		"gameplay":
+		"forge":
+			forge_view.visible = true
+			forge_tab.disabled = true
+			combat_tab.disabled = false
+			settings_tab.disabled = false
+		"combat":
 			gameplay_view.visible = true
-			crafting_button.disabled = false
-			hero_button.disabled = false
-			gameplay_button.disabled = true
+			forge_tab.disabled = false
+			combat_tab.disabled = true
+			settings_tab.disabled = false
+		"settings":
+			settings_view.visible = true
+			forge_tab.disabled = false
+			combat_tab.disabled = false
+			settings_tab.disabled = true
 
-	# CanvasLayer doesn't inherit parent visibility — sync explicitly
-	combat_ui.visible = (view_name == "gameplay")
+	# CRITICAL: CanvasLayer doesn't inherit parent visibility — sync explicitly
+	combat_ui.visible = (view_name == "combat")
 
 	current_view = view_name
 	print("Switched to ", view_name, " view")
