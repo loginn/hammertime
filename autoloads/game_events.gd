@@ -13,3 +13,6 @@ signal pack_attacked(result: Dictionary)
 signal hero_died()
 signal map_completed(area_level: int)
 signal combat_stopped()
+
+# Drop system signals (Phase 16)
+signal currency_dropped(drops: Dictionary)  # Per-pack currency drops

@@ -13,6 +13,7 @@ var area_level: int = 1
 var max_unlocked_level: int = 1
 var auto_retry: bool = true  # Default on — player retries automatically after death
 var hero_attack_speed: float = 1.0  # Cached from weapon at fight start
+var run_currency_earned: Dictionary = {}  # Accumulated currency this run for display
 
 var hero_attack_timer: Timer
 var pack_attack_timer: Timer
@@ -33,6 +34,7 @@ func _ready() -> void:
 ## Starts a new map at the given area level. Generates fresh packs and begins combat.
 func start_combat(level: int) -> void:
 	area_level = level
+	run_currency_earned = {}
 	current_packs = PackGenerator.generate_packs(area_level)
 	current_pack_index = 0
 	state = State.FIGHTING
@@ -123,9 +125,18 @@ func _on_pack_attack() -> void:
 		_on_hero_died()
 
 
-## Current pack killed. Recharge ES, advance to next pack or complete map.
+## Current pack killed. Drop currency, recharge ES, advance to next pack or complete map.
 func _on_pack_killed() -> void:
+	var killed_pack := get_current_pack()
 	_stop_timers()
+
+	# Currency drops on pack kill (Phase 16)
+	var drops := LootTable.roll_pack_currency_drop(area_level, killed_pack.difficulty_bonus)
+	if not drops.is_empty():
+		GameState.add_currencies(drops)
+		_accumulate_run_currency(drops)
+		GameEvents.currency_dropped.emit(drops)
+
 	current_pack_index += 1
 	GameEvents.pack_killed.emit(current_pack_index, current_packs.size())
 
@@ -170,6 +181,15 @@ func _get_hero_attack_speed() -> float:
 	if weapon != null and weapon is Weapon:
 		return weapon.base_attack_speed
 	return 1.0
+
+
+## Accumulates currency drops into run tracking dictionary.
+func _accumulate_run_currency(drops: Dictionary) -> void:
+	for currency_name in drops:
+		if currency_name in run_currency_earned:
+			run_currency_earned[currency_name] += drops[currency_name]
+		else:
+			run_currency_earned[currency_name] = drops[currency_name]
 
 
 ## Stops both attack timers. Called on every state transition exit.

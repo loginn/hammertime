@@ -141,6 +141,50 @@ static func _calculate_currency_chance(
 	return base_chance * ramp_multiplier
 
 
+## Rolls currency drops for a single pack kill.
+## Returns dictionary mapping currency name to drop count (0-2 per currency type).
+## Chances scale with area level and pack difficulty. Area gating from CURRENCY_AREA_GATES applies.
+static func roll_pack_currency_drop(
+	area_level: int, pack_difficulty_bonus: float = 1.0
+) -> Dictionary:
+	var drops: Dictionary = {}
+
+	# Area scaling: higher areas give better drop rates
+	# Starts at 1.0x at area 1, reaches ~1.85x at area 300
+	var area_multiplier: float = 1.0 + log(float(maxi(area_level, 1))) * 0.15
+
+	# Per-pack base chances (scaled down from per-clear rates for ~12 packs/map avg)
+	var pack_currency_rules: Dictionary = {
+		"runic": {"chance": 0.15, "max_qty": 2},
+		"tack": {"chance": 0.10, "max_qty": 2},
+		"forge": {"chance": 0.05, "max_qty": 1},
+		"grand": {"chance": 0.03, "max_qty": 1},
+		"claw": {"chance": 0.04, "max_qty": 1},
+		"tuning": {"chance": 0.04, "max_qty": 1},
+	}
+
+	for currency_name in pack_currency_rules:
+		var unlock_level: int = CURRENCY_AREA_GATES[currency_name]
+		if area_level < unlock_level:
+			continue
+
+		var rule: Dictionary = pack_currency_rules[currency_name]
+		var effective_chance: float = rule["chance"] * area_multiplier * pack_difficulty_bonus
+
+		# Apply unlock ramp (same as existing _calculate_currency_chance)
+		if unlock_level > 1:
+			effective_chance = _calculate_currency_chance(
+				effective_chance, area_level, unlock_level, 50
+			)
+
+		if randf() < effective_chance:
+			# Roll quantity: 1 or up to max_qty
+			var quantity: int = randi_range(1, rule["max_qty"])
+			drops[currency_name] = quantity
+
+	return drops
+
+
 ## Rolls currency drops for area clear based on area level
 ## Returns dictionary mapping currency name to drop count
 ## Currency names: "runic", "forge", "tack", "grand", "claw", "tuning"
