@@ -1,0 +1,97 @@
+# Requirements: Hammertime
+
+**Defined:** 2026-02-17
+**Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
+
+## v1.3 Requirements
+
+Requirements for v1.3 Save/Load & Polish milestone. Each maps to roadmap phases.
+
+### Save/Load
+
+- [ ] **SAVE-01**: Player's full game state persists across sessions (hero equipment, currencies, area progress, crafting inventory)
+- [ ] **SAVE-02**: Game auto-saves every 5 minutes and on significant events (item crafted, area completed, item equipped)
+- [ ] **SAVE-03**: Save format includes version tracking for future migration compatibility
+- [ ] **SAVE-04**: Player can export save as a string and import a save string to restore state
+
+### UI Layout
+
+- [ ] **LAYOUT-01**: Hero equipment and crafting views display side by side (equipment left, crafting right) instead of separate tabs
+- [ ] **LAYOUT-02**: Gameplay/combat view remains a separate full-width view toggled from the side-by-side view
+
+### Crafting UX
+
+- [ ] **CRAFT-01**: Each hammer button shows a tooltip describing what it does and its requirements
+- [ ] **CRAFT-02**: Hovering an equipment slot with a craftable item available shows before/after stat comparison (item-level deltas, not total hero stats)
+- [ ] **CRAFT-03**: Crafting view has one crafted-item slot per item type (weapon, helmet, armor, boots, ring) instead of a single shared slot
+- [ ] **CRAFT-04**: Finishing an item into an occupied slot requires two-click confirmation (button text changes to confirm message, second click overwrites)
+
+### Balance
+
+- [ ] **BAL-01**: New game starts with 1 Runic Hammer and 1 weapon base item so the player can craft their first gear
+- [ ] **BAL-02**: Level 1 area difficulty is reduced so a fresh hero with starter gear can survive early packs
+
+### Polish
+
+- [ ] **UI-01**: Hero View stat panels fit within the viewport by reducing text size and whitespace
+
+## Future Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Save/Load Enhancements
+
+- **SAVE-05**: Multiple save slots for build experimentation
+- **SAVE-06**: Backup rotation (2-3 auto-save backups for corruption protection)
+
+### Crafting Enhancements
+
+- **CRAFT-05**: Crafting preview mode — preview hammer result before spending currency
+- **CRAFT-06**: Crafting audio/visual feedback (Tween flash on success/fail, sound effects)
+- **CRAFT-07**: Crafting history log with undo capability
+
+### UI Enhancements
+
+- **UI-02**: Drag-and-drop equipping alongside click-to-equip
+- **UI-03**: Visual prefix/suffix separation in item display (color-coded or sectioned)
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Cloud save sync | Requires backend infrastructure; overkill for single-player offline game |
+| ScrollContainer for stats | User prefers smaller text + reduced whitespace over scroll UI |
+| Starter gear auto-equipped | Player should craft first gear from base item + Runic Hammer (teaches crafting loop) |
+| Crafting confirmation dialogs | Breaks crafting flow; two-click button confirmation is sufficient |
+| Unlimited undo | Trivializes crafting risk/reward tension |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| SAVE-01 | — | Pending |
+| SAVE-02 | — | Pending |
+| SAVE-03 | — | Pending |
+| SAVE-04 | — | Pending |
+| LAYOUT-01 | — | Pending |
+| LAYOUT-02 | — | Pending |
+| CRAFT-01 | — | Pending |
+| CRAFT-02 | — | Pending |
+| CRAFT-03 | — | Pending |
+| CRAFT-04 | — | Pending |
+| BAL-01 | — | Pending |
+| BAL-02 | — | Pending |
+| UI-01 | — | Pending |
+
+**Coverage:**
+- v1.3 requirements: 13 total
+- Mapped to phases: 0
+- Unmapped: 13 (awaiting roadmap)
+
+---
+*Requirements defined: 2026-02-17*
+*Last updated: 2026-02-17 after initial definition*
