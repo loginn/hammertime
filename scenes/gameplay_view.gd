@@ -1,5 +1,7 @@
 extends Node2D
 
+const FLOATING_LABEL = preload("res://scenes/floating_label.tscn")
+
 signal item_base_found(item_base: Item)
 signal currencies_found(drops: Dictionary)
 
@@ -28,6 +30,10 @@ var combat_started_once: bool = false
 
 ## Default state label color
 var default_label_color := Color(1.0, 1.0, 1.0)
+
+## Floating text spawn positions (above health bars)
+var hero_damage_pos := Vector2(125.0, 160.0)  # Above hero HP bar
+var pack_damage_pos := Vector2(450.0, 160.0)  # Above pack HP bar
 
 
 func _ready() -> void:
@@ -133,11 +139,19 @@ func _on_pack_killed(_pack_index: int, _total_packs: int) -> void:
 	update_display()
 
 
-func _on_hero_attacked(_damage: float, _is_crit: bool) -> void:
+func _on_hero_attacked(damage: float, is_crit: bool) -> void:
+	# Hero attacked the pack — show damage near pack HP bar
+	_spawn_floating_text(pack_damage_pos, int(damage), is_crit)
 	update_display()
 
 
-func _on_pack_attacked(_result: Dictionary) -> void:
+func _on_pack_attacked(result: Dictionary) -> void:
+	# Pack attacked the hero — show damage/dodge near hero HP bar
+	if result["dodged"]:
+		_spawn_floating_text(hero_damage_pos, 0, false, true)
+	else:
+		var total_damage := int(result["life_damage"] + result["es_damage"])
+		_spawn_floating_text(hero_damage_pos, total_damage, false)
 	update_display()
 
 
@@ -179,6 +193,19 @@ func _on_items_dropped(completed_level: int, item_count: int) -> void:
 func _on_currency_dropped(_drops: Dictionary) -> void:
 	currencies_found.emit(_drops)
 	update_display()
+
+
+# --- Floating text ---
+
+
+func _spawn_floating_text(spawn_pos: Vector2, value: int, is_crit: bool = false, is_dodge: bool = false) -> void:
+	var label = FLOATING_LABEL.instantiate()
+	label.position = spawn_pos + Vector2(randf_range(-20.0, 20.0), 0.0)
+	floating_text_container.add_child(label)
+	if is_dodge:
+		label.show_dodge()
+	else:
+		label.show_damage(value, is_crit)
 
 
 # --- Display ---
