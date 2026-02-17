@@ -95,11 +95,11 @@ Plans:
   2. Player can view equipped gear and crafting inventory without switching tabs
   3. Gameplay/combat view remains a separate full-width screen toggled from the side-by-side view
   4. Layout fits within 1200x700 viewport with proper spacing and no overlapping elements
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 19-01: TBD
-- [ ] 19-02: TBD
+- [ ] 19-01-PLAN.md — Create ForgeView scene and script (viewport, layout, merged crafting+hero logic)
+- [ ] 19-02-PLAN.md — Wire MainView with top tab bar, SettingsView, and update GameplayView
 
 ### Phase 20: Crafting UX Enhancements
 **Goal**: Crafting workflow provides clear feedback through tooltips, stat comparisons, dedicated slots, and safety confirmations
