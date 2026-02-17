@@ -7,6 +7,7 @@ var current_view: String = "crafting"
 @onready var crafting_button: Button = $NavigationPanel/CraftingButton
 @onready var hero_button: Button = $NavigationPanel/HeroButton
 @onready var gameplay_button: Button = $NavigationPanel/GameplayButton
+@onready var combat_ui: CanvasLayer = $GameplayView/CombatUI
 
 
 func _ready() -> void:
@@ -80,6 +81,9 @@ func show_view(view_name: String) -> void:
 			crafting_button.disabled = false
 			hero_button.disabled = false
 			gameplay_button.disabled = true
+
+	# CanvasLayer doesn't inherit parent visibility — sync explicitly
+	combat_ui.visible = (view_name == "gameplay")
 
 	current_view = view_name
 	print("Switched to ", view_name, " view")
