@@ -64,7 +64,7 @@ Full details: `.planning/milestones/v1.2-ROADMAP.md`
 **Milestone Goal:** Persist full game state across sessions and fix UX pain points — side-by-side hero/crafting layout, item safety, stats overflow, crafting feedback, and level 1 balance.
 
 - [x] **Phase 18: Save/Load Foundation** - Implement core persistence with auto-save and version tracking
-- [ ] **Phase 19: Side-by-Side Layout** - Restructure UI to show hero equipment and crafting simultaneously
+- [x] **Phase 19: Side-by-Side Layout** - Restructure UI to show hero equipment and crafting simultaneously (completed 2026-02-17)
 - [ ] **Phase 20: Crafting UX Enhancements** - Add tooltips, stat comparison, per-type slots, and safety confirmations
 - [ ] **Phase 21: Save Import/Export** - Enable save string export and import for backup/sharing
 - [ ] **Phase 22: Balance & Polish** - Tune level 1 difficulty, add starter gear, fix stat overflow
@@ -174,7 +174,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 16. Drop System Split | v1.2 | 2/2 | ✓ Complete | 2026-02-17 |
 | 17. UI and Combat Feedback | v1.2 | 3/3 | ✓ Complete | 2026-02-17 |
 | 18. Save/Load Foundation | v1.3 | 2/2 | ✓ Complete | 2026-02-17 |
-| 19. Side-by-Side Layout | v1.3 | 2/4 | Gap closure | - |
+| 19. Side-by-Side Layout | v1.3 | Complete    | 2026-02-17 | - |
 | 20. Crafting UX Enhancements | v1.3 | 0/0 | Not started | - |
 | 21. Save Import/Export | v1.3 | 0/0 | Not started | - |
 | 22. Balance & Polish | v1.3 | 0/0 | Not started | - |
