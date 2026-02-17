@@ -1,236 +1,227 @@
 # Pitfalls Research
 
-**Domain:** Pack-based idle ARPG combat system integration
-**Researched:** 2026-02-16
+**Domain:** Godot 4.5 Idle ARPG - Save/Load, UI Restructure, Crafting UX, Balance Tuning
+**Researched:** 2026-02-17
 **Confidence:** HIGH
 
 ## Critical Pitfalls
 
-### Pitfall 1: Armor Formula Division by Zero and Edge Cases
+### Pitfall 1: Resource.duplicate() Doesn't Deep Copy Arrays of Resources
 
 **What goes wrong:**
-Damage reduction formulas using `armor / (armor + constant)` fail at extremes: division by zero with uncapped armor, negative armor creating inverted damage reduction, and resistance caps not enforced leading to invincibility or one-shot deaths.
+Save/load corruption occurs when Items are serialized because `Resource.duplicate(true)` does not duplicate subresources stored in Array properties. Item has `prefixes: Array[Affix]` and `suffixes: Array[Affix]`. When GameState saves Hero with equipped items, the Affix arrays are shallow-copied, creating reference-sharing between save data and runtime state. Modifying a loaded item corrupts the save.
 
 **Why it happens:**
-Developers port standard ARPG formulas (Path of Exile uses `Damage Reduction = Armour/(Armour + 12 * Damage)`, capped at 90%) without implementing the full edge case handling. The formula appears mathematically sound but breaks when armor goes negative (from debuffs), exceeds intended caps, or when incoming damage is zero.
+Godot's documentation states "Subresources inside Array and Dictionary properties are never duplicated" but this is only mentioned in Array.duplicate() docs, not Resource.duplicate() or Dictionary docs. Developers assume `duplicate(true)` handles nested Resources.
 
 **How to avoid:**
-1. **Hard cap all mitigation at 90%** (industry standard per PoE, Diablo)
-2. **Implement floor at -100%** for negative armor (vulnerability debuffs)
-3. **Clamp resistances to range [-100, 90]** before calculation
-4. **Add epsilon check** before division: `if damage < 0.01: return 0`
-5. **Use separate formulas** for positive vs negative armor (asymmetric scaling)
-6. **Test with extreme values**: armor=0, armor=999999, armor=-1000, damage=0, damage=0.001
+1. Implement custom `deep_duplicate()` method on Item class
+2. Manually iterate `prefixes` and `suffixes` arrays
+3. Call `Affixes.from_affix()` to create new instances (already exists in codebase at item.gd:159, 186)
+4. Do NOT rely on `Resource.duplicate(true)` for save serialization
 
 **Warning signs:**
-- Hero survives with 0 health displayed
-- Negative damage numbers appearing
-- Combat log shows "NaN" or "inf" values
-- 1-damage hits killing hero from full health
-- Armor stat display showing negative percentages
-- Combat becomes trivial with moderate armor investment
+- Item modifications persist after loading a save (affix changes appear in fresh loads)
+- Save file size doesn't grow when adding items (references instead of copies)
+- Random crashes when accessing affix properties after load
+- Debug prints show same affix instances across different items
 
 **Phase to address:**
-Phase 1 (damage reduction implementation) — include test suite with edge cases in acceptance criteria.
+Phase 1 (Save/Load Foundation) - Must implement before any save serialization code. Create `Item.deep_duplicate()` that handles nested arrays properly.
 
 ---
 
-### Pitfall 2: Progression Curve Disruption from Gameplay Loop Change
+### Pitfall 2: CanvasLayer Visibility Doesn't Inherit from Parent Node2D
 
 **What goes wrong:**
-Switching from time-based to pack-based clearing breaks the carefully tuned v1.0-v1.1 progression curve. Currency drop rates balanced for "X per minute" become "X per pack," but pack clear speed varies wildly with gear, creating exponential acceleration or grinding halt. Players with optimized v1.1 gear suddenly progress 10x faster or slower than intended.
+When restructuring UI from tab-switching to side-by-side layout, GameplayView's CombatUI (a CanvasLayer at line 10 of main_view.gd) doesn't inherit visibility from parent GameplayView. Currently handled with explicit sync at main_view.gd:86, but side-by-side layout will have multiple views visible simultaneously. Forgetting to sync each CanvasLayer causes invisible but active UI elements that still process input, block clicks, and trigger hover effects on hidden views.
 
 **Why it happens:**
-Incremental games rely on tightly balanced faucets (resources in) and sinks (resources out). Time-based systems have predictable resource generation rates. Pack-based systems make generation variable based on combat effectiveness, which compounds with gear progression. As noted in game economy research, "if faucet output accumulates faster than sinks consume, purchasing power drops and progression becomes meaningless."
+CanvasLayer exists outside the scene tree hierarchy for rendering purposes. It renders to viewport directly, ignoring parent Node2D visibility. Developers structure UI in scene tree assuming standard visibility propagation.
 
 **How to avoid:**
-1. **Normalize currency drops to DPS tiers**: High DPS players fight harder packs with proportional rewards
-2. **Implement pack scaling**: Area 1 = 3 monsters/pack, Area 300 = 8 monsters/pack, adjust currency per monster to maintain total per-clear rate
-3. **Add statistical baseline testing**: Simulate 1000 area clears at each gear tier (beginner, mid, endgame) and verify currency/hour matches v1.1 baseline ±20%
-4. **Preserve existing LootTable.roll_currency_drops() rates** — these are already balanced, just need to maintain per-clear frequency
-5. **Add debug telemetry**: Track actual clears/minute, currency/minute, compare to v1.1 benchmarks
+1. When adding side-by-side layout, create explicit CanvasLayer visibility management
+2. Pattern: `canvas_layer.visible = parent_view.visible and should_render()`
+3. Use signal-based coordination: parent view emits `visibility_changed` signal
+4. Never assume CanvasLayer inherits parent state
+5. For split-screen UI: assign each CanvasLayer to different layer numbers to control render order
 
 **Warning signs:**
-- Playtest feedback: "I'm stuck, can't afford to craft"
-- Playtest feedback: "I have 9999 hammers after 10 minutes"
-- Area 100 clears in 2 seconds but currency gain feels slow
-- Area 10 takes 30 seconds and currency gain is too fast
-- Drop simulator shows extreme variance between gear tiers
+- Click events don't reach visible UI (hidden CanvasLayer blocking input)
+- Performance degradation (invisible CanvasLayers still processing)
+- UI elements appear in wrong view after visibility toggle
+- Mouse hover highlights on views that should be hidden
 
 **Phase to address:**
-Phase 3 (drop split implementation) and Phase 4 (combat pacing) — explicit verification step to compare v1.1 vs v1.2 progression curves.
+Phase 2 (UI Layout Restructure) - Before converting main_view.gd from visibility toggling to concurrent rendering. Add CanvasLayer management abstraction.
 
 ---
 
-### Pitfall 3: Combat Pacing Mismatch for Idle Games
+### Pitfall 3: Control Node Anchor Positioning Breaks When Switching from Fixed to Container Layout
 
 **What goes wrong:**
-Combat either resolves instantly (feels like a clicker, not idle) or drags for 2-3 minutes per pack (frustrating, player alt-tabs and forgets the game). The "idle" aspect requires combat to be fast enough to feel automated but slow enough to feel strategic. Getting this wrong makes the game unplayable.
+Current UI uses manual anchor positioning (main.tscn lines 20-47: buttons positioned with `anchor_left`, `anchor_right`, `offset_left`, `offset_right`). Converting to Container-based layout (HBoxContainer, VBoxContainer, MarginContainer for side-by-side views) while keeping anchor properties causes Containers to compute size as 0x0. Buttons disappear or overlap at viewport origin. On mobile renderer (1200x700), this manifests as entire UI panels stacking at (0,0).
 
 **Why it happens:**
-Active vs passive play tension: games balanced for active clicking feel glacially slow in idle mode. Community discussions show idle games commonly suffer from "2-3 minutes to kill one enemy" problems. Developers design for "satisfying active experience" but idle games need "satisfying passive experience." These have opposing requirements.
+Control nodes have two mutually exclusive sizing modes: anchor-based (manual) and container-based (automatic). Anchors set explicit positions that override Container min_size calculations. Containers use `rect_min_size` and children's minimum size to auto-layout. Mixing the two creates undefined behavior.
 
 **How to avoid:**
-1. **Target combat duration: 5-15 seconds per pack** at appropriate gear level
-2. **Implement time-to-kill (TTK) normalization**: If hero DPS = 100 and pack HP = 1500, fight lasts 15s. Scale pack HP logarithmically with area to maintain TTK as DPS increases
-3. **Add combat speed multiplier setting**: 1x, 2x, 4x speed options (UI toggle)
-4. **Avoid animation bottlenecks**: Don't tie combat resolution to animation completion
-5. **Use exponential pack HP scaling** with logarithmic curve flattening at high areas (match PoE2 approach: early packs scale fast, late game stabilizes)
-6. **Test with underpowered gear**: If player ignores upgrades, combat should become challenging but not impossible
+1. When converting navigation panel to Container: set all anchors to 0, all offsets to 0
+2. Use Container properties instead: `size_flags_horizontal`, `size_flags_vertical`, `custom_minimum_size`
+3. For button spacing: use `separation` in BoxContainers, not offsets
+4. For centering: use `alignment` property in BoxContainers, not `anchor = 0.5`
+5. Test at exact viewport size (1200x700) before testing responsive behavior
+6. Add `minimum_size` override on root Container to prevent collapse
 
 **Warning signs:**
-- Pack dies in <1 second consistently
-- Pack takes >30 seconds to clear
-- Playtester says "I can't tell if I'm winning"
-- Health bars don't visibly move for 5+ seconds
-- Combat feels like waiting, not playing
-- Player stops checking game because "nothing happens"
+- Container shows size (0, 0) in remote inspector while running
+- UI elements appear at top-left (0, 0) instead of intended position
+- Buttons overlap each other vertically or horizontally
+- Resizing viewport doesn't update layout (Container not recalculating)
+- Different behavior in editor vs. runtime
 
 **Phase to address:**
-Phase 4 (combat pacing) — primary focus. Requires tuning pack HP curve against existing StatCalculator DPS formulas.
+Phase 2 (UI Layout Restructure) - During conversion from manual positioning to Container hierarchy. Create clean Container structure THEN migrate children, not simultaneously.
 
 ---
 
-### Pitfall 4: State Management Race Conditions During Combat
+### Pitfall 4: Integer Division Truncation in Combat Math Pipeline
 
 **What goes wrong:**
-Hero starts clearing Area 5, player unequips weapon mid-combat, DPS recalculates to 0, division by zero crashes game or pack becomes unkillable. Or: hero dies, UI shows "Clearing Area 10," player clicks "Clear" again, spawns two parallel combat loops, double-drops currency, breaks economy.
+DefenseCalculator uses int armor/evasion with float damage. At defense_calculator.gd:18, `float(armor) / (float(armor) + 5.0 * raw_physical_damage)` is safe, but if balance tuning introduces intermediate integer calculations (e.g., "armor = base_armor * strength / 10"), GDScript performs integer division, truncating decimals. A hero with 25 strength and 8 base_armor computes `8 * 25 / 10 = 200 / 10 = 20` correctly, but `8 / 10 * 25 = 0 * 25 = 0` (order matters). This silently breaks DefenseCalculator's diminishing returns formula.
 
 **Why it happens:**
-GameState autoload is globally mutable. Combat is asynchronous (timed loops). Equipment changes trigger `Hero.update_stats()` which modifies `total_dps` while combat logic reads it. Godot autoloads don't have built-in transaction safety. As noted in game state management research, "clients handle presentation while server manages integrity" — but single-player idle games combine both roles in one autoload, creating race condition vulnerability.
+GDScript performs integer division when both operands are integers, automatically truncating decimals. In stat calculations with multiple terms, division order determines whether truncation occurs. Armor formula works because explicit `float()` casts happen first, but new balance formulas may not.
 
 **How to avoid:**
-1. **Lock equipment during combat**: Disable unequip/craft actions while `Hero.is_clearing == true`
-2. **Snapshot combat stats**: When combat starts, copy `hero.total_dps`, `hero.total_armor`, etc. to local variables, use snapshots for entire pack fight
-3. **Atomic state transitions**: Use signal-based state machine (IDLE → COMBAT_STARTING → COMBAT_ACTIVE → COMBAT_ENDING → IDLE), prevent re-entry
-4. **Validate state before actions**: Check `!hero.is_clearing` before starting new combat
-5. **Add state transition logging**: Print "STATE: IDLE → COMBAT_ACTIVE" to detect double-transitions in testing
-6. **Use GameEvents signal bus** (already exists in autoloads/) for combat lifecycle: `combat_started.emit()`, `combat_ended.emit()`, views listen and disable actions
+1. Always cast first operand to float in any division: `float(base_armor) / 10 * strength`
+2. Use float literals for constants: `8.0` not `8` in formulas
+3. For level 1 balance tuning: create formula validation test that prints intermediate values
+4. Document stat type expectations: which stats are int (armor, evasion) vs float (dps, damage reduction)
+5. In StatCalculator, standardize: all intermediate calculations use float, final display values cast to int if needed
 
 **Warning signs:**
-- "Hero took NaN damage" in console
-- Currency count jumps by 2x expected amount
-- Clicking "Clear Area" multiple times spawns multiple timers
-- Unequipping weapon mid-combat freezes game
-- Hero dies but UI still shows "Clearing..."
-- Debug prints show overlapping combat loops
+- Stat values are always round numbers (45, 60, 90) never decimals
+- Defense effectiveness plateaus unexpectedly (0.0 reduction at low armor)
+- Incrementing stat by 1 has no effect (9/10 = 0, 10/10 = 1, jump from 0 to 1)
+- Tooltip displays "X armor grants Y% reduction" but actual reduction is 0%
+- Balance spreadsheet predicts different values than game shows
 
 **Phase to address:**
-Phase 2 (pack-based combat loop) — implement state machine and locking from start. Phase 5 (death mechanics) — verify state transitions handle death edge case.
+Phase 4 (Level 1 Balance) - Before implementing new stat formulas. Add stat calculation test suite that validates intermediate float precision.
 
 ---
 
-### Pitfall 5: Resistance Cap Bypass and Invincibility
+### Pitfall 5: Save Data Schema Changes Break Existing Saves Without Migration
 
 **What goes wrong:**
-Player stacks fire resistance to 150% via suffixes on all gear slots. Elemental damage formula doesn't cap resistance. Hero becomes immune to fire damage despite resistances having 75% soft cap and 90% hard cap in standard ARPGs. Or worse: resistance formula uses `damage * (1 - resistance/100)` without clamping, 150% resistance creates negative damage, healing the hero when hit.
+Adding new properties to Hero, Item, or Affix (e.g., adding `item_level: int` or `affix_tier_range: Vector2i`) breaks existing save files. Godot's resource loader sets missing properties to default values (0, null, empty array). Loaded items have `tier_range = Vector2i(0, 0)` instead of `Vector2i(1, 8)`. Affix._init() at affix.gd:32 calls `randi_range(0, 0)` resulting in tier 0. Item formulas divide by tier, causing division by zero crash or infinite stat values.
 
 **Why it happens:**
-Hero.calculate_defense() sums resistances from all items without bounds checking. Developers assume "items can't roll that high" but forget Magic items can get +15% resistance suffix, Rare items get 3 suffixes, plus weapon suffix, plus ring suffix = 5 sources × 15% = 75% from suffixes alone. Add in implicit modifiers or percentage-based affixes and cap is easily exceeded. Path of Exile caps at 90% with explicit bounds, Diablo 2 caps at 75% (95% with items), Diablo 4 uses diminishing returns multiplication.
+Resource serialization stores property names and values. When loading a .tres/.res file missing a property, Godot initializes it with GDScript's default value (0 for int, null for Object), NOT the value set in _init(). Affix._init() sets tier_range but loaded Resources skip _init() entirely - they call _init() with no arguments then populate properties from file.
 
 **How to avoid:**
-1. **Clamp all resistances to [-100, 90]** range in calculate_defense()
-2. **Display capped and uncapped values**: UI shows "Fire Res: 75% (150% uncapped)" to inform player
-3. **Apply cap before damage calculation**, never trust raw values
-4. **Add overcap testing**: Create test hero with 200% resistance, verify damage reduction = 90%
-5. **Consider diminishing returns**: Diablo 4's multiplicative stacking prevents extreme values organically
-6. **Add elemental penetration mechanic later** (allows uncapped resistance to matter vs penetration debuffs)
+1. Implement save version tracking: add `const SAVE_VERSION = 1` to GameState
+2. Store version in save file header: `{ "version": 1, "hero": {...}, "currencies": {...} }`
+3. Create migration functions: `migrate_v1_to_v2(save_data: Dictionary) -> Dictionary`
+4. Before deserializing: check version, run migrations sequentially (v1→v2→v3→current)
+5. For property additions: use `get("property", default_value)` when reading saves
+6. For property renames: migration copies old name to new name, deletes old
+7. For property removals: migration deletes the key (safe since Godot ignores unknown properties)
 
 **Warning signs:**
-- Hero takes 0 damage from elemental attacks
-- Negative damage numbers in combat log
-- Resistance stat shows >100% value
-- Fire enemies become completely trivial
-- Boss fights feel broken/too easy at certain resistance thresholds
-- Testing reveals invincibility builds
+- Loading save shows "Invalid resource format" errors
+- Loaded hero has 0 stats but save file shows correct values in text editor
+- Items from loaded save have empty affix arrays
+- Crashes on load with "Attempt to call function on null instance"
+- Fresh saves work but old saves from yesterday fail
 
 **Phase to address:**
-Phase 1 (defensive prefix foundation) — when elemental resistance prefixes are implemented, add capping logic immediately. Phase 4 (combat pacing) — verify caps are working in actual combat.
+Phase 1 (Save/Load Foundation) - Implement versioning and empty migration pipeline BEFORE first playable save system. Easier to add migrations incrementally than retrofit later.
 
 ---
 
-### Pitfall 6: Drop Split Implementation Breaking LootTable
+### Pitfall 6: Crafting Inventory Dictionary Uses Strings, Equipment Uses null Checks
 
 **What goes wrong:**
-LootTable currently handles both item and currency drops via `roll_rarity()` and `roll_currency_drops()`. Drop split requires "packs drop currency, maps drop items." Developer adds `source_type` parameter to methods, breaks existing crafting_view.gd calls that don't pass parameter, game crashes on craft. Or: currency drop rates get accidentally halved because both pack-clear AND map-clear call currency logic.
+GameState.hero.equipped_items uses slot strings as keys with null values for empty slots (game_state.gd:12-16). CraftingView.crafting_inventory uses same pattern (crafting_view.gd:247-248). But Item type checking uses `if item is Weapon` (item.gd:58, 88, crafting_view.gd:273-282). Adding new item types requires updating 6+ match/if chains across codebase. When adding Save/Load, inconsistent null handling causes saves to serialize `{"weapon": null}` but loads expect `{"weapon": <Item>}`, throwing "Cannot access property on null" errors.
 
 **Why it happens:**
-LootTable is used by both future combat system (pack drops) AND existing crafting system (simulate drops for testing). Changing method signatures breaks backward compatibility. Adding conditional logic ("if source == pack: drop currency, else: drop items") creates branching paths that are hard to test. The class conflates "loot generation" with "loot source."
+Two mental models mixed: Dictionary-with-nulls (empty slots are present keys with null values) vs. Dictionary-without-keys (empty slots are absent keys). Code sometimes checks `if slot in dict` (key presence), sometimes `if dict[slot] != null` (value presence), sometimes `if dict.get(slot)` (implicit null check). All work until serialization converts between formats.
 
 **How to avoid:**
-1. **Create separate methods, don't modify existing**: Add `roll_pack_drops()` and `roll_map_drops()`, keep `roll_rarity()` and `roll_currency_drops()` unchanged for existing callers
-2. **Deprecate carefully**: Mark old methods with `# DEPRECATED: Use roll_pack_drops() instead` comments
-3. **Test existing flows first**: Run drop_simulator.gd before and after changes, verify identical output for unchanged code paths
-4. **Use composition over modification**: Create `PackDropper` and `MapDropper` wrapper classes that call LootTable internally
-5. **Add integration test**: Verify crafting_view still works after LootTable changes
+1. Standardize on Dictionary-with-nulls: always initialize all slots with null
+2. Always check value presence: `if equipped_items.get("weapon")` not `if "weapon" in equipped_items`
+3. Create helper: `GameState.has_equipped(slot: String) -> bool` that encapsulates null check
+4. For save serialization: filter out null values before writing, restore on load: `equipped_items.get("weapon", null)`
+5. For new item types: extend ItemType enum instead of string literals, use enum for type safety
 
 **Warning signs:**
-- Existing crafting UI breaks after combat implementation
-- Drop simulator results change unexpectedly
-- Currency drops become inconsistent
-- Items drop from sources that shouldn't drop them
-- Test failures in unrelated systems after LootTable edit
-- "Too many arguments" or "Missing argument" errors from existing code
+- "Invalid access of property on null" after loading save
+- Some items show as equipped in one view but not in another
+- Finishing item in crafting doesn't clear from hero view
+- Save file shows `"weapon": null` in JSON but load expects missing key
+- Dictionary.size() counts empty slots (should it?)
 
 **Phase to address:**
-Phase 3 (drop split) — design phase explicitly calls out backward compatibility requirement. Add regression tests before modifying LootTable.
+Phase 1 (Save/Load Foundation) - Before serializing equipped_items. Add helper methods and standardize null checks.
 
 ---
 
-### Pitfall 7: Negative Armor Amplification Asymmetry
+### Pitfall 7: UI Restructure from Sequential Tabs to Side-by-Side Breaks Signal Flow
 
 **What goes wrong:**
-Enemy applies -50 armor debuff. Hero has 100 armor. Developer uses same formula for positive and negative: `DR = armor/(armor+100)`. At 50 armor, DR = 33%. At 100 armor, DR = 50%. So -50 armor debuff increased damage by 1.5x. BUT: +50 armor buff only reduced damage by 0.8x. Asymmetric benefit makes debuffs overpowered, trivializes defensive investment, creates death spiral (debuff → take more damage → die faster → can't recover).
+Current architecture uses main_view as signal hub: crafting_view → hero_view, hero_view → gameplay_view (main_view.gd:20-23). When views are hidden via visibility toggle, signals still fire but recipients process stale data. Converting to side-by-side layout where multiple views are visible means ALL views process every signal. Example: equipping item in hero_view triggers `equipment_changed` → gameplay_view.refresh_clearing_speed() → recalculates DPS. But if crafting_view is also visible and responds to equipment_changed (to update UI preview), it reads hero.equipped_items while hero_view is mid-update, seeing partially-applied state.
 
 **Why it happens:**
-Armor formula `armor/(armor+K)` has diminishing returns by design (Path of Exile's asymmetric scaling). This is intentional for positive armor (prevents infinite stacking) but creates problems for negative armor. As noted in damage formula research: "If defense is decreased by X%, damage taken increases by X%, but if defense is increased by X%, damage reduction is not X%." Developers apply one formula to both positive and negative ranges without realizing the asymmetry.
+Signal-based architecture assumes sequential single-view processing. Signals fire synchronously in connection order. If multiple views connect to same signal and first view modifies shared state (GameState.hero), second view sees intermediate state. Side-by-side layout makes this race condition visible.
 
 **How to avoid:**
-1. **Use separate formula for negative armor**: Positive: `DR = armor/(armor+K)`, Negative: `DR = armor/K` (linear penalty, not hyperbolic)
-2. **Cap negative armor effect at -50% DR** to prevent death spirals
-3. **Test symmetry**: If +50 armor reduces damage by X%, -50 armor should increase damage by ~X% (not 3X%)
-4. **Consider additive debuffs**: Instead of modifying armor stat, apply separate "vulnerability" multiplier to final damage
-5. **Use Path of Exile's approach**: Negative armor below zero uses different constant (divide by 5 at minimum)
+1. Audit all signals: document which signals modify state vs. notify of changes
+2. State-modifying signals should be one-way: `hero_view.equipment_changed` means "I modified hero, please refresh"
+3. Never read GameState in signal handlers - use signal parameters: `equipment_changed(slot: String, item: Item)`
+4. For UI updates triggered by multiple views visible: use deferred calls: `refresh_ui.call_deferred()`
+5. Create signal ordering contract: state changes → UI updates → layout recalculations
+6. Consider replacing some signals with direct method calls when order matters
 
 **Warning signs:**
-- Small armor debuffs feel catastrophically punishing
-- Enemies with armor reduction abilities become "must avoid"
-- Defensive builds feel mandatory (can't survive without high armor)
-- Death from full health in <1 second against debuff enemies
-- Players complain "armor doesn't matter, I die anyway"
-- Testing shows -100 armor = 500% damage taken (unreasonably high)
+- Item appears equipped in one view but not another until view switch
+- Currency counts desync between views (one shows old count)
+- Clicking item in crafting updates hero_view but not currency display
+- Random "index out of range" errors when signals fire during state mutation
+- Race conditions that only occur when specific views are visible together
 
 **Phase to address:**
-Phase 1 (defensive prefix foundation) — when armor calculation is implemented, document and test negative armor separately. Flag for Phase 6+ when monster debuffs are added.
+Phase 2 (UI Layout Restructure) - Before enabling concurrent view visibility. Refactor signal handlers to be state-query-free.
 
 ---
 
-### Pitfall 8: Integer Overflow in Damage Calculations
+### Pitfall 8: Balance Tuning Cascades Across DefenseCalculator, StatCalculator, CombatEngine Without Visibility
 
 **What goes wrong:**
-Endgame hero has 10,000 DPS. Pack has 5 monsters. Fight lasts 15 seconds. Total damage = 10,000 × 15 = 150,000. Godot GDScript uses 64-bit ints by default but intermediate calculations can overflow if mixing int/float incorrectly. Or worse: damage formula does `int(base_damage) * int(crit_multiplier) * int(speed)` and intermediate result exceeds 2^31, wraps to negative, hero deals -50,000 damage and heals the enemy.
+Tweaking level 1 monster damage (from 10 → 15) seems safe, but triggers cascade: CombatEngine calculates raw damage → DefenseCalculator.calculate_armor_reduction() uses `armor / (armor + 5 * raw_damage)` → 5x multiplier in denominator amplifies damage change → at 100 armor, reduction changes from 66.7% (vs 10 damage) to 57.1% (vs 15 damage) → hero dies 2x faster. Without spreadsheet tracking, this is invisible until UAT. Worse: increasing starting armor (50 → 100) to compensate makes high armor even stronger due to diminishing returns curve shape, creating balance divergence between early/late game.
 
 **Why it happens:**
-GDScript's loose typing allows mixing int and float without explicit casts. StatCalculator uses `float` for DPS but combat might convert to `int` for display. As documented in Final Fantasy VII damage overflow: "Final damage overflowed by going beyond 2^31 - 1 at an earlier stage of computation." Developers don't anticipate extreme values during endgame optimization.
+DefenseCalculator uses non-linear formulas (hyperbolic for armor, hyperbolic for evasion, capped linear for resistances). StatCalculator aggregates affixes linearly. CombatEngine applies in pipeline (evasion → resistance → armor → ES split). Changing any input value propagates through pipeline with different scaling at each stage. The 5x multiplier in armor formula and 200 constant in evasion formula are magic numbers with no design documentation - tuning without understanding their derivation breaks intended curve.
 
 **How to avoid:**
-1. **Use float for ALL damage calculations**: Never cast to int until final display
-2. **Clamp results before type conversion**: `int(clamp(damage, 0, 999999))` for display
-3. **Add overflow test cases**: Test with DPS=999999, verify damage doesn't wrap negative
-4. **Use `INF` constant checks**: `if damage >= INF or is_nan(damage): damage = 0`
-5. **Log suspect values**: Print warning if damage > 1,000,000 (indicates possible overflow)
-6. **Prefer multiplication order**: `(damage * multiplier) * time` safer than `damage * (multiplier * time)` due to intermediate precision
+1. Create balance spreadsheet with columns: Raw Damage | Armor | Armor Reduction % | Effective HP Multiplier | Time to Die
+2. Formula: `effective_hp = base_hp / (1 - armor_reduction)`, `time_to_die = effective_hp / dps`
+3. When tuning damage: fill rows with armor values [0, 50, 100, 200, 500] to see curve shape
+4. When tuning armor: fill rows with damage values [10, 50, 100, 200] to see diminishing returns
+5. Establish invariant: level 1 hero (assume 50 armor) should survive 20 seconds against level 1 monster
+6. Red flag: if tuning one stat requires tuning 3+ other stats to compensate, formula needs redesign
+7. Document magic numbers: why 5x? why 200? Reference ARPG balance theory or PoE formulas
 
 **Warning signs:**
-- Damage numbers suddenly become negative
-- High DPS builds deal less damage than low DPS
-- Combat log shows wildly inconsistent damage values
-- Hero one-shots self on crit
-- Damage value displays as negative in UI
-- Large numbers render as "1.234e+6" (scientific notation in UI)
+- Small stat changes have huge gameplay impact (1 point armor = 20% tankier)
+- High-stat builds become exponentially stronger (diminishing returns should prevent this)
+- Balance feels good at level 1, breaks at level 5
+- Spreadsheet calculations don't match in-game results (formula transcription error?)
+- Tuning becomes whack-a-mole: fix early game, break late game, repeat
 
 **Phase to address:**
-Phase 2 (pack-based combat) and Phase 4 (combat pacing) — when damage application is implemented, enforce float types and add overflow tests.
+Phase 4 (Level 1 Balance) - Before any numeric changes. Build spreadsheet first, then tune with data.
 
 ---
 
@@ -238,178 +229,146 @@ Phase 2 (pack-based combat) and Phase 4 (combat pacing) — when damage applicat
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Skipping resistance caps in v1.2, adding later | Faster combat implementation | Invincibility builds discovered post-launch, requires retroactive rebalancing | Never — caps are 3 lines of code |
-| Using time.sleep() instead of proper async combat | Simple combat loop implementation | Freezes UI, can't cancel combat, breaks on slow devices | Never — Godot has Timer nodes and yield |
-| Hardcoding pack HP values per area | Avoid complex scaling formula | Rebalancing requires editing 300 lines, impossible to tune progression curve | Acceptable for prototyping only |
-| Sharing LootTable between combat and crafting without versioning | Don't duplicate code | Breaking change to combat breaks crafting, regression bugs | Acceptable if integration tests exist |
-| Storing combat state in UI layer (gameplay_view) instead of GameState | Avoids refactoring GameState autoload | Can't save/load during combat, state lost on scene change, testing requires UI | Never — combat is game logic, not view logic |
-| Allowing equipment changes during combat | Simpler state management | Race conditions, stat snapshot bugs, exploit potential | Never — lock equipment with `is_clearing` flag |
-| Using global `randf()` without seed control | Default randomness works | Drop testing irreproducible, balancing requires manual playtesting | Acceptable for v1.2, add seed control in v1.3+ |
-| Linear pack HP scaling (HP = area * 100) | Easy to implement | Early areas trivial, late areas impossible, no difficulty curve | Acceptable for proof-of-concept only |
+| Skip save versioning, assume save schema never changes | Faster initial implementation | Every schema change breaks all existing saves, player frustration, support burden | Never - versioning is 10 lines of code |
+| Use string literals for item types instead of enum | Less boilerplate, faster typing | No type safety, typos cause runtime errors, refactoring requires grep | Prototype only |
+| Manual visibility sync for CanvasLayers | Works with current single-view design | Breaks silently when adding concurrent views, input blocking bugs | Single-view UI only |
+| Hard-code balance values in GDScript constants | Quick iteration during testing | Cannot tune without code changes, recompile required, no A/B testing | Pre-alpha only |
+| Shallow copy Resources for save/load | Assume Godot handles it | Silent data corruption, save files share references with runtime | Never - corruption is unfixable |
+| Mix anchor positioning with Container layout | Reuse existing positioned nodes in new Containers | 0x0 size bugs, viewport-dependent behavior, mobile breaks | Never - clean one or the other |
 
 ## Integration Gotchas
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| StatCalculator → Combat | Calling calculate_dps() every frame during combat | Snapshot stats at combat start, reuse for duration |
-| GameState → Gameplay View | Reading hero.total_dps directly in _process() | Cache value, update only on equipment_changed signal |
-| LootTable → Currency Drops | Calling roll_currency_drops() per monster instead of per pack | Call once per pack, multiply by pack size if needed |
-| Hero → Death Mechanics | Setting is_alive=false and assuming everything stops | Emit hero_died signal, let systems respond (stop combat, show UI) |
-| Combat Loop → Timer | Using `await get_tree().create_timer()` without cancellation | Store Timer reference, call stop() on combat end |
-| Damage Calculation → Resistance | Applying resistance after armor in damage chain | Apply in parallel: armor reduces physical, resistance reduces elemental, sum final reductions |
-| Pack HP → Area Scaling | Forgetting that DPS also scales with area (better gear drops) | Pack HP scaling must outpace DPS scaling or combat becomes trivial |
-| Drop Split → Existing Crafting | Modifying roll_rarity() to require area_level param | Add new methods, keep old signatures for backward compatibility |
+| Save/Load with Resources | Use `Resource.duplicate(true)` assuming deep copy | Implement custom `deep_duplicate()` that manually copies typed arrays |
+| CanvasLayer in multi-view UI | Assume visibility inherits from parent Node2D | Explicitly sync `canvas_layer.visible = parent.visible` |
+| Container migration | Convert parent to Container but leave children with anchors | Reset all child anchors/offsets to 0, use Container properties |
+| Balance spreadsheet → GDScript | Copy formula from spreadsheet with integer division | Cast first operand to float or use `.0` literals |
+| Signal-based view communication | Connect all views to all signals | Use signal parameters, avoid state reads in handlers |
 
 ## Performance Traps
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Recalculating hero stats every frame | FPS drops during combat, fan noise | Calculate once on equip_item(), cache result, update on change only | 60 FPS → 30 FPS with 5 items equipped |
-| Creating new Timer nodes per pack without cleanup | Memory leak, game slows after 100 packs | Reuse single Timer, or use Queue.free() after combat | Game crashes after ~1000 area clears |
-| Storing entire combat log in memory | Expanding memory usage over time | Circular buffer (last 100 entries) or clear on area change | 100MB+ memory usage after 1 hour |
-| Using String concatenation in combat loop | GC pressure, stuttering | Use PackedStringArray or StringBuilder pattern | Micro-stutters every 5 seconds |
-| Emitting signals with complex objects per damage tick | Signal bus congestion | Emit on pack_cleared, not per hit | Noticeable lag with 20+ monsters per pack |
-| Calling update_stats() on every affix change during crafting | Crafting feels sluggish | Batch updates: set `_suppress_update=true`, modify all affixes, call update_stats() once | Crafting a 6-mod rare takes 2+ seconds |
-| Deep copying Hero object for stat snapshots | Memory allocation per combat | Reference immutable stats snapshot class | Combat start delay noticeable (>200ms) |
+| Deep copying Resources on every save | Save takes 1-2 seconds on item-heavy builds | Only deep copy when necessary, cache serialization | 100+ items in inventory |
+| CanvasLayers rendering when hidden | 30 FPS with 3 views despite only 1 visible | Explicitly set `canvas_layer.visible = false` | 3+ concurrent CanvasLayers |
+| Signal cascade during view switch | Frame spike when changing tabs | Use `call_deferred()` for non-critical UI updates | 5+ connected signals |
+| Recalculating stats on every frame | FPS drops when equipment window open | Cache stat totals, recalculate only on `equipment_changed` signal | 10+ affixes per item |
+| Container layout with deeply nested hierarchy | UI update lag (100ms+) on viewport resize | Flatten Container hierarchy, max 3 levels deep | 5+ nested Containers |
 
 ## UX Pitfalls
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| No visual feedback during combat | Player can't tell if combat is happening | Add pulsing health bar, damage numbers, pack HP indicator |
-| Combat starts instantly on button click | Accidental clicks waste time | Add 0.5s animation or "Starting combat..." state transition |
-| Death has no consequence | No tension, combat feels meaningless | Lose area progress or pay currency to revive (idle games need stakes) |
-| No way to cancel combat | Trapped in 2-minute fight after misclick | Add "Retreat" button with consequences (lose loot, take damage) |
-| Resistance stats hidden until first elemental hit | Player doesn't know resistances matter | Show resistances in hero view with "0% → 75%" tooltips |
-| Pack HP not visible | Can't gauge fight duration | Show HP bar or "5 monsters remaining" counter |
-| Currency drops invisible during combat | Player ignores drops, doesn't understand rewards | Show "+5 Runic" floating text or post-combat summary |
-| No indication of why hero died | Frustrating, feels unfair | Combat log showing "Took 50 fire damage (0% resistance)" |
-| Combat speed feels wrong but no setting | Player abandons game | Add 1x/2x/4x speed toggle in settings |
-| Area difficulty not visible before starting | Player enters impossible area, wastes time | Show recommended DPS or "Area 50 (Hard)" indicator |
+| No feedback when hammer click does nothing | Click item with no hammer selected - nothing happens, no message | Show toast message "Select a hammer first" |
+| Side-by-side layout doesn't fit 1200x700 viewport | UI elements overlap or scroll off screen | Design for 1200x600 usable space (100px for nav) |
+| Crafting inventory auto-replaces lower tier items | Find rare helmet, auto-deletes magic helmet user was crafting | Show "Replace?" confirmation or use separate stash |
+| Save/load has no error messages on corruption | Load fails silently, player at main menu with no feedback | Show error popup: "Save file corrupted (version mismatch)" |
+| Balance changes between sessions break progression | Player balanced for old damage values, suddenly dies | Display patch notes on load, offer stat respec |
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Combat System:** Often missing cancellation logic — verify clicking area transition mid-combat doesn't break state
-- [ ] **Damage Reduction:** Often missing negative armor handling — verify debuffs use separate formula or cap at -100%
-- [ ] **Resistance Caps:** Often missing upper bound enforcement — verify 200% resistance still = 90% DR
-- [ ] **Drop Split:** Often missing backward compatibility — verify existing crafting/simulator still works after LootTable changes
-- [ ] **Death Mechanics:** Often missing state cleanup — verify hero.is_clearing=false and timers stopped on death
-- [ ] **Pack Scaling:** Often missing DPS normalization — verify Area 300 packs don't die in 0.1s with endgame gear
-- [ ] **Combat Pacing:** Often missing underpowered testing — verify combat possible (not pleasant) with white items
-- [ ] **State Locking:** Often missing re-entry prevention — verify can't start combat twice by double-clicking
-- [ ] **Stat Snapshots:** Often missing race condition prevention — verify unequipping weapon mid-combat doesn't crash
-- [ ] **UI Feedback:** Often missing "combat in progress" indicators — verify player knows combat is happening
-- [ ] **Currency Normalization:** Often missing economy rebalance verification — verify currency/hour matches v1.1 baseline
-- [ ] **Overflow Protection:** Often missing extreme value testing — verify 999,999 DPS doesn't cause negative damage
+- [ ] **Save/Load:** Saves load successfully but have you tested loading v1 save after adding new Hero property? (Schema migration)
+- [ ] **Save/Load:** Deep copied Items but did you deep copy the Affix arrays inside? (Nested Resources)
+- [ ] **UI Layout:** Side-by-side views render but did you test CanvasLayer visibility sync? (Invisible input blocking)
+- [ ] **UI Layout:** Containers position correctly in editor but did you test at runtime 1200x700? (Anchor conflict)
+- [ ] **Crafting UX:** Item selection works but did you test clicking with no hammer selected? (Missing feedback)
+- [ ] **Crafting UX:** Currency buttons update counts but did you test when count hits 0 mid-click? (Race condition)
+- [ ] **Balance Tuning:** Damage values feel right but did you test with 0 armor? 500 armor? (Edge cases)
+- [ ] **Balance Tuning:** Formulas work in spreadsheet but did you verify no integer division in GDScript? (Type coercion)
+- [ ] **Signal Flow:** Signals fire correctly but did you test with all 3 views visible simultaneously? (State race)
 
 ## Recovery Strategies
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Progression curve broken (too fast/slow) | MEDIUM | Run drop simulator with 1000 trials per area tier, compare to v1.1 baseline, adjust LootTable multipliers, re-verify |
-| Invincibility builds discovered | LOW | Add resistance caps to calculate_defense(), no save file migration needed (caps apply on next stat recalc) |
-| Combat pacing wrong (too fast/slow) | MEDIUM | Add HP_SCALE_MULTIPLIER constant to pack generation, tune via testing, update global constant |
-| Race condition crashes during combat | HIGH | Refactor to state machine, add equipment locking, requires architectural change + regression testing |
-| Death mechanics don't clean up state | MEDIUM | Add death handler that emits signal, subscribe all systems, verify cleanup in each subscriber |
-| Drop split broke existing features | HIGH | Revert LootTable changes, create new classes for combat drops, migrate callers incrementally |
-| Negative armor creates death spiral | LOW | Add clamping to armor formula, test with negative values, adjust constants if needed |
-| Integer overflow in damage | LOW | Change all damage vars from `var damage: int` to `var damage: float`, add clamp before display |
-| No combat cancellation | MEDIUM | Store Timer reference, add cancel button, handle early exit (no drops, restore state) |
-| Resistance stacking too powerful | LOW | Add diminishing returns formula (Diablo 4 style) or hard caps (PoE style), retune expected values |
+| Resource arrays not deep copied | HIGH | 1. Add `Item.deep_duplicate()` method 2. Replace all `item.duplicate(true)` calls 3. Wipe existing saves (no migration possible from corrupted references) 4. Apologize to alpha testers |
+| CanvasLayer visibility not synced | LOW | 1. Add `_sync_canvas_layers()` method to main_view 2. Call on `show_view()` 3. Test with all view combinations |
+| Anchor/Container conflict | MEDIUM | 1. Create new Container hierarchy in separate scene 2. Migrate children one-by-one, resetting anchors 3. Test layout at 1200x700 4. Replace old scene with new |
+| Integer division in stat formula | LOW | 1. Add `.0` to all division literals 2. Cast variables to float 3. Add unit test 4. Compare before/after in spreadsheet |
+| Save schema changed without versioning | HIGH | 1. Add versioning system NOW 2. Bump to v2 with migration v1→v2 3. Cannot recover v1 saves (wipe required) 4. Document lesson learned |
+| Balance cascade not modeled | MEDIUM | 1. Build spreadsheet from scratch with all formulas 2. Input current values, verify matches game 3. Tune in spreadsheet 4. Copy tuned values to GDScript 5. Playtest to verify |
 
 ## Pitfall-to-Phase Mapping
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Armor formula division by zero | Phase 1: Defensive Prefix Foundation | Test suite with armor=0, armor=-1000, resistance=150%, verify DR capped at 90% |
-| Progression curve disruption | Phase 3: Drop Split + Phase 4: Pacing | Compare v1.1 vs v1.2 currency/hour via simulator, ±20% tolerance |
-| Combat pacing mismatch | Phase 4: Combat Pacing | Playtest with beginner/mid/endgame gear, verify 5-15s TTK per pack |
-| State management race conditions | Phase 2: Pack-Based Combat | Try unequipping items during combat, verify graceful handling or prevention |
-| Resistance cap bypass | Phase 1: Defensive Prefix Foundation | Create test hero with 200% resistance, verify damage reduction = 90% |
-| Drop split breaking LootTable | Phase 3: Drop Split | Run existing drop_simulator and crafting flows, verify no regressions |
-| Negative armor amplification | Phase 1: Defensive Prefix Foundation | Test with armor=-100, verify damage increase reasonable (<200%) |
-| Integer overflow | Phase 2: Pack-Based Combat | Test with DPS=999999, verify no negative damage or NaN |
+| Resource.duplicate() doesn't deep copy arrays | Phase 1 (Save/Load Foundation) | Unit test: modify loaded item's affix, reload save, verify affix unchanged |
+| CanvasLayer visibility doesn't inherit | Phase 2 (UI Layout Restructure) | Manual test: show gameplay view, verify combat UI visible; hide gameplay, verify combat UI hidden |
+| Anchor/Container conflict causes 0x0 size | Phase 2 (UI Layout Restructure) | Launch at 1200x700, verify all UI visible; resize to 800x600, verify no overlap |
+| Integer division truncates stats | Phase 4 (Level 1 Balance) | Unit test: calculate armor reduction with float vs int, assert equal |
+| Save schema changes break old saves | Phase 1 (Save/Load Foundation) | Integration test: save as v1, add property, load as v2, verify migration ran |
+| Crafting inventory null handling inconsistent | Phase 1 (Save/Load Foundation) | Unit test: serialize empty slot, deserialize, verify null |
+| Signal flow breaks with concurrent views | Phase 2 (UI Layout Restructure) | Manual test: show all 3 views, equip item, verify all views update correctly |
+| Balance cascades not modeled | Phase 4 (Level 1 Balance) | Spreadsheet test: change damage by 50%, verify effective HP multiplier within 20% |
 
-## Domain-Specific Warnings
+## Godot 4.5 Specific Gotchas
 
-### When Adding Pack-Based Combat to Time-Based Game
+### Resource Serialization Quirks
 
-**Pack HP Tuning is Non-Linear:**
-Don't use `pack_hp = area_level * constant`. Hero DPS scales exponentially via gear (Area 1 weapon = 10 DPS, Area 100 weapon = 500 DPS due to better implicits + affixes + tiers). Pack HP must scale faster than DPS to maintain challenge. Use logarithmic curves: `pack_hp = BASE_HP * log(area_level + 1) * SCALE_FACTOR`. Path of Exile 2 uses `Armour/(Armour + 12 * Damage)` which inherently has diminishing returns.
+1. **Tres File External Resource Stripping**: When moving scene files with external resource references (`.tres` files for Items, Affixes), the scene writer may strip out external resources and parser has trouble reading the new files. **Mitigation**: Use internal resources for save data (JSON or binary), not external `.tres` files.
 
-**Drop Rate Testing Requires Both Statistical AND Playtest Validation:**
-Drop simulator shows "60 Runic per hour" but doesn't account for human behavior (AFK time, interruptions). Idle games need 80% passive efficiency (player checks every 15 min) and 100% active efficiency (player present). Test both: 1) Run simulator for statistical baseline, 2) Playtest with actual timer to verify feel.
+2. **Resource Cache Prevents Reloading**: Godot's resource cache prevents reloading already-loaded resources like savegames. Loading `user://save_slot_1.res` multiple times returns the cached version, not disk version. **Mitigation**: Use `ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)` for save files.
 
-**Damage Types Must Be Balanced Simultaneously:**
-Can't balance physical damage then add elemental later. If armor reduces physical by 50% but fire resistance is 0%, fire becomes meta. All damage types and mitigation must ship together or create tier lists. Either launch v1.2 with physical-only (defer elemental), OR implement all types in Phase 1 (preferred).
+3. **Custom Resources Break on Upgrade**: Custom resource types that worked in Godot 4.3 may break in 4.4+, with Godot ignoring the custom script and treating as plain Resource. **Mitigation**: Avoid relying on Resource script inheritance for save data; use plain Dictionary serialization.
 
-### When Integrating StatCalculator with Combat
+### CanvasLayer Layering Issues
 
-StatCalculator currently handles **offense** (DPS calculation with proper order of operations). Combat adds **defense** (damage reduction). These must compose correctly:
+1. **Dynamic UI on Layer 1024**: Dynamically generated UI elements (popups, menus) inherit from Window class and render on layer 1024, while static UI renders on layer 0. **Mitigation**: Set explicit `layer` property on all CanvasLayers to control render order. For side-by-side layout: Crafting UI layer 0, Hero UI layer 1, Gameplay UI layer 2.
 
-```
-Incoming Damage = Enemy Base Damage
-→ Apply armor reduction (physical)
-→ Apply resistance reduction (elemental)
-→ Apply evasion check (RNG miss)
-→ Apply energy shield absorption (soak before health)
-→ Final damage to health
-```
+2. **First Control Node Detaches**: First Control node under CanvasLayer follows viewport instead of CanvasLayer, detaching from scene and becoming part of parent scene. **Mitigation**: Wrap first Control in a Container or add dummy Control as first child.
 
-**Pitfall:** Applying reductions in wrong order changes effective survivability exponentially. Test composition explicitly.
+### Container Sizing on Mobile Renderer
 
-### When Replacing Core Gameplay Loop
+1. **SubViewportContainer Stretch Undoes Itself**: Resizing SubViewportContainer with stretch enabled changes child SubViewport size to match, undoing the stretch effect. **Mitigation**: Don't use SubViewportContainer for side-by-side layout; use regular Containers with Control nodes.
 
-v1.0-v1.1 established player expectations: "I craft items to progress." v1.2 changes to "I clear packs to get currency to craft items." This is **additive** (combat unlocks crafting) not **replacement** (combat instead of crafting). Pitfall: If combat feels mandatory, crafting becomes chore. If crafting feels mandatory, combat is just a currency grind.
+2. **CenterContainer Squishes Children**: If Control children have no minimum size, CenterContainer squishes them to 0x0. **Mitigation**: Set `custom_minimum_size` on all Controls or use `size_flags_expand` + `size_flags_fill`.
 
-**Prevention:** Combat should feel optional for pure crafters (can buy/find items), crafting should feel optional for pure fighters (can find good drops). Both paths should work, combination should be optimal.
+3. **Viewport Rect_Scale Causes Distortion**: Changing ViewportContainer's `rect_scale` distorts contents. **Mitigation**: Adjust margins, not scale, to resize ViewportContainers.
+
+### GDScript Type System
+
+1. **Float is 64-bit in Godot 4**: Unlike Godot 3 (32-bit float), Godot 4 uses 64-bit double precision float. **Implication**: More precision for stat calculations, but ConfigFile saves large floats incorrectly (1234567.0 → 1234570.0). **Mitigation**: Use int for currencies and large numbers, float only for percentages and ratios.
+
+2. **Integer Division Auto-Truncates**: `5 / 2 = 2` not `2.5`. **Mitigation**: Cast first operand: `float(5) / 2 = 2.5` or use literal: `5.0 / 2 = 2.5`.
 
 ## Sources
 
-**ARPG Damage Formulas:**
-- [Path of Exile 2 Armour Formula](https://mobalytics.gg/poe-2/guides/armour) - Armour/(Armour+12*Damage), 90% cap
-- [Path of Exile Wiki: Damage Reduction](https://www.poewiki.net/wiki/Damage_reduction) - 90% max, -200% min caps
-- [Diablo 4 Armor and Resistances](https://www.thegamer.com/diablo-4-how-armor-and-resistances-work/) - Diminishing returns via multiplication
-- [Melvor Idle Damage Reduction](https://wiki.melvoridle.com/w/Damage_Reduction) - Additive damage reduction example
+**Godot Resource Serialization:**
+- [Saving and Loading Games in Godot 4 (with resources) | GDQuest Library](https://www.gdquest.com/library/save_game_godot4/)
+- [How to load and save things with Godot: a complete tutorial about serialization](https://forum.godotengine.org/t/how-to-load-and-save-things-with-godot-a-complete-tutorial-about-serialization/44515)
+- [Failed to create instances when loading nested resources · Issue #66973](https://github.com/godotengine/godot/issues/66973)
+- [Resource.duplicate(true) doesn't duplicate subresources stored in Array or Dictionary properties · Issue #74918](https://github.com/godotengine/godot/issues/74918)
+- [Duplicate Godot custom resources deeply, for real](https://simondalvai.org/blog/godot-duplicate-resources/)
 
-**Damage Formula Edge Cases:**
-- [Last Epoch Forum: Negative Armor](https://forum.lastepoch.com/t/negative-armor-formula/26045) - Singular behavior between -700 and -500
-- [The Simplest Non-Problematic Damage Formula](https://tung.github.io/posts/simplest-non-problematic-damage-formula/) - Special-casing extremes is norm
-- [Armor Formula Edge Cases](https://forum.albiononline.com/index.php/Thread/101286-What-is-the-formula-for-Armor-Damage-reduction/) - Asymmetric scaling issues
-- [WoW Damage Reduction Formula](https://wowpedia.fandom.com/wiki/Damage_reduction) - armor/(armor+K) with different constants
+**CanvasLayer UI Issues:**
+- [Canvas layers — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/2d/canvas_layers.html)
+- [CanvasLayer not matching with first child control · Issue #81514](https://github.com/godotengine/godot/issues/81514)
+- [Bite-Sized Godot: The fix for UI and post-processing shaders in Godot 4](https://shaggydev.com/2025/04/09/godot-ui-postprocessing-shaders/)
 
-**Idle Game Pacing:**
-- [Idle Game Pacing Problems](https://steamcommunity.com/app/992070/discussions/0/2997674076186864255/) - "2-3 minutes to kill one enemy"
-- [How to Design Idle Games](https://machinations.io/articles/idle-games-and-how-to-design-them/) - Simple core loop, complex meta loop
-- [Balancing Tips: Idle Idol](https://www.gamedeveloper.com/design/balancing-tips-how-we-managed-math-on-idle-idol) - Math management patterns
-- [The Math of Idle Games Part III](https://www.gamedeveloper.com/design/the-math-of-idle-games-part-iii) - Progression curve design
+**Container Layout:**
+- [UI Layout using Containers in Godot](https://gdscript.com/solutions/ui-layout-using-containers-in-godot/)
+- [Resizing SubViewportContainer with stretch enabled · Issue #62041](https://github.com/godotengine/godot/issues/62041)
+- [Overview of Godot UI containers | GDQuest](https://school.gdquest.com/courses/learn_2d_gamedev_godot_4/start_a_dialogue/all_the_containers)
 
-**Incremental Game Economy:**
-- [Designing Game Economies](https://medium.com/@msahinn21/designing-game-economies-inflation-resource-management-and-balance-fa1e6c894670) - Faucets, sinks, inflation
-- [I Designed Economies for $150M Games](https://www.gamedeveloper.com/production/i-designed-economies-for-150m-games-here-s-my-ultimate-handbook) - Professional economy design
-- [Game Economy Inflation](https://machinations.io/articles/what-is-game-economy-inflation-how-to-foresee-it-and-how-to-overcome-it-in-your-game-design) - Balancing production and consumption
+**Crafting/Inventory UX:**
+- [How To Build An Inventory System In Godot 4](https://gamedevacademy.org/godot-inventory-system-tutorial/)
+- [Inventory System Design Fundamentals: Item Management with Resources and Signals](https://uhiyama-lab.com/en/notes/godot/inventory-system/)
 
-**Godot State Management:**
-- [Godot Autoload Best Practices](https://docs.godotengine.org/en/stable/tutorials/best_practices/autoloads_versus_internal_nodes.html) - When to use autoloads
-- [Godot Singletons](https://docs.godotengine.org/en/stable/tutorials/scripting/singletons_autoload.html) - Official autoload documentation
-- [Unity Game State Management](https://docs.unity.com/ugs/en-us/manual/cloud-code/manual/game-state-management) - Server-side state patterns
+**Balance Tuning:**
+- [Balancing Tips: How We Managed Math on Idle Idol](https://www.gamedeveloper.com/design/balancing-tips-how-we-managed-math-on-idle-idol)
+- [How do you use spreadsheets to manage your game's data and balance?](https://www.linkedin.com/advice/0/how-do-you-use-spreadsheets-manage-your-games-data)
+- [Balance & Tuning | Understanding Games](https://medium.com/understanding-games/balance-tuning-8e0871ad0a0b)
 
-**ARPG UI and Combat Feedback:**
-- [Path of Exile: Visual Clarity Issues](https://www.pathofexile.com/forum/view-thread/3898159) - Community feedback on combat clarity
-- [Top ARPGs in 2026](https://www.tribality.com/articles/top-action-rpgs-arpgs-in-2026-the-best-isometric-loot-driven-games/) - Diablo IV's audiovisual feedback praised
+**Godot 4 Type System:**
+- [Godot Integer Division: Stop Losing Decimals! (Quick Fix)](https://the-scientist.blog/45208-godot-integer-division-stop-losing-decimals)
+- [float — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/classes/class_float.html)
 
-**Integer Overflow:**
-- [Final Fantasy VII Damage Overflow](https://finalfantasy.fandom.com/wiki/Damage_overflow_glitch_in_Final_Fantasy_VII) - Exceeding 2^31-1 in damage calculation
-
-**Resistance Caps:**
-- [PoE Wiki: Resistance](https://www.poewiki.net/wiki/Resistance) - 90% hard cap, -200% floor
-- [Diablo Resistances](https://diablo.fandom.com/wiki/Resistances) - 75% default cap, 95% max
-
-**Combat Rebalancing:**
-- [Pantheon Spring 2026 Combat Update](https://www.pantheonmmo.com/news/spring-2026-combat-and-progression-update/) - TTK increases, sustainability focus
+**Save Schema Migration:**
+- ["Godot 4" save system version migration data schema changes](https://www.gdquest.com/library/save_game_godot4/)
+- [Saving games — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/io/saving_games.html)
 
 ---
-
-*Pitfalls research for: Pack-based idle ARPG combat system integration*
-*Researched: 2026-02-16*
-*Primary risk areas: Damage formula edge cases, progression curve preservation, combat pacing for idle gameplay, state management during async combat*
+*Pitfalls research for: Hammertime v1.3 Milestone - Save/Load, UI Restructure, Crafting UX, Balance Tuning*
+*Researched: 2026-02-17*
+*Confidence: HIGH - Based on official Godot documentation, GitHub issues, community patterns, and codebase analysis*

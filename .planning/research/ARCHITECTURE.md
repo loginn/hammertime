@@ -1,799 +1,720 @@
 # Architecture Research
 
-**Domain:** Pack-Based Combat Integration for ARPG Idle Game
-**Researched:** 2026-02-16
+**Domain:** Save/Load, Side-by-Side UI Layout, Crafting UX Integration
+**Researched:** 2026-02-17
 **Confidence:** HIGH
 
-## Executive Summary
+## Integration Overview
 
-The v1.2 milestone adds pack-based combat, monster packs, death mechanics, and defensive calculations to an existing Resource-based ARPG crafting game built on Godot 4.5. The existing architecture is well-suited for this integration with minimal disruption:
-
-- **NEW Resources**: MonsterPack, Map (replacing area-as-integer)
-- **MODIFIED Resources**: Hero (add defensive calculation methods), StatCalculator (add damage reduction functions)
-- **MODIFIED Autoloads**: GameState (pack tracking, death state), GameEvents (new combat signals)
-- **MAJOR REWORK**: gameplay_view (from time-based area clearing to pack-based combat loop)
-- **MODIFIED System**: LootTable (split drops: packs→currency, maps→items)
-
-The architecture follows Godot's Resource pattern for data, signal bus for events, and StatCalculator service for calculations. New combat features integrate cleanly without restructuring the existing feature-based folder organization or scene hierarchy.
-
-## Current Architecture (v1.1)
-
-### System Overview
+This milestone adds save/load persistence, side-by-side hero/crafting UI layout, and crafting UX improvements to existing Godot 4.5 Resource-based idle ARPG. All features integrate with existing architecture rather than replacing it.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Scene Layer                             │
+│                    Scene Layer (main.tscn)                   │
 ├─────────────────────────────────────────────────────────────┤
-│  main.tscn                                                   │
-│    └─ main_view (coordinator)                                │
-│         ├─ crafting_view (Item creation)                     │
-│         ├─ hero_view (Equipment, stats display)              │
-│         └─ gameplay_view (Area clearing, drops) ← REWORK     │
+│  ┌────────────────┐  ┌────────────────┐  ┌──────────────┐   │
+│  │  HeroView      │  │  CraftingView  │  │ GameplayView │   │
+│  │  (CanvasLayer) │  │  (CanvasLayer) │  │(CanvasLayer) │   │
+│  └───────┬────────┘  └───────┬────────┘  └──────┬───────┘   │
+│          └──────────┬─────────┘                  │           │
+│                     │ (signals)                  │           │
+├─────────────────────┴────────────────────────────┴───────────┤
+│                   Autoload Layer                             │
 ├─────────────────────────────────────────────────────────────┤
-│                    Service Layer                             │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
-│  │StatCalculator│  │  LootTable   │  │   Currency   │       │
-│  │(DPS/defense) │  │ (rarity/qty) │  │ (template)   │       │
-│  └──────────────┘  └──────────────┘  └──────────────┘       │
-├─────────────────────────────────────────────────────────────┤
+│  ┌──────────────────┐  ┌─────────────────────────────────┐  │
+│  │   GameState      │  │        GameEvents               │  │
+│  │   - hero         │  │   - equipment_changed           │  │
+│  │   - currencies   │  │   - item_crafted                │  │
+│  │   (singleton)    │  │   - combat signals (7)          │  │
+│  └────────┬─────────┘  │   - drop signals (2)            │  │
+│           │            └─────────────────────────────────┘  │
+├───────────┴──────────────────────────────────────────────────┤
 │                    Data Layer (Resources)                    │
 ├─────────────────────────────────────────────────────────────┤
-│  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐│
-│  │  Hero  │  │  Item  │  │ Affix  │  │Currency│  │Implicit││
-│  └────────┘  └────────┘  └────────┘  └────────┘  └────────┘│
-├─────────────────────────────────────────────────────────────┤
-│                    Global State (Autoloads)                  │
-│  ┌────────────────────────┐  ┌────────────────────────┐     │
-│  │      GameState         │  │      GameEvents        │     │
-│  │ - hero: Hero singleton │  │  - equipment_changed   │     │
-│  │ - currency_counts: {}  │  │  - item_crafted        │     │
-│  │                        │  │  - area_cleared        │     │
-│  └────────────────────────┘  └────────────────────────┘     │
+│  ┌──────┐  ┌──────┐  ┌──────┐  ┌─────────┐  ┌──────────┐   │
+│  │ Hero │  │ Item │  │Affix │  │Currency │  │BiomeConf │   │
+│  │(Res) │  │(Res) │  │(Res) │  │  (Res)  │  │  (Res)   │   │
+│  └──────┘  └──────┘  └──────┘  └─────────┘  └──────────┘   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Component Responsibilities
+## Save/Load Integration
 
-| Component | Responsibility | Pattern |
-|-----------|----------------|---------|
-| **GameState** | Hero singleton, currency inventory | Autoload singleton |
-| **GameEvents** | Cross-scene signal bus | Event bus pattern |
-| **StatCalculator** | DPS/defense calculations (static service) | Stateless service |
-| **LootTable** | Rarity weights, drop counts (static service) | Stateless service |
-| **Resource classes** | Item, Affix, Implicit, Hero, Currency data | Data objects extending Resource |
-| **Currency** | Template method for validation/application | Template method pattern |
-| **Views** | Scene-specific UI, coordinated by main_view | MVC-style views |
+### Current State Snapshot
 
-### Current Data Flow (v1.1)
+**What exists:**
+- `GameState.hero: Hero` (Resource) with `equipped_items: Dictionary` (slot → Item Resource)
+- `GameState.currency_counts: Dictionary` (type → int)
+- All data extends Resource: Item, Affix, Implicit, Hero, Currency classes
+- Hero.update_stats() recalculates total_dps, total_defense, resistances from equipped items
 
-```
-CRAFTING FLOW:
-User clicks hammer → crafting_view → Currency.apply(item) → item.update_value()
-→ StatCalculator → item_finished signal → hero_view updates display
+**What's missing:**
+- No save file persistence
+- No way to restore game state on launch
+- No UI for save/load actions
 
-COMBAT FLOW (v1.1 - time-based):
-Timer timeout → gameplay_view.clear_area()
-  ├─ LootTable.get_item_drop_count(area_level) → spawn items
-  ├─ LootTable.roll_currency_drops(area_level) → add currencies to GameState
-  ├─ GameEvents.area_cleared.emit(area_level)
-  ├─ Hero.take_damage() → simple armor formula
-  └─ If dead: stop clearing, auto-revive
+### Save System Architecture
 
-EQUIPMENT FLOW:
-hero_view.equip_item() → Hero.equip_item() → Hero.update_stats()
-→ GameEvents.equipment_changed → gameplay_view.refresh_clearing_speed()
-```
+**Pattern: Resource Snapshot with Deep Copy**
 
-## New Architecture for v1.2 (Pack-Based Combat)
+Godot 4.5 provides `ResourceSaver.save()` and `ResourceLoader.load()` for Resource-based save systems. This is the recommended approach when you already have Resource-based data (HIGH confidence).
 
-### New Resources
+**Why this fits:**
+- All game data already extends Resource
+- Static typing prevents JSON serialization errors
+- Works seamlessly with Godot data types (Vector2, Color, etc.)
+- Editor can inspect `.tres` save files during development
 
-#### MonsterPack Resource
-```gdscript
-class_name MonsterPack extends Resource
+**Critical limitation:** `Resource.duplicate(true)` does NOT deep copy subresources in Arrays or Dictionaries (see [Godot issue #74918](https://github.com/godotengine/godot/issues/74918)). Since Hero has `equipped_items: Dictionary` with Item Resources containing `prefixes: Array[Affix]` and `suffixes: Array[Affix]`, a shallow duplicate will share references.
 
-var pack_name: String = "Goblin Pack"
-var current_hp: float = 100.0
-var max_hp: float = 100.0
-var damage: float = 10.0
-var damage_type: String = "physical"  # "physical", "fire", "cold", "lightning"
-var pack_size: int = 5  # Visual only, affects HP
-var area_level: int = 1
+### New Components Needed
 
-func is_alive() -> bool:
-    return current_hp > 0
-
-func take_damage(damage: float) -> void:
-    current_hp -= damage
-    current_hp = max(0, current_hp)
-```
-
-**Why Resource**: Follows existing pattern (Hero, Item, Currency all extend Resource). Pack instances are runtime state, not saved data, but Resource provides structure and inspector visibility for debugging.
-
-#### Map Resource
-```gdscript
-class_name Map extends Resource
-
-var map_name: String = "Forest Clearing"
-var area_level: int = 1
-var total_packs: int = 10
-var packs_cleared: int = 0
-var current_pack: MonsterPack = null
-
-func generate_next_pack() -> MonsterPack:
-    # Creates MonsterPack with HP/damage scaled by area_level
-    pass
-
-func is_complete() -> bool:
-    return packs_cleared >= total_packs
-```
-
-**Why Resource**: Replaces current area_level integer. Encapsulates map progression state. Area tier names ("Forest", "Dark Forest") become map types.
-
-### Modified Resources
-
-#### Hero (models/hero.gd)
-
-**ADD defensive calculation methods:**
+#### 1. SaveData Resource (new file: `models/save/save_data.gd`)
 
 ```gdscript
-# NEW method: Calculate damage reduction from armor/evasion/ES/resistances
-func calculate_damage_taken(incoming_damage: float, damage_type: String) -> float:
-    # Delegate to StatCalculator for actual formulas
-    return StatCalculator.calculate_damage_taken(
-        incoming_damage,
-        damage_type,
-        total_armor,
-        total_evasion,
-        total_energy_shield,
-        total_fire_resistance,
-        total_cold_resistance,
-        total_lightning_resistance
-    )
+class_name SaveData extends Resource
 
-# EXISTING: calculate_defense() already sums armor/evasion/ES/resistances from affixes
-# NO CHANGE needed to stat aggregation logic
+@export var hero_data: Hero
+@export var currency_counts: Dictionary
+@export var save_version: int = 1
+@export var save_timestamp: int
 ```
 
-**Why modify**: Hero already aggregates defensive stats (armor, evasion, ES, resistances). Adding damage calculation method keeps defensive logic centralized in Hero, matching existing DPS pattern (Hero.get_total_dps()).
+**Rationale:** Container Resource for all persistent state. Exported vars enable editor inspection.
 
-#### StatCalculator (models/stats/stat_calculator.gd)
-
-**ADD damage reduction functions:**
+#### 2. SaveManager Singleton (new file: `autoloads/save_manager.gd`)
 
 ```gdscript
-## Calculate final damage after defensive layers
-## Order: Armor → Evasion → Energy Shield → Resistances
-static func calculate_damage_taken(
-    incoming_damage: float,
-    damage_type: String,
-    armor: int,
-    evasion: int,
-    energy_shield: int,
-    fire_res: int,
-    cold_res: int,
-    lightning_res: int
-) -> float:
-    var damage := incoming_damage
+extends Node
 
-    # Layer 1: Armor (physical only, diminishing returns)
-    if damage_type == "physical":
-        damage = _apply_armor_reduction(damage, armor)
+const SAVE_PATH := "user://save_game.tres"
 
-    # Layer 2: Evasion (chance to avoid, entropy system)
-    if _roll_evasion(evasion):
-        return 0.0  # Attack evaded
+func save_game() -> bool:
+	var save_data := SaveData.new()
+	save_data.hero_data = _deep_copy_hero(GameState.hero)
+	save_data.currency_counts = GameState.currency_counts.duplicate(true)
+	save_data.save_timestamp = Time.get_unix_time_from_system()
 
-    # Layer 3: Energy Shield (absorbs before life)
-    # Handled separately in Hero.take_damage() since ES is a pool
+	var err := ResourceSaver.save(save_data, SAVE_PATH)
+	return err == OK
 
-    # Layer 4: Elemental Resistance (elemental damage only)
-    if damage_type in ["fire", "cold", "lightning"]:
-        var resistance := 0
-        match damage_type:
-            "fire": resistance = fire_res
-            "cold": resistance = cold_res
-            "lightning": resistance = lightning_res
-        damage = _apply_resistance(damage, resistance)
+func load_game() -> bool:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return false
 
-    return max(1.0, damage)  # Minimum 1 damage
+	var save_data: SaveData = ResourceLoader.load(SAVE_PATH, "", ResourceLoader.CACHE_MODE_IGNORE)
+	if save_data == null:
+		return false
 
-static func _apply_armor_reduction(damage: float, armor: int) -> float:
-    # Formula: Damage * (1 - Armor/(Armor + 10*Damage))
-    # More effective vs small hits, less vs large hits
-    var reduction_factor := float(armor) / (float(armor) + 10.0 * damage)
-    return damage * (1.0 - reduction_factor)
+	GameState.hero = save_data.hero_data
+	GameState.currency_counts = save_data.currency_counts
+	GameEvents.equipment_changed.emit("all", null)  # Trigger UI refresh
+	return true
 
-static func _apply_resistance(damage: float, resistance: int) -> float:
-    # Cap resistance at 75% (standard ARPG cap)
-    var capped_res := min(resistance, 75)
-    return damage * (1.0 - capped_res / 100.0)
+func _deep_copy_hero(hero: Hero) -> Hero:
+	var copy := Hero.new()
+	copy.health = hero.health
+	copy.max_health = hero.max_health
+	copy.hero_name = hero.hero_name
 
-static func _roll_evasion(evasion: int) -> bool:
-    # Simplified: higher evasion = higher avoid chance (cap at 75%)
-    var avoid_chance := min(float(evasion) / 500.0, 0.75)
-    return randf() < avoid_chance
+	# Deep copy equipped items
+	copy.equipped_items = {}
+	for slot in hero.equipped_items:
+		var item = hero.equipped_items[slot]
+		if item != null:
+			copy.equipped_items[slot] = _deep_copy_item(item)
+
+	copy.update_stats()
+	return copy
+
+func _deep_copy_item(item: Item) -> Item:
+	# Duplicate base (shallow copy)
+	var copy = item.duplicate(false)
+
+	# Manually deep copy affixes arrays
+	copy.prefixes = []
+	for prefix in item.prefixes:
+		copy.prefixes.append(_deep_copy_affix(prefix))
+
+	copy.suffixes = []
+	for suffix in item.suffixes:
+		copy.suffixes.append(_deep_copy_affix(suffix))
+
+	# Deep copy implicit
+	if item.implicit != null:
+		copy.implicit = _deep_copy_affix(item.implicit)
+
+	copy.update_value()
+	return copy
+
+func _deep_copy_affix(affix: Affix) -> Affix:
+	var copy := Affix.new()
+	copy.affix_name = affix.affix_name
+	copy.type = affix.type
+	copy.min_value = affix.min_value
+	copy.max_value = affix.max_value
+	copy.value = affix.value
+	copy.tier = affix.tier
+	copy.tags = affix.tags.duplicate()
+	copy.stat_types = affix.stat_types.duplicate()
+	copy.tier_range = affix.tier_range
+	copy.base_min = affix.base_min
+	copy.base_max = affix.base_max
+	return copy
 ```
 
-**Why StatCalculator**: Matches existing pattern (DPS calculation uses StatCalculator.calculate_dps()). Defense formulas are complex, tested independently. Stateless service keeps calculation logic separate from state.
+**Rationale:** Custom deep copy avoids Godot's duplicate() limitation with nested Array/Dictionary Resources. Uses `CACHE_MODE_IGNORE` to prevent stale cached saves (Godot 4 improvement).
 
-### Modified Autoloads
+**Sources:**
+- [Saving and Loading Games in Godot 4 (with resources) | GDQuest](https://www.gdquest.com/library/save_game_godot4/)
+- [Godot Resource.duplicate(true) doesn't duplicate subresources in Arrays/Dictionaries](https://github.com/godotengine/godot/issues/74918)
+- [Duplicate Godot custom resources deeply, for real](https://simondalvai.org/blog/godot-duplicate-resources/)
 
-#### GameState (autoloads/game_state.gd)
+#### 3. Save/Load UI (modify: `scenes/main_view.gd` and `main.tscn`)
 
-**ADD pack/map tracking:**
+Add buttons to NavigationPanel:
+- Save button → `SaveManager.save_game()`
+- Load button → `SaveManager.load_game()` + refresh all views
+
+**Integration point:** main_view already has `@onready` references to all views. After load, call:
+```gdscript
+hero_view.update_all_slots()
+hero_view.update_stats_display()
+crafting_view.update_currency_button_states()
+gameplay_view.update_display()
+```
+
+### Modified Components
+
+| Component | Current | After Save/Load |
+|-----------|---------|-----------------|
+| `autoloads/game_state.gd` | Creates new Hero in _ready() | Check `SaveManager.has_save()`, load if exists, else create new |
+| `scenes/main_view.gd` | 3 nav buttons | +2 buttons (Save, Load), connect to SaveManager |
+| `project.godot` | 4 autoloads | +1 autoload: SaveManager |
+
+**No changes needed:** Item, Hero, Affix classes already extend Resource.
+
+### Data Flow: Save Operation
+
+```
+[User clicks Save]
+       ↓
+[main_view] → SaveManager.save_game()
+       ↓
+[SaveManager creates SaveData Resource]
+       ↓
+[Deep copy GameState.hero (custom logic)]
+[Copy GameState.currency_counts (shallow OK)]
+       ↓
+[ResourceSaver.save(save_data, "user://save_game.tres")]
+       ↓
+[Return success/failure to UI]
+```
+
+### Data Flow: Load Operation
+
+```
+[User clicks Load]
+       ↓
+[main_view] → SaveManager.load_game()
+       ↓
+[ResourceLoader.load("user://save_game.tres", CACHE_MODE_IGNORE)]
+       ↓
+[Overwrite GameState.hero and currency_counts]
+       ↓
+[Emit GameEvents.equipment_changed("all", null)]
+       ↓
+[hero_view, crafting_view, gameplay_view refresh via signals]
+```
+
+**Key consideration:** Use `CACHE_MODE_IGNORE` flag to prevent Godot from returning stale cached Resource (Godot 4 improvement over Godot 3).
+
+**Source:** [Save and Load: Godot 4 Cheat Sheet | GDQuest](https://www.gdquest.com/library/cheatsheet_save_systems/)
+
+---
+
+## Side-by-Side UI Layout Integration
+
+### Current Layout Architecture
+
+**What exists:**
+- main.tscn root: Node2D with 3 child CanvasLayers (CraftingView, HeroView, GameplayView)
+- main_view.gd: Switches views via `visible = true/false`
+- NavigationPanel: 3 buttons (Crafting, Hero, Adventure) at bottom (600-700px)
+- Viewport: 1200x700px
+- Each view is full-screen when visible
+
+**Problem:** Views are mutually exclusive. Cannot see hero stats while crafting.
+
+### New Layout Architecture
+
+**Pattern: HBoxContainer Split with Persistent Panels**
+
+Remove tab navigation. Show hero and crafting side-by-side simultaneously. Keep gameplay view separate (combat needs full attention).
+
+#### Scene Tree Changes (modify: `scenes/main.tscn`)
+
+**Before:**
+```
+MainView (Node2D)
+├── NavigationPanel (ColorRect with 3 buttons)
+├── CraftingView (Node2D, visible toggled)
+├── HeroView (Node2D, visible toggled)
+└── GameplayView (Node2D, visible toggled)
+```
+
+**After:**
+```
+MainView (Node2D)
+├── NavigationPanel (ColorRect with 2 buttons: Adventure, Save, Load)
+├── SideBySideContainer (HBoxContainer)  # NEW
+│   ├── HeroView (PanelContainer → Node2D)  # LEFT HALF
+│   └── CraftingView (PanelContainer → Node2D)  # RIGHT HALF
+└── GameplayView (Node2D, visible toggled)  # FULLSCREEN when active
+```
+
+**HBoxContainer setup:**
+- Position: (0, 0) to (1200, 600)
+- Separation: 10px between hero and crafting panels
+- Children use Size Flags: Fill + Expand with Stretch Ratio 1:1 (equal width)
+
+**Sources:**
+- [Using Containers — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/ui/gui_containers.html)
+- [HBoxContainer — Godot Engine (4.5) documentation](https://docs.godotengine.org/en/4.5/classes/class_hboxcontainer.html)
+- [Overview of Godot UI containers | GDQuest](https://school.gdquest.com/courses/learn_2d_gamedev_godot_4/start_a_dialogue/all_the_containers)
+
+#### Layout Calculations
+
+Available space: 1200px wide × 600px tall (700 - 100 for nav panel)
+
+**With 10px separation:**
+- Hero panel: 595px wide × 600px tall
+- Crafting panel: 595px wide × 600px tall
+
+**Current hero_view.tscn layout (absolute positions):**
+- Equipment slots: 700-850px (right side)
+- Stats panels: 884-1200px (far right)
+- Crafted item panel: 0-320px (left)
+
+**Adjustments needed:**
+All absolute `offset_` positions must scale to fit 595px width. Use Container nodes or anchors for responsive layout.
+
+#### New Components Needed
+
+1. **SideBySideContainer (HBoxContainer)** — add to main.tscn
+2. **Wrapper PanelContainers** — wrap HeroView and CraftingView for visual separation
+
+**PanelContainer benefits:**
+- Draws background rectangle around child
+- Single child only (perfect for view wrappers)
+- Built-in padding via theme overrides
+
+**Source:** [UI Layout using Containers in Godot](https://gdscript.com/solutions/ui-layout-using-containers-in-godot/)
+
+#### Modified Components
+
+| Component | Current | After Side-by-Side |
+|-----------|---------|-------------------|
+| `scenes/main.tscn` | 3 separate views toggled | HBoxContainer with hero+crafting always visible |
+| `scenes/main_view.gd` | show_view() toggles 3 views | show_view() only toggles gameplay vs side-by-side |
+| `scenes/hero_view.tscn` | Absolute positions for 1200px | Anchors/containers for 595px |
+| `scenes/crafting_view.tscn` | Absolute positions for 1200px | Anchors/containers for 595px |
+| NavigationPanel | 3 buttons (Crafting, Hero, Adventure) | 1 button (Adventure) + Save/Load |
+
+**No changes needed:** Signal connections in main_view.gd still work (crafting_view.item_finished → hero_view.set_last_crafted_item).
+
+### Data Flow: View Switching
+
+**Before (3-way toggle):**
+```
+[User presses TAB/number key]
+       ↓
+[main_view.show_view(view_name)]
+       ↓
+[Hide all 3 views, show selected]
+       ↓
+[Sync CanvasLayer visibility]
+```
+
+**After (2-mode toggle):**
+```
+[User presses Adventure button]
+       ↓
+[main_view.show_view("gameplay")]
+       ↓
+[Hide SideBySideContainer, show GameplayView]
+       ↓
+[Sync CombatUI CanvasLayer visibility]
+
+[User presses TAB/ESC]
+       ↓
+[main_view.show_view("side_by_side")]
+       ↓
+[Show SideBySideContainer, hide GameplayView]
+```
+
+**Benefit:** Hero stats and crafting inventory always visible together. No tab switching during crafting workflow.
+
+---
+
+## Crafting UX Feedback Integration
+
+### Current Crafting Flow
+
+**What exists:**
+- crafting_view.gd: Click item → select currency → click item → currency applied
+- hero_view.gd: Crafted item stored in `last_crafted_item`, shown in CraftedItemStatsPanel
+- Equipment slots show item stats on hover (via `currently_hovered_slot`)
+
+**Problem:** Cannot compare crafted item stats to equipped item stats BEFORE equipping.
+
+### New UX: Before/After Comparison
+
+**Pattern: Temporary Stat Preview via Signals**
+
+When hovering over equipment slot with `last_crafted_item` available, show:
+1. Current equipped item stats (already exists)
+2. Crafted item stats (already exists in separate panel)
+3. **NEW:** Stat delta preview (DPS change, defense change, etc.)
+
+**No tooltips needed.** ARPG pattern: side-by-side panels show "current" vs "new" (Path of Exile, Diablo, Last Epoch).
+
+**Source:** [Game UI Database - Weapon Comparison Pickup](https://www.gameuidatabase.com/index.php?scrn=154)
+
+#### New Component: StatComparisonPanel
+
+**File:** `scenes/stat_comparison_panel.gd` (new)
 
 ```gdscript
-# NEW: Current map/pack state
-var current_map: Map = null
-var current_pack: MonsterPack = null
+class_name StatComparisonPanel extends PanelContainer
 
-# NEW: Death state tracking
-var hero_death_count: int = 0
+@onready var comparison_label: Label = $ComparisonLabel
 
-# NEW: Generate/progress maps
-func start_new_map(area_level: int) -> void:
-    current_map = Map.new()
-    current_map.area_level = area_level
-    current_map.total_packs = 10  # Could scale with area_level
-    current_map.packs_cleared = 0
-    current_pack = current_map.generate_next_pack()
-    GameEvents.map_started.emit(current_map)
+func show_comparison(current_item: Item, new_item: Item, slot: String) -> void:
+	visible = true
+	var current_stats = _get_item_contribution(current_item, slot)
+	var new_stats = _get_item_contribution(new_item, slot)
 
-func advance_to_next_pack() -> void:
-    if current_map.is_complete():
-        # Map finished, generate new one
-        start_new_map(current_map.area_level + 1)
-    else:
-        current_pack = current_map.generate_next_pack()
-        GameEvents.pack_spawned.emit(current_pack)
+	var text := "Equipping will change:\n\n"
+	text += _format_stat_delta("DPS", new_stats.dps - current_stats.dps)
+	text += _format_stat_delta("Armor", new_stats.armor - current_stats.armor)
+	text += _format_stat_delta("Evasion", new_stats.evasion - current_stats.evasion)
+	text += _format_stat_delta("Energy Shield", new_stats.es - current_stats.es)
+
+	comparison_label.text = text
+
+func hide_comparison() -> void:
+	visible = false
+
+func _format_stat_delta(stat_name: String, delta: float) -> String:
+	if delta == 0:
+		return ""
+	var color := Color.GREEN if delta > 0 else Color.RED
+	var sign := "+" if delta > 0 else ""
+	return "[color=%s]%s: %s%.1f[/color]\n" % [color.to_html(), stat_name, sign, delta]
+
+func _get_item_contribution(item: Item, slot: String) -> Dictionary:
+	# Calculate what this specific item contributes to hero stats
+	# (Not total hero stats, just this item's portion)
+	var stats := {"dps": 0.0, "armor": 0, "evasion": 0, "es": 0}
+
+	if item == null:
+		return stats
+
+	if item is Weapon:
+		stats.dps = item.dps
+	elif item is Ring:
+		stats.dps = item.dps
+	elif "base_armor" in item:
+		stats.armor = item.base_armor
+		stats.evasion = item.base_evasion if "base_evasion" in item else 0
+		stats.es = item.base_energy_shield if "base_energy_shield" in item else 0
+
+	return stats
 ```
 
-**Why GameState**: Already owns hero singleton and currency inventory. Current map/pack are runtime singletons (only one active). Centralizes game progression state.
+**Rationale:** Shows item-level stat contribution deltas, not total hero stats. Prevents confusion (e.g., "Why did DPS only go up 10 when item has 50 DPS?" — because old item had 40 DPS).
 
-#### GameEvents (autoloads/game_events.gd)
+#### Integration Points
 
-**ADD combat signals:**
+**Modify:** `scenes/hero_view.gd`
+
+Add StatComparisonPanel as child node. Connect to hover signals:
 
 ```gdscript
-# NEW signals
-signal map_started(map: Map)
-signal pack_spawned(pack: MonsterPack)
-signal pack_defeated(pack: MonsterPack)
-signal hero_death()
-signal combat_damage_dealt(damage: float, target: MonsterPack)
-signal combat_damage_taken(damage: float, source: MonsterPack)
+func _on_item_slot_hover_entered(slot: ItemSlot) -> void:
+	currently_hovered_slot = slot
+	update_item_stats_display()
+
+	# NEW: Show comparison if hovering with last_crafted_item available
+	if last_crafted_item != null and can_equip_item(last_crafted_item, slot):
+		var slot_name = get_slot_name(slot).to_lower()
+		var current_item = GameState.hero.equipped_items[slot_name]
+		stat_comparison_panel.show_comparison(current_item, last_crafted_item, slot_name)
+
+func _on_item_slot_hover_exited(_slot: ItemSlot) -> void:
+	currently_hovered_slot = ItemSlot.NONE
+	update_item_stats_display()
+	stat_comparison_panel.hide_comparison()  # NEW
 ```
 
-**Why GameEvents**: Existing pattern for cross-scene communication. Views listen to events, don't poll state. Decouples combat logic from UI updates.
+**No new signals needed.** Reuse existing `mouse_entered`/`mouse_exited` connections.
 
-### Modified Services
+#### Scene Tree Changes
 
-#### LootTable (models/loot/loot_table.gd)
-
-**SPLIT drop generation:**
-
-```gdscript
-# EXISTING: roll_currency_drops(area_level) → Dictionary
-# NO CHANGE: Packs drop currency (called on pack death)
-
-# NEW: Roll item drops for completed maps
-static func roll_map_item_drops(area_level: int) -> Array[Item]:
-    var items: Array[Item] = []
-    var item_count := get_item_drop_count(area_level)
-
-    for i in range(item_count):
-        var item := _spawn_random_item_base()
-        var rarity := roll_rarity(area_level)
-        spawn_item_with_mods(item, rarity)
-        items.append(item)
-
-    return items
-
-# EXISTING methods used by both:
-# - get_item_drop_count(area_level) → int
-# - roll_rarity(area_level) → Rarity
-# - spawn_item_with_mods(item, rarity) → void
+**scenes/hero_view.tscn:**
+```
+HeroView (Node2D)
+├── [existing nodes]
+└── StatComparisonPanel (PanelContainer)  # NEW
+    └── ComparisonLabel (Label with RichText enabled)
 ```
 
-**Why split**: Drop sources change (packs vs maps), but formulas remain identical. Existing rarity/quantity logic reused. Clarifies when items vs currency drop.
+**Position:** Float above equipment slots (e.g., 350-550px horizontal, 200-400px vertical).
 
-### Major Rework: gameplay_view
-
-**CURRENT (v1.1 - time-based):**
-```gdscript
-# Timer-based clearing with auto-progression
-var area_level: int = 1
-var clearing_timer: Timer
-
-func clear_area():
-    # Drop items immediately
-    # Drop currency immediately
-    # Take damage once
-    # Maybe advance area_level
-```
-
-**NEW (v1.2 - pack-based):**
-```gdscript
-# Combat loop with explicit pack progression
-var combat_timer: Timer  # Attacks every X seconds based on DPS
-var current_map: Map = null  # Reference to GameState.current_map
-var current_pack: MonsterPack = null  # Reference to GameState.current_pack
-
-func _ready():
-    GameEvents.map_started.connect(_on_map_started)
-    GameEvents.pack_spawned.connect(_on_pack_spawned)
-    GameEvents.pack_defeated.connect(_on_pack_defeated)
-    GameEvents.hero_death.connect(_on_hero_death)
-
-    # Start first map
-    GameState.start_new_map(1)
-
-func start_combat():
-    combat_timer.start()
-
-func stop_combat():
-    combat_timer.stop()
-
-func _on_combat_timer_timeout():
-    # Hero attacks pack
-    var hero_dps := GameState.hero.get_total_dps()
-    var damage_per_hit := hero_dps * combat_timer.wait_time
-    current_pack.take_damage(damage_per_hit)
-    GameEvents.combat_damage_dealt.emit(damage_per_hit, current_pack)
-
-    if not current_pack.is_alive():
-        _on_pack_killed()
-        return
-
-    # Pack attacks hero
-    var pack_damage := current_pack.damage
-    var damage_taken := GameState.hero.calculate_damage_taken(
-        pack_damage,
-        current_pack.damage_type
-    )
-    GameState.hero.take_damage(damage_taken)
-    GameEvents.combat_damage_taken.emit(damage_taken, current_pack)
-
-    if not GameState.hero.is_alive:
-        _on_hero_died()
-
-func _on_pack_killed():
-    # Currency drops from pack
-    var currency_drops := LootTable.roll_currency_drops(current_map.area_level)
-    GameState.add_currencies(currency_drops)
-    currencies_found.emit(currency_drops)
-
-    # Advance to next pack
-    current_map.packs_cleared += 1
-    GameEvents.pack_defeated.emit(current_pack)
-
-    if current_map.is_complete():
-        _on_map_completed()
-    else:
-        GameState.advance_to_next_pack()
-
-func _on_map_completed():
-    # Item drops from completed map
-    var item_drops := LootTable.roll_map_item_drops(current_map.area_level)
-    for item in item_drops:
-        item_base_found.emit(item)
-
-    # Start next map (higher area level)
-    GameState.start_new_map(current_map.area_level + 1)
-
-func _on_hero_died():
-    stop_combat()
-    GameState.hero_death_count += 1
-    GameState.hero.revive()
-    GameEvents.hero_death.emit()
-    # Auto-restart combat (idle game design)
-    start_combat()
-```
-
-**Why rework**: Current design is timer-based with area as integer. New design requires pack state, combat loop, split drop timing (packs vs maps). Rewrite is cleaner than bolting pack logic onto time-based system.
-
-**What stays the same**:
-- Signal emissions to crafting_view/hero_view
-- Display update methods
-- Button connections (Start/Stop clearing)
-- Currency/item emission patterns
-
-## Integration Points
-
-### Data Flow Changes
+### Data Flow: Stat Comparison
 
 ```
-OLD (v1.1):
-Timer → clear_area() → drops items + currency → signals
+[User hovers equipment slot with last_crafted_item available]
+       ↓
+[hero_view._on_item_slot_hover_entered(slot)]
+       ↓
+[Check: can_equip_item(last_crafted_item, slot)?]
+       ↓ YES
+[Get current_item from GameState.hero.equipped_items[slot]]
+       ↓
+[stat_comparison_panel.show_comparison(current_item, last_crafted_item, slot)]
+       ↓
+[Calculate stat deltas (item contribution, not total hero stats)]
+       ↓
+[Display green (+) or red (-) deltas with RichText color]
 
-NEW (v1.2):
-Combat Timer → attack pack → pack dies → currency drops
-                    ↓
-              pack attacks hero → defensive calculations
-                    ↓
-          all packs dead → map complete → item drops
+[User moves mouse away]
+       ↓
+[hero_view._on_item_slot_hover_exited()]
+       ↓
+[stat_comparison_panel.hide_comparison()]
 ```
 
-### Cross-Component Dependencies
+**Key insight:** Item-level comparison prevents confusion. Total hero stats change calculation would require temp-equipping item (expensive, complex state management).
 
-| New Component | Depends On | Used By |
-|---------------|------------|---------|
-| MonsterPack | (none - data class) | GameState, gameplay_view |
-| Map | MonsterPack | GameState, gameplay_view |
-| Hero.calculate_damage_taken() | StatCalculator | gameplay_view |
-| StatCalculator damage functions | Tag.StatType (existing) | Hero |
-| GameState pack tracking | Map, MonsterPack | gameplay_view |
-| GameEvents combat signals | (none - bus) | gameplay_view, hero_view (future) |
-| LootTable.roll_map_item_drops() | Existing item/rarity logic | gameplay_view |
+---
 
-### Signal Flow (New)
+## Build Order and Dependencies
+
+### Phase Structure Recommendation
+
+**Phase 1: Save/Load Foundation**
+- Add SaveData Resource
+- Add SaveManager autoload with deep copy logic
+- Add Save/Load buttons to main_view
+- Test: Save game with equipped items, quit, load, verify items restored
+
+**Rationale:** Independent of UI changes. Establishes persistence layer.
+
+**Phase 2: Side-by-Side Layout**
+- Modify main.tscn: Add HBoxContainer, wrap views in PanelContainers
+- Modify main_view.gd: Change show_view() to 2-mode toggle
+- Adjust hero_view.tscn and crafting_view.tscn for 595px width
+- Test: Hero and crafting panels visible simultaneously, gameplay view still toggles
+
+**Rationale:** Requires scene restructuring. Do before adding comparison UI to avoid repositioning twice.
+
+**Phase 3: Crafting UX — Stat Comparison**
+- Add StatComparisonPanel scene
+- Modify hero_view.gd: Connect hover signals to comparison panel
+- Test: Hover equipment slot with crafted item → see stat deltas
+
+**Rationale:** Depends on side-by-side layout (comparison panel positioning assumes new layout).
+
+### Dependency Graph
 
 ```
-GameState.start_new_map()
+Phase 1: Save/Load
+    ↓ (no dependency, parallel possible)
+Phase 2: Side-by-Side Layout
+    ↓ (comparison panel position depends on new layout)
+Phase 3: Stat Comparison UI
+```
+
+**Critical path:** Phase 2 → Phase 3. Phase 1 can run in parallel or first.
+
+---
+
+## Integration Points Summary
+
+### What Gets Serialized (Save/Load)
+
+| Data | Location | Serialization Strategy |
+|------|----------|----------------------|
+| Hero stats | GameState.hero (Resource) | Deep copy with custom logic |
+| Equipment | Hero.equipped_items (Dictionary) | Deep copy Items + Affixes arrays |
+| Currencies | GameState.currency_counts (Dictionary) | Shallow duplicate (primitives) |
+| Combat state | Not persisted | Recreate from equipped_items on load |
+
+**NOT serialized:**
+- crafting_view.current_item (transient work-in-progress)
+- crafting_view.crafting_inventory (regenerate from drops)
+- gameplay_view.item_bases_collected (per-session drops)
+
+**Rationale:** Only persist hero progression (equipment, currencies). Crafting work resets on load (matches ARPG patterns — don't save half-crafted items).
+
+### View Communication After Changes
+
+**Existing signals (unchanged):**
+```
+crafting_view.item_finished → hero_view.set_last_crafted_item
+hero_view.equipment_changed → gameplay_view.refresh_clearing_speed
+gameplay_view.item_base_found → crafting_view.set_new_item_base
+gameplay_view.currencies_found → crafting_view.on_currencies_found
+```
+
+**New signal usage:**
+```
+SaveManager (after load) → GameEvents.equipment_changed.emit("all", null)
     ↓
-GameEvents.map_started → gameplay_view updates display
-    ↓
-GameState.advance_to_next_pack()
-    ↓
-GameEvents.pack_spawned → gameplay_view updates display
-    ↓
-(combat loop)
-    ↓
-GameEvents.pack_defeated → gameplay_view advances pack count
-    ↓
-GameEvents.map_completed (NEW, optional)
-    ↓
-gameplay_view emits item_base_found → crafting_view
+    [All views listening to GameEvents refresh displays]
 ```
 
-## Architectural Patterns in v1.2
+**No new cross-view signals needed.** Stat comparison is internal to hero_view (hover events).
 
-### Pattern 1: Resource-Based State Objects
+### Components: New vs Modified
 
-**What:** Game entities (Hero, Item, MonsterPack, Map) extend Godot's Resource class
-**When to use:** Data that needs structure, inspector visibility, potential serialization
-**Trade-offs:**
-- PRO: Type-safe, editor integration, matches existing codebase pattern
-- CON: Resources are reference types (shared state risk), but GameState enforces single ownership
+**New files:**
+- `models/save/save_data.gd` (Resource)
+- `autoloads/save_manager.gd` (Node singleton)
+- `scenes/stat_comparison_panel.gd` (scene + script)
+- `scenes/stat_comparison_panel.tscn`
 
-**Example:**
-```gdscript
-# MonsterPack follows same pattern as Hero/Item
-class_name MonsterPack extends Resource
+**Modified files:**
+- `scenes/main.tscn` (add HBoxContainer, Save/Load buttons)
+- `scenes/main_view.gd` (2-mode view toggle, SaveManager calls)
+- `scenes/hero_view.tscn` (add StatComparisonPanel, responsive layout)
+- `scenes/hero_view.gd` (connect comparison panel to hover signals)
+- `scenes/crafting_view.tscn` (responsive layout for 595px)
+- `autoloads/game_state.gd` (_ready checks SaveManager.has_save())
+- `project.godot` (add SaveManager autoload)
 
-var max_hp: float = 100.0
-var current_hp: float = 100.0
+**Unchanged files:**
+- `models/` classes (Item, Hero, Affix, etc.) — already Resource-based
+- `autoloads/game_events.gd` — existing signals sufficient
+- `scenes/gameplay_view.gd` — no layout changes (still full-screen)
 
-func take_damage(damage: float) -> void:
-    current_hp = max(0, current_hp - damage)
-```
-
-### Pattern 2: Stateless Service Layer
-
-**What:** StatCalculator and LootTable are static classes with pure functions
-**When to use:** Complex calculations that don't depend on instance state
-**Trade-offs:**
-- PRO: Testable in isolation, no state leakage, reusable
-- CON: Can't be mocked (static), but GDScript testing is limited anyway
-
-**Example:**
-```gdscript
-# StatCalculator doesn't hold state, just does math
-var damage_taken := StatCalculator.calculate_damage_taken(
-    100.0, "fire", armor, evasion, es, fire_res, cold_res, lightning_res
-)
-```
-
-### Pattern 3: Event Bus for Decoupling
-
-**What:** GameEvents autoload emits signals, views/systems subscribe
-**When to use:** Cross-scene communication, avoiding direct references
-**Trade-offs:**
-- PRO: Loose coupling, views don't need references to each other
-- CON: Harder to trace flow (signal connections), but signals are debuggable in Godot
-
-**Example:**
-```gdscript
-# gameplay_view emits event
-GameEvents.pack_defeated.emit(current_pack)
-
-# hero_view listens (future feature)
-GameEvents.pack_defeated.connect(_on_pack_defeated)
-func _on_pack_defeated(pack: MonsterPack):
-    update_combat_stats_display()
-```
-
-### Pattern 4: Template Method (Currency)
-
-**What:** Currency base class defines apply() skeleton, subclasses override _do_apply()
-**When to use:** Shared validation/consumption logic, varied behavior
-**Trade-offs:**
-- PRO: Enforces consumption-on-success rule (CRAFT-09), reduces duplication
-- CON: Inheritance over composition, but only one level deep
-
-**EXISTING - no changes for v1.2:**
-```gdscript
-class_name Currency extends Resource
-
-func apply(item: Item) -> bool:
-    if not can_apply(item):
-        return false
-    _do_apply(item)  # Subclass implements
-    return true
-```
-
-### Pattern 5: Combat Loop State Machine
-
-**What:** gameplay_view manages combat state (idle → fighting → pack_dead → map_complete)
-**When to use:** State transitions with different behaviors per state
-**Trade-offs:**
-- PRO: Clear state progression, prevents invalid transitions
-- CON: Could use formal FSM, but simple flags suffice for linear progression
-
-**Example:**
-```gdscript
-enum CombatState { IDLE, FIGHTING, PACK_TRANSITION, MAP_COMPLETE }
-var state: CombatState = CombatState.IDLE
-
-func _on_combat_timer_timeout():
-    match state:
-        CombatState.FIGHTING:
-            _process_combat()
-        CombatState.PACK_TRANSITION:
-            _spawn_next_pack()
-        # etc.
-```
-
-## Build Order (Dependency-Driven)
-
-### Phase 1: Data Foundation (No Dependencies)
-1. **MonsterPack Resource** (models/combat/monster_pack.gd)
-   - New file, extends Resource
-   - No dependencies
-   - Needed by: Map, GameState
-
-2. **Map Resource** (models/combat/map.gd)
-   - New file, extends Resource
-   - Depends: MonsterPack
-   - Needed by: GameState
-
-### Phase 2: Calculation Extensions (Depends on Data)
-3. **StatCalculator defensive functions** (models/stats/stat_calculator.gd)
-   - Modify existing file
-   - Depends: Tag.StatType (existing)
-   - Needed by: Hero
-
-4. **Hero damage calculation** (models/hero.gd)
-   - Modify existing file
-   - Depends: StatCalculator (modified)
-   - Needed by: gameplay_view
-
-### Phase 3: State Management (Depends on Data + Calcs)
-5. **GameState pack tracking** (autoloads/game_state.gd)
-   - Modify existing autoload
-   - Depends: Map, MonsterPack
-   - Needed by: gameplay_view
-
-6. **GameEvents combat signals** (autoloads/game_events.gd)
-   - Modify existing autoload
-   - No dependencies (just signal definitions)
-   - Needed by: gameplay_view
-
-### Phase 4: Drop Logic Split (Depends on Data)
-7. **LootTable map drops** (models/loot/loot_table.gd)
-   - Modify existing file
-   - Depends: Item (existing), LootTable existing methods
-   - Needed by: gameplay_view
-
-### Phase 5: View Integration (Depends on Everything)
-8. **gameplay_view rework** (scenes/gameplay_view.gd)
-   - Major rewrite of existing file
-   - Depends: GameState (modified), GameEvents (modified), LootTable (modified), Hero (modified)
-   - Last to implement, integrates all new systems
-
-**Rationale**: Bottom-up dependency order. Data layer → calculation layer → state layer → view layer. Each phase is testable before moving to next. gameplay_view last because it orchestrates everything.
-
-## What NOT to Restructure
-
-### Keep Feature-Based Folders
-```
-models/
-  items/
-  affixes/
-  currencies/
-  stats/
-  loot/
-  combat/  ← NEW folder for MonsterPack, Map
-```
-**Why**: Existing organization is clear. Combat is a new feature domain, gets its own folder. Don't flatten to "data/" or "resources/" - feature-based is more maintainable.
-
-### Keep Autoload Pattern for Singletons
-GameState and GameEvents remain autoloads. Don't move to scene instances.
-**Why**: Global state (hero, currency) is legitimately singleton. Event bus needs global access. Autoloads are Godot's idiomatic pattern for this.
-
-### Keep main_view Coordination Pattern
-main_view remains the coordinator, views remain siblings.
-**Why**: Existing signal wiring (crafting_view → hero_view) works. Don't introduce parent-child view nesting - keeps views reusable.
-
-### Keep Resource Pattern (Don't Switch to Dictionaries)
-MonsterPack/Map extend Resource, not plain Dictionaries.
-**Why**: Consistency with Hero/Item/Currency. Type safety. Inspector visibility for debugging. Resources are Godot's idiomatic data pattern.
-
-### Keep StatCalculator Stateless
-Don't make StatCalculator an autoload or instance.
-**Why**: Pure functions are testable, no side effects. Static class prevents accidental state leakage.
-
-### Keep Currency Template Method
-Don't refactor Currency to composition or delegate pattern.
-**Why**: Works well, only one level of inheritance, enforces consumption rules. Not broken, don't fix.
+---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Tight Coupling gameplay_view → Hero
+### Anti-Pattern 1: Using JSON for Resource Save Data
 
-**What people might do:**
+**What people do:** Convert Resources to Dictionary → JSON.stringify() → save as .json
+
+**Why it's wrong:**
+- Loses static typing (load returns Dictionary, not Hero)
+- Manual serialization for Godot types (Vector2, Color)
+- Nested resources (Item with Affixes array) require recursive dict conversion
+
+**Do this instead:** Use ResourceSaver/ResourceLoader with Resource classes. Already extends Resource.
+
+**Source:** [Resource-based architecture for Godot 4 | Medium](https://medium.com/@sfmayke/resource-based-architecture-for-godot-4-25bd4b2d9018)
+
+### Anti-Pattern 2: Using Resource.duplicate(true) for Deep Copy
+
+**What people do:** Assume `hero.duplicate(true)` deep copies nested arrays
+
+**Why it's wrong:** Godot 4's duplicate() does NOT deep copy Resources inside Arrays or Dictionaries. Hero.equipped_items with Item Resources containing Affix arrays will share references.
+
+**Do this instead:** Implement custom deep copy that manually duplicates arrays:
+
 ```gdscript
-# gameplay_view directly modifying Hero internal state
-GameState.hero.health -= 50
-GameState.hero.is_alive = false
+func _deep_copy_item(item: Item) -> Item:
+	var copy = item.duplicate(false)  # Shallow
+	copy.prefixes = []
+	for prefix in item.prefixes:
+		copy.prefixes.append(_deep_copy_affix(prefix))
+	# ... repeat for suffixes, implicit
+	return copy
 ```
 
-**Why it's wrong:** Breaks encapsulation, bypasses Hero's take_damage() logic, skips death signals
+**Source:** [Resource.duplicate(true) doesn't duplicate subresources stored in Array or Dictionary](https://github.com/godotengine/godot/issues/74918)
+
+### Anti-Pattern 3: Absolute Positioning in Resizable Containers
+
+**What people do:** Use `offset_left/right/top/bottom` for all UI elements in HBoxContainer
+
+**Why it's wrong:** Container expects children to use Size Flags (Fill, Expand) for responsive layout. Absolute positions override container behavior.
 
 **Do this instead:**
-```gdscript
-# Use Hero's public interface
-GameState.hero.take_damage(50)
-# Hero handles health clamping, death state, signals internally
+- Use anchors for percentage-based positioning inside panels
+- Use nested VBoxContainer/HBoxContainer for structured layouts
+- Set Size Flags: Fill + Expand on container children
+
+**Source:** [Using Containers — Godot Engine documentation](https://docs.godotengine.org/en/stable/tutorials/ui/gui_containers.html)
+
+### Anti-Pattern 4: Showing Total Hero Stats in Item Comparison
+
+**What people do:** Compare total hero DPS before vs after equipping
+
+**Why it's wrong:**
+- User sees "Equip this 100 DPS weapon" but total DPS only goes up 50 (because unequipping 50 DPS weapon)
+- Requires temp-equipping item to calculate (mutates state during preview)
+- Confusing when item has affixes affecting multiple stats
+
+**Do this instead:** Show item contribution delta:
+```
+Current weapon: 50 DPS
+New weapon: 100 DPS
+Display: "DPS: +50"
 ```
 
-### Anti-Pattern 2: Polling State Instead of Signals
+Calculate delta from item properties only, not total hero stats.
 
-**What people might do:**
-```gdscript
-# gameplay_view checking state every frame
-func _process(delta):
-    if current_pack.current_hp <= 0:
-        _on_pack_killed()
-```
-
-**Why it's wrong:** Misses exact moment of death, runs logic multiple times, doesn't notify other systems
-
-**Do this instead:**
-```gdscript
-# Event-driven flow
-func _on_combat_timer_timeout():
-    current_pack.take_damage(damage)
-    if not current_pack.is_alive():
-        _on_pack_killed()
-        GameEvents.pack_defeated.emit(current_pack)
-```
-
-### Anti-Pattern 3: Mixing Drop Logic in gameplay_view
-
-**What people might do:**
-```gdscript
-# gameplay_view rolling its own rarity/quantity
-func _on_pack_killed():
-    var currency_amount = randi_range(1, 5)
-    GameState.currency_counts["runic"] += currency_amount
-```
-
-**Why it's wrong:** Duplicates LootTable logic, inconsistent with existing system, not area-scaled
-
-**Do this instead:**
-```gdscript
-# Delegate to LootTable service
-func _on_pack_killed():
-    var drops := LootTable.roll_currency_drops(current_map.area_level)
-    GameState.add_currencies(drops)
-```
-
-### Anti-Pattern 4: Energy Shield as Instant Mitigation
-
-**What people might do:**
-```gdscript
-# Treating ES like armor (% reduction)
-var es_reduction = energy_shield / (energy_shield + 100)
-damage *= (1.0 - es_reduction)
-```
-
-**Why it's wrong:** Energy Shield in ARPGs is a damage buffer (like extra HP), not mitigation
-
-**Do this instead:**
-```gdscript
-# ES absorbs damage before life (in Hero.take_damage())
-func take_damage(damage: float):
-    if total_energy_shield > 0:
-        var absorbed = min(damage, total_energy_shield)
-        total_energy_shield -= absorbed
-        damage -= absorbed
-    health -= damage
-```
-
-### Anti-Pattern 5: Storing Pack State in gameplay_view
-
-**What people might do:**
-```gdscript
-# gameplay_view owns pack instances
-var current_pack: MonsterPack = MonsterPack.new()
-```
-
-**Why it's wrong:** Pack state isn't view state. Other systems (future: minimap, achievements) need pack access. View gets destroyed/recreated.
-
-**Do this instead:**
-```gdscript
-# GameState owns single source of truth
-var current_pack: MonsterPack = null  # Reference to GameState.current_pack
-
-func _on_pack_spawned(pack: MonsterPack):
-    current_pack = pack  # Store reference, don't own
-```
-
-## Defensive Stat Formulas (Path of Exile-Inspired)
-
-The defensive calculation architecture follows ARPG standards, specifically Path of Exile's layered defense system. Sources: [Path of Exile 2 Defense Guide](https://www.sportskeeda.com/mmo/exile-2-poe2-defense-resistance-guide-energy-shield-armor-evasion), [Maxroll Defense Layering](https://maxroll.gg/poe/resources/defenses-and-defensive-layering), [PoE Wiki Armor](https://www.poewiki.net/wiki/Armour).
-
-### Armor Formula
-```
-Damage Reduction = Armor / (Armor + 10 * Incoming Damage)
-Final Damage = Incoming Damage * (1 - Damage Reduction)
-```
-**Characteristics**: Diminishing returns against large hits, very effective vs many small hits. Physical damage only.
-
-### Evasion Formula
-```
-Avoid Chance = min(Evasion / 500, 0.75)  # Simplified, cap at 75%
-```
-**Characteristics**: Entropy-based (prevents lucky/unlucky streaks), downgrade crits to normal hits, works vs attacks not spells.
-
-### Resistance Formula
-```
-Final Damage = Elemental Damage * (1 - min(Resistance, 75) / 100)
-```
-**Characteristics**: Linear reduction, hard cap at 75%, applies to fire/cold/lightning damage types.
-
-### Energy Shield
-Not a mitigation layer - acts as damage buffer before life. Absorbed in Hero.take_damage() before applying to health.
-
-**Layer Order**: Armor → Evasion (chance to avoid) → Resistances → ES absorbs → Life damage
+---
 
 ## Scaling Considerations
 
-| Scale | Combat Architecture |
-|-------|---------------------|
-| **MVP (10 areas)** | Simple pack HP scaling (HP = base * area_level). Single damage type (physical). Basic combat loop. |
-| **Mid (100 areas)** | Elemental damage types per pack. Resistance becomes valuable. Evasion entropy system. Pack variety (fast/slow packs). |
-| **Late (300+ areas)** | All defensive layers required. Boss packs (unique modifiers). Map modifiers (increased pack damage/size). Multiple packs per screen (future). |
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| 0-100 save files | Current architecture sufficient. ResourceSaver handles .tres files efficiently. |
+| 100+ save files | Add save slot UI (numbered saves). Use file naming: `save_slot_01.tres`, `save_slot_02.tres`. |
+| Cloud saves | Replace ResourceSaver with HTTP upload/download + local cache. SaveData Resource serializes to bytes with `var2bytes()` for network transfer. |
 
-**First bottleneck**: Defensive calculations become complex (4+ layers). Mitigation: StatCalculator caches resistance caps, armor formula precomputed for common values.
+### Current Bottlenecks
 
-**Second bottleneck**: Combat feels same across 300 areas. Mitigation: Pack modifiers ("Elemental", "Fast", "Armored"), boss encounters, map affixes.
+**Not a concern for idle ARPG:**
+- Save file size: Hero + 5 equipped items + 6 currency counts ≈ 5-10KB
+- Save/load time: ResourceSaver/Loader handles <1KB resources instantly
+- Deep copy performance: 5 items × 6 affixes average × manual copy = negligible (<1ms)
+
+**Only matters if:**
+- Expanding to 100+ item stash (add incremental save — only dirty items)
+- Adding cloud sync (batch updates, avoid save on every currency drop)
+
+---
 
 ## Sources
 
-**Godot Architecture Patterns:**
-- [Game Development Patterns with Godot 4](https://www.packtpub.com/en-us/product/game-development-patterns-with-godot-4-9781835880296)
-- [Top Game Development Patterns in Godot Engine](https://www.manuelsanchezdev.com/blog/game-development-patterns)
-- [GDQuest: Design patterns in Godot](https://www.gdquest.com/tutorial/godot/design-patterns/intro-to-design-patterns/)
-- [Godot Finite State Machine Tutorial](https://www.gdquest.com/tutorial/godot/design-patterns/finite-state-machine/)
+**Save/Load:**
+- [Saving and Loading Games in Godot 4 (with resources) | GDQuest Library](https://www.gdquest.com/library/save_game_godot4/)
+- [Saving games — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/io/saving_games.html)
+- [Resource-based architecture for Godot 4 | Medium](https://medium.com/@sfmayke/resource-based-architecture-for-godot-4-25bd4b2d9018)
+- [Save and Load: Godot 4 Cheat Sheet | GDQuest Library](https://www.gdquest.com/library/cheatsheet_save_systems/)
+- [Resource.duplicate(true) doesn't duplicate subresources in Arrays/Dictionaries](https://github.com/godotengine/godot/issues/74918)
+- [Duplicate Godot custom resources deeply, for real](https://simondalvai.org/blog/godot-duplicate-resources/)
 
-**State Management:**
-- [Godot Resource Pattern for State Management](https://forum.godotengine.org/t/autoload-resource-singleton-for-keeping-and-saving-game-state/78981)
-- [State Management in Godot with Vue.js Twist](https://tumeo.space/gamedev/2023/10/18/godot-states/)
+**UI Layout:**
+- [Using Containers — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/ui/gui_containers.html)
+- [HBoxContainer — Godot Engine (4.5) documentation](https://docs.godotengine.org/en/4.5/classes/class_hboxcontainer.html)
+- [Overview of Godot UI containers | GDQuest](https://school.gdquest.com/courses/learn_2d_gamedev_godot_4/start_a_dialogue/all_the_containers)
+- [UI Layout using Containers in Godot](https://gdscript.com/solutions/ui-layout-using-containers-in-godot/)
 
-**ARPG Defense Mechanics:**
-- [Path of Exile 2 Defense and Resistance Guide](https://www.sportskeeda.com/mmo/exile-2-poe2-defense-resistance-guide-energy-shield-armor-evasion)
-- [Path of Exile 2 Defences Explained](https://vulkk.com/2025/06/12/path-of-exile-2-defences-explained/)
-- [Defenses and Defensive Layering in Path of Exile](https://maxroll.gg/poe/resources/defenses-and-defensive-layering)
-- [PoE Wiki: Armour](https://www.poewiki.net/wiki/Armour)
+**Inventory/Equipment Systems:**
+- [GitHub - alfredbaudisch/GodotDynamicInventorySystem](https://github.com/alfredbaudisch/GodotDynamicInventorySystem)
+- [How To Build An Inventory System In Godot 4 - GameDev Academy](https://gamedevacademy.org/godot-inventory-system-tutorial/)
 
-**Damage Calculation Patterns:**
-- [RPG Stats: Implementing Character Stats](https://howtomakeanrpg.com/r/a/how-to-make-an-rpg-stats.html)
-- [RPG Damage Formula Wiki](https://rpg.fandom.com/wiki/Damage_Formula)
+**Crafting UX Patterns:**
+- [Game UI Database - Weapon Comparison Pickup](https://www.gameuidatabase.com/index.php?scrn=154)
 
 ---
-*Architecture research for: Hammertime v1.2 pack-based combat integration*
-*Researched: 2026-02-16*
+
+*Architecture research for: Hammertime v1.3 milestone — Save/Load, Side-by-Side UI, Crafting UX*
+*Researched: 2026-02-17*
