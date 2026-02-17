@@ -57,7 +57,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] **Phase 14: Monster Pack Data Model** - Pack Resources with HP, damage, elemental types (completed 2026-02-16)
 - [x] **Phase 15: Pack-Based Combat Loop** - Sequential idle auto-combat with death mechanics (completed 2026-02-16)
 - [x] **Phase 16: Drop System Split** - Packs drop currency, maps drop items (completed 2026-02-17)
-- [x] **Phase 17: UI and Combat Feedback** - Combat state display and pack progress (completed 2026-02-17)
+- [ ] **Phase 17: UI and Combat Feedback** - Combat state display and pack progress (gap closure in progress)
 
 ## Phase Details
 
@@ -133,11 +133,12 @@ Plans:
   2. Current pack HP and hero HP are visible and update during combat
   3. Pack progress is shown clearly (e.g., "Pack 3 of 7 cleared")
   4. Combat state changes are visible (fighting, pack transition, death, map complete)
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — Combat UI bars (HP, ES overlay, pack HP, pack progress) and state transitions
-- [ ] 17-02-PLAN.md — Floating damage numbers with crit styling and dodge text
+- [x] 17-01-PLAN.md — Combat UI bars (HP, ES overlay, pack HP, pack progress) and state transitions
+- [x] 17-02-PLAN.md — Floating damage numbers with crit styling and dodge text
+- [ ] 17-03-PLAN.md — Gap closure: fix CanvasLayer mouse blocking and visibility
 
 ## Progress
 
@@ -162,8 +163,8 @@ Phases execute in numeric order: 13 → 14 → 15 → 16 → 17
 | 14. Monster Pack Data Model | v1.2 | Complete    | 2026-02-16 | - |
 | 15. Pack-Based Combat Loop | v1.2 | Complete    | 2026-02-16 | - |
 | 16. Drop System Split | v1.2 | Complete    | 2026-02-17 | - |
-| 17. UI and Combat Feedback | v1.2 | Complete    | 2026-02-17 | - |
+| 17. UI and Combat Feedback | v1.2 | 2/3 (gap closure) | In Progress | - |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-16 (v1.2 milestone roadmap created)*
+*Last updated: 2026-02-17 (Phase 17 gap closure plan added)*
