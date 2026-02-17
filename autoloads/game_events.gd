@@ -16,3 +16,4 @@ signal combat_stopped()
 
 # Drop system signals (Phase 16)
 signal currency_dropped(drops: Dictionary)  # Per-pack currency drops
+signal items_dropped(area_level: int, item_count: int)  # Map completion item drops

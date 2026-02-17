@@ -99,6 +99,31 @@ static func roll_rarity(area_level: int) -> Item.Rarity:
 	return Item.Rarity.RARE
 
 
+## Returns number of items to drop on map completion (1-3).
+## Distribution scales with area level per anchors:
+##   Area 1:   ~99% chance for 1, ~1% for 2, ~0% for 3
+##   Area 300: ~20% for 1, ~60% for 2, ~20% for 3
+## Uses logarithmic interpolation for smooth progression between anchors.
+static func get_map_item_count(area_level: int) -> int:
+	# Log progress: 0.0 at area 1, approaches 1.0 at area 300
+	var progress: float = log(1.0 + float(area_level) / 50.0) / log(1.0 + 300.0 / 50.0)
+	progress = clampf(progress, 0.0, 1.0)
+
+	# Interpolate anchor weights
+	var w1: float = lerpf(0.99, 0.20, progress)  # chance for 1 item
+	var w2: float = lerpf(0.01, 0.60, progress)  # chance for 2 items
+	# w3 is the remainder (chance for 3 items)
+
+	var roll: float = randf()
+	if roll < w1:
+		return 1
+	elif roll < w1 + w2:
+		return 2
+	else:
+		return 3
+
+
+## DEPRECATED: Use get_map_item_count() instead. Kept for drop_simulator compatibility.
 ## Returns number of items to drop for this area clear
 ## Scales logarithmically from 1 (area 1) to ~4.5 (area 300)
 static func get_item_drop_count(area_level: int) -> int:
@@ -185,6 +210,7 @@ static func roll_pack_currency_drop(
 	return drops
 
 
+## DEPRECATED: Use roll_pack_currency_drop() instead. Per-pack drops replace bulk rolls.
 ## Rolls currency drops for area clear based on area level
 ## Returns dictionary mapping currency name to drop count
 ## Currency names: "runic", "forge", "tack", "grand", "claw", "tuning"
