@@ -104,19 +104,10 @@ icon = ExtResource("9_tuning")
 icon_alignment = 0
 expand_icon = true
 
-[node name="FinishItemButton" type="Button" parent="HammerSidebar"]
-layout_mode = 0
-offset_left = 15.0
-offset_top = 260.0
-offset_right = 245.0
-offset_bottom = 300.0
-theme_override_font_sizes/font_size = 11
-text = "Finish Item"
-
 [node name="InventoryLabel" type="Label" parent="HammerSidebar"]
 layout_mode = 0
 offset_left = 10.0
-offset_top = 310.0
+offset_top = 260.0
 offset_right = 250.0
 offset_bottom = 550.0
 theme_override_font_sizes/font_size = 11

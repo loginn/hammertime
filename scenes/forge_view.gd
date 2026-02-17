@@ -11,7 +11,6 @@ enum ItemSlot { NONE = -1, WEAPON, HELMET, ARMOR, BOOTS, RING }
 @onready var grand_btn: Button = $HammerSidebar/GrandHammerBtn
 @onready var claw_btn: Button = $HammerSidebar/ClawHammerBtn
 @onready var tuning_btn: Button = $HammerSidebar/TuningHammerBtn
-@onready var finish_item_btn: Button = $HammerSidebar/FinishItemButton
 
 # Item type button references
 @onready var weapon_type_btn: Button = $ItemTypeButtons/WeaponButton
@@ -45,8 +44,11 @@ var currency_buttons: Dictionary = {}
 
 # Crafting state
 var current_item: Item = null
-var finished_item: Item = null
 var inventory_types: Array = ["weapon", "helmet", "armor", "boots", "ring"]
+
+# Equip confirmation state
+var equip_confirm_pending: bool = false
+var equip_timer: Timer
 
 # Hero display state
 var currently_hovered_type: String = ""
@@ -80,7 +82,14 @@ func _ready() -> void:
 	grand_btn.pressed.connect(_on_currency_selected.bind("grand"))
 	claw_btn.pressed.connect(_on_currency_selected.bind("claw"))
 	tuning_btn.pressed.connect(_on_currency_selected.bind("tuning"))
-	finish_item_btn.pressed.connect(_on_finish_item_button_pressed)
+
+	# Set hammer tooltips
+	runic_btn.tooltip_text = "Runic Hammer\nTurns a normal item into a magic item\nwith 1-2 random mods.\nRequires: Normal rarity"
+	forge_btn.tooltip_text = "Forge Hammer\nTurns a normal item into a rare item\nwith 4-6 random mods.\nRequires: Normal rarity"
+	tack_btn.tooltip_text = "Tack Hammer\nAdds one random mod to a magic item.\nRequires: Magic rarity with room for mods"
+	grand_btn.tooltip_text = "Grand Hammer\nAdds one random mod to a rare item.\nRequires: Rare rarity with room for mods"
+	claw_btn.tooltip_text = "Claw Hammer\nRemoves one random mod from an item.\nRequires: At least one mod"
+	tuning_btn.tooltip_text = "Tuning Hammer\nRerolls all mod values within their\ntier ranges.\nRequires: At least one mod"
 
 	# Connect item image click for applying currency
 	item_image.gui_input.connect(update_item)
@@ -108,6 +117,14 @@ func _ready() -> void:
 	# Connect melt/equip buttons
 	melt_button.pressed.connect(_on_melt_pressed)
 	equip_button.pressed.connect(_on_equip_pressed)
+
+	# Create equip confirmation timer
+	equip_timer = Timer.new()
+	equip_timer.name = "EquipTimer"
+	equip_timer.one_shot = true
+	equip_timer.wait_time = 3.0
+	equip_timer.timeout.connect(_on_equip_timer_timeout)
+	add_child(equip_timer)
 
 	# Load crafting inventory from GameState
 	var has_saved_items := false
@@ -157,6 +174,12 @@ func _ready() -> void:
 
 
 func _on_currency_selected(currency_type: String) -> void:
+	# Reset equip confirmation when selecting currency
+	if equip_confirm_pending:
+		equip_confirm_pending = false
+		equip_timer.stop()
+		equip_button.text = "Equip"
+
 	var button: Button = currency_buttons[currency_type]
 
 	if button.button_pressed:
@@ -241,6 +264,12 @@ func update_currency_button_states() -> void:
 
 
 func _on_item_type_selected(item_type: String) -> void:
+	# Reset equip confirmation when switching types
+	equip_confirm_pending = false
+	if equip_timer != null:
+		equip_timer.stop()
+	equip_button.text = "Equip"
+
 	# Check if there's an item of this type in the inventory
 	if GameState.crafting_inventory.get(item_type) == null:
 		print("No ", item_type, " in inventory - selection ignored")
@@ -300,82 +329,78 @@ func _on_type_hover_exited(_item_type: String) -> void:
 	update_hero_stats_display()
 
 
-# --- Finish item ---
-
-
-func _on_finish_item_button_pressed() -> void:
-	finish_item()
-
-
-func finish_item() -> void:
-	if current_item == null:
-		print("No item to finish")
-		return
-
-	# Untoggle all currency buttons
-	for currency_type in currency_buttons:
-		currency_buttons[currency_type].button_pressed = false
-
-	# Clear currency selection
-	selected_currency = null
-	selected_currency_type = ""
-
-	# Store the finished item
-	finished_item = current_item
-
-	# Emit global crafted signal for save triggers
-	GameEvents.item_crafted.emit(finished_item)
-
-	# Remove the finished item from inventory
-	var finished_item_type: String = get_item_type(current_item)
-	if finished_item_type != "None":
-		GameState.crafting_inventory[finished_item_type] = null
-		print("Removed finished ", finished_item_type, " from inventory")
-
-	# Clear the current item — player must choose Melt or Equip
-	current_item = null
-	update_inventory_display()
-	update_currency_button_states()
-	update_item_stats_display()
-	update_melt_equip_states()
-
-	print("Item finished! Choose Melt or Equip.")
-
-
 # --- Melt / Equip ---
 
 
 func _on_melt_pressed() -> void:
-	if finished_item == null:
+	if current_item == null:
 		return
-	# Destroy the item, free the crafting slot
-	print("Melted: ", finished_item.item_name)
-	finished_item = null
+	var slot_name: String = get_item_type(current_item)
+	print("Melted: ", current_item.item_name)
+
+	# Clear the crafting slot
+	if slot_name != "None":
+		GameState.crafting_inventory[slot_name] = null
+	current_item = null
+
+	# Reset equip confirm state if active
+	equip_confirm_pending = false
+	equip_timer.stop()
+	equip_button.text = "Equip"
+
 	update_item_stats_display()
 	update_melt_equip_states()
+	update_inventory_display()
 
 
 func _on_equip_pressed() -> void:
-	if finished_item == null:
+	if current_item == null:
 		return
-	var slot_name: String = get_item_type(finished_item)
+	var slot_name: String = get_item_type(current_item)
 	if slot_name == "None":
 		return
-	# Old item in slot is DESTROYED (no swap-back, per CONTEXT.md)
-	GameState.hero.equip_item(finished_item, slot_name)
-	GameEvents.equipment_changed.emit(slot_name, finished_item)
-	print("Equipped: ", finished_item.item_name, " to ", slot_name)
-	finished_item = null
+
+	# Check if slot is occupied and confirmation not yet given
+	var existing: Item = GameState.hero.equipped_items.get(slot_name)
+	if existing != null and not equip_confirm_pending:
+		# First click — show confirmation
+		equip_confirm_pending = true
+		equip_button.text = "Confirm Overwrite?"
+		equip_timer.start()
+		return
+
+	# Second click (confirmed) or empty slot — do the equip
+	equip_confirm_pending = false
+	equip_timer.stop()
+	equip_button.text = "Equip"
+
+	# Equip the item (old item in slot is destroyed)
+	GameState.hero.equip_item(current_item, slot_name)
+	GameEvents.equipment_changed.emit(slot_name, current_item)
+	GameEvents.item_crafted.emit(current_item)
+	print("Equipped: ", current_item.item_name, " to ", slot_name)
+
+	# Clear the crafting slot
+	GameState.crafting_inventory[slot_name] = null
+	current_item = null
+
+	# Update all displays
 	update_hero_stats_display()
 	update_item_stats_display()
 	update_melt_equip_states()
+	update_inventory_display()
 	equipment_changed.emit()
 
 
+func _on_equip_timer_timeout() -> void:
+	equip_confirm_pending = false
+	equip_button.text = "Equip"
+
+
 func update_melt_equip_states() -> void:
-	var has_finished: bool = finished_item != null
-	melt_button.disabled = not has_finished
-	equip_button.disabled = not has_finished
+	var has_item: bool = current_item != null
+	melt_button.disabled = not has_item
+	equip_button.disabled = not has_item
 
 
 # --- Inventory management ---
@@ -463,10 +488,7 @@ func update_item_stats_display() -> void:
 	if item_stats_label == null:
 		return
 
-	if finished_item != null:
-		item_stats_label.text = get_item_stats_text(finished_item)
-		item_stats_label.modulate = finished_item.get_rarity_color()
-	elif current_item != null:
+	if current_item != null:
 		item_stats_label.text = get_item_stats_text(current_item)
 		item_stats_label.modulate = current_item.get_rarity_color()
 	else:
