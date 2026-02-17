@@ -464,13 +464,13 @@ func update_item_stats_display() -> void:
 		return
 
 	if finished_item != null:
-		item_stats_label.text = "Finished Item:\n\n" + get_item_stats_text(finished_item)
+		item_stats_label.text = get_item_stats_text(finished_item)
 		item_stats_label.modulate = finished_item.get_rarity_color()
 	elif current_item != null:
-		item_stats_label.text = "Crafting:\n\n" + get_item_stats_text(current_item)
+		item_stats_label.text = get_item_stats_text(current_item)
 		item_stats_label.modulate = current_item.get_rarity_color()
 	else:
-		item_stats_label.text = "Item Stats:\n\nNo item on crafting bench"
+		item_stats_label.text = "No item on crafting bench"
 		item_stats_label.modulate = Color.WHITE
 
 
