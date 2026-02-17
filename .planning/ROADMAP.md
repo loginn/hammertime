@@ -113,11 +113,11 @@ Plans:
   3. Crafting view has separate item slots for weapon, helmet, armor, boots, and ring instead of one shared slot
   4. Finishing an item into an occupied slot requires two clicks (first click changes button to "Confirm Overwrite?", second click completes)
   5. Stat comparison shows item-level contribution differences, not total hero stat changes
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 20-01: TBD
-- [ ] 20-02: TBD
+- [ ] 20-01-PLAN.md — Hammer tooltips, remove Finish Item, two-click equip confirmation
+- [ ] 20-02-PLAN.md — Stat comparison display on equip hover with colored deltas
 
 ### Phase 21: Save Import/Export
 **Goal**: Players can export their save as a string and import save strings to restore or share game state
@@ -175,7 +175,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 17. UI and Combat Feedback | v1.2 | 3/3 | ✓ Complete | 2026-02-17 |
 | 18. Save/Load Foundation | v1.3 | 2/2 | ✓ Complete | 2026-02-17 |
 | 19. Side-by-Side Layout | v1.3 | Complete    | 2026-02-17 | - |
-| 20. Crafting UX Enhancements | v1.3 | 0/0 | Not started | - |
+| 20. Crafting UX Enhancements | v1.3 | 0/2 | Planned | - |
 | 21. Save Import/Export | v1.3 | 0/0 | Not started | - |
 | 22. Balance & Polish | v1.3 | 0/0 | Not started | - |
 
