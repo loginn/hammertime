@@ -69,7 +69,7 @@ func _setup_bar_styles() -> void:
 
 	# Hero ES bar — blue fill, transparent dark blue background (stacked on top)
 	var es_fill := StyleBoxFlat.new()
-	es_fill.bg_color = Color(0.0, 0.5, 1.0)
+	es_fill.bg_color = Color(0.0, 0.5, 1.0, 0.7)
 	hero_es_bar.add_theme_stylebox_override("fill", es_fill)
 	var es_bg := StyleBoxFlat.new()
 	es_bg.bg_color = Color(0.0, 0.1, 0.3, 0.3)
