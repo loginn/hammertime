@@ -1,7 +1,7 @@
 # Project State: Hammertime
 
 **Updated:** 2026-02-17
-**Milestone:** v1.2 Pack-Based Mapping (SHIPPED)
+**Milestone:** v1.3 Save/Load & Polish
 
 ## Project Reference
 
@@ -9,17 +9,16 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Planning next milestone
+**Current Focus:** Defining requirements
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication, ~3,943 LOC across ~42 files.
 
 ## Current Position
 
-Phase: All complete
-Status: v1.2 shipped, ready for next milestone
-Last activity: 2026-02-17 — Milestone v1.2 archived
-
-Progress: [████████████████████] 100% (17 phases complete across 4 milestones)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-17 — Milestone v1.3 started
 
 ## Performance Metrics
 
@@ -59,17 +58,15 @@ All v1.2 decisions marked ✓ Good.
 
 - debug_hammers flag in game_state.gd (currently false)
 - Deprecated LootTable methods kept for drop_simulator tool (get_item_drop_count, roll_currency_drops)
-- Level 1 difficulty may be too high for fresh heroes (balance tuning deferred)
+- Level 1 difficulty may be too high for fresh heroes (addressing in v1.3)
 
 ### Deferred Items
 
-**v1.3+ scope:**
+**v1.4+ scope:**
 - Totem system (forge god shrine with slottable pieces, favor mechanic, map modifiers)
 - Hybrid defense prefixes (armor+evasion single-slot affixes)
 - Visual prefix/suffix separation in UI (color-coded or sectioned)
 - Tag-based affix pool tooltips
-- Save/load system
-- Level 1 balance tuning for fresh heroes
 
 ### Quick Tasks Completed
 
@@ -80,12 +77,11 @@ All v1.2 decisions marked ✓ Good.
 ## Session Continuity
 
 **Last session:** 2026-02-17
-- Milestone v1.2 Pack-Based Mapping shipped and archived
-- All 21 requirements satisfied, audit passed
-- Archives: milestones/v1.2-ROADMAP.md, milestones/v1.2-REQUIREMENTS.md
+- Milestone v1.3 Save/Load & Polish started
+- Defining requirements
 
 **For next session:**
-- Start next milestone with `/gsd:new-milestone`
+- Continue requirements definition or `/gsd:plan-phase [N]`
 
 ---
 *State initialized: 2026-02-15*

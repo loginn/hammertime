@@ -58,7 +58,17 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 
 <!-- Current scope. Building toward these. -->
 
-(None yet — start next milestone with `/gsd:new-milestone`)
+## Current Milestone: v1.3 Save/Load & Polish
+
+**Goal:** Persist full game state across sessions and fix UX pain points — side-by-side hero/crafting layout, item safety, stats overflow, crafting feedback, and level 1 balance.
+
+**Target features:**
+- Full save/load (hero, inventory, currencies, area progress)
+- Side-by-side Hero + Crafting layout (equipment left, crafting/inventory right)
+- Item safety — finishing an item cannot silently overwrite equipped gear
+- Stats overflow fix — Hero View stats fit within viewport
+- Crafting feedback — clearer hammer descriptions and post-application changes
+- Level 1 balance tuning — fresh heroes can survive early packs
 
 ### Out of Scope
 
@@ -66,7 +76,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - Item melting/salvage system -- future feature
 - Chaos-style full reroll -- deliberate design choice: no full rerolls, craft carefully or equip as-is
 - Drag-and-drop crafting UI -- select-and-click is sufficient
-- Save/load system -- Resource model enables it, but not yet scoped
+- Save/load system -- now in scope for v1.3
 - Hybrid defense prefixes (armor+evasion single-slot) -- v1.3+ scope
 - Visual prefix/suffix separation in UI (color-coded or sectioned) -- v1.3+ scope
 - Totem system (forge god shrine with slottable pieces, favor mechanic, map modifiers) -- v1.3+ scope, builds on pack-based mapping
@@ -90,6 +100,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - BiomeConfig defines biome element weight arrays and pack count ranges for 4 biomes
 - 18 prefix types (9 offensive + 9 defensive) and 19 suffix types (15 original + 4 resistance)
 - Shipped 4 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat)
+- v1.3 focus: save/load persistence, UI layout overhaul, crafting UX, balance tuning
 
 ## Constraints
 
@@ -133,4 +144,4 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Explicit CanvasLayer visibility management | CanvasLayer ignores parent visibility; must toggle in show_view() | ✓ Good -- tab navigation works correctly |
 
 ---
-*Last updated: 2026-02-17 after v1.2 milestone*
+*Last updated: 2026-02-17 after v1.3 milestone started*
