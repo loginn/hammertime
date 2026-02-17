@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 19-side-by-side-layout
 source: [19-01-SUMMARY.md, 19-02-SUMMARY.md]
 started: 2026-02-17T18:00:00Z
@@ -80,19 +80,31 @@ skipped: 1
   reason: "User reported: Hammers are not using the right icons from the asset folder. Text is too large + too much whitespace. it goes outside the viewport"
   severity: major
   test: 1
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "Three interconnected issues: (1) All 6 hammer buttons are plain Button nodes with text-only labels, no icon textures — assets exist in assets/ but are unreferenced. (2) Zero font_size theme overrides on any node — Godot 16px default is too large. (3) HammerSidebar starts at y=0 not y=50, InventoryLabel allocated 330px for ~120px of content."
+  artifacts:
+    - path: "scenes/forge_view.tscn"
+      issue: "Hammer buttons are plain Button nodes (lines 23-75) with no icon/texture properties; no font_size overrides on any node; sidebar offset_top=0 not 50"
+    - path: "scenes/forge_view.gd"
+      issue: "update_currency_button_states() (line 216) only sets button.text, no icon logic"
+  missing:
+    - "Convert hammer buttons to use icon property or TextureButton with assets/*.png"
+    - "Add font_size theme overrides (11-12px) on hammer buttons, labels throughout"
+    - "Fix HammerSidebar offset_top to 50, shrink InventoryLabel vertical allocation"
+    - "Update forge_view.gd to set button icons in update_currency_button_states()"
+  debug_session: ".planning/debug/forge-view-hammers-icons-overflow.md"
 
-- truth: "Keyboard shortcuts switch views: 1=Forge, 2=Combat, TAB cycles"
+- truth: "Keyboard shortcuts switch views: 1=Forge, 2=Adventure, TAB cycles between Forge and Adventure only"
   status: failed
   reason: "User reported: Settings does not need a shortcut"
   severity: minor
   test: 3
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "main_view.gd _input() maps KEY_3 to settings (lines 39-40) and TAB cycle includes settings (lines 41-47)"
+  artifacts:
+    - path: "scenes/main_view.gd"
+      issue: "KEY_3 mapped to settings view; TAB cycle includes settings stop"
+  missing:
+    - "Remove KEY_3 case from match statement"
+    - "Update TAB cycling to only alternate between forge and combat"
   debug_session: ""
 
 - truth: "Item type buttons display below item image with no flickering when hovering between buttons"
@@ -100,9 +112,12 @@ skipped: 1
   reason: "User reported: Selection works, remove the gap between buttons because it makes the hero stats flicker when between item stats and hero stats in between 2 buttons which is uncomfortable."
   severity: minor
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "4px gaps between item type buttons in forge_view.tscn (each 82px wide, spaced 86px apart). Mouse crossing gap fires mouse_exited then mouse_entered, causing hero stats panel to rapidly toggle between equipped item and aggregate stats."
+  artifacts:
+    - path: "scenes/forge_view.tscn"
+      issue: "Button positions have 4px gaps: Weapon 0-82, Helmet 86-168, Armor 172-254, Boots 258-340, Ring 344-426"
+  missing:
+    - "Close gaps: Weapon 0-82, Helmet 82-164, Armor 164-246, Boots 246-328, Ring 328-410"
   debug_session: ""
 
 - truth: "Crafted items display rarity colors (blue for magic, yellow for rare) in item stats text"
@@ -110,9 +125,15 @@ skipped: 1
   reason: "User reported: Melt works. Item colors are gone though, rares are no longer yellow, magic items are no longer blue."
   severity: major
   test: 5
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "When merging crafting_view.gd into forge_view.gd, the rarity color line was dropped. Old code had item_label.modulate = current_item.get_rarity_color() in update_label(). New update_item_stats_display() only sets item_stats_label.text, never calls get_rarity_color() or sets .modulate. Item.get_rarity_color() still exists (White/Normal, #6888F5/Magic, #FFD700/Rare)."
+  artifacts:
+    - path: "scenes/forge_view.gd"
+      issue: "update_item_stats_display() (line 451) and get_item_stats_text() (line 529) never apply rarity color"
+    - path: "scenes/forge_view.tscn"
+      issue: "ItemStatsLabel is plain Label (line 187), no modulate set"
+  missing:
+    - "Add item_stats_label.modulate = current_item.get_rarity_color() in update_item_stats_display() after setting text"
+    - "Reset to Color.WHITE when no item is displayed"
   debug_session: ""
 
 - truth: "Combat tab switches to full-width gameplay view with correct layout and tab named appropriately"
@@ -120,9 +141,15 @@ skipped: 1
   reason: "User reported: The combat view has the adventure text misplaced. Remove that text. Rename the combat tab to adventure instead"
   severity: minor
   test: 2
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "gameplay_view.tscn has a 'Title' Label node (lines 15-23) with text='Adventure' anchored to bottom of viewport. main.tscn CombatTab button (line 29) has text='Combat' instead of 'Adventure'."
+  artifacts:
+    - path: "scenes/gameplay_view.tscn"
+      issue: "Title Label node (lines 15-23) is a misplaced 'Adventure' label anchored to bottom"
+    - path: "scenes/main.tscn"
+      issue: "CombatTab button text='Combat' should be 'Adventure'"
+  missing:
+    - "Delete the Title node block from gameplay_view.tscn"
+    - "Change CombatTab text from 'Combat' to 'Adventure' in main.tscn"
   debug_session: ""
 
 - truth: "Viewport background color is consistent — no color mismatches at top/bottom edges"
@@ -130,7 +157,16 @@ skipped: 1
   reason: "User reported: 1280x720 is right, the bottom and top areas have weird colors though. Strips at top and bottom of viewport are a different gray than the dark content background."
   severity: cosmetic
   test: 10
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "10px gap between TabBar bottom (y=40) and ContentArea top (y=50) has no ColorRect coverage — default Godot clear color shows through. ForgeView background is 660px tall (should be 670 to match GameplayView/SettingsView). No custom rendering/environment/defaults/default_clear_color set in project.godot."
+  artifacts:
+    - path: "scenes/main.tscn"
+      issue: "TabBar ends at y=40, ContentArea starts at y=50 — 10px uncovered gap"
+    - path: "scenes/forge_view.tscn"
+      issue: "Background offset_bottom=660 should be 670 to fill content area"
+    - path: "project.godot"
+      issue: "No custom default_clear_color set"
+  missing:
+    - "Extend TabBar to y=50 or add full-viewport background ColorRect behind everything"
+    - "Change ForgeView Background offset_bottom from 660 to 670"
+    - "Set environment/defaults/default_clear_color=Color(0.1, 0.1, 0.1, 1) in project.godot"
   debug_session: ""
