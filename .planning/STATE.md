@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Phase 23 — Damage Range Data Model
+**Current Focus:** Phase 24 — Stat Calculation and Hero Range Caching
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 23 of 26 (Damage Range Data Model)
-Plan: 2 of 2 complete
-Status: Phase 23 execution complete, pending verification
-Last activity: 2026-02-18 — Plan 23-02 complete (affix damage schema + MonsterPack ranges)
+Phase: 24 of 26 (Stat Calculation and Hero Range Caching)
+Plan: 0 of ? (not yet planned)
+Status: Ready to plan
+Last activity: 2026-02-18 — Phase 23 complete (4/4 requirements, 2/2 plans)
 
-Progress: [██████████] 100% (2/2 plans complete)
+Progress: [░░░░░░░░░░] 0% (0/? plans complete)
 
 ## Performance Metrics
 
@@ -46,8 +46,10 @@ All prior decisions logged in PROJECT.md Key Decisions table.
 **v1.4 key decisions:**
 - No save migration: user chose fresh saves only; existing v1.3 saves are not supported across this milestone boundary
 - No SAVE_VERSION bump: skipping migration means no schema versioning needed for this milestone
-- Element variance ratios to define in Phase 23: Physical tight (1:1.5), Cold moderate (1:2), Fire wide (1:2.5), Lightning extreme (1:4) — validate against survivability before finalizing
-- Affix template fields are separate from rolled fields: dmg_min_lo/dmg_min_hi/dmg_max_lo/dmg_max_hi are template bounds; add_min/add_max are rolled results; Tuning Hammer always reads template bounds
+- Element variance ratios (Phase 23): Physical 1:1.5, Cold 1:2, Fire 1:2.5, Lightning 1:4
+- Affix template bounds are immutable; add_min/add_max are mutable rolled results; Tuning Hammer always reads template bounds
+- Computed base_damage getter returns (min+max)/2 for zero-change backward compatibility
+- Base + scaled field pattern: base_dmg_* unscaled for cloning, dmg_* tier-scaled for rolling
 
 ### Known Issues
 
@@ -69,12 +71,11 @@ No known issues.
 ## Session Continuity
 
 **Last session:** 2026-02-18
-- Phase 23 execution complete (2/2 plans)
-- Plan 23-01: weapon base_damage_min/max fields, computed base_damage property, ELEMENT_VARIANCE constants
-- Plan 23-02: affix 10-field damage schema, MonsterPack damage_min/max from element variance
+- Phase 23 complete and verified (4/4 requirements, 2/2 plans)
+- Transitioned to Phase 24: Stat Calculation and Hero Range Caching
 
-**Next step:** Phase 23 verification, then Phase 24 (Stat Calculation and Hero Range Caching)
+**Next step:** `/gsd:plan-phase 24`
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-18 — Phase 23 execution complete (2/2 plans)*
+*Last updated: 2026-02-18 — Phase 23 complete, transitioned to Phase 24*

@@ -163,6 +163,10 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | MD5 checksum on save export strings | Detects clipboard corruption without crypto overhead | ✓ Good -- catches copy errors |
 | 40% Forest difficulty reduction | Fresh heroes survive 3+ packs with starter gear | ✓ Good -- playable from level 1 |
 | Font size 11 for ForgeView | Prevents text overflow in 1280x720 viewport | ✓ Good -- readable and fits |
+| Computed base_damage getter for backward compat | Weapon.base_damage returns (min+max)/2; zero changes to StatCalculator or UI | ✓ Good -- seamless migration |
+| Immutable template bounds for affix reroll | dmg_min_lo/hi are never modified; reroll always reads from bounds, not rolled values | ✓ Good -- prevents range collapse |
+| Base + scaled field pattern for affixes | base_dmg_* stores unscaled params, dmg_* stores tier-scaled; from_affix() passes base to avoid double-scaling | ✓ Good -- follows existing base_min/base_max pattern |
+| ELEMENT_VARIANCE in PackGenerator | Constants define min_mult/max_mult per element; Physical 1:1.5 through Lightning 1:4 | ✓ Good -- centralized, easy to tune |
 
 ---
-*Last updated: 2026-02-18 after v1.4 milestone started*
+*Last updated: 2026-02-18 after Phase 23*
