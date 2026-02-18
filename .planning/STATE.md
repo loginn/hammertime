@@ -16,11 +16,11 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 25 of 26 (Per-Hit Combat Rolling)
-Plan: 0 of ? (not yet planned)
-Status: Ready to plan
-Last activity: 2026-02-18 — Phase 24 complete (1/1 requirements, 2/2 plans)
+Plan: 0 of 1 planned
+Status: Ready to execute
+Last activity: 2026-02-18 — Phase 25 planned (1 plan in 1 wave)
 
-Progress: [░░░░░░░░░░] 0% (0/? plans complete)
+Progress: [░░░░░░░░░░] 0% (0/1 plans complete)
 
 ## Performance Metrics
 
@@ -75,10 +75,10 @@ No known issues.
 ## Session Continuity
 
 **Last session:** 2026-02-18
-- Phase 24 complete and verified (1/1 requirements, 2/2 plans)
-- Transitioned to Phase 25: Per-Hit Combat Rolling
+- Phase 25 planned: 1 plan in 1 wave
+- Plan 25-01: Per-element hero rolling and per-hit pack rolling in CombatEngine
 
-**Next step:** `/gsd:discuss-phase 25`
+**Next step:** `/gsd:execute-phase 25`
 
 ---
 *State initialized: 2026-02-15*
