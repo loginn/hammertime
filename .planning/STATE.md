@@ -66,7 +66,7 @@ No known issues.
 
 ## Session Continuity
 
-**Last session:** 2026-02-18
+**Last session:** 2026-02-18T13:46:36.851Z
 - Milestone v1.4 Damage Ranges shipped and archived
 - All artifacts archived to .planning/milestones/
 
