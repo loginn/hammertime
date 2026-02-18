@@ -98,8 +98,8 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
   5. Tuning Hammer re-roll reads from template bounds (not previously rolled values), so repeated re-rolls never collapse the range
 **Plans:** 2/2 plans complete
 Plans:
-- [ ] 23-01-PLAN.md — Weapon base damage range fields and element variance constants
-- [ ] 23-02-PLAN.md — Affix six-field damage range schema and MonsterPack damage ranges
+- [x] 23-01-PLAN.md — Weapon base damage range fields and element variance constants
+- [x] 23-02-PLAN.md — Affix six-field damage range schema and MonsterPack damage ranges
 
 ### Phase 24: Stat Calculation and Hero Range Caching
 **Goal**: StatCalculator accumulates per-element min and max independently, and Hero caches the totals for combat use
@@ -161,7 +161,7 @@ Plans:
 | 20. Crafting UX Enhancements | v1.3 | 3/3 | ✓ Complete | 2026-02-18 |
 | 21. Save Import/Export | v1.3 | 1/1 | ✓ Complete | 2026-02-18 |
 | 22. Balance & Polish | v1.3 | 1/1 | ✓ Complete | 2026-02-18 |
-| 23. Damage Range Data Model | 2/2 | Complete   | 2026-02-18 | - |
+| 23. Damage Range Data Model | v1.4 | 2/2 | ✓ Complete | 2026-02-18 |
 | 24. Stat Calculation and Hero Range Caching | v1.4 | 0/? | Not started | - |
 | 25. Per-Hit Combat Rolling | v1.4 | 0/? | Not started | - |
 | 26. UI Range Display | v1.4 | 0/? | Not started | - |
