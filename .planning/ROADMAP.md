@@ -129,10 +129,10 @@ Plans:
   2. Player can paste a save string into an "Import Save" field and restore that exact game state
   3. Save string export/import preserves all hero equipment, currencies, area progress, and crafting inventory
   4. Invalid save strings show clear error messages instead of corrupting game state
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 21-01: TBD
+- [ ] 21-01-PLAN.md — Save string export/import with Base64 encoding, clipboard auto-copy, two-click import confirmation, and colored toast notifications
 
 ### Phase 22: Balance & Polish
 **Goal**: Fresh heroes can survive level 1 content and UI provides polished feedback
