@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 20-crafting-ux-enhancements
 source: [20-01-SUMMARY.md, 20-02-SUMMARY.md]
 started: 2026-02-18T00:00:00Z
@@ -76,9 +76,12 @@ skipped: 5
   reason: "User reported: Tooltip takes too long to appear"
   severity: minor
   test: 1
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Godot default tooltip delay is 0.5 seconds (gui/timers/tooltip_delay_sec). No custom setting in project.godot."
+  artifacts:
+    - path: "project.godot"
+      issue: "Missing gui/timers/tooltip_delay_sec setting"
+  missing:
+    - "Add [gui] section with timers/tooltip_delay_sec=0.2 to project.godot"
   debug_session: ""
 
 - truth: "Melt destroys item directly and crafting slot cleared, buttons remain functional for next item"
@@ -86,7 +89,10 @@ skipped: 5
   reason: "User reported: after melting or equipping a hammer, the melt/equip buttons stop working for the next item"
   severity: major
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "_on_item_type_selected() calls update_current_item() which sets current_item, but never calls update_melt_equip_states() — so buttons remain disabled after melt/equip even when switching to a type with a valid item"
+  artifacts:
+    - path: "scenes/forge_view.gd"
+      issue: "_on_item_type_selected() missing update_melt_equip_states() call after update_current_item()"
+  missing:
+    - "Add update_melt_equip_states() call at end of _on_item_type_selected()"
   debug_session: ""
