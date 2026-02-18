@@ -110,7 +110,10 @@ Plans:
   2. Percentage damage modifiers (e.g., +10% fire damage) scale both the min and max ends independently — a 10-20 fire affix with +10% fire mod produces 11-22, not 15-15
   3. Hero exposes total_damage_min and total_damage_max per element, populated after equip and recalculated on load (not serialized)
   4. DPS display value uses (min+max)/2 averaged across all elements — the displayed number is stable and comparable between items
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
+Plans:
+- [ ] 24-01-PLAN.md -- StatCalculator.calculate_damage_range() with per-element dual-accumulator math
+- [ ] 24-02-PLAN.md -- Hero range caching, range-based DPS, and is_item_better() DPS comparison
 
 ### Phase 25: Per-Hit Combat Rolling
 **Goal**: Every hero and monster attack rolls actual damage from the range rather than using a deterministic per-hit value
@@ -162,7 +165,7 @@ Plans:
 | 21. Save Import/Export | v1.3 | 1/1 | ✓ Complete | 2026-02-18 |
 | 22. Balance & Polish | v1.3 | 1/1 | ✓ Complete | 2026-02-18 |
 | 23. Damage Range Data Model | v1.4 | 2/2 | ✓ Complete | 2026-02-18 |
-| 24. Stat Calculation and Hero Range Caching | v1.4 | 0/? | Not started | - |
+| 24. Stat Calculation and Hero Range Caching | v1.4 | 0/2 | Planned | - |
 | 25. Per-Hit Combat Rolling | v1.4 | 0/? | Not started | - |
 | 26. UI Range Display | v1.4 | 0/? | Not started | - |
 
