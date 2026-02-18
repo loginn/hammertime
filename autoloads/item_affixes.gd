@@ -178,7 +178,7 @@ var suffixes: Array[Affix] = [
 		[Tag.SPEED, Tag.ATTACK, Tag.WEAPON],
 		[Tag.StatType.INCREASED_SPEED]
 	),
-	Affix.new("Cast Speed", Affix.AffixType.SUFFIX, 2, 10, [Tag.MAGIC, Tag.WEAPON], []),
+	Affix.new("Cast Speed", Affix.AffixType.SUFFIX, 2, 10, [Tag.MAGIC], []),
 	Affix.new("Damage over time", Affix.AffixType.SUFFIX, 2, 10, [Tag.DOT, Tag.WEAPON], []),
 	Affix.new(
 		"Bleed Damage", Affix.AffixType.SUFFIX, 2, 10, [Tag.DOT, Tag.PHYSICAL, Tag.WEAPON], []
