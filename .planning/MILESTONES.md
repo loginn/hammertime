@@ -90,7 +90,6 @@
 
 **Known Gaps:**
 - Level 1 difficulty may be too high for fresh heroes (balance tuning deferred to v1.3+)
-- Deprecated LootTable methods kept for drop_simulator tool
 
 **Archives:** `.planning/milestones/v1.2-ROADMAP.md`, `.planning/milestones/v1.2-REQUIREMENTS.md`
 

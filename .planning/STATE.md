@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Current Focus:** Planning next milestone
 
-**Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
+**Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
@@ -65,8 +65,7 @@ All v1.3 decisions marked as validated.
 
 ### Known Issues
 
-- Deprecated LootTable methods kept for drop_simulator tool (get_item_drop_count, roll_currency_drops)
-- 2 orphaned legacy files (scenes/hero_view.gd, scenes/crafting_view.gd) replaced by ForgeView
+No known issues.
 
 ### Deferred Items
 
@@ -88,6 +87,7 @@ All v1.3 decisions marked as validated.
 |---|-------------|------|--------|-----------|
 | 1 | Fix Light Sword item type button regenerating a free weapon while other types do not | 2026-02-15 | c0bcfb8 | [1-fix-light-sword-item-type-button-regener](./quick/1-fix-light-sword-item-type-button-regener/) |
 | 2 | Adventure tab UI has overlaps - move HP bars lower so they dont overlap with buttons | 2026-02-18 | c4a180c | [2-adventure-tab-ui-has-overlaps-move-hp-ba](./quick/2-adventure-tab-ui-has-overlaps-move-hp-ba/) |
+| 3 | Remove deprecated loot tables and simulator tool | 2026-02-18 | a3938b6 | [3-remove-the-deprecated-loot-tables-and-si](./quick/3-remove-the-deprecated-loot-tables-and-si/) |
 
 ## Session Continuity
 
