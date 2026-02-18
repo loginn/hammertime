@@ -18,7 +18,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: Not started (defining requirements)
 Plan: —
 Status: Defining requirements
-Last activity: 2026-02-18 — Milestone v1.5 started
+Last activity: 2026-02-18 - Completed quick task 6: restore hero HP/ES on combat stop
 
 ## Performance Metrics
 
@@ -70,7 +70,7 @@ No known issues.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 5 | Remove caster mods from physical weapons | 2026-02-18 | 682ac7c | [5-remove-caster-mods-from-physical-weapons](./quick/5-remove-caster-mods-from-physical-weapons/) |
-| 6 | Restore hero HP/ES on combat stop and tab leave | 2026-02-18 | a198535 | [6-on-stopping-combat-hero-should-go-back-t](./quick/6-on-stopping-combat-hero-should-go-back-t/) |
+| 6 | Restore hero HP/ES on combat stop and tab leave | 2026-02-18 | b4617df | [6-on-stopping-combat-hero-should-go-back-t](./quick/6-on-stopping-combat-hero-should-go-back-t/) |
 
 ## Session Continuity
 
