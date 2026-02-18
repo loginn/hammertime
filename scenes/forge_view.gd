@@ -289,6 +289,7 @@ func _on_item_type_selected(item_type: String) -> void:
 
 	# Update button visual states
 	update_item_type_button_states()
+	update_melt_equip_states()
 
 
 func update_item_type_button_states() -> void:
