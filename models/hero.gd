@@ -108,7 +108,7 @@ func calculate_damage_ranges() -> void:
 	if "weapon" in equipped_items and equipped_items["weapon"] != null:
 		var weapon = equipped_items["weapon"]
 		if weapon is Weapon:
-			var all_affixes := weapon.prefixes.duplicate()
+			var all_affixes: Array = weapon.prefixes.duplicate()
 			all_affixes.append_array(weapon.suffixes)
 			if weapon.implicit:
 				all_affixes.append(weapon.implicit)
@@ -124,7 +124,7 @@ func calculate_damage_ranges() -> void:
 	if "ring" in equipped_items and equipped_items["ring"] != null:
 		var ring = equipped_items["ring"]
 		if ring is Ring:
-			var all_affixes := ring.prefixes.duplicate()
+			var all_affixes: Array = ring.prefixes.duplicate()
 			all_affixes.append_array(ring.suffixes)
 			if ring.implicit:
 				all_affixes.append(ring.implicit)
@@ -152,7 +152,7 @@ func calculate_dps() -> float:
 		if weapon is Weapon:
 			speed = float(weapon.base_speed)
 			# Apply speed modifiers from affixes
-			var all_affixes := weapon.prefixes.duplicate()
+			var all_affixes: Array = weapon.prefixes.duplicate()
 			all_affixes.append_array(weapon.suffixes)
 			if weapon.implicit:
 				all_affixes.append(weapon.implicit)
