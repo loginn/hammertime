@@ -144,11 +144,10 @@ Plans:
   3. Level 1 monsters deal reduced damage and have reduced HP compared to previous balance (30-50% damage reduction)
   4. Hero View stat panels fit within viewport without scrolling or text overflow
   5. All stat labels are readable with properly sized text and whitespace
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 22-01: TBD
-- [ ] 22-02: TBD
+- [ ] 22-01-PLAN.md — Starter gear, monster rebalance, debug flag, stat panel verification
 
 ## Progress
 
