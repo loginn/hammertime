@@ -171,6 +171,8 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Hero range-based DPS formula | DPS = sum of per-element (min+max)/2 * speed * crit instead of summing weapon.dps + ring.dps | ✓ Good -- uses hero-level crit, more accurate |
 | DPS comparison for weapon/ring drops | is_item_better() uses DPS for damage slots, tier for defense slots | ✓ Good -- evaluates actual damage output |
 | update_stats() order: crit -> ranges -> dps -> defense | Ensures crit stats available for DPS calculation, ranges available for DPS average | ✓ Good -- correct dependency order |
+| Per-element hero rolling with crit on total | Roll each element independently, sum, then crit; matches ARPG expected-value math | ✓ Good -- natural per-hit variance |
+| Pack per-hit rolling from damage_min/max | randf_range(min, max) replaces flat average; lightning naturally wider than physical | ✓ Good -- element identity in combat |
 
 ---
-*Last updated: 2026-02-18 after Phase 24*
+*Last updated: 2026-02-18 after Phase 25*

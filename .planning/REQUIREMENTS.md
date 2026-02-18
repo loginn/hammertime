@@ -16,8 +16,8 @@ Requirements for the Damage Ranges milestone. Each maps to roadmap phases.
 
 ### Combat
 
-- [ ] **CMB-01**: Hero attacks roll each damage element independently (physical base + each elemental flat affix), apply element-specific percentage modifiers per element, then sum for total hit
-- [ ] **CMB-02**: Monster pack attacks roll damage per-hit from pack min-max range before defense pipeline
+- [x] **CMB-01**: Hero attacks roll each damage element independently (physical base + each elemental flat affix), apply element-specific percentage modifiers per element, then sum for total hit
+- [x] **CMB-02**: Monster pack attacks roll damage per-hit from pack min-max range before defense pipeline
 
 ### Stat Calculation
 
@@ -68,8 +68,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DMG-03 | Phase 23 | Complete |
 | DMG-04 | Phase 23 | Complete |
 | STAT-01 | Phase 24 | Complete |
-| CMB-01 | Phase 25 | Pending |
-| CMB-02 | Phase 25 | Pending |
+| CMB-01 | Phase 25 | Complete |
+| CMB-02 | Phase 25 | Complete |
 | DISP-01 | Phase 26 | Pending |
 | DISP-02 | Phase 26 | Pending |
 | DISP-03 | Phase 26 | Pending |

@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Phase 25 — Per-Hit Combat Rolling
+**Current Focus:** Phase 26 — UI Range Display
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 25 of 26 (Per-Hit Combat Rolling)
-Plan: 0 of 1 planned
-Status: Ready to execute
-Last activity: 2026-02-18 — Phase 25 planned (1 plan in 1 wave)
+Phase: 26 of 26 (UI Range Display)
+Plan: 0 of ? (not yet planned)
+Status: Ready to plan
+Last activity: 2026-02-18 — Phase 25 complete (2/2 requirements, 1/1 plans)
 
-Progress: [░░░░░░░░░░] 0% (0/1 plans complete)
+Progress: [░░░░░░░░░░] 0% (0/? plans complete)
 
 ## Performance Metrics
 
@@ -54,6 +54,8 @@ All prior decisions logged in PROJECT.md Key Decisions table.
 - Hero range-based DPS: sum of per-element (min+max)/2 * speed * crit replaces weapon.dps + ring.dps summation
 - DPS comparison for weapon/ring item drops: is_item_better() uses DPS instead of tier for damage slots
 - update_stats() order: crit -> ranges -> dps -> defense (dependency-correct ordering)
+- Per-element hero damage rolling: each element rolled independently via randf_range, crit on total sum
+- Pack per-hit rolling: randf_range(damage_min, damage_max) replaces flat pack.damage
 
 ### Known Issues
 
@@ -75,11 +77,11 @@ No known issues.
 ## Session Continuity
 
 **Last session:** 2026-02-18
-- Phase 25 planned: 1 plan in 1 wave
-- Plan 25-01: Per-element hero rolling and per-hit pack rolling in CombatEngine
+- Phase 25 complete and verified (2/2 requirements, 1/1 plans)
+- Transitioned to Phase 26: UI Range Display
 
-**Next step:** `/gsd:execute-phase 25`
+**Next step:** `/gsd:discuss-phase 26`
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-18 — Phase 24 complete, transitioned to Phase 25*
+*Last updated: 2026-02-18 — Phase 25 complete, transitioned to Phase 26*
