@@ -1,6 +1,9 @@
 class_name Weapon extends Item
 
-var base_damage: int
+var base_damage_min: int = 0
+var base_damage_max: int = 0
+var base_damage: int:
+	get: return (base_damage_min + base_damage_max) / 2
 var base_damage_type: String
 var base_speed: int
 var dps: float

@@ -14,7 +14,8 @@ func _init() -> void:
 	self.implicit = Implicit.new(
 		"Attack Speed", Affix.AffixType.IMPLICIT, 2, 5, [Tag.SPEED, Tag.ATTACK], [Tag.StatType.INCREASED_SPEED]
 	)
-	self.base_damage = 10
+	self.base_damage_min = 8
+	self.base_damage_max = 12
 	self.base_speed = 1
 	self.base_attack_speed = 1.8  # Fast sword: ~0.56s between hits
 	self.update_value()
