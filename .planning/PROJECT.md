@@ -65,22 +65,21 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ Starter Runic Hammer + weapon base for new game crafting tutorial -- v1.3
 - ✓ Reduced Forest difficulty (40% reduction) for fresh hero survival -- v1.3
 - ✓ Stat panels fit viewport with font size 11 and proper spacing -- v1.3
+- ✓ Weapon base damage ranges (min-max per weapon type) with computed average getter -- v1.4
+- ✓ Flat damage affix ranges with element-specific variance (Physical tight, Lightning extreme) -- v1.4
+- ✓ Monster pack damage ranges with element variance constants -- v1.4
+- ✓ Dual-accumulator per-element damage range tracking in StatCalculator -- v1.4
+- ✓ Hero range caching with range-based DPS formula -- v1.4
+- ✓ Per-element hero damage rolling and per-hit pack rolling in CombatEngine -- v1.4
+- ✓ Weapon tooltip "Damage: X to Y" and affix "Adds X to Y [Element] Damage" display -- v1.4
+- ✓ Pack name and element type shown in gameplay view during combat -- v1.4
+- ✓ DPS-based item comparison for weapon/ring slots -- v1.4
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-## Current Milestone: v1.4 Damage Ranges
-
-**Goal:** Replace flat damage values with min-max ranges for weapons, monsters, and affixes, giving each element a distinct variance identity and updating UI to display ranges.
-
-**Target features:**
-- Weapon base damage ranges (min-max per weapon type)
-- Monster damage ranges (min-max per monster type, scaling with area)
-- Flat damage affix ranges with element-specific variance (Physical tight → Lightning extreme)
-- Per-hit damage rolling in CombatEngine
-- UI updates showing "X to Y" damage on items and tooltips
-- DPS display using average of ranges
+No active milestone. v1.4 Damage Ranges shipped 2026-02-18.
 
 ### Out of Scope
 
@@ -112,7 +111,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - BiomeConfig defines biome element weight arrays and pack count ranges for 4 biomes
 - SaveManager handles JSON save/load, auto-save timer, event triggers, and Base64 export/import
 - 18 prefix types (9 offensive + 9 defensive) and 19 suffix types (15 original + 4 resistance)
-- Shipped 5 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish)
+- Shipped 6 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges)
 
 ## Constraints
 
@@ -173,6 +172,10 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | update_stats() order: crit -> ranges -> dps -> defense | Ensures crit stats available for DPS calculation, ranges available for DPS average | ✓ Good -- correct dependency order |
 | Per-element hero rolling with crit on total | Roll each element independently, sum, then crit; matches ARPG expected-value math | ✓ Good -- natural per-hit variance |
 | Pack per-hit rolling from damage_min/max | randf_range(min, max) replaces flat average; lightning naturally wider than physical | ✓ Good -- element identity in combat |
+| Weapon tooltip "Damage: X to Y" format | Replaces "Base Damage: N"; shows actual min/max range from base_damage_min/max | ✓ Good -- players see damage variance |
+| _format_affix_line() helper for flat damage | Flat damage affixes show "Adds X to Y [Element] Damage"; element from tags; others unchanged | ✓ Good -- clean display, single helper |
+| Pack HP label with name and element | "PackName (Element) -- HP/MaxHP" in gameplay view; no new UI nodes needed | ✓ Good -- combat context at a glance |
+| Stat comparison shows damage ranges | Weapons show "Damage: X-Y (was X-Y)" instead of single-value delta | ✓ Good -- meaningful comparison for ranged damage |
 
 ---
-*Last updated: 2026-02-18 after Phase 25*
+*Last updated: 2026-02-18 after Phase 26 — milestone v1.4 complete*

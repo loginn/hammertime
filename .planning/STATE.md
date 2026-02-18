@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Phase 26 — UI Range Display
+**Current Focus:** Milestone v1.4 complete — all phases shipped
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
 Phase: 26 of 26 (UI Range Display)
-Plan: 0 of 2 planned
-Status: Ready to execute
-Last activity: 2026-02-18 — Phase 26 planned (2 plans in 1 wave)
+Plan: 2 of 2 complete
+Status: Milestone complete
+Last activity: 2026-02-18 — Phase 26 executed and verified (5/5 criteria passed)
 
-Progress: [░░░░░░░░░░] 0% (0/2 plans complete)
+Progress: [██████████] 100% (2/2 plans complete)
 
 ## Performance Metrics
 
@@ -56,6 +56,9 @@ All prior decisions logged in PROJECT.md Key Decisions table.
 - update_stats() order: crit -> ranges -> dps -> defense (dependency-correct ordering)
 - Per-element hero damage rolling: each element rolled independently via randf_range, crit on total sum
 - Pack per-hit rolling: randf_range(damage_min, damage_max) replaces flat pack.damage
+- Weapon tooltip "Damage: X to Y" replaces single "Base Damage: N" display
+- _format_affix_line() helper: flat damage affixes as "Adds X to Y [Element] Damage", others as "Name: value"
+- Pack HP label shows "PackName (Element) -- HP/MaxHP" during combat
 
 ### Known Issues
 
@@ -77,11 +80,11 @@ No known issues.
 ## Session Continuity
 
 **Last session:** 2026-02-18
-- Phase 25 complete and verified (2/2 requirements, 1/1 plans)
-- Transitioned to Phase 26: UI Range Display
+- Phase 26 complete and verified (5/5 criteria, 4/4 requirements)
+- All v1.4 phases (23-26) shipped
 
-**Next step:** `/gsd:discuss-phase 26`
+**Next step:** `/gsd:complete-milestone` to archive v1.4
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-18 — Phase 25 complete, transitioned to Phase 26*
+*Last updated: 2026-02-18 — Phase 26 complete, milestone v1.4 shipped*

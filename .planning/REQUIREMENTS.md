@@ -25,10 +25,10 @@ Requirements for the Damage Ranges milestone. Each maps to roadmap phases.
 
 ### Display
 
-- [ ] **DISP-01**: Weapon tooltip shows "X to Y" damage range instead of single number
-- [ ] **DISP-02**: Flat damage affixes display "Adds X to Y [Element] Damage" format
-- [ ] **DISP-03**: DPS stat computed using average of per-element damage ranges with element modifiers applied
-- [ ] **DISP-04**: Current combat pack shows its name and damage element type in the gameplay view
+- [x] **DISP-01**: Weapon tooltip shows "X to Y" damage range instead of single number
+- [x] **DISP-02**: Flat damage affixes display "Adds X to Y [Element] Damage" format
+- [x] **DISP-03**: DPS stat computed using average of per-element damage ranges with element modifiers applied
+- [x] **DISP-04**: Current combat pack shows its name and damage element type in the gameplay view
 
 ## Future Requirements
 
@@ -70,10 +70,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STAT-01 | Phase 24 | Complete |
 | CMB-01 | Phase 25 | Complete |
 | CMB-02 | Phase 25 | Complete |
-| DISP-01 | Phase 26 | Pending |
-| DISP-02 | Phase 26 | Pending |
-| DISP-03 | Phase 26 | Pending |
-| DISP-04 | Phase 26 | Pending |
+| DISP-01 | Phase 26 | Complete |
+| DISP-02 | Phase 26 | Complete |
+| DISP-03 | Phase 26 | Complete |
+| DISP-04 | Phase 26 | Complete |
 
 **Coverage:**
 - v1.4 requirements: 11 total
@@ -82,4 +82,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-18*
-*Last updated: 2026-02-18 — added DISP-04 (pack info display)*
+*Last updated: 2026-02-18 — all 11 requirements complete, milestone v1.4 shipped*

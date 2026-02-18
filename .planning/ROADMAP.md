@@ -7,7 +7,7 @@
 - ✅ **v1.1 Content & Balance** — Phases 9-12 (shipped 2026-02-16)
 - ✅ **v1.2 Pack-Based Mapping** — Phases 13-17 (shipped 2026-02-17)
 - ✅ **v1.3 Save/Load & Polish** — Phases 18-22 (shipped 2026-02-18)
-- 🚧 **v1.4 Damage Ranges** — Phases 23-26 (in progress)
+- ✅ **v1.4 Damage Ranges** — Phases 23-26 (shipped 2026-02-18)
 
 ## Phases
 
@@ -73,7 +73,7 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.4 Damage Ranges (In Progress)
+### ✅ v1.4 Damage Ranges (Shipped 2026-02-18)
 
 **Milestone Goal:** Replace flat damage values with min-max ranges for weapons, monsters, and affixes, giving each element a distinct variance identity and updating UI to display ranges.
 
@@ -82,7 +82,7 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
 - [x] **Phase 23: Damage Range Data Model** — Add min/max range fields to Weapon, Affix templates, and MonsterPack with element-specific variance constants (completed 2026-02-18)
 - [x] **Phase 24: Stat Calculation and Hero Range Caching** — Dual-accumulator DPS math in StatCalculator and per-element min/max totals on Hero (completed 2026-02-18)
 - [x] **Phase 25: Per-Hit Combat Rolling** — CombatEngine rolls hero damage per-element independently and monster pack rolls per-hit from its range (completed 2026-02-18)
-- [ ] **Phase 26: UI Range Display** — Weapon and affix tooltips show X-to-Y ranges, DPS uses range averages, item comparison uses DPS, pack info shows name and element
+- [x] **Phase 26: UI Range Display** — Weapon and affix tooltips show X-to-Y ranges, DPS uses range averages, item comparison uses DPS, pack info shows name and element (completed 2026-02-18)
 
 ## Phase Details
 
@@ -138,10 +138,10 @@ Plans:
   3. DPS shown in hero stats and item comparison uses the average-of-ranges formula across all elements with modifiers applied; it matches the value used by is_item_better() for weapon comparison
   4. UI labels do not overflow at 1280x720 with the longest realistic lightning affix string
   5. Gameplay view displays the current pack's name and damage element type during combat
-**Plans:** 2 plans in 1 wave
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 26-01-PLAN.md -- Weapon range tooltip, affix range display, stat comparison update
-- [ ] 26-02-PLAN.md -- Pack name and element display in gameplay view
+- [x] 26-01-PLAN.md -- Weapon range tooltip, affix range display, stat comparison update
+- [x] 26-02-PLAN.md -- Pack name and element display in gameplay view
 
 ## Progress
 
@@ -172,8 +172,8 @@ Plans:
 | 23. Damage Range Data Model | v1.4 | 2/2 | ✓ Complete | 2026-02-18 |
 | 24. Stat Calculation and Hero Range Caching | v1.4 | 2/2 | ✓ Complete | 2026-02-18 |
 | 25. Per-Hit Combat Rolling | v1.4 | 1/1 | ✓ Complete | 2026-02-18 |
-| 26. UI Range Display | v1.4 | 0/2 | Planned | - |
+| 26. UI Range Display | v1.4 | 2/2 | ✓ Complete | 2026-02-18 |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-18 — Phase 23 planned (2 plans)*
+*Last updated: 2026-02-18 — Phase 26 complete, milestone v1.4 shipped*
