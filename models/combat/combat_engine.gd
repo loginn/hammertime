@@ -65,7 +65,7 @@ func _start_pack_fight() -> void:
 	pack_attack_timer.start()
 
 
-## Hero attacks the current pack. Damage = DPS / attack_speed with per-hit crit roll.
+## Hero attacks the current pack. Rolls each damage element independently, then applies crit.
 func _on_hero_attack() -> void:
 	if state != State.FIGHTING:
 		return
@@ -76,10 +76,15 @@ func _on_hero_attack() -> void:
 
 	var hero := GameState.hero
 
-	# Damage per hit: DPS / attack_speed removes the speed factor from DPS
-	var damage_per_hit := hero.total_dps / hero_attack_speed
+	# Roll each element independently from hero's cached damage ranges
+	var damage_per_hit := 0.0
+	for element in hero.damage_ranges:
+		var el_min: float = hero.damage_ranges[element]["min"]
+		var el_max: float = hero.damage_ranges[element]["max"]
+		if el_max > 0.0:
+			damage_per_hit += randf_range(el_min, el_max)
 
-	# Per-hit crit roll (not expected-value averaging)
+	# Per-hit crit roll (applied to total, not per-element)
 	var is_crit := randf() < (hero.total_crit_chance / 100.0)
 	if is_crit:
 		damage_per_hit *= (hero.total_crit_damage / 100.0)
@@ -91,7 +96,7 @@ func _on_hero_attack() -> void:
 		_on_pack_killed()
 
 
-## Pack attacks the hero. Routes through DefenseCalculator for full 4-stage pipeline.
+## Pack attacks the hero. Rolls damage from pack range, routes through DefenseCalculator.
 func _on_pack_attack() -> void:
 	if state != State.FIGHTING:
 		return
@@ -101,8 +106,9 @@ func _on_pack_attack() -> void:
 		return
 
 	var hero := GameState.hero
+	var rolled_damage := randf_range(pack.damage_min, pack.damage_max)
 	var result := DefenseCalculator.calculate_damage_taken(
-		pack.damage,
+		rolled_damage,
 		pack.element,
 		false,  # Pack attacks are attacks, not spells
 		hero.get_total_armor(),
