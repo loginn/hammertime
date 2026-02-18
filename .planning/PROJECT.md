@@ -70,7 +70,17 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 
 <!-- Current scope. Building toward these. -->
 
-(No active milestone — planning next)
+## Current Milestone: v1.4 Damage Ranges
+
+**Goal:** Replace flat damage values with min-max ranges for weapons, monsters, and affixes, giving each element a distinct variance identity and updating UI to display ranges.
+
+**Target features:**
+- Weapon base damage ranges (min-max per weapon type)
+- Monster damage ranges (min-max per monster type, scaling with area)
+- Flat damage affix ranges with element-specific variance (Physical tight → Lightning extreme)
+- Per-hit damage rolling in CombatEngine
+- UI updates showing "X to Y" damage on items and tooltips
+- DPS display using average of ranges
 
 ### Out of Scope
 
@@ -155,4 +165,4 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Font size 11 for ForgeView | Prevents text overflow in 1280x720 viewport | ✓ Good -- readable and fits |
 
 ---
-*Last updated: 2026-02-18 after v1.3 milestone shipped*
+*Last updated: 2026-02-18 after v1.4 milestone started*
