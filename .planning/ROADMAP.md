@@ -113,11 +113,12 @@ Plans:
   3. Crafting view has separate item slots for weapon, helmet, armor, boots, and ring instead of one shared slot
   4. Finishing an item into an occupied slot requires two clicks (first click changes button to "Confirm Overwrite?", second click completes)
   5. Stat comparison shows item-level contribution differences, not total hero stat changes
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [x] 20-01-PLAN.md — Hammer tooltips, remove Finish Item, two-click equip confirmation
 - [x] 20-02-PLAN.md — Stat comparison display on equip hover with colored deltas
+- [ ] 20-03-PLAN.md — Gap closure: tooltip delay reduction, melt/equip button state fix
 
 ### Phase 21: Save Import/Export
 **Goal**: Players can export their save as a string and import save strings to restore or share game state
@@ -175,10 +176,10 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 17. UI and Combat Feedback | v1.2 | 3/3 | ✓ Complete | 2026-02-17 |
 | 18. Save/Load Foundation | v1.3 | 2/2 | ✓ Complete | 2026-02-17 |
 | 19. Side-by-Side Layout | v1.3 | Complete    | 2026-02-17 | - |
-| 20. Crafting UX Enhancements | v1.3 | 2/2 | ✓ Complete | 2026-02-17 |
+| 20. Crafting UX Enhancements | v1.3 | 2/3 | Gap closure | - |
 | 21. Save Import/Export | v1.3 | 0/0 | Not started | - |
 | 22. Balance & Polish | v1.3 | 0/0 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-17 — Phase 20 complete*
+*Last updated: 2026-02-18 — Phase 20 gap closure plan added*
