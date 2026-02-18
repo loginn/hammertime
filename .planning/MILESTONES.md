@@ -114,3 +114,23 @@
 
 ---
 
+
+## v1.4 — Damage Ranges (Shipped: 2026-02-18)
+
+**Goal:** Replace flat damage values with min-max ranges for weapons, monsters, and affixes, giving each element a distinct variance identity and updating UI to display ranges.
+
+**Phases:** 4 phases (23-26), 7 plans | **Timeline:** 1 day (2026-02-18)
+**Stats:** 11 GDScript files changed (+318/-43 lines), 4,849 LOC GDScript (down from 5,464 due to refactoring)
+
+**Key accomplishments:**
+- Weapon base damage min/max range fields with computed average getter for zero-change backward compatibility
+- Affix six-field damage range schema with immutable template bounds and element-specific variance (Physical 1:1.5, Cold 1:2, Fire 1:2.5, Lightning 1:4)
+- StatCalculator dual-accumulator per-element damage range calculation with correct percentage modifier routing
+- Hero range caching with range-based DPS formula and DPS-based item comparison for weapon/ring slots
+- Per-element hero damage rolling and per-hit pack rolling replacing deterministic combat values
+- UI displaying "Damage: X to Y" on weapons, "Adds X to Y [Element] Damage" on affixes, and pack name + element in combat view
+
+**Archives:** `.planning/milestones/v1.4-ROADMAP.md`, `.planning/milestones/v1.4-REQUIREMENTS.md`
+
+---
+

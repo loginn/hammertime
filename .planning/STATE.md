@@ -1,7 +1,7 @@
 # Project State: Hammertime
 
 **Updated:** 2026-02-18
-**Milestone:** v1.4 Damage Ranges
+**Milestone:** v1.4 Damage Ranges (shipped)
 
 ## Project Reference
 
@@ -9,20 +9,24 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Milestone v1.4 complete — all phases shipped
+**Current Focus:** Planning next milestone
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 26 of 26 (UI Range Display)
-Plan: 2 of 2 complete
-Status: Milestone complete
-Last activity: 2026-02-18 — Phase 26 executed and verified (5/5 criteria passed)
-
-Progress: [██████████] 100% (2/2 plans complete)
+Milestone: v1.4 complete (all 4 phases shipped)
+Status: Between milestones
+Last activity: 2026-02-18 — v1.4 archived
 
 ## Performance Metrics
+
+**Milestone v1.4 (shipped 2026-02-18):**
+- Phases: 4 (23-26)
+- Plans executed: 7
+- Requirements delivered: 11/11
+- Timeline: 1 day (2026-02-18)
+- Final LOC: 4,849 GDScript
 
 **Milestone v1.3 (shipped 2026-02-18):**
 - Phases: 5 (18-22)
@@ -41,24 +45,7 @@ Progress: [██████████] 100% (2/2 plans complete)
 
 ### Decisions
 
-All prior decisions logged in PROJECT.md Key Decisions table.
-
-**v1.4 key decisions:**
-- No save migration: user chose fresh saves only; existing v1.3 saves are not supported across this milestone boundary
-- No SAVE_VERSION bump: skipping migration means no schema versioning needed for this milestone
-- Element variance ratios (Phase 23): Physical 1:1.5, Cold 1:2, Fire 1:2.5, Lightning 1:4
-- Affix template bounds are immutable; add_min/add_max are mutable rolled results; Tuning Hammer always reads template bounds
-- Computed base_damage getter returns (min+max)/2 for zero-change backward compatibility
-- Base + scaled field pattern: base_dmg_* unscaled for cloning, dmg_* tier-scaled for rolling
-- Dual-accumulator damage ranges: StatCalculator tracks min/max per element independently; percentage mods scale both ends
-- Hero range-based DPS: sum of per-element (min+max)/2 * speed * crit replaces weapon.dps + ring.dps summation
-- DPS comparison for weapon/ring item drops: is_item_better() uses DPS instead of tier for damage slots
-- update_stats() order: crit -> ranges -> dps -> defense (dependency-correct ordering)
-- Per-element hero damage rolling: each element rolled independently via randf_range, crit on total sum
-- Pack per-hit rolling: randf_range(damage_min, damage_max) replaces flat pack.damage
-- Weapon tooltip "Damage: X to Y" replaces single "Base Damage: N" display
-- _format_affix_line() helper: flat damage affixes as "Adds X to Y [Element] Damage", others as "Name: value"
-- Pack HP label shows "PackName (Element) -- HP/MaxHP" during combat
+All decisions logged in PROJECT.md Key Decisions table (176 entries through v1.4).
 
 ### Known Issues
 
@@ -66,12 +53,12 @@ No known issues.
 
 ### Deferred Items
 
-**Future scope (from v1.4 REQUIREMENTS.md):**
-- DISP-04: Element variance hint in tooltip ("High variance" / "Consistent")
-- DISP-05: Per-element DPS breakdown in Hero View
-- DISP-06: Min/Max DPS shown alongside average DPS
-- MECH-01: Lucky/Unlucky damage rolls
-- MECH-02: Damage range visualization
+**From v1.4:**
+- Element variance hint in tooltip ("High variance" / "Consistent")
+- Per-element DPS breakdown in Hero View
+- Min/Max DPS shown alongside average DPS
+- Lucky/Unlucky damage rolls
+- Damage range visualization
 
 **Carried from v1.3:**
 - Totem system, hybrid defense prefixes, visual prefix/suffix separation
@@ -80,11 +67,11 @@ No known issues.
 ## Session Continuity
 
 **Last session:** 2026-02-18
-- Phase 26 complete and verified (5/5 criteria, 4/4 requirements)
-- All v1.4 phases (23-26) shipped
+- Milestone v1.4 Damage Ranges shipped and archived
+- All artifacts archived to .planning/milestones/
 
-**Next step:** `/gsd:complete-milestone` to archive v1.4
+**Next step:** `/gsd:new-milestone` to start next milestone
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-18 — Phase 26 complete, milestone v1.4 shipped*
+*Last updated: 2026-02-18 — v1.4 milestone archived*

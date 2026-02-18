@@ -73,75 +73,17 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
 
 </details>
 
-### ✅ v1.4 Damage Ranges (Shipped 2026-02-18)
+<details>
+<summary>✅ v1.4 Damage Ranges (Phases 23-26) — SHIPPED 2026-02-18</summary>
 
-**Milestone Goal:** Replace flat damage values with min-max ranges for weapons, monsters, and affixes, giving each element a distinct variance identity and updating UI to display ranges.
+- [x] Phase 23: Damage Range Data Model (2/2 plans) — completed 2026-02-18
+- [x] Phase 24: Stat Calculation and Hero Range Caching (2/2 plans) — completed 2026-02-18
+- [x] Phase 25: Per-Hit Combat Rolling (1/1 plan) — completed 2026-02-18
+- [x] Phase 26: UI Range Display (2/2 plans) — completed 2026-02-18
 
-**No save migration:** User chose fresh saves only. Existing saves are not supported across this milestone boundary.
+Full details: `.planning/milestones/v1.4-ROADMAP.md`
 
-- [x] **Phase 23: Damage Range Data Model** — Add min/max range fields to Weapon, Affix templates, and MonsterPack with element-specific variance constants (completed 2026-02-18)
-- [x] **Phase 24: Stat Calculation and Hero Range Caching** — Dual-accumulator DPS math in StatCalculator and per-element min/max totals on Hero (completed 2026-02-18)
-- [x] **Phase 25: Per-Hit Combat Rolling** — CombatEngine rolls hero damage per-element independently and monster pack rolls per-hit from its range (completed 2026-02-18)
-- [x] **Phase 26: UI Range Display** — Weapon and affix tooltips show X-to-Y ranges, DPS uses range averages, item comparison uses DPS, pack info shows name and element (completed 2026-02-18)
-
-## Phase Details
-
-### Phase 23: Damage Range Data Model
-**Goal**: Weapons, affixes, and monster packs all express damage as min-max ranges with element-specific variance
-**Depends on**: Phase 22 (v1.3 complete)
-**Requirements**: DMG-01, DMG-02, DMG-03, DMG-04
-**Success Criteria** (what must be TRUE):
-  1. Every weapon type has base_damage_min and base_damage_max fields; base_damage returns their average for backward compatibility
-  2. Every flat damage affix template has four range fields (dmg_min_lo, dmg_min_hi, dmg_max_lo, dmg_max_hi) and rolls add_min/add_max at item creation from those bounds
-  3. Element variance constants exist for Physical, Fire, Cold, and Lightning defining the spread ratio for each element; Lightning has the widest spread and Physical the tightest
-  4. MonsterPack has damage_min and damage_max fields populated by PackGenerator using the element variance constants
-  5. Tuning Hammer re-roll reads from template bounds (not previously rolled values), so repeated re-rolls never collapse the range
-**Plans:** 2/2 plans complete
-Plans:
-- [x] 23-01-PLAN.md — Weapon base damage range fields and element variance constants
-- [x] 23-02-PLAN.md — Affix six-field damage range schema and MonsterPack damage ranges
-
-### Phase 24: Stat Calculation and Hero Range Caching
-**Goal**: StatCalculator accumulates per-element min and max independently, and Hero caches the totals for combat use
-**Depends on**: Phase 23
-**Requirements**: STAT-01
-**Success Criteria** (what must be TRUE):
-  1. StatCalculator.calculate_damage_range() returns a per-element breakdown of total_min and total_max for hero equipment
-  2. Percentage damage modifiers (e.g., +10% fire damage) scale both the min and max ends independently — a 10-20 fire affix with +10% fire mod produces 11-22, not 15-15
-  3. Hero exposes total_damage_min and total_damage_max per element, populated after equip and recalculated on load (not serialized)
-  4. DPS display value uses (min+max)/2 averaged across all elements — the displayed number is stable and comparable between items
-**Plans:** 2/2 plans complete
-Plans:
-- [x] 24-01-PLAN.md -- StatCalculator.calculate_damage_range() with per-element dual-accumulator math
-- [x] 24-02-PLAN.md -- Hero range caching, range-based DPS, and is_item_better() DPS comparison
-
-### Phase 25: Per-Hit Combat Rolling
-**Goal**: Every hero and monster attack rolls actual damage from the range rather than using a deterministic per-hit value
-**Depends on**: Phase 24
-**Requirements**: CMB-01, CMB-02
-**Success Criteria** (what must be TRUE):
-  1. Hero attacks roll physical base damage independently from each elemental flat affix; element-specific percentage modifiers apply per-element before summing; the result is a single rolled hit value passed to DefenseCalculator
-  2. Ten consecutive hero hits against the same pack show nonzero variance (no two hits are identical unless the range is degenerate)
-  3. Monster pack attacks roll per-hit from the pack's damage_min/damage_max range before the defense pipeline; the DefenseCalculator interface is unchanged
-  4. Lightning-element monster packs show noticeably wider hit variance than Physical-element packs at the same area level
-**Plans:** 1/1 plans complete
-Plans:
-- [x] 25-01-PLAN.md -- Per-element hero rolling and per-hit pack rolling in CombatEngine
-
-### Phase 26: UI Range Display
-**Goal**: Players see X-to-Y damage ranges on weapon tooltips and affix descriptions, and DPS values are computed from range averages
-**Depends on**: Phase 25
-**Requirements**: DISP-01, DISP-02, DISP-03, DISP-04
-**Success Criteria** (what must be TRUE):
-  1. Weapon item tooltip shows "Damage: X to Y" instead of a single number; the displayed range matches base_damage_min/max
-  2. Flat damage affix descriptions show "Adds X to Y [Element] Damage" using the rolled add_min/add_max values
-  3. DPS shown in hero stats and item comparison uses the average-of-ranges formula across all elements with modifiers applied; it matches the value used by is_item_better() for weapon comparison
-  4. UI labels do not overflow at 1280x720 with the longest realistic lightning affix string
-  5. Gameplay view displays the current pack's name and damage element type during combat
-**Plans:** 2/2 plans complete
-Plans:
-- [x] 26-01-PLAN.md -- Weapon range tooltip, affix range display, stat comparison update
-- [x] 26-02-PLAN.md -- Pack name and element display in gameplay view
+</details>
 
 ## Progress
 
