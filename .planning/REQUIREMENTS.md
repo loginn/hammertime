@@ -10,9 +10,9 @@ Requirements for the Damage Ranges milestone. Each maps to roadmap phases.
 ### Damage Ranges
 
 - [x] **DMG-01**: Weapon base damage expressed as min-max range per weapon type
-- [ ] **DMG-02**: Flat damage affixes store add_min and add_max values rolled from element-specific tier ranges at item creation
+- [x] **DMG-02**: Flat damage affixes store add_min and add_max values rolled from element-specific tier ranges at item creation
 - [x] **DMG-03**: Element-specific variance ratios define spread between min and max (Physical tight, Cold moderate, Fire wide, Lightning extreme)
-- [ ] **DMG-04**: Monster pack damage expressed as min-max range with variance based on pack element type
+- [x] **DMG-04**: Monster pack damage expressed as min-max range with variance based on pack element type
 
 ### Combat
 
@@ -64,9 +64,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DMG-01 | Phase 23 | Complete |
-| DMG-02 | Phase 23 | Pending |
+| DMG-02 | Phase 23 | Complete |
 | DMG-03 | Phase 23 | Complete |
-| DMG-04 | Phase 23 | Pending |
+| DMG-04 | Phase 23 | Complete |
 | STAT-01 | Phase 24 | Pending |
 | CMB-01 | Phase 25 | Pending |
 | CMB-02 | Phase 25 | Pending |

@@ -79,7 +79,7 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
 
 **No save migration:** User chose fresh saves only. Existing saves are not supported across this milestone boundary.
 
-- [ ] **Phase 23: Damage Range Data Model** — Add min/max range fields to Weapon, Affix templates, and MonsterPack with element-specific variance constants
+- [x] **Phase 23: Damage Range Data Model** — Add min/max range fields to Weapon, Affix templates, and MonsterPack with element-specific variance constants (completed 2026-02-18)
 - [ ] **Phase 24: Stat Calculation and Hero Range Caching** — Dual-accumulator DPS math in StatCalculator and per-element min/max totals on Hero
 - [ ] **Phase 25: Per-Hit Combat Rolling** — CombatEngine rolls hero damage per-element independently and monster pack rolls per-hit from its range
 - [ ] **Phase 26: UI Range Display** — Weapon and affix tooltips show X-to-Y ranges, DPS uses range averages, item comparison uses DPS, pack info shows name and element
@@ -96,7 +96,7 @@ Full details: `.planning/milestones/v1.3-ROADMAP.md`
   3. Element variance constants exist for Physical, Fire, Cold, and Lightning defining the spread ratio for each element; Lightning has the widest spread and Physical the tightest
   4. MonsterPack has damage_min and damage_max fields populated by PackGenerator using the element variance constants
   5. Tuning Hammer re-roll reads from template bounds (not previously rolled values), so repeated re-rolls never collapse the range
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 23-01-PLAN.md — Weapon base damage range fields and element variance constants
 - [ ] 23-02-PLAN.md — Affix six-field damage range schema and MonsterPack damage ranges
@@ -161,7 +161,7 @@ Plans:
 | 20. Crafting UX Enhancements | v1.3 | 3/3 | ✓ Complete | 2026-02-18 |
 | 21. Save Import/Export | v1.3 | 1/1 | ✓ Complete | 2026-02-18 |
 | 22. Balance & Polish | v1.3 | 1/1 | ✓ Complete | 2026-02-18 |
-| 23. Damage Range Data Model | 1/2 | In Progress|  | - |
+| 23. Damage Range Data Model | 2/2 | Complete   | 2026-02-18 | - |
 | 24. Stat Calculation and Hero Range Caching | v1.4 | 0/? | Not started | - |
 | 25. Per-Hit Combat Rolling | v1.4 | 0/? | Not started | - |
 | 26. UI Range Display | v1.4 | 0/? | Not started | - |
