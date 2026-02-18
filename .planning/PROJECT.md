@@ -167,6 +167,10 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Immutable template bounds for affix reroll | dmg_min_lo/hi are never modified; reroll always reads from bounds, not rolled values | ✓ Good -- prevents range collapse |
 | Base + scaled field pattern for affixes | base_dmg_* stores unscaled params, dmg_* stores tier-scaled; from_affix() passes base to avoid double-scaling | ✓ Good -- follows existing base_min/base_max pattern |
 | ELEMENT_VARIANCE in PackGenerator | Constants define min_mult/max_mult per element; Physical 1:1.5 through Lightning 1:4 | ✓ Good -- centralized, easy to tune |
+| Dual-accumulator per-element damage ranges | StatCalculator tracks min and max separately per element; percentage mods scale both independently | ✓ Good -- mathematically correct variance preservation |
+| Hero range-based DPS formula | DPS = sum of per-element (min+max)/2 * speed * crit instead of summing weapon.dps + ring.dps | ✓ Good -- uses hero-level crit, more accurate |
+| DPS comparison for weapon/ring drops | is_item_better() uses DPS for damage slots, tier for defense slots | ✓ Good -- evaluates actual damage output |
+| update_stats() order: crit -> ranges -> dps -> defense | Ensures crit stats available for DPS calculation, ranges available for DPS average | ✓ Good -- correct dependency order |
 
 ---
-*Last updated: 2026-02-18 after Phase 23*
+*Last updated: 2026-02-18 after Phase 24*

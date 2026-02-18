@@ -21,7 +21,7 @@ Requirements for the Damage Ranges milestone. Each maps to roadmap phases.
 
 ### Stat Calculation
 
-- [ ] **STAT-01**: Hero tracks per-element min/max damage totals (physical, fire, cold, lightning) for independent rolling
+- [x] **STAT-01**: Hero tracks per-element min/max damage totals (physical, fire, cold, lightning) for independent rolling
 
 ### Display
 
@@ -67,7 +67,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DMG-02 | Phase 23 | Complete |
 | DMG-03 | Phase 23 | Complete |
 | DMG-04 | Phase 23 | Complete |
-| STAT-01 | Phase 24 | Pending |
+| STAT-01 | Phase 24 | Complete |
 | CMB-01 | Phase 25 | Pending |
 | CMB-02 | Phase 25 | Pending |
 | DISP-01 | Phase 26 | Pending |

@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Phase 24 — Stat Calculation and Hero Range Caching
+**Current Focus:** Phase 25 — Per-Hit Combat Rolling
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 24 of 26 (Stat Calculation and Hero Range Caching)
-Plan: 2 of 2 complete
-Status: Verifying
-Last activity: 2026-02-18 — Plan 24-02 complete (Hero range caching + DPS + is_item_better)
+Phase: 25 of 26 (Per-Hit Combat Rolling)
+Plan: 0 of ? (not yet planned)
+Status: Ready to plan
+Last activity: 2026-02-18 — Phase 24 complete (1/1 requirements, 2/2 plans)
 
-Progress: [██████████] 100% (2/2 plans complete)
+Progress: [░░░░░░░░░░] 0% (0/? plans complete)
 
 ## Performance Metrics
 
@@ -50,6 +50,10 @@ All prior decisions logged in PROJECT.md Key Decisions table.
 - Affix template bounds are immutable; add_min/add_max are mutable rolled results; Tuning Hammer always reads template bounds
 - Computed base_damage getter returns (min+max)/2 for zero-change backward compatibility
 - Base + scaled field pattern: base_dmg_* unscaled for cloning, dmg_* tier-scaled for rolling
+- Dual-accumulator damage ranges: StatCalculator tracks min/max per element independently; percentage mods scale both ends
+- Hero range-based DPS: sum of per-element (min+max)/2 * speed * crit replaces weapon.dps + ring.dps summation
+- DPS comparison for weapon/ring item drops: is_item_better() uses DPS instead of tier for damage slots
+- update_stats() order: crit -> ranges -> dps -> defense (dependency-correct ordering)
 
 ### Known Issues
 
@@ -71,12 +75,11 @@ No known issues.
 ## Session Continuity
 
 **Last session:** 2026-02-18
-- Phase 24 planned: 2 plans in 2 waves
-- Plan 24-01 (Wave 1): StatCalculator.calculate_damage_range() with per-element dual-accumulator math
-- Plan 24-02 (Wave 2): Hero range caching, range-based DPS, is_item_better() DPS comparison
+- Phase 24 complete and verified (1/1 requirements, 2/2 plans)
+- Transitioned to Phase 25: Per-Hit Combat Rolling
 
-**Next step:** `/gsd:execute-phase 24`
+**Next step:** `/gsd:discuss-phase 25`
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-18 — Phase 23 complete, transitioned to Phase 24*
+*Last updated: 2026-02-18 — Phase 24 complete, transitioned to Phase 25*
