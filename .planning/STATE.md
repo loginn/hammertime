@@ -18,7 +18,7 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 Phase: 20 of 22 (Crafting UX Enhancements)
 Plan: 3 of 3 complete
 Status: Complete
-Last activity: 2026-02-18 — Completed 20-03-PLAN.md (UAT gap closure - tooltip delay and button state fix)
+Last activity: 2026-02-18 - Completed quick task 2: Adventure tab UI has overlaps - move HP bars lower so they dont overlap with buttons
 
 Progress: [████████████████████░] 91% (20/22 phases)
 
@@ -118,6 +118,7 @@ Recent decisions affecting v1.3 work:
 | 1 | Fix Light Sword item type button regenerating a free weapon while other types do not | 2026-02-15 | c0bcfb8 | [1-fix-light-sword-item-type-button-regener](./quick/1-fix-light-sword-item-type-button-regener/) |
 | Phase 19 P03 | 3 | 2 tasks | 2 files |
 | Phase 20 P03 | 42 | 1 tasks | 2 files |
+| 2 | Adventure tab UI has overlaps - move HP bars lower so they dont overlap with buttons | 2026-02-18 | c4a180c | [2-adventure-tab-ui-has-overlaps-move-hp-ba](./quick/2-adventure-tab-ui-has-overlaps-move-hp-ba/) |
 
 ## Session Continuity
 
@@ -132,4 +133,4 @@ Recent decisions affecting v1.3 work:
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-18 — Phase 20 complete (including UAT gap closure)*
+*Last updated: 2026-02-18 — Quick task 2: Adventure tab UI overlap fix*
