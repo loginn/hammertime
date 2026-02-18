@@ -28,6 +28,7 @@ Requirements for the Damage Ranges milestone. Each maps to roadmap phases.
 - [ ] **DISP-01**: Weapon tooltip shows "X to Y" damage range instead of single number
 - [ ] **DISP-02**: Flat damage affixes display "Adds X to Y [Element] Damage" format
 - [ ] **DISP-03**: DPS stat computed using average of per-element damage ranges with element modifiers applied
+- [ ] **DISP-04**: Current combat pack shows its name and damage element type in the gameplay view
 
 ## Future Requirements
 
@@ -35,9 +36,9 @@ Deferred to future release. Tracked but not in current roadmap.
 
 ### Display Enhancements
 
-- **DISP-04**: Element variance hint in tooltip ("High variance" / "Consistent" label)
-- **DISP-05**: Per-element DPS breakdown in Hero View (Physical/Fire/Cold/Lightning separately)
-- **DISP-06**: Min/Max DPS shown alongside average DPS on hero stats panel
+- **DISP-05**: Element variance hint in tooltip ("High variance" / "Consistent" label)
+- **DISP-06**: Per-element DPS breakdown in Hero View (Physical/Fire/Cold/Lightning separately)
+- **DISP-07**: Min/Max DPS shown alongside average DPS on hero stats panel
 
 ### Advanced Mechanics
 
@@ -62,22 +63,23 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DMG-01 | — | Pending |
-| DMG-02 | — | Pending |
-| DMG-03 | — | Pending |
-| DMG-04 | — | Pending |
-| CMB-01 | — | Pending |
-| CMB-02 | — | Pending |
-| STAT-01 | — | Pending |
-| DISP-01 | — | Pending |
-| DISP-02 | — | Pending |
-| DISP-03 | — | Pending |
+| DMG-01 | Phase 23 | Pending |
+| DMG-02 | Phase 23 | Pending |
+| DMG-03 | Phase 23 | Pending |
+| DMG-04 | Phase 23 | Pending |
+| STAT-01 | Phase 24 | Pending |
+| CMB-01 | Phase 25 | Pending |
+| CMB-02 | Phase 25 | Pending |
+| DISP-01 | Phase 26 | Pending |
+| DISP-02 | Phase 26 | Pending |
+| DISP-03 | Phase 26 | Pending |
+| DISP-04 | Phase 26 | Pending |
 
 **Coverage:**
-- v1.4 requirements: 10 total
-- Mapped to phases: 0
-- Unmapped: 10 ⚠️
+- v1.4 requirements: 11 total
+- Mapped to phases: 11
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-18*
-*Last updated: 2026-02-18 after initial definition*
+*Last updated: 2026-02-18 — added DISP-04 (pack info display)*
