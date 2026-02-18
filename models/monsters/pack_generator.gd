@@ -8,6 +8,17 @@ const PACK_COUNT_MIN: int = 8
 const PACK_COUNT_MAX: int = 15
 const GROWTH_RATE: float = 0.06  # 6% exponential growth per level
 
+## Element variance: multipliers applied to scaled base damage to produce min/max range.
+## Ratios from project decisions: Physical 1:1.5, Cold 1:2, Fire 1:2.5, Lightning 1:4.
+## Formula: for ratio lo:hi, min_mult = 2*lo/(lo+hi), max_mult = 2*hi/(lo+hi).
+## Average is always preserved: (min + max) / 2 = base.
+const ELEMENT_VARIANCE: Dictionary = {
+	"physical": {"min_mult": 0.80, "max_mult": 1.20},
+	"cold": {"min_mult": 0.667, "max_mult": 1.333},
+	"fire": {"min_mult": 0.571, "max_mult": 1.429},
+	"lightning": {"min_mult": 0.40, "max_mult": 1.60},
+}
+
 
 ## Returns the exponential scaling multiplier for an area level.
 ## Compound growth: base * (1 + rate)^(level - 1)
