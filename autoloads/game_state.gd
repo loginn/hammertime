@@ -1,6 +1,6 @@
 extends Node
 
-var debug_hammers: bool = true  # Set to false when done testing
+var debug_hammers: bool = false  # Set to true for testing
 
 var hero: Hero
 var currency_counts: Dictionary = {}
@@ -50,7 +50,7 @@ func initialize_fresh_game() -> void:
 
 	# Initialize currency counts
 	currency_counts = {
-		"runic": 0,
+		"runic": 1,
 		"forge": 0,
 		"tack": 0,
 		"grand": 0,

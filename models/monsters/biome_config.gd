@@ -61,12 +61,12 @@ static func _build_biomes() -> Array[BiomeConfig]:
 		"Forest", 1, 100, "physical",
 		{"physical": 0.40, "fire": 0.20, "cold": 0.20, "lightning": 0.20},
 		[
-			MonsterType.create("Forest Bear", 120.0, 12.0, 0.8),
-			MonsterType.create("Timber Wolf", 80.0, 10.0, 1.2),
-			MonsterType.create("Wild Boar", 100.0, 14.0, 0.9),
-			MonsterType.create("Venomous Spider", 50.0, 11.0, 1.8),
-			MonsterType.create("Forest Sprite", 40.0, 8.0, 2.0),
-			MonsterType.create("Bramble Golem", 150.0, 7.0, 0.6),
+			MonsterType.create("Forest Bear", 72.0, 7.0, 0.8),
+			MonsterType.create("Timber Wolf", 48.0, 6.0, 1.2),
+			MonsterType.create("Wild Boar", 60.0, 8.0, 0.9),
+			MonsterType.create("Venomous Spider", 30.0, 7.0, 1.8),
+			MonsterType.create("Forest Sprite", 24.0, 5.0, 2.0),
+			MonsterType.create("Bramble Golem", 90.0, 4.0, 0.6),
 		]
 	))
 
