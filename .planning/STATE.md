@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Phase 21 - Save Import/Export
+**Current Focus:** Phase 22 - Balance & Polish
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/, tools/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 20 of 22 (Crafting UX Enhancements)
-Plan: 3 of 3 complete
+Phase: 21 of 22 (Save Import/Export)
+Plan: 1 of 1 complete
 Status: Complete
-Last activity: 2026-02-18 - Completed quick task 2: Adventure tab UI has overlaps - move HP bars lower so they dont overlap with buttons
+Last activity: 2026-02-18 - Phase 21 complete: save string export/import with Base64 encoding
 
-Progress: [████████████████████░] 91% (20/22 phases)
+Progress: [█████████████████████] 95% (21/22 phases)
 
 ## Performance Metrics
 
@@ -57,7 +57,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 All v1.2 decisions marked ✓ Good.
 
 Recent decisions affecting v1.3 work:
-- JSON save/load chosen over ResourceSaver (Phase 21 needs export strings)
+- JSON save/load chosen over ResourceSaver (Phase 21 needs export strings) ✓ Validated
+- [Phase 21]: MD5 checksum on base64 payload for save string corruption detection
+- [Phase 21]: import_just_completed flag on GameState for post-scene-reload toast display
+- [Phase 21]: Reuse new_game_started signal path for import scene reload (consistent with New Game)
 - SaveManager autoload registered before GameState in autoload order
 - Crafting inventory and area progress centralized in GameState for persistence
 - Explicit CanvasLayer visibility management (v1.2) informs side-by-side layout approach
@@ -122,15 +125,13 @@ Recent decisions affecting v1.3 work:
 
 ## Session Continuity
 
-**Last session:** 2026-02-18T01:59:28.726Z
-- Phase 20 (Crafting UX Enhancements) complete — 3 of 3 plans executed
-- Plan 20-01: Added hammer tooltips, removed Finish Item workflow, added two-click equip confirmation
-- Plan 20-02: Added stat comparison display on equip hover with green/red BBCode-colored deltas
-- Plan 20-03: UAT gap closure - reduced tooltip delay (0.5s → 0.2s), fixed button state refresh on type switch
-- Requirements CRAFT-01, CRAFT-02, CRAFT-03, CRAFT-04 all delivered
+**Last session:** 2026-02-18
+- Phase 21 (Save Import/Export) complete — 1 of 1 plans executed
+- Plan 21-01: Base64 save string export/import with clipboard auto-copy, two-click import confirmation, colored toast notifications
+- Requirement SAVE-04 delivered
 
-**Next step:** `/gsd:plan-phase 21` to begin Save Import/Export
+**Next step:** `/gsd:discuss-phase 22` or `/gsd:plan-phase 22` to begin Balance & Polish
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-18 — Quick task 2: Adventure tab UI overlap fix*
+*Last updated: 2026-02-18 — Phase 21 complete: Save Import/Export*
