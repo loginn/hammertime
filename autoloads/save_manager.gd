@@ -1,7 +1,7 @@
 extends Node
 
 const SAVE_PATH = "user://hammertime_save.json"
-const SAVE_VERSION = 1
+const SAVE_VERSION = 2
 const AUTO_SAVE_INTERVAL = 300.0  # 5 minutes
 
 var auto_save_timer: Timer
@@ -162,11 +162,28 @@ func _migrate_save(data: Dictionary) -> Dictionary:
 	if saved_version < SAVE_VERSION:
 		print("SaveManager: Migrating save from v%d to v%d" % [saved_version, SAVE_VERSION])
 
-	# Future migrations go here:
-	# if saved_version < 2:
-	#     data = _migrate_v1_to_v2(data)
+	if saved_version < 2:
+		data = _migrate_v1_to_v2(data)
 
 	data["version"] = SAVE_VERSION
+	return data
+
+
+## Migrates v1 save data to v2 format (per-slot inventory arrays).
+func _migrate_v1_to_v2(data: Dictionary) -> Dictionary:
+	var old_inv: Dictionary = data.get("crafting_inventory", {})
+	var new_inv := {}
+	for slot in ["weapon", "helmet", "armor", "boots", "ring"]:
+		var item_data = old_inv.get(slot)
+		if item_data != null and item_data is Dictionary:
+			new_inv[slot] = [item_data]
+		else:
+			new_inv[slot] = []
+	data["crafting_inventory"] = new_inv
+
+	# Strip orphaned crafting_bench_item
+	data.erase("crafting_bench_item")
+
 	return data
 
 
