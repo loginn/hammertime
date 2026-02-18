@@ -17,7 +17,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 Phase: 22 of 22 (all phases shipped)
 Status: v1.3 milestone shipped
-Last activity: 2026-02-18 - v1.3 milestone archived and tagged
+Last activity: 2026-02-18 - Completed quick task 3: remove the deprecated loot tables and simulator tool
 
 Progress: [██████████████████████] 100% (22/22 phases across 5 milestones)
 
@@ -87,7 +87,7 @@ No known issues.
 |---|-------------|------|--------|-----------|
 | 1 | Fix Light Sword item type button regenerating a free weapon while other types do not | 2026-02-15 | c0bcfb8 | [1-fix-light-sword-item-type-button-regener](./quick/1-fix-light-sword-item-type-button-regener/) |
 | 2 | Adventure tab UI has overlaps - move HP bars lower so they dont overlap with buttons | 2026-02-18 | c4a180c | [2-adventure-tab-ui-has-overlaps-move-hp-ba](./quick/2-adventure-tab-ui-has-overlaps-move-hp-ba/) |
-| 3 | Remove deprecated loot tables and simulator tool | 2026-02-18 | a3938b6 | [3-remove-the-deprecated-loot-tables-and-si](./quick/3-remove-the-deprecated-loot-tables-and-si/) |
+| 3 | Remove deprecated loot tables and simulator tool | 2026-02-18 | bd481f5 | [3-remove-the-deprecated-loot-tables-and-si](./quick/3-remove-the-deprecated-loot-tables-and-si/) |
 
 ## Session Continuity
 
