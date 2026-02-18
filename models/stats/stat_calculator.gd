@@ -72,6 +72,70 @@ static func calculate_percentage_stat(base_value: float, affixes: Array, stat_ty
 	return base_value * (1.0 + additive_mult)
 
 
+## Calculates per-element damage ranges from weapon base damage and equipped affixes.
+## Returns Dictionary of element -> {"min": float, "max": float} for each damage element.
+## Percentage modifiers scale min and max independently (10-20 + 10% = 11-22, not 15-15).
+##
+## Element identification for flat damage affixes uses tags:
+##   Tag.PHYSICAL -> physical, Tag.FIRE -> fire, Tag.COLD -> cold, Tag.LIGHTNING -> lightning
+## Percentage modifier routing:
+##   Tag.PHYSICAL in tags -> applies to physical only
+##   Tag.ELEMENTAL in tags -> applies to fire, cold, lightning (all elemental)
+static func calculate_damage_range(
+	weapon_min: int,
+	weapon_max: int,
+	affixes: Array
+) -> Dictionary:
+	# Step 1: Accumulate per-element flat damage (min and max separately)
+	var elements := {
+		"physical": {"min": float(weapon_min), "max": float(weapon_max)},
+		"fire": {"min": 0.0, "max": 0.0},
+		"cold": {"min": 0.0, "max": 0.0},
+		"lightning": {"min": 0.0, "max": 0.0},
+	}
+
+	for affix: Affix in affixes:
+		if Tag.StatType.FLAT_DAMAGE not in affix.stat_types:
+			continue
+		var element := _get_damage_element(affix.tags)
+		elements[element]["min"] += affix.add_min
+		elements[element]["max"] += affix.add_max
+
+	# Step 2: Accumulate percentage modifiers per group
+	var physical_pct := 0.0
+	var elemental_pct := 0.0
+
+	for affix: Affix in affixes:
+		if Tag.StatType.INCREASED_DAMAGE not in affix.stat_types:
+			continue
+		if Tag.PHYSICAL in affix.tags:
+			physical_pct += affix.value / 100.0
+		elif Tag.ELEMENTAL in affix.tags:
+			elemental_pct += affix.value / 100.0
+
+	# Step 3: Apply percentage modifiers -- scale min and max independently
+	elements["physical"]["min"] *= (1.0 + physical_pct)
+	elements["physical"]["max"] *= (1.0 + physical_pct)
+
+	for el in ["fire", "cold", "lightning"]:
+		elements[el]["min"] *= (1.0 + elemental_pct)
+		elements[el]["max"] *= (1.0 + elemental_pct)
+
+	return elements
+
+
+## Determines which damage element a flat damage affix belongs to from its tags.
+## Falls back to "physical" if no element tag found.
+static func _get_damage_element(tags: Array) -> String:
+	if Tag.FIRE in tags:
+		return "fire"
+	if Tag.COLD in tags:
+		return "cold"
+	if Tag.LIGHTNING in tags:
+		return "lightning"
+	return "physical"
+
+
 ## Correct crit multiplier using weighted average formula:
 ## E[multiplier] = (1 - c) * 1.0 + c * d = 1 + c * (d - 1)
 ## Where c = crit_chance/100, d = crit_damage/100
