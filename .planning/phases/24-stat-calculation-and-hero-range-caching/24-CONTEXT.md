@@ -1,7 +1,7 @@
 # Phase 24: Stat Calculation and Hero Range Caching - Context
 
-**Gathered:** 2026-02-18
-**Status:** Ready for planning
+**Gathered:** 2026-02-18 (updated: 2026-02-18)
+**Status:** Updated with gap closure decisions
 
 <domain>
 ## Phase Boundary
@@ -36,11 +36,21 @@ StatCalculator gains a new `calculate_damage_range()` method that accumulates pe
 - New `calculate_damage_range()` is additive, not replacing
 - StatCalculator remains a static utility class (no state)
 
+### Gap closure: Inventory rework (supersedes 24-03 defensive scoring)
+- **Drop auto-replace mechanic** -- `is_item_better()` no longer decides what to keep
+- **Multi-item inventory per slot** -- separate lists for weapon, armor, helmet, boots, ring
+- **Limit: 10 items per slot** -- when full, new drops are discarded (no prompt, no auto-replace)
+- **Crafting target: highest tier** -- auto-select the highest tier item in a slot for crafting
+- **No manual discard** -- overflow-only cleanup, no delete button
+- **No player selection** -- crafting always targets highest tier, not player's choice
+
 ### Claude's Discretion
 - Internal data structure for per-element range breakdown (Dictionary, custom class, or Array)
 - Whether to refactor existing calculate_dps() to call calculate_damage_range() internally or keep them separate
 - Method naming and parameter design for the new API
 - How Hero triggers recalculation (signal vs direct call after equip)
+- Data model for multi-item inventory (Array per slot in Dictionary, or separate arrays)
+- UI layout for showing item lists per slot
 
 </decisions>
 
@@ -50,13 +60,15 @@ StatCalculator gains a new `calculate_damage_range()` method that accumulates pe
 - The per-element breakdown must handle the case where a hero has NO affixes for a given element -- that element's contribution is 0-0
 - Physical base damage always comes from the weapon; elemental damage only comes from affixes (no elemental base weapons in current design)
 - The locked element variance ratios from Phase 23 (Physical 1:1.5, Cold 1:2, Fire 1:2.5, Lightning 1:4) affect affix ranges, NOT the stat calculation itself -- StatCalculator just sums what it receives
+- Items are fairly limited at the start -- players want to keep everything they find and craft on multiple items
 
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-None -- discussion stayed within phase scope.
+- Per-defensive-stat comparison scoring (Evasion, HP, Armor, ES, Resistances) -- may not be needed if auto-replace is removed, but could be useful for sort/display in inventory list
+- Manual item discard/management -- future UX enhancement if overflow-only feels limiting
 
 </deferred>
 
