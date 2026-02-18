@@ -54,8 +54,8 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 27 complete, ready to discuss Phase 28
-Resume file: None
+Stopped at: Phase 28 context gathered
+Resume file: .planning/phases/28-gamestate-data-model-and-drop-flow/28-CONTEXT.md
 
 ---
 *State initialized: 2026-02-15*
