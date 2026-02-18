@@ -66,7 +66,7 @@ Full details: `.planning/milestones/v1.2-ROADMAP.md`
 - [x] **Phase 18: Save/Load Foundation** - Implement core persistence with auto-save and version tracking
 - [x] **Phase 19: Side-by-Side Layout** - Restructure UI to show hero equipment and crafting simultaneously (completed 2026-02-17)
 - [x] **Phase 20: Crafting UX Enhancements** - Add tooltips, stat comparison, per-type slots, and safety confirmations (completed 2026-02-18)
-- [ ] **Phase 21: Save Import/Export** - Enable save string export and import for backup/sharing
+- [x] **Phase 21: Save Import/Export** - Enable save string export and import for backup/sharing (completed 2026-02-18)
 - [ ] **Phase 22: Balance & Polish** - Tune level 1 difficulty, add starter gear, fix stat overflow
 
 ## Phase Details
@@ -177,7 +177,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 18. Save/Load Foundation | v1.3 | 2/2 | ✓ Complete | 2026-02-17 |
 | 19. Side-by-Side Layout | v1.3 | Complete    | 2026-02-17 | - |
 | 20. Crafting UX Enhancements | v1.3 | Complete    | 2026-02-18 | - |
-| 21. Save Import/Export | v1.3 | 0/0 | Not started | - |
+| 21. Save Import/Export | v1.3 | Complete    | 2026-02-18 | - |
 | 22. Balance & Polish | v1.3 | 0/0 | Not started | - |
 
 ---
