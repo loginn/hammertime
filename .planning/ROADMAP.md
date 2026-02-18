@@ -113,7 +113,7 @@ Plans:
 **Plans**: 2 plans in 2 waves
 Plans:
 - [x] 24-01-PLAN.md -- StatCalculator.calculate_damage_range() with per-element dual-accumulator math
-- [ ] 24-02-PLAN.md -- Hero range caching, range-based DPS, and is_item_better() DPS comparison
+- [x] 24-02-PLAN.md -- Hero range caching, range-based DPS, and is_item_better() DPS comparison
 
 ### Phase 25: Per-Hit Combat Rolling
 **Goal**: Every hero and monster attack rolls actual damage from the range rather than using a deterministic per-hit value
@@ -165,7 +165,7 @@ Plans:
 | 21. Save Import/Export | v1.3 | 1/1 | ✓ Complete | 2026-02-18 |
 | 22. Balance & Polish | v1.3 | 1/1 | ✓ Complete | 2026-02-18 |
 | 23. Damage Range Data Model | v1.4 | 2/2 | ✓ Complete | 2026-02-18 |
-| 24. Stat Calculation and Hero Range Caching | v1.4 | 1/2 | In Progress | - |
+| 24. Stat Calculation and Hero Range Caching | v1.4 | 2/2 | In Progress | - |
 | 25. Per-Hit Combat Rolling | v1.4 | 0/? | Not started | - |
 | 26. UI Range Display | v1.4 | 0/? | Not started | - |
 
