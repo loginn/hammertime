@@ -17,23 +17,61 @@ var prefixes: Array[Affix] = [
 		[Tag.PHYSICAL, Tag.PERCENTAGE, Tag.WEAPON],
 		[Tag.StatType.INCREASED_DAMAGE]
 	),
-	Affix.new("%Elemental Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.WEAPON], []),
-	Affix.new("%Cold Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.WEAPON], []),
-	Affix.new("%Fire Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.WEAPON], []),
-	Affix.new("%Lightning Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.WEAPON], []),
+	Affix.new(
+		"%Elemental Damage",
+		Affix.AffixType.PREFIX,
+		2,
+		10,
+		[Tag.ELEMENTAL, Tag.WEAPON],
+		[Tag.StatType.INCREASED_DAMAGE]
+	),
+	Affix.new(
+		"%Cold Damage",
+		Affix.AffixType.PREFIX,
+		2,
+		10,
+		[Tag.ELEMENTAL, Tag.WEAPON],
+		[Tag.StatType.INCREASED_DAMAGE]
+	),
+	Affix.new(
+		"%Fire Damage",
+		Affix.AffixType.PREFIX,
+		2,
+		10,
+		[Tag.ELEMENTAL, Tag.WEAPON],
+		[Tag.StatType.INCREASED_DAMAGE]
+	),
+	Affix.new(
+		"%Lightning Damage",
+		Affix.AffixType.PREFIX,
+		2,
+		10,
+		[Tag.ELEMENTAL, Tag.WEAPON],
+		[Tag.StatType.INCREASED_DAMAGE]
+	),
 	Affix.new(
 		"Lightning Damage",
 		Affix.AffixType.PREFIX,
 		2,
 		10,
 		[Tag.ELEMENTAL, Tag.LIGHTNING, Tag.WEAPON],
-		[]
+		[Tag.StatType.FLAT_DAMAGE]
 	),
 	Affix.new(
-		"Fire Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.FIRE, Tag.WEAPON], []
+		"Fire Damage",
+		Affix.AffixType.PREFIX,
+		2,
+		10,
+		[Tag.ELEMENTAL, Tag.FIRE, Tag.WEAPON],
+		[Tag.StatType.FLAT_DAMAGE]
 	),
 	Affix.new(
-		"Cold Damage", Affix.AffixType.PREFIX, 2, 10, [Tag.ELEMENTAL, Tag.COLD, Tag.WEAPON], []
+		"Cold Damage",
+		Affix.AffixType.PREFIX,
+		2,
+		10,
+		[Tag.ELEMENTAL, Tag.COLD, Tag.WEAPON],
+		[Tag.StatType.FLAT_DAMAGE]
 	),
 	# Defensive prefixes (30-tier range)
 	Affix.new(
