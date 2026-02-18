@@ -17,7 +17,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 Milestone: v1.4 complete (all 4 phases shipped)
 Status: Between milestones
-Last activity: 2026-02-18 — v1.4 archived
+Last activity: 2026-02-18 - Completed quick task 5: remove caster mods from physical weapons
 
 ## Performance Metrics
 
@@ -63,6 +63,12 @@ No known issues.
 **Carried from v1.3:**
 - Totem system, hybrid defense prefixes, visual prefix/suffix separation
 - Multiple save slots, save backup rotation, crafting preview/audio/history
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 5 | Remove caster mods from physical weapons | 2026-02-18 | 682ac7c | [5-remove-caster-mods-from-physical-weapons](./quick/5-remove-caster-mods-from-physical-weapons/) |
 
 ## Session Continuity
 
