@@ -1,720 +1,680 @@
 # Architecture Research
 
-**Domain:** Save/Load, Side-by-Side UI Layout, Crafting UX Integration
-**Researched:** 2026-02-17
-**Confidence:** HIGH
+**Domain:** Damage Range System — Integration with Existing ARPG Crafting Architecture
+**Researched:** 2026-02-18
+**Confidence:** HIGH (based on direct codebase analysis)
 
-## Integration Overview
+---
 
-This milestone adds save/load persistence, side-by-side hero/crafting UI layout, and crafting UX improvements to existing Godot 4.5 Resource-based idle ARPG. All features integrate with existing architecture rather than replacing it.
+## System Overview
+
+This document maps how min-max damage ranges integrate into the existing Hammertime architecture. The existing system uses single-value `affix.value` integers throughout. The new system introduces damage ranges (min-max) for weapons, monsters, and flat damage affixes, with per-element variance and per-hit rolling in combat.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Scene Layer (main.tscn)                   │
-├─────────────────────────────────────────────────────────────┤
-│  ┌────────────────┐  ┌────────────────┐  ┌──────────────┐   │
-│  │  HeroView      │  │  CraftingView  │  │ GameplayView │   │
-│  │  (CanvasLayer) │  │  (CanvasLayer) │  │(CanvasLayer) │   │
-│  └───────┬────────┘  └───────┬────────┘  └──────┬───────┘   │
-│          └──────────┬─────────┘                  │           │
-│                     │ (signals)                  │           │
-├─────────────────────┴────────────────────────────┴───────────┤
-│                   Autoload Layer                             │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────────┐  ┌─────────────────────────────────┐  │
-│  │   GameState      │  │        GameEvents               │  │
-│  │   - hero         │  │   - equipment_changed           │  │
-│  │   - currencies   │  │   - item_crafted                │  │
-│  │   (singleton)    │  │   - combat signals (7)          │  │
-│  └────────┬─────────┘  │   - drop signals (2)            │  │
-│           │            └─────────────────────────────────┘  │
-├───────────┴──────────────────────────────────────────────────┤
-│                    Data Layer (Resources)                    │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────┐  ┌──────┐  ┌──────┐  ┌─────────┐  ┌──────────┐   │
-│  │ Hero │  │ Item │  │Affix │  │Currency │  │BiomeConf │   │
-│  │(Res) │  │(Res) │  │(Res) │  │  (Res)  │  │  (Res)   │   │
-│  └──────┘  └──────┘  └──────┘  └─────────┘  └──────────┘   │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                     Scene Layer                                  │
+│  ┌──────────────┐  ┌───────────────┐  ┌────────────────────┐   │
+│  │  forge_view  │  │ gameplay_view │  │ floating_label     │   │
+│  │ (affix fmt)  │  │ (hit display) │  │ (shows range roll) │   │
+│  └──────┬───────┘  └──────┬────────┘  └──────────┬─────────┘   │
+│         │                 │                       │             │
+├─────────┴─────────────────┴───────────────────────┴─────────────┤
+│                     Combat Layer                                  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ CombatEngine._on_hero_attack()                              │  │
+│  │  damage_per_hit = roll_damage_range() / attack_speed       │  │  ← MODIFIED
+│  │  (was: hero.total_dps / hero_attack_speed)                 │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ PackGenerator.create_pack()                                 │  │
+│  │  pack.damage_min, pack.damage_max = scaled range           │  │  ← MODIFIED
+│  └────────────────────────────────────────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                     Stat Calculator Layer                         │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ StatCalculator                                              │  │
+│  │  calculate_dps(base_min, base_max, ...) → avg DPS float    │  │  ← MODIFIED
+│  │  calculate_damage_range(base_min, base_max, affixes)       │  │  ← NEW
+│  │    → Vector2i(total_min, total_max)                        │  │
+│  └────────────────────────────────────────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                     Data Layer (Resources)                        │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐   │
+│  │ Weapon           │  │ Affix (flat dmg) │  │ MonsterPack  │   │
+│  │ base_damage_min  │  │ damage_min: int  │  │ damage_min   │   │  ← MODIFIED
+│  │ base_damage_max  │  │ damage_max: int  │  │ damage_max   │   │
+│  └──────────────────┘  └──────────────────┘  └──────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## Save/Load Integration
+---
 
-### Current State Snapshot
+## Integration Point 1: Affix — Where Min-Max Values Live
 
-**What exists:**
-- `GameState.hero: Hero` (Resource) with `equipped_items: Dictionary` (slot → Item Resource)
-- `GameState.currency_counts: Dictionary` (type → int)
-- All data extends Resource: Item, Affix, Implicit, Hero, Currency classes
-- Hero.update_stats() recalculates total_dps, total_defense, resistances from equipped items
+### Current State
 
-**What's missing:**
-- No save file persistence
-- No way to restore game state on launch
-- No UI for save/load actions
-
-### Save System Architecture
-
-**Pattern: Resource Snapshot with Deep Copy**
-
-Godot 4.5 provides `ResourceSaver.save()` and `ResourceLoader.load()` for Resource-based save systems. This is the recommended approach when you already have Resource-based data (HIGH confidence).
-
-**Why this fits:**
-- All game data already extends Resource
-- Static typing prevents JSON serialization errors
-- Works seamlessly with Godot data types (Vector2, Color, etc.)
-- Editor can inspect `.tres` save files during development
-
-**Critical limitation:** `Resource.duplicate(true)` does NOT deep copy subresources in Arrays or Dictionaries (see [Godot issue #74918](https://github.com/godotengine/godot/issues/74918)). Since Hero has `equipped_items: Dictionary` with Item Resources containing `prefixes: Array[Affix]` and `suffixes: Array[Affix]`, a shallow duplicate will share references.
-
-### New Components Needed
-
-#### 1. SaveData Resource (new file: `models/save/save_data.gd`)
+`Affix` already has `min_value` and `max_value` (int) — but these represent the **rolled stat value bounds** (e.g., "+5 to +20 flat damage for this tier"), not a **damage range delivered per hit**. The single `value` field is what gets summed into DPS.
 
 ```gdscript
-class_name SaveData extends Resource
-
-@export var hero_data: Hero
-@export var currency_counts: Dictionary
-@export var save_version: int = 1
-@export var save_timestamp: int
+# affix.gd (EXISTING)
+var min_value: int  # Lower bound for this tier's rolled value
+var max_value: int  # Upper bound for this tier's rolled value
+var value: int      # The rolled result — used by StatCalculator
 ```
 
-**Rationale:** Container Resource for all persistent state. Exported vars enable editor inspection.
+### Required Change
 
-#### 2. SaveManager Singleton (new file: `autoloads/save_manager.gd`)
+Flat damage affixes (those with `Tag.StatType.FLAT_DAMAGE`) need to express a per-hit damage range, not a single integer. The range is the actual damage spread delivered each hit after the affix rolls.
+
+**Option A (Recommended): Reuse existing fields with semantic clarity**
+
+The existing `min_value` / `max_value` on Affix already contain the correct data for range-typed flat damage affixes — they are the lower and upper bounds of what the affix contributes. The `value` field currently holds the single rolled result (used in DPS average). No new fields needed on Affix for flat damage affixes; the convention just changes:
+
+- DPS calculation uses average: `(min_value + max_value) / 2.0` instead of `value`
+- Per-hit combat rolls from `randi_range(min_value, max_value)` instead of using `value`
+
+**Option B: Add explicit range fields**
+
+Add `damage_min: int` and `damage_max: int` to Affix specifically for FLAT_DAMAGE affixes. Clearer intent, but adds fields to every Affix even when irrelevant.
+
+**Recommendation: Option A** — the existing `min_value`/`max_value` are the correct semantic fields for damage range. They are already serialized. No schema change, no migration needed. The `value` field becomes "the average for DPS display" and per-hit combat rolls from the min/max pair.
+
+**Confidence: HIGH** — Affix already serializes `min_value` and `max_value` in `to_dict()` / `from_dict()`. No save format change required for this integration point.
+
+---
+
+## Integration Point 2: Weapon — Base Damage Range
+
+### Current State
 
 ```gdscript
-extends Node
-
-const SAVE_PATH := "user://save_game.tres"
-
-func save_game() -> bool:
-	var save_data := SaveData.new()
-	save_data.hero_data = _deep_copy_hero(GameState.hero)
-	save_data.currency_counts = GameState.currency_counts.duplicate(true)
-	save_data.save_timestamp = Time.get_unix_time_from_system()
-
-	var err := ResourceSaver.save(save_data, SAVE_PATH)
-	return err == OK
-
-func load_game() -> bool:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return false
-
-	var save_data: SaveData = ResourceLoader.load(SAVE_PATH, "", ResourceLoader.CACHE_MODE_IGNORE)
-	if save_data == null:
-		return false
-
-	GameState.hero = save_data.hero_data
-	GameState.currency_counts = save_data.currency_counts
-	GameEvents.equipment_changed.emit("all", null)  # Trigger UI refresh
-	return true
-
-func _deep_copy_hero(hero: Hero) -> Hero:
-	var copy := Hero.new()
-	copy.health = hero.health
-	copy.max_health = hero.max_health
-	copy.hero_name = hero.hero_name
-
-	# Deep copy equipped items
-	copy.equipped_items = {}
-	for slot in hero.equipped_items:
-		var item = hero.equipped_items[slot]
-		if item != null:
-			copy.equipped_items[slot] = _deep_copy_item(item)
-
-	copy.update_stats()
-	return copy
-
-func _deep_copy_item(item: Item) -> Item:
-	# Duplicate base (shallow copy)
-	var copy = item.duplicate(false)
-
-	# Manually deep copy affixes arrays
-	copy.prefixes = []
-	for prefix in item.prefixes:
-		copy.prefixes.append(_deep_copy_affix(prefix))
-
-	copy.suffixes = []
-	for suffix in item.suffixes:
-		copy.suffixes.append(_deep_copy_affix(suffix))
-
-	# Deep copy implicit
-	if item.implicit != null:
-		copy.implicit = _deep_copy_affix(item.implicit)
-
-	copy.update_value()
-	return copy
-
-func _deep_copy_affix(affix: Affix) -> Affix:
-	var copy := Affix.new()
-	copy.affix_name = affix.affix_name
-	copy.type = affix.type
-	copy.min_value = affix.min_value
-	copy.max_value = affix.max_value
-	copy.value = affix.value
-	copy.tier = affix.tier
-	copy.tags = affix.tags.duplicate()
-	copy.stat_types = affix.stat_types.duplicate()
-	copy.tier_range = affix.tier_range
-	copy.base_min = affix.base_min
-	copy.base_max = affix.base_max
-	return copy
+# weapon.gd (EXISTING)
+var base_damage: int        # Single value — both DPS average and hit value
+var base_damage_type: String
 ```
 
-**Rationale:** Custom deep copy avoids Godot's duplicate() limitation with nested Array/Dictionary Resources. Uses `CACHE_MODE_IGNORE` to prevent stale cached saves (Godot 4 improvement).
+### Required Change
 
-**Sources:**
-- [Saving and Loading Games in Godot 4 (with resources) | GDQuest](https://www.gdquest.com/library/save_game_godot4/)
-- [Godot Resource.duplicate(true) doesn't duplicate subresources in Arrays/Dictionaries](https://github.com/godotengine/godot/issues/74918)
-- [Duplicate Godot custom resources deeply, for real](https://simondalvai.org/blog/godot-duplicate-resources/)
+Replace `base_damage: int` with a min/max pair:
 
-#### 3. Save/Load UI (modify: `scenes/main_view.gd` and `main.tscn`)
-
-Add buttons to NavigationPanel:
-- Save button → `SaveManager.save_game()`
-- Load button → `SaveManager.load_game()` + refresh all views
-
-**Integration point:** main_view already has `@onready` references to all views. After load, call:
 ```gdscript
-hero_view.update_all_slots()
-hero_view.update_stats_display()
-crafting_view.update_currency_button_states()
-gameplay_view.update_display()
+# weapon.gd (MODIFIED)
+var base_damage_min: int    # Minimum base weapon hit
+var base_damage_max: int    # Maximum base weapon hit
+# base_damage preserved as property for backward compat, returns average:
+var base_damage: int:
+    get: return (base_damage_min + base_damage_max) / 2
 ```
+
+**Element-specific variance** is a property of the **weapon type definition** (LightSword, etc.), not a field on Weapon base class. Each concrete weapon class sets the ratio:
+
+```gdscript
+# light_sword.gd (MODIFIED)
+func _init() -> void:
+    self.base_damage_min = 8    # Physical: tight spread (8-12, ratio ~0.67)
+    self.base_damage_max = 12
+    # Lightning weapon example: 4-18 (ratio ~0.22) — much wider
+```
+
+The variance ratio lives in the concrete item class, not a generic `variance_factor` field. This keeps it explicit and designer-readable.
+
+### Save Format Impact
+
+`weapon.to_dict()` inherits from `item.to_dict()`, which doesn't directly serialize `base_damage`. The weapon's `base_damage` is used transiently for DPS calculation. Affixes (the rolling parts) are already serialized. However:
+
+- `base_damage_min` and `base_damage_max` must be added to weapon serialization if weapons can have variable base ranges (e.g., found items). For fixed base ranges (defined per class like LightSword), they can be reconstructed from `_init()` — **no serialization needed**.
+- For variable-base weapons in the future, add `base_damage_min`/`base_damage_max` to `Item.to_dict()` and `create_from_dict()`.
+
+**Save version bump required: YES** — but only if base damage range is not always reconstructible from item type. For now (fixed base ranges per class), no save schema change.
+
+---
+
+## Integration Point 3: StatCalculator — Aggregating Ranges vs Flat Values
+
+### Current State
+
+```gdscript
+# stat_calculator.gd (EXISTING)
+static func calculate_dps(base_damage: float, base_speed: float, affixes: Array, ...) -> float:
+    var damage := base_damage
+    for affix: Affix in affixes:
+        if Tag.StatType.FLAT_DAMAGE in affix.stat_types:
+            damage += affix.value      # Single value summed
+    # ... rest of calculation
+```
+
+### Required Changes
+
+**New method: `calculate_damage_range()`**
+
+```gdscript
+# stat_calculator.gd (NEW METHOD)
+## Aggregates min and max damage from base weapon range + flat damage affixes.
+## Returns Vector2i(total_min, total_max).
+## Used for: UI display, per-hit combat rolling.
+static func calculate_damage_range(
+    base_min: int,
+    base_max: int,
+    affixes: Array
+) -> Vector2i:
+    var total_min := base_min
+    var total_max := base_max
+
+    for affix: Affix in affixes:
+        if Tag.StatType.FLAT_DAMAGE in affix.stat_types:
+            total_min += affix.min_value   # Add lower bound
+            total_max += affix.max_value   # Add upper bound
+
+    return Vector2i(total_min, total_max)
+```
+
+**Modified method: `calculate_dps()` signature**
+
+```gdscript
+# stat_calculator.gd (MODIFIED)
+static func calculate_dps(
+    base_min: int,        # was: base_damage: float
+    base_max: int,        # NEW
+    base_speed: float,
+    affixes: Array,
+    base_crit_chance: float = 5.0,
+    base_crit_damage: float = 150.0
+) -> float:
+    # DPS uses average damage for expected-value calculation
+    var damage := float(base_min + base_max) / 2.0   # was: base_damage
+
+    for affix: Affix in affixes:
+        if Tag.StatType.FLAT_DAMAGE in affix.stat_types:
+            damage += float(affix.min_value + affix.max_value) / 2.0  # was: affix.value
+    # ... rest unchanged
+```
+
+**Aggregation rules:**
+
+| Affix Type | Min Contribution | Max Contribution |
+|------------|-----------------|-----------------|
+| FLAT_DAMAGE | `affix.min_value` | `affix.max_value` |
+| INCREASED_DAMAGE | Applied to both min and max proportionally | Same |
+| CRIT_CHANCE / CRIT_DAMAGE | Flat additions (unchanged) | Unchanged |
+
+**Increased damage multiplier** applies identically to both min and max — it scales the range uniformly, preserving relative spread:
+
+```gdscript
+# After flat additions:
+total_min *= (1.0 + additive_damage_mult)
+total_max *= (1.0 + additive_damage_mult)
+```
+
+---
+
+## Integration Point 4: CombatEngine — Per-Hit Rolling from Ranges
+
+### Current State
+
+```gdscript
+# combat_engine.gd — _on_hero_attack() (EXISTING)
+var damage_per_hit := hero.total_dps / hero_attack_speed
+var is_crit := randf() < (hero.total_crit_chance / 100.0)
+if is_crit:
+    damage_per_hit *= (hero.total_crit_damage / 100.0)
+```
+
+`total_dps` is pre-calculated average DPS. Dividing by attack speed gives expected-value damage per hit — no per-hit variance.
+
+### Required Changes
+
+**Hero needs to expose damage range** alongside `total_dps`. The cleanest integration: add `total_damage_min: float` and `total_damage_max: float` to `Hero`, updated by `calculate_dps()` calls, mirroring how `total_dps` is maintained.
+
+```gdscript
+# hero.gd (ADD FIELDS)
+var total_damage_min: float = 0.0    # Per-hit minimum (before crit)
+var total_damage_max: float = 0.0    # Per-hit maximum (before crit)
+```
+
+```gdscript
+# hero.gd — calculate_dps() (MODIFIED)
+func calculate_dps() -> float:
+    total_dps = 0.0
+    total_damage_min = 0.0
+    total_damage_max = 0.0
+
+    if "weapon" in equipped_items and equipped_items["weapon"] is Weapon:
+        var weapon: Weapon = equipped_items["weapon"]
+        total_dps += weapon.dps
+        # NEW: track per-hit range
+        var range := weapon.get_damage_range()     # Vector2i
+        total_damage_min += float(range.x) / weapon.base_attack_speed
+        total_damage_max += float(range.y) / weapon.base_attack_speed
+
+    # ... ring handling same pattern
+```
+
+**CombatEngine per-hit roll:**
+
+```gdscript
+# combat_engine.gd — _on_hero_attack() (MODIFIED)
+var rolled_damage := randf_range(hero.total_damage_min, hero.total_damage_max)
+
+var is_crit := randf() < (hero.total_crit_chance / 100.0)
+if is_crit:
+    rolled_damage *= (hero.total_crit_damage / 100.0)
+
+pack.take_damage(rolled_damage)
+GameEvents.hero_attacked.emit(rolled_damage, is_crit)
+```
+
+This eliminates the `total_dps / hero_attack_speed` path for hero attacks. `total_dps` is retained as a display-only average — it still appears in Hero Stats and forge_view comparison panels.
+
+### MonsterPack — Range for Incoming Damage
+
+```gdscript
+# monster_pack.gd (ADD FIELDS)
+var damage_min: float = 0.0    # was: only damage: float
+var damage_max: float = 0.0
+```
+
+`PackGenerator.create_pack()` sets both:
+
+```gdscript
+# pack_generator.gd — create_pack() (MODIFIED)
+var element_variance := _get_element_variance(element)   # NEW helper
+pack.damage_min = monster_type.base_damage * multiplier * (1.0 - element_variance)
+pack.damage_max = monster_type.base_damage * multiplier * (1.0 + element_variance)
+pack.damage = pack.damage_min  # backward compat — DefenseCalculator uses pack.damage
+```
+
+**CombatEngine pack attack** rolls from range before passing to DefenseCalculator:
+
+```gdscript
+# combat_engine.gd — _on_pack_attack() (MODIFIED)
+var rolled_pack_damage := randf_range(pack.damage_min, pack.damage_max)
+
+var result := DefenseCalculator.calculate_damage_taken(
+    rolled_pack_damage,     # was: pack.damage
+    pack.element,
+    ...
+)
+```
+
+**Element variance table** (drives `_get_element_variance()`):
+
+| Element | Variance | Example (base 10) | Result Range |
+|---------|----------|-------------------|--------------|
+| physical | 0.10 | 10 | 9–11 |
+| cold | 0.20 | 10 | 8–12 |
+| fire | 0.30 | 10 | 7–13 |
+| lightning | 0.50 | 10 | 5–15 |
+
+---
+
+## Integration Point 5: Weapon.update_value() — DPS and Range Cache
+
+### Current State
+
+```gdscript
+# weapon.gd (EXISTING)
+func update_value() -> void:
+    var all_affixes := self.prefixes + self.suffixes
+    all_affixes.append(self.implicit)
+    self.dps = StatCalculator.calculate_dps(
+        self.base_damage, self.base_speed, all_affixes, self.crit_chance, self.crit_damage
+    )
+```
+
+### Required Change
+
+```gdscript
+# weapon.gd (MODIFIED)
+var damage_range: Vector2i = Vector2i(0, 0)  # Cached per-hit range (NEW)
+
+func update_value() -> void:
+    var all_affixes := self.prefixes + self.suffixes
+    all_affixes.append(self.implicit)
+
+    self.damage_range = StatCalculator.calculate_damage_range(
+        self.base_damage_min, self.base_damage_max, all_affixes
+    )
+    self.dps = StatCalculator.calculate_dps(
+        self.base_damage_min, self.base_damage_max,
+        self.base_speed, all_affixes, self.crit_chance, self.crit_damage
+    )
+
+func get_damage_range() -> Vector2i:
+    return damage_range
+```
+
+---
+
+## Integration Point 6: UI — Displaying Ranges
+
+### forge_view.gd — Item Stats Text
+
+`get_item_stats_text()` currently shows `"Base Damage: %d" % weapon.base_damage`. Must change to range format:
+
+```gdscript
+# forge_view.gd — get_item_stats_text() (MODIFIED)
+# Before:
+stats_text += "Base Damage: %d\n" % weapon.base_damage
+
+# After:
+var dr := weapon.damage_range
+stats_text += "Damage: %d-%d\n" % [dr.x, dr.y]
+stats_text += "DPS: %.1f\n" % weapon.dps      # unchanged — avg DPS for comparison
+```
+
+Flat damage affixes in the prefix list now also show range:
+
+```gdscript
+# forge_view.gd — prefix display (MODIFIED)
+for prefix in weapon.prefixes:
+    if Tag.StatType.FLAT_DAMAGE in prefix.stat_types:
+        stats_text += "%s: %d-%d\n" % [prefix.affix_name, prefix.min_value, prefix.max_value]
+    else:
+        stats_text += "%s: %d\n" % [prefix.affix_name, prefix.value]
+```
+
+### gameplay_view.gd — Floating Damage Labels
+
+No change required. `_spawn_floating_text()` already receives a rolled per-hit value (int). The combat engine will now supply a rolled value from a range rather than a flat DPS-derived value. The floating label format is unchanged.
+
+### Hero Stats Panel (forge_view.gd update_hero_stats_display)
+
+```gdscript
+# forge_view.gd — update_hero_stats_display() (MODIFIED)
+# After DPS line:
+hero_stats_label.text += "Total DPS: %.1f\n" % hero.get_total_dps()
+# NEW range line:
+hero_stats_label.text += "Hit Range: %d-%d\n" % [int(hero.total_damage_min), int(hero.total_damage_max)]
+```
+
+---
+
+## Integration Point 7: Save Format
+
+### What Changes
+
+**Affix serialization (NO CHANGE NEEDED):** `min_value` and `max_value` are already in `Affix.to_dict()` and `Affix.from_dict()`. If flat damage affixes reuse these fields for damage range, nothing new needs to be serialized.
+
+**Weapon serialization (MINOR CHANGE):** If `base_damage_min` / `base_damage_max` are fixed per class (LightSword always 8-12), they do not need serialization — `_init()` reconstructs them. If future weapons can have randomized base ranges, add to `Item.to_dict()`:
+
+```gdscript
+# item.to_dict() (ADD IF NEEDED)
+"base_damage_min": base_damage_min if "base_damage_min" in self else 0,
+"base_damage_max": base_damage_max if "base_damage_max" in self else 0,
+```
+
+**MonsterPack:** Not serialized. Generated fresh each combat. No save change.
+
+**Hero cached ranges (total_damage_min, total_damage_max):** Not serialized. Recalculated by `Hero.update_stats()` after load, same as `total_dps`. No save change.
+
+### Save Version
+
+**Recommendation: bump SAVE_VERSION to 2 in save_manager.gd** when base_damage_min/max are added to weapon serialization. Add migration in `_migrate_save()`:
+
+```gdscript
+# save_manager.gd (MIGRATION)
+if saved_version < 2:
+    # Migrate weapons: base_damage_min/max missing → derive from existing base_damage
+    # (backward compat: old saves only have single base_damage on Item)
+    data = _migrate_v1_to_v2(data)
+```
+
+---
+
+## Component Boundaries: New vs Modified
+
+### New Components
+
+| File | Type | Purpose |
+|------|------|---------|
+| None | — | No new files required. All changes are modifications to existing files. |
 
 ### Modified Components
 
-| Component | Current | After Save/Load |
-|-----------|---------|-----------------|
-| `autoloads/game_state.gd` | Creates new Hero in _ready() | Check `SaveManager.has_save()`, load if exists, else create new |
-| `scenes/main_view.gd` | 3 nav buttons | +2 buttons (Save, Load), connect to SaveManager |
-| `project.godot` | 4 autoloads | +1 autoload: SaveManager |
+| File | Change Type | Specific Changes |
+|------|-------------|-----------------|
+| `models/affixes/affix.gd` | Semantic | `min_value`/`max_value` now serve as damage range for FLAT_DAMAGE affixes; `value` becomes avg for DPS display only |
+| `models/items/weapon.gd` | Fields + method | `base_damage` → `base_damage_min` + `base_damage_max`; add `damage_range: Vector2i`; update `update_value()` |
+| `models/items/light_sword.gd` | Init values | Set `base_damage_min` / `base_damage_max` instead of `base_damage` |
+| `models/monsters/monster_pack.gd` | Fields | Add `damage_min: float` + `damage_max: float` alongside existing `damage: float` |
+| `models/monsters/pack_generator.gd` | create_pack() | Set `damage_min`/`damage_max` from element variance; add `_get_element_variance()` helper |
+| `models/monsters/monster_type.gd` | No change | `base_damage` stays single — PackGenerator applies variance per element |
+| `models/stats/stat_calculator.gd` | New method + modified signature | Add `calculate_damage_range()` returning Vector2i; change `calculate_dps()` to accept `base_min`/`base_max` |
+| `models/hero.gd` | Fields + calculate_dps() | Add `total_damage_min`/`total_damage_max` floats; update `calculate_dps()` to populate them |
+| `models/combat/combat_engine.gd` | _on_hero_attack(), _on_pack_attack() | Hero attack rolls `randf_range(total_damage_min, total_damage_max)`; pack attack rolls from pack range before passing to DefenseCalculator |
+| `autoloads/save_manager.gd` | Version + migration | Bump `SAVE_VERSION` to 2; add `_migrate_v1_to_v2()` if base ranges serialized |
+| `scenes/forge_view.gd` | Display strings | Weapon shows "Damage: X-Y"; flat damage affixes show min-max; hero stats show Hit Range |
 
-**No changes needed:** Item, Hero, Affix classes already extend Resource.
+### Unchanged Components
 
-### Data Flow: Save Operation
-
-```
-[User clicks Save]
-       ↓
-[main_view] → SaveManager.save_game()
-       ↓
-[SaveManager creates SaveData Resource]
-       ↓
-[Deep copy GameState.hero (custom logic)]
-[Copy GameState.currency_counts (shallow OK)]
-       ↓
-[ResourceSaver.save(save_data, "user://save_game.tres")]
-       ↓
-[Return success/failure to UI]
-```
-
-### Data Flow: Load Operation
-
-```
-[User clicks Load]
-       ↓
-[main_view] → SaveManager.load_game()
-       ↓
-[ResourceLoader.load("user://save_game.tres", CACHE_MODE_IGNORE)]
-       ↓
-[Overwrite GameState.hero and currency_counts]
-       ↓
-[Emit GameEvents.equipment_changed("all", null)]
-       ↓
-[hero_view, crafting_view, gameplay_view refresh via signals]
-```
-
-**Key consideration:** Use `CACHE_MODE_IGNORE` flag to prevent Godot from returning stale cached Resource (Godot 4 improvement over Godot 3).
-
-**Source:** [Save and Load: Godot 4 Cheat Sheet | GDQuest](https://www.gdquest.com/library/cheatsheet_save_systems/)
+| File | Reason Unchanged |
+|------|-----------------|
+| `models/stats/defense_calculator.gd` | Receives rolled float damage — no change to interface |
+| `models/items/item.gd` | `to_dict()` / `create_from_dict()` — affix serialization unchanged |
+| `models/affixes/implicit.gd` | Extends Affix — inherits range fields |
+| `autoloads/item_affixes.gd` | Affix pool definitions — adjust base_min/base_max values per element but no structural change |
+| `autoloads/game_events.gd` | Signal signatures unchanged |
+| `autoloads/game_state.gd` | No structural change |
+| `scenes/gameplay_view.gd` | Floating label receives rolled int — no change |
+| `models/loot/loot_table.gd` | Drop system unaffected |
+| `models/monsters/biome_config.gd` | BiomeConfig doesn't store damage — PackGenerator handles it |
 
 ---
 
-## Side-by-Side UI Layout Integration
+## Data Flow: Damage Range Through the System
 
-### Current Layout Architecture
+### Flow 1: Weapon Created / Affix Added
 
-**What exists:**
-- main.tscn root: Node2D with 3 child CanvasLayers (CraftingView, HeroView, GameplayView)
-- main_view.gd: Switches views via `visible = true/false`
-- NavigationPanel: 3 buttons (Crafting, Hero, Adventure) at bottom (600-700px)
-- Viewport: 1200x700px
-- Each view is full-screen when visible
-
-**Problem:** Views are mutually exclusive. Cannot see hero stats while crafting.
-
-### New Layout Architecture
-
-**Pattern: HBoxContainer Split with Persistent Panels**
-
-Remove tab navigation. Show hero and crafting side-by-side simultaneously. Keep gameplay view separate (combat needs full attention).
-
-#### Scene Tree Changes (modify: `scenes/main.tscn`)
-
-**Before:**
 ```
-MainView (Node2D)
-├── NavigationPanel (ColorRect with 3 buttons)
-├── CraftingView (Node2D, visible toggled)
-├── HeroView (Node2D, visible toggled)
-└── GameplayView (Node2D, visible toggled)
+[LightSword._init()]
+    base_damage_min = 8, base_damage_max = 12
+         ↓
+[weapon.update_value()]
+    damage_range = StatCalculator.calculate_damage_range(8, 12, affixes)
+    dps = StatCalculator.calculate_dps(8, 12, base_speed, affixes, ...)
+         ↓
+[forge_view.get_item_stats_text()]
+    "Damage: 10-18"  (after flat affix min_value/max_value added)
+    "DPS: 14.0"      (average × speed × crit multiplier)
 ```
 
-**After:**
+### Flow 2: Hero Equips Weapon → Stats Update
+
 ```
-MainView (Node2D)
-├── NavigationPanel (ColorRect with 2 buttons: Adventure, Save, Load)
-├── SideBySideContainer (HBoxContainer)  # NEW
-│   ├── HeroView (PanelContainer → Node2D)  # LEFT HALF
-│   └── CraftingView (PanelContainer → Node2D)  # RIGHT HALF
-└── GameplayView (Node2D, visible toggled)  # FULLSCREEN when active
-```
-
-**HBoxContainer setup:**
-- Position: (0, 0) to (1200, 600)
-- Separation: 10px between hero and crafting panels
-- Children use Size Flags: Fill + Expand with Stretch Ratio 1:1 (equal width)
-
-**Sources:**
-- [Using Containers — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/ui/gui_containers.html)
-- [HBoxContainer — Godot Engine (4.5) documentation](https://docs.godotengine.org/en/4.5/classes/class_hboxcontainer.html)
-- [Overview of Godot UI containers | GDQuest](https://school.gdquest.com/courses/learn_2d_gamedev_godot_4/start_a_dialogue/all_the_containers)
-
-#### Layout Calculations
-
-Available space: 1200px wide × 600px tall (700 - 100 for nav panel)
-
-**With 10px separation:**
-- Hero panel: 595px wide × 600px tall
-- Crafting panel: 595px wide × 600px tall
-
-**Current hero_view.tscn layout (absolute positions):**
-- Equipment slots: 700-850px (right side)
-- Stats panels: 884-1200px (far right)
-- Crafted item panel: 0-320px (left)
-
-**Adjustments needed:**
-All absolute `offset_` positions must scale to fit 595px width. Use Container nodes or anchors for responsive layout.
-
-#### New Components Needed
-
-1. **SideBySideContainer (HBoxContainer)** — add to main.tscn
-2. **Wrapper PanelContainers** — wrap HeroView and CraftingView for visual separation
-
-**PanelContainer benefits:**
-- Draws background rectangle around child
-- Single child only (perfect for view wrappers)
-- Built-in padding via theme overrides
-
-**Source:** [UI Layout using Containers in Godot](https://gdscript.com/solutions/ui-layout-using-containers-in-godot/)
-
-#### Modified Components
-
-| Component | Current | After Side-by-Side |
-|-----------|---------|-------------------|
-| `scenes/main.tscn` | 3 separate views toggled | HBoxContainer with hero+crafting always visible |
-| `scenes/main_view.gd` | show_view() toggles 3 views | show_view() only toggles gameplay vs side-by-side |
-| `scenes/hero_view.tscn` | Absolute positions for 1200px | Anchors/containers for 595px |
-| `scenes/crafting_view.tscn` | Absolute positions for 1200px | Anchors/containers for 595px |
-| NavigationPanel | 3 buttons (Crafting, Hero, Adventure) | 1 button (Adventure) + Save/Load |
-
-**No changes needed:** Signal connections in main_view.gd still work (crafting_view.item_finished → hero_view.set_last_crafted_item).
-
-### Data Flow: View Switching
-
-**Before (3-way toggle):**
-```
-[User presses TAB/number key]
-       ↓
-[main_view.show_view(view_name)]
-       ↓
-[Hide all 3 views, show selected]
-       ↓
-[Sync CanvasLayer visibility]
+[hero.equip_item(weapon, "weapon")]
+    hero.update_stats()
+         ↓
+[hero.calculate_dps()]
+    total_dps = weapon.dps
+    total_damage_min = weapon.damage_range.x / weapon.base_attack_speed
+    total_damage_max = weapon.damage_range.y / weapon.base_attack_speed
+         ↓
+[forge_view.update_hero_stats_display()]
+    "Total DPS: 25.2"
+    "Hit Range: 9-17"   ← NEW display
 ```
 
-**After (2-mode toggle):**
-```
-[User presses Adventure button]
-       ↓
-[main_view.show_view("gameplay")]
-       ↓
-[Hide SideBySideContainer, show GameplayView]
-       ↓
-[Sync CombatUI CanvasLayer visibility]
+### Flow 3: Per-Hit Combat Roll (Hero Attacks)
 
-[User presses TAB/ESC]
-       ↓
-[main_view.show_view("side_by_side")]
-       ↓
-[Show SideBySideContainer, hide GameplayView]
+```
+[hero_attack_timer.timeout → CombatEngine._on_hero_attack()]
+    rolled_damage = randf_range(hero.total_damage_min, hero.total_damage_max)
+         ↓
+[crit roll]
+    if randf() < crit_chance:
+        rolled_damage *= (crit_damage / 100.0)
+         ↓
+[pack.take_damage(rolled_damage)]
+[GameEvents.hero_attacked.emit(rolled_damage, is_crit)]
+         ↓
+[gameplay_view._on_hero_attacked(damage, is_crit)]
+    _spawn_floating_text(pack_damage_pos, int(damage), is_crit)
 ```
 
-**Benefit:** Hero stats and crafting inventory always visible together. No tab switching during crafting workflow.
+### Flow 4: Per-Hit Combat Roll (Monster Attacks)
+
+```
+[pack_attack_timer.timeout → CombatEngine._on_pack_attack()]
+    rolled_pack_damage = randf_range(pack.damage_min, pack.damage_max)
+         ↓
+[DefenseCalculator.calculate_damage_taken(rolled_pack_damage, pack.element, ...)]
+    → result: {dodged, life_damage, es_damage}
+         ↓
+[hero.apply_damage(result.life_damage, result.es_damage)]
+[GameEvents.pack_attacked.emit(result)]
+```
+
+### Flow 5: Save / Load Round-Trip
+
+```
+[Affix.to_dict()]  — min_value, max_value already serialized (no change)
+[Weapon.to_dict()] — if base ranges are fixed per class: not needed
+                     if base ranges are variable: add base_damage_min/max
+[Hero.calculate_dps()] called after load → total_damage_min/max recalculated
+```
 
 ---
 
-## Crafting UX Feedback Integration
+## Architectural Patterns
 
-### Current Crafting Flow
+### Pattern 1: Average-for-DPS, Roll-for-Combat
 
-**What exists:**
-- crafting_view.gd: Click item → select currency → click item → currency applied
-- hero_view.gd: Crafted item stored in `last_crafted_item`, shown in CraftedItemStatsPanel
-- Equipment slots show item stats on hover (via `currently_hovered_slot`)
+**What:** `StatCalculator.calculate_dps()` uses `(min + max) / 2` for the DPS average shown in UI. `CombatEngine` rolls `randf_range(min, max)` per hit.
 
-**Problem:** Cannot compare crafted item stats to equipped item stats BEFORE equipping.
+**Why:** DPS is an expected-value metric — the correct formula uses average damage. Combat gives variance and tactile feel. These are separate use cases and should use separate code paths.
 
-### New UX: Before/After Comparison
+**Anti-pattern to avoid:** Do not pass a rolled value into `calculate_dps()`. DPS must always use average damage — it is a planning metric, not a combat metric.
 
-**Pattern: Temporary Stat Preview via Signals**
+### Pattern 2: Range Propagation via Min/Max Pair Accumulation
 
-When hovering over equipment slot with `last_crafted_item` available, show:
-1. Current equipped item stats (already exists)
-2. Crafted item stats (already exists in separate panel)
-3. **NEW:** Stat delta preview (DPS change, defense change, etc.)
+**What:** Each layer accumulates `total_min` and `total_max` independently. Multiplicative modifiers (INCREASED_DAMAGE) scale both ends proportionally. Result is Vector2i handed to the next layer.
 
-**No tooltips needed.** ARPG pattern: side-by-side panels show "current" vs "new" (Path of Exile, Diablo, Last Epoch).
+**Why:** Preserves spread. If you collapse to a single value anywhere in the pipeline, you lose the variance the feature is adding.
 
-**Source:** [Game UI Database - Weapon Comparison Pickup](https://www.gameuidatabase.com/index.php?scrn=154)
-
-#### New Component: StatComparisonPanel
-
-**File:** `scenes/stat_comparison_panel.gd` (new)
-
-```gdscript
-class_name StatComparisonPanel extends PanelContainer
-
-@onready var comparison_label: Label = $ComparisonLabel
-
-func show_comparison(current_item: Item, new_item: Item, slot: String) -> void:
-	visible = true
-	var current_stats = _get_item_contribution(current_item, slot)
-	var new_stats = _get_item_contribution(new_item, slot)
-
-	var text := "Equipping will change:\n\n"
-	text += _format_stat_delta("DPS", new_stats.dps - current_stats.dps)
-	text += _format_stat_delta("Armor", new_stats.armor - current_stats.armor)
-	text += _format_stat_delta("Evasion", new_stats.evasion - current_stats.evasion)
-	text += _format_stat_delta("Energy Shield", new_stats.es - current_stats.es)
-
-	comparison_label.text = text
-
-func hide_comparison() -> void:
-	visible = false
-
-func _format_stat_delta(stat_name: String, delta: float) -> String:
-	if delta == 0:
-		return ""
-	var color := Color.GREEN if delta > 0 else Color.RED
-	var sign := "+" if delta > 0 else ""
-	return "[color=%s]%s: %s%.1f[/color]\n" % [color.to_html(), stat_name, sign, delta]
-
-func _get_item_contribution(item: Item, slot: String) -> Dictionary:
-	# Calculate what this specific item contributes to hero stats
-	# (Not total hero stats, just this item's portion)
-	var stats := {"dps": 0.0, "armor": 0, "evasion": 0, "es": 0}
-
-	if item == null:
-		return stats
-
-	if item is Weapon:
-		stats.dps = item.dps
-	elif item is Ring:
-		stats.dps = item.dps
-	elif "base_armor" in item:
-		stats.armor = item.base_armor
-		stats.evasion = item.base_evasion if "base_evasion" in item else 0
-		stats.es = item.base_energy_shield if "base_energy_shield" in item else 0
-
-	return stats
+**Example accumulation:**
+```
+Base weapon: 8-12
++ Flat affix min_value=4, max_value=8  →  12-20
+× INCREASED_DAMAGE 50%                 →  18-30
 ```
 
-**Rationale:** Shows item-level stat contribution deltas, not total hero stats. Prevents confusion (e.g., "Why did DPS only go up 10 when item has 50 DPS?" — because old item had 40 DPS).
+### Pattern 3: Element Variance at Pack Generation, Not in DefenseCalculator
 
-#### Integration Points
+**What:** Variance factor is applied in `PackGenerator.create_pack()` when setting `damage_min`/`damage_max`. `DefenseCalculator` receives a single pre-rolled float — unchanged interface.
 
-**Modify:** `scenes/hero_view.gd`
-
-Add StatComparisonPanel as child node. Connect to hover signals:
-
-```gdscript
-func _on_item_slot_hover_entered(slot: ItemSlot) -> void:
-	currently_hovered_slot = slot
-	update_item_stats_display()
-
-	# NEW: Show comparison if hovering with last_crafted_item available
-	if last_crafted_item != null and can_equip_item(last_crafted_item, slot):
-		var slot_name = get_slot_name(slot).to_lower()
-		var current_item = GameState.hero.equipped_items[slot_name]
-		stat_comparison_panel.show_comparison(current_item, last_crafted_item, slot_name)
-
-func _on_item_slot_hover_exited(_slot: ItemSlot) -> void:
-	currently_hovered_slot = ItemSlot.NONE
-	update_item_stats_display()
-	stat_comparison_panel.hide_comparison()  # NEW
-```
-
-**No new signals needed.** Reuse existing `mouse_entered`/`mouse_exited` connections.
-
-#### Scene Tree Changes
-
-**scenes/hero_view.tscn:**
-```
-HeroView (Node2D)
-├── [existing nodes]
-└── StatComparisonPanel (PanelContainer)  # NEW
-    └── ComparisonLabel (Label with RichText enabled)
-```
-
-**Position:** Float above equipment slots (e.g., 350-550px horizontal, 200-400px vertical).
-
-### Data Flow: Stat Comparison
-
-```
-[User hovers equipment slot with last_crafted_item available]
-       ↓
-[hero_view._on_item_slot_hover_entered(slot)]
-       ↓
-[Check: can_equip_item(last_crafted_item, slot)?]
-       ↓ YES
-[Get current_item from GameState.hero.equipped_items[slot]]
-       ↓
-[stat_comparison_panel.show_comparison(current_item, last_crafted_item, slot)]
-       ↓
-[Calculate stat deltas (item contribution, not total hero stats)]
-       ↓
-[Display green (+) or red (-) deltas with RichText color]
-
-[User moves mouse away]
-       ↓
-[hero_view._on_item_slot_hover_exited()]
-       ↓
-[stat_comparison_panel.hide_comparison()]
-```
-
-**Key insight:** Item-level comparison prevents confusion. Total hero stats change calculation would require temp-equipping item (expensive, complex state management).
-
----
-
-## Build Order and Dependencies
-
-### Phase Structure Recommendation
-
-**Phase 1: Save/Load Foundation**
-- Add SaveData Resource
-- Add SaveManager autoload with deep copy logic
-- Add Save/Load buttons to main_view
-- Test: Save game with equipped items, quit, load, verify items restored
-
-**Rationale:** Independent of UI changes. Establishes persistence layer.
-
-**Phase 2: Side-by-Side Layout**
-- Modify main.tscn: Add HBoxContainer, wrap views in PanelContainers
-- Modify main_view.gd: Change show_view() to 2-mode toggle
-- Adjust hero_view.tscn and crafting_view.tscn for 595px width
-- Test: Hero and crafting panels visible simultaneously, gameplay view still toggles
-
-**Rationale:** Requires scene restructuring. Do before adding comparison UI to avoid repositioning twice.
-
-**Phase 3: Crafting UX — Stat Comparison**
-- Add StatComparisonPanel scene
-- Modify hero_view.gd: Connect hover signals to comparison panel
-- Test: Hover equipment slot with crafted item → see stat deltas
-
-**Rationale:** Depends on side-by-side layout (comparison panel positioning assumes new layout).
-
-### Dependency Graph
-
-```
-Phase 1: Save/Load
-    ↓ (no dependency, parallel possible)
-Phase 2: Side-by-Side Layout
-    ↓ (comparison panel position depends on new layout)
-Phase 3: Stat Comparison UI
-```
-
-**Critical path:** Phase 2 → Phase 3. Phase 1 can run in parallel or first.
-
----
-
-## Integration Points Summary
-
-### What Gets Serialized (Save/Load)
-
-| Data | Location | Serialization Strategy |
-|------|----------|----------------------|
-| Hero stats | GameState.hero (Resource) | Deep copy with custom logic |
-| Equipment | Hero.equipped_items (Dictionary) | Deep copy Items + Affixes arrays |
-| Currencies | GameState.currency_counts (Dictionary) | Shallow duplicate (primitives) |
-| Combat state | Not persisted | Recreate from equipped_items on load |
-
-**NOT serialized:**
-- crafting_view.current_item (transient work-in-progress)
-- crafting_view.crafting_inventory (regenerate from drops)
-- gameplay_view.item_bases_collected (per-session drops)
-
-**Rationale:** Only persist hero progression (equipment, currencies). Crafting work resets on load (matches ARPG patterns — don't save half-crafted items).
-
-### View Communication After Changes
-
-**Existing signals (unchanged):**
-```
-crafting_view.item_finished → hero_view.set_last_crafted_item
-hero_view.equipment_changed → gameplay_view.refresh_clearing_speed
-gameplay_view.item_base_found → crafting_view.set_new_item_base
-gameplay_view.currencies_found → crafting_view.on_currencies_found
-```
-
-**New signal usage:**
-```
-SaveManager (after load) → GameEvents.equipment_changed.emit("all", null)
-    ↓
-    [All views listening to GameEvents refresh displays]
-```
-
-**No new cross-view signals needed.** Stat comparison is internal to hero_view (hover events).
-
-### Components: New vs Modified
-
-**New files:**
-- `models/save/save_data.gd` (Resource)
-- `autoloads/save_manager.gd` (Node singleton)
-- `scenes/stat_comparison_panel.gd` (scene + script)
-- `scenes/stat_comparison_panel.tscn`
-
-**Modified files:**
-- `scenes/main.tscn` (add HBoxContainer, Save/Load buttons)
-- `scenes/main_view.gd` (2-mode view toggle, SaveManager calls)
-- `scenes/hero_view.tscn` (add StatComparisonPanel, responsive layout)
-- `scenes/hero_view.gd` (connect comparison panel to hover signals)
-- `scenes/crafting_view.tscn` (responsive layout for 595px)
-- `autoloads/game_state.gd` (_ready checks SaveManager.has_save())
-- `project.godot` (add SaveManager autoload)
-
-**Unchanged files:**
-- `models/` classes (Item, Hero, Affix, etc.) — already Resource-based
-- `autoloads/game_events.gd` — existing signals sufficient
-- `scenes/gameplay_view.gd` — no layout changes (still full-screen)
+**Why:** DefenseCalculator's contract is "given raw damage, apply mitigation stages." Adding variance inside it would break separation of concerns and make DefenseCalculator harder to reason about (it already has four stages).
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Using JSON for Resource Save Data
+### Anti-Pattern 1: Collapsing Range to Single Value Too Early
 
-**What people do:** Convert Resources to Dictionary → JSON.stringify() → save as .json
+**What people do:** Store `(min + max) / 2` as the affix value immediately on creation, then use that single value everywhere.
 
-**Why it's wrong:**
-- Loses static typing (load returns Dictionary, not Hero)
-- Manual serialization for Godot types (Vector2, Color)
-- Nested resources (Item with Affixes array) require recursive dict conversion
+**Why it's wrong:** UI cannot show "12-20" if the range was collapsed to "16". Per-hit combat cannot roll variance. The range information is lost before it can be used.
 
-**Do this instead:** Use ResourceSaver/ResourceLoader with Resource classes. Already extends Resource.
+**Do this instead:** Keep `min_value` and `max_value` as the canonical fields for FLAT_DAMAGE affixes. Compute average only when needed for DPS (in StatCalculator). Roll per-hit only in CombatEngine.
 
-**Source:** [Resource-based architecture for Godot 4 | Medium](https://medium.com/@sfmayke/resource-based-architecture-for-godot-4-25bd4b2d9018)
+### Anti-Pattern 2: Adding Variance to DefenseCalculator
 
-### Anti-Pattern 2: Using Resource.duplicate(true) for Deep Copy
+**What people do:** "Lightning does more variable damage, so let's make DefenseCalculator roll variance when element is lightning."
 
-**What people do:** Assume `hero.duplicate(true)` deep copies nested arrays
+**Why it's wrong:** DefenseCalculator is downstream of rolling. It receives a specific damage number and applies mitigation math. Adding RNG inside it makes it stateful and harder to test. It also breaks the "evasion happens before mitigation" pipeline.
 
-**Why it's wrong:** Godot 4's duplicate() does NOT deep copy Resources inside Arrays or Dictionaries. Hero.equipped_items with Item Resources containing Affix arrays will share references.
+**Do this instead:** Roll in CombatEngine before calling DefenseCalculator. Pack attack code: `rolled = randf_range(pack.damage_min, pack.damage_max)` → pass rolled value to DefenseCalculator.
 
-**Do this instead:** Implement custom deep copy that manually duplicates arrays:
+### Anti-Pattern 3: Storing total_damage_min/max in Save Data
 
-```gdscript
-func _deep_copy_item(item: Item) -> Item:
-	var copy = item.duplicate(false)  # Shallow
-	copy.prefixes = []
-	for prefix in item.prefixes:
-		copy.prefixes.append(_deep_copy_affix(prefix))
-	# ... repeat for suffixes, implicit
-	return copy
-```
+**What people do:** Serialize `hero.total_damage_min` and `hero.total_damage_max` to avoid recalculating.
 
-**Source:** [Resource.duplicate(true) doesn't duplicate subresources stored in Array or Dictionary](https://github.com/godotengine/godot/issues/74918)
+**Why it's wrong:** These are derived values, computed from equipped items + affixes. Saving them creates a second source of truth. On load, if an affix was changed or the formula adjusted, the saved cached value becomes stale.
 
-### Anti-Pattern 3: Absolute Positioning in Resizable Containers
+**Do this instead:** Do not serialize `total_damage_min` / `total_damage_max`. They recalculate in `hero.update_stats()` which is already called after load in `_restore_state()`.
 
-**What people do:** Use `offset_left/right/top/bottom` for all UI elements in HBoxContainer
+### Anti-Pattern 4: Per-Element Variance in MonsterType
 
-**Why it's wrong:** Container expects children to use Size Flags (Fill, Expand) for responsive layout. Absolute positions override container behavior.
+**What people do:** Add `damage_variance: float` to MonsterType so each monster has its own variance regardless of element.
 
-**Do this instead:**
-- Use anchors for percentage-based positioning inside panels
-- Use nested VBoxContainer/HBoxContainer for structured layouts
-- Set Size Flags: Fill + Expand on container children
+**Why it's wrong:** The milestone requirement is element-specific variance (Lightning is extreme, Physical is tight). Variance is a property of the damage element, not the monster species. Goblins hitting with lightning should have the same spread as bears hitting with lightning.
 
-**Source:** [Using Containers — Godot Engine documentation](https://docs.godotengine.org/en/stable/tutorials/ui/gui_containers.html)
-
-### Anti-Pattern 4: Showing Total Hero Stats in Item Comparison
-
-**What people do:** Compare total hero DPS before vs after equipping
-
-**Why it's wrong:**
-- User sees "Equip this 100 DPS weapon" but total DPS only goes up 50 (because unequipping 50 DPS weapon)
-- Requires temp-equipping item to calculate (mutates state during preview)
-- Confusing when item has affixes affecting multiple stats
-
-**Do this instead:** Show item contribution delta:
-```
-Current weapon: 50 DPS
-New weapon: 100 DPS
-Display: "DPS: +50"
-```
-
-Calculate delta from item properties only, not total hero stats.
+**Do this instead:** Keep variance in `PackGenerator._get_element_variance(element: String) -> float`. It is a lookup table by element string. MonsterType stays clean.
 
 ---
 
-## Scaling Considerations
+## Build Order and Dependencies
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 0-100 save files | Current architecture sufficient. ResourceSaver handles .tres files efficiently. |
-| 100+ save files | Add save slot UI (numbered saves). Use file naming: `save_slot_01.tres`, `save_slot_02.tres`. |
-| Cloud saves | Replace ResourceSaver with HTTP upload/download + local cache. SaveData Resource serializes to bytes with `var2bytes()` for network transfer. |
+Dependencies flow bottom-up. Build data model first, then calculator, then combat, then UI last.
 
-### Current Bottlenecks
+```
+Step 1: Affix (semantic clarity only)
+    No code change — min_value/max_value already exist and are serialized.
+    Document the convention: FLAT_DAMAGE affixes use min_value/max_value as damage range.
+    Adjust affix pool definitions in item_affixes.gd to set element-appropriate spreads.
 
-**Not a concern for idle ARPG:**
-- Save file size: Hero + 5 equipped items + 6 currency counts ≈ 5-10KB
-- Save/load time: ResourceSaver/Loader handles <1KB resources instantly
-- Deep copy performance: 5 items × 6 affixes average × manual copy = negligible (<1ms)
+Step 2: Weapon (base damage range fields)
+    Depends on: Affix convention established (Step 1)
+    Changes:
+    - weapon.gd: base_damage_min + base_damage_max fields; base_damage computed property
+    - weapon.gd: add damage_range: Vector2i field
+    - light_sword.gd: set base_damage_min/max in _init()
 
-**Only matters if:**
-- Expanding to 100+ item stash (add incremental save — only dirty items)
-- Adding cloud sync (batch updates, avoid save on every currency drop)
+Step 3: StatCalculator (new method + modified signature)
+    Depends on: Weapon fields in place (Step 2)
+    Changes:
+    - Add calculate_damage_range(base_min, base_max, affixes) → Vector2i
+    - Modify calculate_dps() to accept base_min + base_max, use average internally
+
+Step 4: Weapon.update_value() (uses new StatCalculator)
+    Depends on: StatCalculator updated (Step 3)
+    Changes:
+    - weapon.gd: call calculate_damage_range() and cache result
+    - weapon.gd: call calculate_dps() with new signature
+
+Step 5: MonsterPack + PackGenerator (monster damage ranges)
+    Depends on: Nothing from Steps 1-4 (independent data model change)
+    Changes:
+    - monster_pack.gd: add damage_min + damage_max
+    - pack_generator.gd: set damage_min/max from element variance table
+
+Step 6: Hero (total_damage_min/max fields)
+    Depends on: Weapon.get_damage_range() available (Step 4)
+    Changes:
+    - hero.gd: add total_damage_min + total_damage_max
+    - hero.gd: calculate_dps() populates both from weapon damage_range
+
+Step 7: CombatEngine (per-hit rolling)
+    Depends on: Hero fields (Step 6), MonsterPack fields (Step 5)
+    Changes:
+    - _on_hero_attack(): roll from hero.total_damage_min/max
+    - _on_pack_attack(): roll from pack.damage_min/max before DefenseCalculator
+
+Step 8: Save format (if needed)
+    Depends on: All model changes (Steps 1-6)
+    Changes:
+    - Only if base_damage_min/max are variable (not reconstructible from class _init)
+    - Bump SAVE_VERSION + add migration
+
+Step 9: UI (display ranges)
+    Depends on: All model changes (Steps 1-6)
+    Changes:
+    - forge_view.gd: weapon shows "Damage: X-Y", flat affixes show min-max
+    - forge_view.gd: hero stats shows "Hit Range: X-Y"
+```
+
+**Critical path:** Steps 1 → 2 → 3 → 4 → 6 → 7 → 9
+
+Steps 5 and 8 are parallel to the critical path (monster damage range can be done anytime before Step 7; save format after all models).
 
 ---
 
 ## Sources
 
-**Save/Load:**
-- [Saving and Loading Games in Godot 4 (with resources) | GDQuest Library](https://www.gdquest.com/library/save_game_godot4/)
-- [Saving games — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/io/saving_games.html)
-- [Resource-based architecture for Godot 4 | Medium](https://medium.com/@sfmayke/resource-based-architecture-for-godot-4-25bd4b2d9018)
-- [Save and Load: Godot 4 Cheat Sheet | GDQuest Library](https://www.gdquest.com/library/cheatsheet_save_systems/)
-- [Resource.duplicate(true) doesn't duplicate subresources in Arrays/Dictionaries](https://github.com/godotengine/godot/issues/74918)
-- [Duplicate Godot custom resources deeply, for real](https://simondalvai.org/blog/godot-duplicate-resources/)
-
-**UI Layout:**
-- [Using Containers — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/ui/gui_containers.html)
-- [HBoxContainer — Godot Engine (4.5) documentation](https://docs.godotengine.org/en/4.5/classes/class_hboxcontainer.html)
-- [Overview of Godot UI containers | GDQuest](https://school.gdquest.com/courses/learn_2d_gamedev_godot_4/start_a_dialogue/all_the_containers)
-- [UI Layout using Containers in Godot](https://gdscript.com/solutions/ui-layout-using-containers-in-godot/)
-
-**Inventory/Equipment Systems:**
-- [GitHub - alfredbaudisch/GodotDynamicInventorySystem](https://github.com/alfredbaudisch/GodotDynamicInventorySystem)
-- [How To Build An Inventory System In Godot 4 - GameDev Academy](https://gamedevacademy.org/godot-inventory-system-tutorial/)
-
-**Crafting UX Patterns:**
-- [Game UI Database - Weapon Comparison Pickup](https://www.gameuidatabase.com/index.php?scrn=154)
+- Direct codebase analysis: `models/affixes/affix.gd`, `models/stats/stat_calculator.gd`, `models/combat/combat_engine.gd`, `models/items/weapon.gd`, `models/monsters/monster_pack.gd`, `models/monsters/pack_generator.gd`, `models/hero.gd`, `autoloads/save_manager.gd`, `scenes/forge_view.gd`
+- Existing save format: `Affix.to_dict()` confirms `min_value`/`max_value` already serialized (line 58-63 of affix.gd)
+- `SAVE_VERSION = 1` in `save_manager.gd` — current save schema baseline for migration planning
 
 ---
-
-*Architecture research for: Hammertime v1.3 milestone — Save/Load, Side-by-Side UI, Crafting UX*
-*Researched: 2026-02-17*
+*Architecture research for: Hammertime — Damage Range System integration*
+*Researched: 2026-02-18*
+*Confidence: HIGH — based on direct code analysis of all relevant files*

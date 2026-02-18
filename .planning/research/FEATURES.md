@@ -1,338 +1,283 @@
 # Feature Research
 
-**Domain:** Idle ARPG Save/Load, UI Layout, Crafting UX, Balance Tuning
-**Researched:** 2026-02-17
-**Confidence:** MEDIUM
+**Domain:** ARPG Damage Range System — Hammertime v1.4
+**Researched:** 2026-02-18
+**Confidence:** HIGH (ARPG conventions verified via PoE Wiki, Diablo 2/4 documentation; codebase analysis confirms integration points)
+
+---
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Features users assume exist. Missing these = product feels incomplete.
-
-#### Save/Load System
+Features users assume exist in any ARPG with elemental damage. Missing these = system feels unfinished.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Auto-save on progress | Idle games run in background; players expect zero loss on crash/close | LOW | Standard in idle games: 20-30 min intervals or on significant events |
-| User data directory persistence | Modern games save to platform-specific user folders | LOW | Godot's `user://` path handles this automatically |
-| Multiple save slots | Players want to test builds or restart without losing main progress | MEDIUM | Optional for MVP but commonly expected |
-| Save format versioning | Updates shouldn't corrupt saves | MEDIUM | Critical for live games; use version field in save data |
-| Restore from backup | Protect against corruption | MEDIUM | Keep 2-3 backup saves (main + previous 10-20 min) |
-
-#### Side-by-Side Equipment/Crafting UI
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Simultaneous visibility | Switching views is tedious; ARPGs show equipment + inventory together | MEDIUM | Core UX improvement; reduces clicks |
-| Equipment slot visibility | Players need to see what's equipped while crafting | LOW | Already exists; needs layout integration |
-| Click-to-equip | Fast mass-equipping when focused | LOW | Already implemented in hero_view.gd |
-| Hover tooltips | Show item stats on hover | LOW | Already implemented for equipped items |
-| Visual slot states (empty/filled) | Instant recognition of gear gaps | LOW | Already implemented via color modulation |
-
-#### Crafting UX Feedback
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Before/after stat comparison | ARPGs (Diablo 4, PoE) show stat deltas when modifying items | MEDIUM | Critical for informed crafting decisions |
-| Hammer tooltips | Players need to know what currency does before using it | LOW | Missing; each hammer should explain effect |
-| Visual/audio feedback on craft | Satisfying feedback loop; standard in all games | LOW | Sound effects for success/failure states |
-| Currency count visibility | Players need to know budget before crafting | LOW | Already implemented in button text |
-| Undo last craft | Prevents catastrophic mistakes | HIGH | Most ARPGs don't have this; use autosave instead |
-
-#### Early-Game Balance
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Starter gear | Fresh heroes shouldn't fight naked; tutorial expects success | LOW | Provide basic weapon/armor at start |
-| Tutorial difficulty ramp | Level 1 must be easy; idle games need accessible beginnings | LOW | Reduce monster damage/HP for first area |
-| Visible progression feedback | Players need to see numbers go up early | LOW | Floating damage already exists; ensure positive feedback |
-| Forgiving resource economy | Early levels shouldn't require grinding | LOW | Ensure hammer drops are generous at start |
+| Weapon base damage as min-max range | Every ARPG (Diablo, PoE) expresses weapon damage as "X-Y damage" — a single flat number reads as a mobile game prototype | LOW | Replace `base_damage: int` with `base_min_damage: int` + `base_max_damage: int` on Weapon; LightSword already has `base_damage = 10`, convert to e.g. 8-12 |
+| Per-hit damage rolling in CombatEngine | Rolling each hit separately is what makes combat exciting vs. pure expected-value math — players expect to see variance in floating numbers | LOW | `randi_range(min_damage, max_damage)` per hit in `_on_hero_attack()`; replaces current `damage_per_hit = hero.total_dps / hero_attack_speed` |
+| Flat damage affixes as "adds X to Y" ranges | PoE/Diablo standard: affixes read "Adds 5 to 12 Fire Damage" not "Adds 8 Fire Damage" | MEDIUM | Affix already has `min_value`/`max_value` fields; need to store two values (add_min, add_max) that roll independently per hit instead of a single rolled `value` |
+| DPS display using average | Every ARPG tooltip shows DPS as `(min+max)/2 * speed * crit_multiplier` — players need a stable number for gear comparison, not a range | LOW | StatCalculator.calculate_dps() currently takes `base_damage: float`; change call site to pass `(base_min + base_max) / 2.0` as the average |
+| Item tooltip shows "X to Y" damage range | Weapons in Diablo 4 and PoE display the raw range, not the average, so players can evaluate variance — "8 to 42 Lightning Damage" communicates both floor and ceiling | LOW | Update item_view / forge_view stat display strings from `"%d" % value` to `"%d to %d" % [min_val, max_val]` for damage affixes and weapon base |
+| Element-specific variance identity | Lightning is "spiky and extreme" in all ARPGs (PoE: "Adds 1 to 1000 Lightning Damage"); Physical is consistent/reliable; Cold is moderate — this is genre convention | MEDIUM | Define variance multipliers per element type; apply when generating affix min/max values. Physical: tight (ratio ~1.5:1), Cold: moderate (~3:1), Fire: wide (~5:1), Lightning: extreme (~10:1+) |
+| Monster damage ranges | Monster hits should also vary — static pack.damage reads as unpolished | LOW | `MonsterPack.damage` is currently a scalar; convert to min/max range, roll per hit in `_on_pack_attack()` |
 
 ### Differentiators (Competitive Advantage)
 
-Features that set the product apart. Not required, but valuable.
+Features not required by convention but meaningful for this specific game's identity.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Cloud save sync | Cross-device play for idle games is premium feature | HIGH | Defer to post-MVP; requires backend |
-| Export/import save strings | Community build sharing; modding-friendly | MEDIUM | Low-effort differentiator; base64 encode save JSON |
-| Crafting preview mode | "Try before you buy" - preview hammer result without spending | MEDIUM | Unique to Hammertime; reduces anxiety |
-| Drag-and-drop equipping | More satisfying than click; feels premium | MEDIUM | Nice-to-have; click-to-equip works for idle games |
-| Crafting history log | Show last 10 crafts with undo capability | MEDIUM | Addresses "oops I misclicked" pain point |
-| Stat overflow auto-scroll | ScrollContainer auto-handles long stat lists | LOW | Solves current pain point; quality-of-life win |
-| Side-by-side comparison panel | Show equipped item vs crafted item stats simultaneously | MEDIUM | Informed decisions; reduces mental load |
+| Element variance shown in tooltip hint | Instead of just "8 to 42", a small text hint like "High variance" for lightning and "Consistent" for physical — makes the variance system legible to players | LOW | Simple string lookup by element type; adds storytelling to damage numbers |
+| Hero View DPS breakdown by element | Show Physical DPS, Fire DPS, Cold DPS, Lightning DPS separately so players understand their damage composition | MEDIUM | Requires StatCalculator to track per-element averages; hero.gd currently exposes only `total_dps` |
+| Min DPS and Max DPS as secondary stats | Show "DPS range: 40-120" alongside "Avg DPS: 80" so players understand their hit floor and ceiling | LOW | Simple: `(min_damage * speed)` and `(max_damage * speed)` × crit multiplier; display alongside avg DPS |
+| Floating number variance feedback | Players see numbers ranging from small hits to giant crits — especially dramatic with high-variance lightning | NONE | Already works once per-hit rolling is in place; floating_label.gd already handles crit styling |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features that seem good but create problems.
-
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Manual save only | "Player control over saves" | Idle games crash; players forget to save and lose hours | Auto-save + manual save option |
-| Unlimited undo | "Fix all mistakes" | Trivializes crafting; removes risk/reward tension | Autosave before crafting session |
-| Real-time cloud sync | "Never lose progress" | Complexity, cost, latency; overkill for single-player | Local save + export/import strings |
-| Drag-and-drop-only | "Feels more tactile" | Slower for mass operations; accessibility issues | Support both drag and click |
-| Crafting confirmation dialogs | "Prevent mistakes" | Breaks flow; tedious for iterative crafting | Undo last craft or autosave instead |
+| Store rolled per-hit value on Affix.value | Simplest approach — just roll once at item creation and show that | Misleads players: "5 fire damage" hides that the affix could have rolled 1-12; loses variance identity entirely | Keep `add_min`/`add_max` as the affix's data; roll at combat time |
+| Lucky/Unlucky damage rolls (PoE mechanic) | Advanced PoE feature — roll twice, take better/worse | Adds significant complexity, needs UI explanation, zero value for idle game | Skip; standard uniform roll is sufficient |
+| DPS tooltip using maximum damage only | "Looks bigger" to players | Misleading; makes all items look better than they perform; breaks gear comparison math | Always use average `(min+max)/2` for DPS display |
+| Separate weapon and affix ranges summed separately in tooltip | Technically correct breakdown | Creates tooltip complexity players don't need in an idle game — they want one number to compare | Sum all flat damage ranges into total weapon range, show one "X to Y Damage" line |
+| Storing weapon range on Hero as `hero.min_dps` / `hero.max_dps` | Feels natural | Hero.gd is already complex; adding more DPS variants bloats the API | Compute min/max DPS on-demand in UI layer; Hero exposes `total_dps` (avg) only |
+| Float damage ranges on affixes | More granularity | Existing affixes use `int` throughout — floats would require migration across serialization, display, and math | Keep all damage values as `int`; float only at DPS calculation step |
+
+---
 
 ## Feature Dependencies
 
 ```
-Save/Load System
-    └──requires──> Serialization format (JSON/Resource)
-    └──requires──> GameState centralization (already exists)
+[1] Weapon Base Damage Range (min/max on Weapon)
+    └──required-by──> [3] Per-Hit Rolling (needs values to roll between)
+    └──required-by──> [5] DPS Average Calculation (needs min+max to average)
+    └──required-by──> [6] Tooltip "X to Y" Display (needs range to show)
 
-Side-by-Side Layout
-    └──requires──> UI restructure (hero_view + crafting_view merge)
-    └──enhances──> Crafting UX (visibility while crafting)
+[2] Affix Damage Range (add_min / add_max stored, rolled per hit)
+    └──required-by──> [3] Per-Hit Rolling (affix flat added to weapon roll)
+    └──required-by──> [5] DPS Average Calculation (affixes averaged separately)
+    └──required-by──> [6] Tooltip "X to Y" Display (affix shows range)
 
-Crafting UX Feedback
-    └──requires──> Before/after stat calculation
-    └──requires──> Hammer tooltip system
-    └──enhances──> Side-by-Side Layout (comparison panel)
+[4] Element Variance Identity (variance ratio per element)
+    └──required-by──> [2] Affix Damage Range (determines how wide the affix range is)
+    └──enhances──> [7] Variance Hint in Tooltip (labels the element character)
 
-Balance Tuning
-    └──requires──> Starter gear items
-    └──requires──> Monster damage/HP adjustments
-    └──conflicts──> Current level 1 difficulty (too hard)
+[3] Per-Hit Rolling in CombatEngine
+    └──required-by──> [8] Monster Damage Range (same rolling pattern for pack attacks)
+    └──enhances──> [Floating Numbers] (already exists; range rolling adds visual drama)
 
-Stat Overflow Fix
-    └──requires──> ScrollContainer on stats panels
-    └──independent──> Other features (cosmetic fix)
-
-Crafting Preview Mode
-    └──requires──> Deep copy of item for simulation
-    └──requires──> Before/after comparison
-    └──enhances──> Crafting UX
+[5] DPS Average Calculation
+    └──required-by──> StatCalculator.calculate_dps() signature change
+    └──required-by──> Hero.total_dps (computed from averaged range)
+    └──independent──> [3] Per-Hit Rolling (display vs. combat are separate)
 ```
 
 ### Dependency Notes
 
-- **Save/Load requires GameState centralization:** All state already flows through `game_state.gd` autoload, making serialization straightforward
-- **Side-by-Side enhances Crafting UX:** Visibility of equipment while crafting reduces cognitive load
-- **Crafting Preview requires Before/after comparison:** Preview is superset of comparison feature
-- **Balance Tuning conflicts with current difficulty:** Level 1 is currently too hard; needs explicit nerfs
+- **Weapon base damage range blocks everything:** Until `base_min_damage`/`base_max_damage` exist on Weapon, neither rolling nor display works. This is Phase 1.
+- **Affix damage range is independent from weapon range at the data layer:** `Affix.min_value`/`Affix.max_value` already exist but currently represent the tier-scaled value band; for damage affixes, these become `add_min`/`add_max` rolled per hit rather than at item generation. Requires careful reading of how existing code uses `affix.value`.
+- **StatCalculator and CombatEngine are decoupled correctly:** StatCalculator computes expected-value DPS (shown in UI); CombatEngine rolls actual per-hit damage. These should remain separate — do not merge.
+- **Monster damage range is lowest-risk change:** `MonsterPack.damage` is a scalar used only in `_on_pack_attack()`; converting to min/max range touches one call site.
+
+---
 
 ## MVP Definition
 
-### Launch With (v1.3 milestone)
+### Launch With (v1.4 milestone)
 
-Minimum viable product — what's needed to validate the concept.
+Minimum set to replace the flat damage model with ranges.
 
-- [x] **Auto-save system** — Core feature; prevents progress loss (critical for idle games)
-- [x] **User directory persistence** — Table stakes; use Godot's `user://` path
-- [x] **Side-by-side equipment/crafting layout** — Solves view-switching pain point
-- [x] **Hammer tooltips** — Players need to know what currency does before spending
-- [x] **Before/after stat comparison** — Informed crafting decisions; expected in ARPGs
-- [x] **Starter gear (weapon + armor)** — Fresh heroes need basic equipment to survive level 1
-- [x] **Level 1 balance tuning** — Reduce difficulty so tutorial is accessible
-- [x] **Stat overflow fix** — Current pain point; prevents stat lists from breaking viewport
-- [x] **Crafting audio/visual feedback** — Satisfying feedback loop; low effort, high impact
+- [ ] **Weapon base damage as min-max range** — `LightSword.base_damage = 10` becomes `base_min = 8, base_max = 12`; every Weapon subclass updated
+- [ ] **Element variance ratios defined** — Per-element constants (Physical 1.5:1, Cold 3:1, Fire 5:1, Lightning 10:1) used when building affix ranges
+- [ ] **Flat damage affixes store add_min / add_max** — Affix data model extended; existing `affix.value` field retired for damage affixes (or repurposed as the per-hit roll result)
+- [ ] **Per-hit rolling in CombatEngine** — Hero attacks roll `randi_range(total_min, total_max)` per hit; replaces `total_dps / attack_speed` for actual combat
+- [ ] **Monster damage range** — MonsterPack.damage becomes min/max; pack attacks roll per hit
+- [ ] **DPS display uses average** — StatCalculator receives `(min+max)/2` as base_damage; display unchanged from player's perspective but now mathematically accurate
+- [ ] **Item tooltip shows "X to Y"** — Weapon stat panel shows e.g. "8 to 42 Lightning Damage"; damage affixes show "Adds 5 to 18 Fire Damage"
 
 ### Add After Validation (v1.x)
 
-Features to add once core is working.
-
-- [ ] **Export/import save strings** — When players want to share builds or backup saves
-- [ ] **Crafting preview mode** — When crafting anxiety becomes pain point
-- [ ] **Crafting history with undo** — When "misclick" complaints arise
-- [ ] **Drag-and-drop equipping** — When polish pass happens
-- [ ] **Multiple save slots** — When players request build experimentation
-- [ ] **Side-by-side comparison panel** — Enhancement to before/after comparison
+- [ ] **Element variance hint in tooltip** — "High variance" / "Consistent" label once players understand the range display
+- [ ] **Per-element DPS breakdown in Hero View** — Physical/Fire/Cold/Lightning DPS separately when build diversity grows
+- [ ] **Min/Max DPS display alongside Avg DPS** — "DPS range: 40-120 (avg 80)" as secondary stat once core ranges ship
 
 ### Future Consideration (v2+)
 
-Features to defer until product-market fit is established.
+- [ ] **Lucky/Unlucky damage rolls** — PoE mechanic; only relevant if status ailments or buffs are added
+- [ ] **Damage range visualization** — Bar or histogram showing spread; heavy UI investment for an idle game
 
-- [ ] **Cloud save sync** — Requires backend infrastructure; overkill for single-player
-- [ ] **Real-time save conflict resolution** — Only needed if cloud sync added
-- [ ] **Crafting simulation API** — Only if modding community emerges
+---
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Auto-save system | HIGH | MEDIUM | P1 |
-| Side-by-side layout | HIGH | MEDIUM | P1 |
-| Hammer tooltips | HIGH | LOW | P1 |
-| Before/after comparison | HIGH | MEDIUM | P1 |
-| Starter gear | HIGH | LOW | P1 |
-| Level 1 balance tuning | HIGH | LOW | P1 |
-| Stat overflow fix | MEDIUM | LOW | P1 |
-| Crafting feedback (sound/visual) | MEDIUM | LOW | P1 |
-| Export/import saves | MEDIUM | MEDIUM | P2 |
-| Crafting preview mode | MEDIUM | MEDIUM | P2 |
-| Crafting history/undo | MEDIUM | MEDIUM | P2 |
-| Drag-and-drop equip | LOW | MEDIUM | P2 |
-| Multiple save slots | MEDIUM | LOW | P2 |
-| Side-by-side comparison panel | MEDIUM | MEDIUM | P2 |
-| Cloud save sync | LOW | HIGH | P3 |
+| Weapon base damage range | HIGH | LOW | P1 |
+| Element variance ratios | HIGH | LOW | P1 |
+| Affix add_min / add_max data model | HIGH | MEDIUM | P1 |
+| Per-hit rolling in CombatEngine | HIGH | LOW | P1 |
+| Monster damage range | MEDIUM | LOW | P1 |
+| DPS display using average | HIGH | LOW | P1 |
+| Item tooltip "X to Y" display | HIGH | LOW | P1 |
+| Variance hint in tooltip | MEDIUM | LOW | P2 |
+| Per-element DPS breakdown | MEDIUM | MEDIUM | P2 |
+| Min/Max DPS alongside Avg DPS | LOW | LOW | P2 |
+| Lucky/Unlucky rolls | LOW | HIGH | P3 |
 
 **Priority key:**
-- P1: Must have for launch (v1.3 milestone)
-- P2: Should have, add when possible (v1.4+)
-- P3: Nice to have, future consideration (v2+)
+- P1: Required for v1.4 milestone — the feature is the milestone
+- P2: Polish pass after core ranges work
+- P3: Deferred; needs design justification to add
 
-## Implementation Details by Feature Area
+---
 
-### Save/Load System
+## ARPG Convention Reference
 
-**What to persist:**
-- Hero equipment (5 slots: weapon, helmet, armor, boots, ring)
-- Currency counts (6 hammer types)
-- Crafting inventory (5 slots: weapon, helmet, armor, boots, ring)
-- Current crafting item (if in-progress)
-- Combat state (current area, pack progress)
+Sourced from Path of Exile, Diablo 2, and Diablo 4 to establish what "correct" looks like.
 
-**Save frequency patterns (from research):**
-- **Idle Wizard:** Every 30 minutes
-- **NGU IDLE:** Every 10-20 minutes + 2 backup files
-- **Recommended:** Every 5 minutes + on significant events (item crafted, area completed, currency spent)
+### (1) Weapon Base Damage Ranges
 
-**Format choice:**
-- **JSON:** Human-readable, debuggable, easy export/import (recommended for MVP)
-- **Godot Resource:** Type-safe, editor-inspectable, harder to manually edit
-- **Binary:** Fast, compact, not human-readable (defer until performance issues)
+In all ARPGs studied, weapon base damage is expressed as a min-max range, not a scalar:
+- Diablo 4: weapon tooltip shows "43-81 Damage" with attacks per second below it; DPS is `(43+81)/2 * 1.4 = 86.8`
+- Path of Exile: base weapon shows "9-22 Physical Damage" — multiplied by all modifiers
+- Design rule: the range represents the variance envelope of the weapon archetype; a dagger has tight physical range, a scepter has wide elemental range
 
-**Implementation approach:**
-- Create `SaveGame` resource or Dictionary with version field
-- Serialize `GameState` autoload to JSON using `var_to_str()` or `JSON.stringify()`
-- Write to `user://saves/autosave.json` every 5 minutes via Timer
-- Keep 3 backups: `autosave.json`, `autosave_backup1.json`, `autosave_backup2.json`
-- Load on `_ready()` if save exists
+**Application to Hammertime:** `LightSword.base_damage = 10` becomes a range. Fast weapons (high attack speed) conventionally have tighter ranges than slow heavy weapons. Suggested: LightSword 8-12, heavier weapons wider.
 
-### Side-by-Side UI Layout
+### (2) Flat Damage Affix Ranges ("Adds X to Y")
 
-**Current state (from code analysis):**
-- 3 separate views: `hero_view.tscn`, `crafting_view.tscn`, `gameplay_view.tscn`
-- Switching between hero/crafting is tedious
-- Equipment slots in hero_view, crafting in crafting_view
+PoE affixes are explicitly defined with add_min and add_max — the item tooltips display "Adds 11 to 19 Physical Damage." This range is separate from the weapon base range. At hit time, the weapon base rolls its range AND the affix rolls its range independently; both are summed. DPS is computed as `(weapon_avg + affix_avg) * speed * crit`.
 
-**Target layout:**
-```
-┌─────────────────────────────────────────┐
-│  Combat Area (top, existing)            │
-├──────────────────┬──────────────────────┤
-│  Equipment       │  Crafting            │
-│  - 5 slots       │  - Item type buttons │
-│  - Stats panel   │  - Hammer buttons    │
-│  - Item stats    │  - Current item      │
-│                  │  - Inventory panel   │
-└──────────────────┴──────────────────────┘
-```
+Existing `Affix` class in Hammertime already has `min_value` and `max_value` fields (tier-scaled), but currently the affix rolls a single `value` at item generation. For damage ranges, the affix must instead store two range boundaries and roll at combat time.
 
-**Implementation approach:**
-- Merge hero_view and crafting_view into single scene
-- Use HBoxContainer to split left (equipment) and right (crafting)
-- Keep existing signals and state management
-- Update main_view navigation to show merged view
-
-### Crafting UX Feedback
-
-**Before/After Comparison:**
-- When hovering over hammer button, show projected stats if applied
-- Format: `Current: 10 DPS → After: 12 DPS (+2)`
-- Color code: green for improvements, red for downgrades (if applicable)
-
-**Hammer Tooltips:**
-- Add `description` field to Currency base class
-- Show on button hover: "Runic Hammer: Upgrades Normal item to Magic rarity"
-- Include validation rules: "Requires: Normal rarity item"
-
-**Crafting Feedback:**
-- Sound effects from libraries like [BOOM Library Modern UI](https://www.boomlibrary.com/sound-effects/modern-ui/)
-- Visual: brief flash/glow on item_view when hammer applied
-- Floating text showing affix added (reuse floating_label.gd)
-
-### Early-Game Balance
-
-**Current pain points (from milestone context):**
-- Level 1 too hard for fresh heroes
-- No starter gear; hero starts naked
-
-**Starter gear approach:**
-- Generate basic weapon (LightSword tier 0) on new game
-- Generate basic armor (BasicArmor tier 0) on new game
-- Auto-equip both on game start
-- Provide 5-10 of each hammer type as starting currency
-
-**Level 1 tuning:**
-- Reduce monster damage by 30-50% for first area
-- Reduce monster HP by 20-30% for first area
-- Increase hammer drop rates by 2x for first area
-- Add visual feedback: "Tutorial Area" label
-
-### Stat Overflow Fix
-
-**Current issue:**
-- Stats panel uses fixed-size Label
-- Long stat lists (many affixes) overflow viewport
-- No scrolling capability
-
-**Solution (from Godot research):**
-- Wrap stats_label in ScrollContainer
-- Set ScrollContainer size constraints
-- Enable vertical scroll, disable horizontal
-- Let content expand naturally
-
-**Implementation:**
+**Current code path to change:**
 ```gdscript
-# In hero_view.tscn scene tree:
-StatsPanel (Panel)
-  └─ ScrollContainer
-      └─ StatsLabel (Label)
-          - autowrap_mode: AUTOWRAP_WORD_SMART
-          - custom_minimum_size: (0, 0)
+# Current (item generation time roll):
+self.value = randi_range(self.min_value, self.max_value)
+
+# Target (combat time roll for damage affixes):
+# affix.add_min and affix.add_max define the range
+# CombatEngine does: randi_range(affix.add_min, affix.add_max) per hit
 ```
 
-## Competitor Feature Analysis
+**Serialization note:** `add_min`/`add_max` must be included in `Affix.to_dict()` / `from_dict()` for save compatibility.
 
-| Feature | Path of Exile | Diablo 4 | Idle Heroes | Our Approach |
-|---------|---------------|----------|-------------|--------------|
-| Save system | Cloud auto-save | Cloud auto-save | Cloud + local | Local auto-save (MVP), export strings (P2) |
-| Crafting UI | Modal popup | Modal popup | Side panel | Side-by-side (less interruption) |
-| Before/after comparison | No preview | Full preview with Shift | No preview | Hover preview (P1), full preview (P2) |
-| Undo crafting | No | No | No | Autosave snapshots (P2) |
-| Starter gear | Yes (basic weapon) | Yes (full set) | Yes (auto-equip) | Yes (weapon + armor) |
-| Drag-and-drop | Yes | Yes | Click only | Click (P1), drag (P2) |
+### (3) Element Variance Identity
+
+Verified from Diablo 2 community documentation and PoE Wiki:
+
+| Element | Variance Profile | Design Intent | Ratio Example |
+|---------|-----------------|---------------|---------------|
+| Physical | Tight, consistent | Reliable baseline; mastery of fundamentals | 8 to 12 (1.5:1) |
+| Cold | Moderate | Balanced; cold is controlled, precise | 5 to 15 (3:1) |
+| Fire | Wide | Explosive, chaotic; fire burns unpredictably | 3 to 18 (6:1) |
+| Lightning | Extreme | "1 to 1000" — massive ceiling, near-zero floor; pure gambler's damage | 1 to 30 (30:1 extreme) |
+
+The Diablo 2 wiki explicitly documents lightning: "Lightning Damage has an extremely large damage range, sometimes ranging from a measly 1 to a player-killing 2000." This is intentional genre convention — lightning identity is variance.
+
+**Implementation approach for Hammertime:** Define a `VARIANCE_RATIO` constant per element. When building an affix range for a given element and tier, set:
+```
+add_min = base_roll / variance_ratio  (rounded down, minimum 1)
+add_max = base_roll * variance_ratio
+```
+This keeps the average damage equal across elements (same DPS at same tier) while dramatically differing the distribution.
+
+### (4) Per-Hit Rolling
+
+PoE Wiki confirms: "The damage number rolled is rolled per hit, and not per skill use." Guild Wars 2 uses the same pattern: "whenever a weapon skill deals damage, a value is chosen at random from the range of weapon strength."
+
+This means:
+- The DPS stat in the UI is a theoretical average (`(min+max)/2 * speed * crit`)
+- Every actual hit in combat generates a fresh roll
+- Crit rolls happen separately on top of the damage roll (already implemented in CombatEngine)
+
+**Current CombatEngine hit path:**
+```gdscript
+var damage_per_hit := hero.total_dps / hero_attack_speed  # expected value
+```
+**Target:**
+```gdscript
+var base_hit := randi_range(hero.total_min_damage, hero.total_max_damage)
+var damage_per_hit := float(base_hit)
+if is_crit:
+    damage_per_hit *= (hero.total_crit_damage / 100.0)
+```
+
+### (5) DPS Calculation with Ranges
+
+Standard formula across all ARPGs studied:
+```
+DPS = average_damage * attacks_per_second * crit_multiplier
+average_damage = (min_damage + max_damage) / 2
+```
+
+Where `min_damage` and `max_damage` are the sum of weapon base min/max and all flat added damage affix min/max.
+
+StatCalculator currently receives `base_damage: float` (a scalar). The change: call site in `Weapon.update_value()` passes `(base_min_damage + base_max_damage) / 2.0` as the base, and affix averaging is unchanged (affixes also provide their average at DPS time).
+
+Alternatively, StatCalculator's signature could be updated to accept `base_min` and `base_max` and average internally — cleaner long-term.
+
+### (6) Display Conventions
+
+From Diablo 4 and PoE, confirmed:
+- **Weapon tooltip:** Shows raw range "43 to 81 Physical Damage" — not the average
+- **DPS stat:** Shows computed average as a single number (largest number on the tooltip)
+- **Affix display:** "Adds 11 to 19 Fire Damage" — the range, not a single value
+- **Hero stat panel:** Shows "DPS: 86.8" — the theoretical average, matching Diablo 4's approach
+
+Guild Wars 2 confirms the midpoint convention: "when a damage value is displayed in skill tooltips, the midpoint of the range is used to calculate the displayed value."
+
+**Application to Hammertime:**
+- Weapon item card: "8 to 42 Lightning Damage" (base + elemental implicit)
+- Damage affix line: "Adds 3 to 18 Fire Damage" (the stored range, not a rolled snapshot)
+- Hero Offense section: "DPS: 84.2" (unchanged; still average-based)
+- Floating combat numbers: the actual per-hit roll (already working; will now vary more)
+
+---
+
+## Integration Points with Existing System
+
+| Existing Component | Current State | Required Change | Complexity |
+|-------------------|---------------|-----------------|------------|
+| `Weapon.base_damage: int` | Single scalar | Split to `base_min_damage`/`base_max_damage` | LOW |
+| `LightSword._init()` | `base_damage = 10` | `base_min_damage = 8, base_max_damage = 12` | LOW |
+| `StatCalculator.calculate_dps(base_damage: float)` | Takes single value | Accept min+max or average; average at call site | LOW |
+| `Weapon.update_value()` | Passes `base_damage` to StatCalculator | Pass `(base_min + base_max) / 2.0` | LOW |
+| `Affix` data model | `min_value`/`max_value` for tier scaling; single `value` rolled at init | Add `add_min`/`add_max` for damage affixes; retain `value` for non-damage affixes | MEDIUM |
+| `Affix.to_dict()` / `from_dict()` | Does not include add_min/add_max | Add both fields; save format version bump | LOW |
+| `CombatEngine._on_hero_attack()` | `hero.total_dps / hero_attack_speed` | `randi_range(hero.total_min_damage, hero.total_max_damage)` | LOW |
+| `Hero.total_dps` | Single float, computed by StatCalculator avg | Unchanged; avg DPS is still the display value | NONE |
+| `Hero` (new fields needed) | No min/max damage tracking | Add `total_min_damage: int` + `total_max_damage: int` computed by Hero.calculate_dps() | LOW |
+| `MonsterPack.damage` | Scalar float | Add `min_damage`/`max_damage`; roll in CombatEngine | LOW |
+| `CombatEngine._on_pack_attack()` | `pack.damage` as scalar | `randi_range(pack.min_damage, pack.max_damage)` | LOW |
+| Forge/Item tooltip display | Single value strings | Range strings for damage fields | LOW |
+| `item_affixes.gd` affix definitions | `Affix.new("Fire Damage", ...)` with single base_min/base_max | New damage affixes need element variance applied to their ranges | MEDIUM |
+
+---
 
 ## Sources
 
-**Godot Save/Load Best Practices:**
-- [GDQuest: Saving and Loading Games in Godot 4](https://www.gdquest.com/library/save_game_godot4/)
-- [GDQuest: Save and Load Cheat Sheet](https://www.gdquest.com/library/cheatsheet_save_systems/)
-- [Kids Can Code: Saving/loading data in Godot 4](https://kidscancode.org/godot_recipes/4.x/basics/file_io/index.html)
-- [GDQuest: Choosing the right save game format](https://www.gdquest.com/tutorial/godot/best-practices/save-game-formats/)
+**Path of Exile Damage Wiki (HIGH confidence — official wiki):**
+- [Flat damage | PoE Wiki](https://www.poewiki.net/wiki/Flat_damage) — Confirms "adds X to Y" format, per-hit rolling, DPS = (min+max)/2
+- [Damage | PoE Wiki](https://www.poewiki.net/wiki/Damage) — Per-hit rolling confirmed: "rolled per hit, not per skill use"; lightning high variance documented
+- [Lightning damage | PoE Wiki](https://www.poewiki.net/wiki/Lightning_damage) — Element variance identity confirmed
 
-**Idle Game Patterns:**
-- [Idle Wizard Auto-Save Discussion](https://steamcommunity.com/app/992070/discussions/0/2247803885929795897/)
-- [Game Developer: Balancing Tips for Idle Games](https://www.gamedeveloper.com/design/balancing-tips-how-we-managed-math-on-idle-idol)
-- [Machinations: How to Design Idle Games](https://machinations.io/articles/idle-games-and-how-to-design-them)
-- [Kongregate: The Math of Idle Games](https://blog.kongregate.com/the-math-of-idle-games-part-i/)
+**Diablo 2 (HIGH confidence — established game documentation):**
+- [Lightning (Damage) | Diablo Wiki](https://diablo.fandom.com/wiki/Lightning_(Damage)) — "extremely large damage range, sometimes ranging from 1 to 2000"; cold as lowest damage/highest control
+- [Elemental Damage | Diablo Wiki](https://diablo.fandom.com/wiki/Elemental_Damage) — Lightning adds highest max damage; cold adds lowest damage values
 
-**ARPG Crafting UX:**
-- [Diablo 4 Advanced Tooltip Compare](https://www.denofgeek.com/games/diablo-4-best-hidden-setting-compare-gear/)
-- [Path of Exile Interface Design](https://interfaceingame.com/games/path-of-exile/)
-- [RPGCodex: Drag-and-Drop vs Click-to-Equip Discussion](https://rpgcodex.net/forums/threads/drag-and-drop-from-inventory-to-equipment-slot-or-click-to-equip.141654/)
+**Diablo 4 (HIGH confidence — documented mechanic):**
+- [Damage Per Second | Diablo Wiki](https://www.diablowiki.net/Damage_Per_Second) — DPS = avg(min, max) * attacks/sec; "2-5 Damage = 3.5 average"
+- [In-Depth Damage Guide | Maxroll D4](https://maxroll.gg/d4/resources/in-depth-damage-guide) — Flat affixes incorporated before DPS display
 
-**Game UI Patterns:**
-- [Game UI Database - Inventory Browse](https://www.gameuidatabase.com/index.php?scrn=71)
-- [Medium: UX and UI in Game Design](https://medium.com/@brdelfino.work/ux-and-ui-in-game-design-exploring-hud-inventory-and-menus-5d8c189deb65)
+**Guild Wars 2 (HIGH confidence — official wiki):**
+- [Damage calculation | GW2 Wiki](https://wiki.guildwars2.com/wiki/Damage_calculation) — "midpoint of range used for tooltip DPS"; per-hit random from range confirmed
 
-**Crafting Feedback:**
-- [BOOM Library: Modern UI Sound Effects](https://www.boomlibrary.com/sound-effects/modern-ui/)
-- [A Sound Effect: How to Succeed in UI/UX Sound Design](https://www.asoundeffect.com/sound-success-ui-ux-sound-design-adr-audio-programming/)
-
-**Early Game Balance:**
-- [MapleStory Idle RPG Beginner Guide](https://www.ldcloud.net/blog/maplestory-idle-rpg-en-beginner-guide)
-- [Melvor Idle Combat Guide](https://wiki.melvoridle.com/w/Combat_Guide)
-- [Lootfiend Idle Dungeons Build Guide](https://www.bluestacks.com/blog/game-guides/lootfiendidle-dungeons/lfid-builds-guide-en.html)
-
-**Godot ScrollContainer:**
-- [Godot ScrollContainer Documentation](https://docs.godotengine.org/en/stable/classes/class_scrollcontainer.html)
-- [Godot Forum: ScrollContainer and Scrollbar Activation](https://forum.godotengine.org/t/how-to-stop-scrollcontainer-from-not-activating-scrollbar-and-resizing-contents-to-fit-in-the-box/64615)
+**Path of Exile 2 (MEDIUM confidence — WebSearch):**
+- [Damage Scaling | Maxroll PoE2](https://maxroll.gg/poe2/getting-started/damage-scaling) — "Adds X to Y" format consistent with PoE1
 
 ---
-*Feature research for: Hammertime v1.3 Milestone (Save/Load, UI Layout, Crafting UX, Balance)*
-*Researched: 2026-02-17*
-*Confidence: MEDIUM (WebSearch primary source; Godot docs verified via official documentation)*
+*Feature research for: Hammertime v1.4 Damage Range System*
+*Researched: 2026-02-18*
+*Confidence: HIGH (PoE Wiki, Diablo 2/4 docs verified; codebase analysis HIGH confidence)*

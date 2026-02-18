@@ -1,227 +1,261 @@
 # Pitfalls Research
 
-**Domain:** Godot 4.5 Idle ARPG - Save/Load, UI Restructure, Crafting UX, Balance Tuning
-**Researched:** 2026-02-17
+**Domain:** Hammertime — Adding Min/Max Damage Ranges to Existing Flat-Damage ARPG System
+**Researched:** 2026-02-18
 **Confidence:** HIGH
+
+---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Resource.duplicate() Doesn't Deep Copy Arrays of Resources
+### Pitfall 1: Save Migration Breaks Existing Affix `value` Field — Weapons Load with 0 Damage
 
 **What goes wrong:**
-Save/load corruption occurs when Items are serialized because `Resource.duplicate(true)` does not duplicate subresources stored in Array properties. Item has `prefixes: Array[Affix]` and `suffixes: Array[Affix]`. When GameState saves Hero with equipped items, the Affix arrays are shallow-copied, creating reference-sharing between save data and runtime state. Modifying a loaded item corrupts the save.
+Existing saves store flat damage affixes with a single integer `value` (e.g., `"value": 15`). After converting "Physical Damage" and elemental damage affixes to output a min-damage + max-damage pair instead of a single value, `Affix.from_dict()` at `affix.gd:93` still reads `int(data.get("value", affix.value))`. Loaded affixes end up with a single flat value that StatCalculator interprets as neither a min nor a max — whichever new field was added (e.g., `damage_min`, `damage_max`) defaults to 0. The weapon loads with 0 effective flat damage but no crash occurs, so the bug is silent. DPS displays as correct-ish because percentage-based modifiers still work.
 
 **Why it happens:**
-Godot's documentation states "Subresources inside Array and Dictionary properties are never duplicated" but this is only mentioned in Array.duplicate() docs, not Resource.duplicate() or Dictionary docs. Developers assume `duplicate(true)` handles nested Resources.
+The `_migrate_save()` in `save_manager.gd:159` currently has no v1→v2 migration stub. SAVE_VERSION is 1. Adding damage range fields to Affix without bumping SAVE_VERSION and writing a migration means all existing saves load with the old schema, receive defaults for new fields, and silently produce wrong numbers. The migration hook exists but is empty (`# Future migrations go here`).
 
 **How to avoid:**
-1. Implement custom `deep_duplicate()` method on Item class
-2. Manually iterate `prefixes` and `suffixes` arrays
-3. Call `Affixes.from_affix()` to create new instances (already exists in codebase at item.gd:159, 186)
-4. Do NOT rely on `Resource.duplicate(true)` for save serialization
+1. Bump `SAVE_VERSION` to 2 before merging any Affix schema changes
+2. Implement `_migrate_v1_to_v2(data: Dictionary)` that iterates all affixes in hero equipment, crafting inventory, and bench item
+3. For each flat damage affix (`stat_types` contains `FLAT_DAMAGE`), synthesize `damage_min` and `damage_max` from the existing `value` field: both fields set equal to `value` (flat damage becomes a degenerate range)
+4. After migration the player loses nothing — their flat damage value is preserved as `[value, value]`, which the new system treats as zero-variance damage (perfectly valid starting state)
+5. Verify by loading a v1 save after migration: DPS should be identical to pre-migration value
 
 **Warning signs:**
-- Item modifications persist after loading a save (affix changes appear in fresh loads)
-- Save file size doesn't grow when adding items (references instead of copies)
-- Random crashes when accessing affix properties after load
-- Debug prints show same affix instances across different items
+- Weapons display 0 flat damage after load but percentage modifiers work
+- DPS drops exactly by the flat damage contribution amount on load
+- Save-then-load cycle shows different DPS than before save
+- New items crafted post-load have correct min/max, old items have 0
 
 **Phase to address:**
-Phase 1 (Save/Load Foundation) - Must implement before any save serialization code. Create `Item.deep_duplicate()` that handles nested arrays properly.
+Phase 1 (Save Migration) — Write migration BEFORE changing any Affix fields. The save pipeline must accept old data before the data model changes.
 
 ---
 
-### Pitfall 2: CanvasLayer Visibility Doesn't Inherit from Parent Node2D
+### Pitfall 2: DPS Formula Uses `base_damage` as a Single Float — Range Breaks `calculate_dps()` Signature
 
 **What goes wrong:**
-When restructuring UI from tab-switching to side-by-side layout, GameplayView's CombatUI (a CanvasLayer at line 10 of main_view.gd) doesn't inherit visibility from parent GameplayView. Currently handled with explicit sync at main_view.gd:86, but side-by-side layout will have multiple views visible simultaneously. Forgetting to sync each CanvasLayer causes invisible but active UI elements that still process input, block clicks, and trigger hover effects on hidden views.
+`StatCalculator.calculate_dps()` at `stat_calculator.gd:9` takes `base_damage: float` as a scalar. `Weapon.update_value()` passes `self.base_damage` (an int, `light_sword.gd:18`: `base_damage = 10`). After conversion, flat damage affixes contribute a range, not a scalar. If the DPS sheet value is computed using average damage `(min + max) / 2.0`, that is the mathematically correct expected-value DPS. But if the implementation naively replaces `affix.value` with `affix.damage_min` (or `damage_max`), the DPS shown on the item tooltip diverges from actual average combat output by up to 50% of the affix's range.
+
+The correct formula for expected DPS with a damage range:
+```
+average_flat_damage = (min_damage + max_damage) / 2.0
+DPS_sheet = average_flat_damage * speed * crit_multiplier
+```
+Expected value is NOT `min_damage * speed * crit_multiplier` (pessimistic) nor `max_damage * speed * crit_multiplier` (optimistic).
 
 **Why it happens:**
-CanvasLayer exists outside the scene tree hierarchy for rendering purposes. It renders to viewport directly, ignoring parent Node2D visibility. Developers structure UI in scene tree assuming standard visibility propagation.
+The existing crit multiplier logic in `stat_calculator.gd:84` already uses correct expected-value math: `1 + c * (d - 1)`. But developers often apply expected-value thinking to crit while treating damage range inconsistently — using either min or max as the "representative" value for the tooltip rather than the mean.
 
 **How to avoid:**
-1. When adding side-by-side layout, create explicit CanvasLayer visibility management
-2. Pattern: `canvas_layer.visible = parent_view.visible and should_render()`
-3. Use signal-based coordination: parent view emits `visibility_changed` signal
-4. Never assume CanvasLayer inherits parent state
-5. For split-screen UI: assign each CanvasLayer to different layer numbers to control render order
+1. When summing flat damage affixes in `calculate_dps()`, sum `(affix.damage_min + affix.damage_max) / 2.0` for each range affix
+2. The weapon base itself (`base_damage`) can stay a scalar OR be converted to a range — if it stays scalar, add it directly; if converted, apply the same mean formula
+3. The per-hit combat roll in `combat_engine.gd:80` MUST use `randi_range(total_min, total_max)` not the mean — sheet DPS uses mean, actual hits use random draw
+4. Test: simulate 10,000 hits, compute average. Assert it is within 2% of sheet DPS value
 
 **Warning signs:**
-- Click events don't reach visible UI (hidden CanvasLayer blocking input)
-- Performance degradation (invisible CanvasLayers still processing)
-- UI elements appear in wrong view after visibility toggle
-- Mouse hover highlights on views that should be hidden
+- Sheet DPS matches combat output only when lightning has 1:1 min:max ratio (degenerate case)
+- Average observed damage in combat logs is consistently lower than sheet DPS (min was used) or higher (max was used)
+- Lightning DPS appears far lower than physical DPS of equivalent gear because min was used as representative
 
 **Phase to address:**
-Phase 2 (UI Layout Restructure) - Before converting main_view.gd from visibility toggling to concurrent rendering. Add CanvasLayer management abstraction.
+Phase 2 (DPS Formula Refactor) — Refactor `calculate_dps()` signature before wiring in affix ranges. New signature: `calculate_dps(base_min: float, base_max: float, ...)` or keep scalar base and sum ranges from affixes separately.
 
 ---
 
-### Pitfall 3: Control Node Anchor Positioning Breaks When Switching from Fixed to Container Layout
+### Pitfall 3: Affix Tier Schema Needs 4 Values But Current System Encodes 2 — Silent Truncation on Re-roll
 
 **What goes wrong:**
-Current UI uses manual anchor positioning (main.tscn lines 20-47: buttons positioned with `anchor_left`, `anchor_right`, `offset_left`, `offset_right`). Converting to Container-based layout (HBoxContainer, VBoxContainer, MarginContainer for side-by-side views) while keeping anchor properties causes Containers to compute size as 0x0. Buttons disappear or overlap at viewport origin. On mobile renderer (1200x700), this manifests as entire UI panels stacking at (0,0).
+Current Affix tier math in `affix.gd:36-37`:
+```gdscript
+self.min_value = p_min * (tier_range.y + 1 - tier)
+self.max_value = p_max * (tier_range.y + 1 - tier)
+self.value = randi_range(self.min_value, self.max_value)
+```
+This uses `p_min` and `p_max` as the base scalar range for a tier. For flat damage affixes with a damage range, a tier now needs:
+- `base_dmg_min_lo`: minimum possible min-damage at tier 1
+- `base_dmg_min_hi`: maximum possible min-damage at tier 1
+- `base_dmg_max_lo`: minimum possible max-damage at tier 1
+- `base_dmg_max_hi`: maximum possible max-damage at tier 1
+
+The current 2-value schema (`p_min`, `p_max`) cannot encode this. If the implementation tries to reuse `min_value` as the rolled min-damage and `max_value` as the rolled max-damage (repurposing the existing fields), the Tuning Hammer (`reroll()` at `affix.gd:46`) calls `randi_range(self.min_value, self.max_value)` — which would reroll `damage_max` between `[damage_min, damage_max]`, not between the template range. After one reroll, max-damage can collapse toward min-damage and never recover.
 
 **Why it happens:**
-Control nodes have two mutually exclusive sizing modes: anchor-based (manual) and container-based (automatic). Anchors set explicit positions that override Container min_size calculations. Containers use `rect_min_size` and children's minimum size to auto-layout. Mixing the two creates undefined behavior.
+The Affix class was designed around a single scalar stat. `min_value` and `max_value` are the rolled range for that single stat. Damage ranges introduce a second independent random variable. Conflating the two (using `min_value` = rolled min-damage, `max_value` = rolled max-damage) destroys the template information needed for re-rolls.
 
 **How to avoid:**
-1. When converting navigation panel to Container: set all anchors to 0, all offsets to 0
-2. Use Container properties instead: `size_flags_horizontal`, `size_flags_vertical`, `custom_minimum_size`
-3. For button spacing: use `separation` in BoxContainers, not offsets
-4. For centering: use `alignment` property in BoxContainers, not `anchor = 0.5`
-5. Test at exact viewport size (1200x700) before testing responsive behavior
-6. Add `minimum_size` override on root Container to prevent collapse
+1. Add distinct template fields to Affix for damage ranges: `dmg_min_lo`, `dmg_min_hi`, `dmg_max_lo`, `dmg_max_hi` (the tier-1 blueprint values, scaled by tier formula)
+2. Add rolled result fields: `rolled_damage_min`, `rolled_damage_max`
+3. Keep `value` as legacy field for all non-damage-range affixes (backward compatible)
+4. `reroll()` for damage range affixes: `rolled_damage_min = randi_range(dmg_min_lo, dmg_min_hi)`, `rolled_damage_max = randi_range(dmg_max_lo, dmg_max_hi)`
+5. Guard: always assert `rolled_damage_min <= rolled_damage_max` after reroll; if violated, swap values
+6. `to_dict()` / `from_dict()` must serialize all 4 template fields and both rolled fields
 
 **Warning signs:**
-- Container shows size (0, 0) in remote inspector while running
-- UI elements appear at top-left (0, 0) instead of intended position
-- Buttons overlap each other vertically or horizontally
-- Resizing viewport doesn't update layout (Container not recalculating)
-- Different behavior in editor vs. runtime
+- Tuning Hammer compresses damage range toward zero over repeated uses (max converges to min)
+- High-tier items have same damage spread as low-tier (tier scaling lost on re-roll)
+- Console output from `print("reroll ", self.value)` in `affix.gd:47` shows `value` changing but damage range does not
 
 **Phase to address:**
-Phase 2 (UI Layout Restructure) - During conversion from manual positioning to Container hierarchy. Create clean Container structure THEN migrate children, not simultaneously.
+Phase 2 (Affix Data Model) — Extend Affix before writing any affix initialization code for damage ranges. Do not repurpose `min_value`/`max_value` for a different semantic.
 
 ---
 
-### Pitfall 4: Integer Division Truncation in Combat Math Pipeline
+### Pitfall 4: Per-Hit Damage Roll in CombatEngine Skips Affix Ranges — Uses Precomputed DPS Average
 
 **What goes wrong:**
-DefenseCalculator uses int armor/evasion with float damage. At defense_calculator.gd:18, `float(armor) / (float(armor) + 5.0 * raw_physical_damage)` is safe, but if balance tuning introduces intermediate integer calculations (e.g., "armor = base_armor * strength / 10"), GDScript performs integer division, truncating decimals. A hero with 25 strength and 8 base_armor computes `8 * 25 / 10 = 200 / 10 = 20` correctly, but `8 / 10 * 25 = 0 * 25 = 0` (order matters). This silently breaks DefenseCalculator's diminishing returns formula.
+`combat_engine.gd:80` computes per-hit damage as:
+```gdscript
+var damage_per_hit := hero.total_dps / hero_attack_speed
+```
+`hero.total_dps` is the expected-value DPS computed by `StatCalculator`. Dividing by `hero_attack_speed` gives expected damage per hit. This is deterministic — every hit deals exactly the same damage. After adding ranges, each hit should roll `randi_range(hero.total_damage_min, hero.total_damage_max)`. If the combat engine is not updated alongside the DPS formula, the variance system is implemented in the model but never used in combat. The tooltip shows "15 to 45 damage" but every hit deals exactly 30.
 
 **Why it happens:**
-GDScript performs integer division when both operands are integers, automatically truncating decimals. In stat calculations with multiple terms, division order determines whether truncation occurs. Armor formula works because explicit `float()` casts happen first, but new balance formulas may not.
+The DPS sheet update and the combat hit calculation are in separate files (`stat_calculator.gd` vs `combat_engine.gd`). It is easy to update the tooltip display and DPS formula without realizing combat is still using the precomputed average path.
 
 **How to avoid:**
-1. Always cast first operand to float in any division: `float(base_armor) / 10 * strength`
-2. Use float literals for constants: `8.0` not `8` in formulas
-3. For level 1 balance tuning: create formula validation test that prints intermediate values
-4. Document stat type expectations: which stats are int (armor, evasion) vs float (dps, damage reduction)
-5. In StatCalculator, standardize: all intermediate calculations use float, final display values cast to int if needed
+1. Add `total_damage_min: float` and `total_damage_max: float` to `Hero` alongside `total_dps`
+2. `hero.update_stats()` populates both min/max totals and total_dps (mean)
+3. `CombatEngine._on_hero_attack()` replaces `hero.total_dps / hero_attack_speed` with `randi_range(int(hero.total_damage_min), int(hero.total_damage_max))` for base damage, then applies crit as before
+4. The existing per-hit crit roll (`combat_engine.gd:83`) remains correct — range roll and crit roll are independent
+5. Floating text labels in `gameplay_view.gd:201` already show int damage — no change needed for display
 
 **Warning signs:**
-- Stat values are always round numbers (45, 60, 90) never decimals
-- Defense effectiveness plateaus unexpectedly (0.0 reduction at low armor)
-- Incrementing stat by 1 has no effect (9/10 = 0, 10/10 = 1, jump from 0 to 1)
-- Tooltip displays "X armor grants Y% reduction" but actual reduction is 0%
-- Balance spreadsheet predicts different values than game shows
+- Every floating damage number is identical (same value every hit) despite tooltip showing a range
+- Adding a "1 to 100 Lightning Damage" affix shows 50.5 DPS on tooltip, but combat shows 50 damage every single hit
+- The variance design (Physical tight, Lightning extreme) has no visible effect in combat
 
 **Phase to address:**
-Phase 4 (Level 1 Balance) - Before implementing new stat formulas. Add stat calculation test suite that validates intermediate float precision.
+Phase 3 (Combat Integration) — Update CombatEngine immediately after extending Hero stats. Add an integration test: equip weapon with wide range, run 100 hits, assert standard deviation > 0.
 
 ---
 
-### Pitfall 5: Save Data Schema Changes Break Existing Saves Without Migration
+### Pitfall 5: Lightning Variance Makes Idle Game Feel Unfair — Player Sees Death With No Counterplay
 
 **What goes wrong:**
-Adding new properties to Hero, Item, or Affix (e.g., adding `item_level: int` or `affix_tier_range: Vector2i`) breaks existing save files. Godot's resource loader sets missing properties to default values (0, null, empty array). Loaded items have `tier_range = Vector2i(0, 0)` instead of `Vector2i(1, 8)`. Affix._init() at affix.gd:32 calls `randi_range(0, 0)` resulting in tier 0. Item formulas divide by tier, causing division by zero crash or infinite stat values.
+In PoE's design, lightning's high variance (1:N ratio) is balanced by the Shock ailment, which amplifies damage taken by the shocked target. Without a compensating mechanic, pure damage variance creates a problem specific to idle games: the player cannot react to bad RNG streaks. A monster pack that deals "20 to 80 lightning damage" will occasionally roll three 80s in a row, killing a hero who can survive the expected 50 average. The player sees their hero die despite having "enough" stats on paper. This feels like a bug, not a feature.
+
+Lightning with a 5:1 max:min ratio (e.g., 4 to 20) and a 1.8 attacks/second monster produces a standard deviation roughly equal to half the expected damage per second. Over a 10-second fight: expected total = 180 damage, standard deviation ≈ 51 damage (28%). This means a 2-sigma event (95th percentile) deals 282 damage — 57% more than expected. A hero balanced to survive the expected amount has a 5% chance of dying from variance alone per fight.
 
 **Why it happens:**
-Resource serialization stores property names and values. When loading a .tres/.res file missing a property, Godot initializes it with GDScript's default value (0 for int, null for Object), NOT the value set in _init(). Affix._init() sets tier_range but loaded Resources skip _init() entirely - they call _init() with no arguments then populate properties from file.
+Developers set variance ratios based on "feels interesting" (wide range = exciting) without modeling the survivability impact. The stat comparison display (forge_view.gd:640) shows only DPS as a single number — players and developers both use DPS as the proxy for survivability, missing the variance dimension entirely.
 
 **How to avoid:**
-1. Implement save version tracking: add `const SAVE_VERSION = 1` to GameState
-2. Store version in save file header: `{ "version": 1, "hero": {...}, "currencies": {...} }`
-3. Create migration functions: `migrate_v1_to_v2(save_data: Dictionary) -> Dictionary`
-4. Before deserializing: check version, run migrations sequentially (v1→v2→v3→current)
-5. For property additions: use `get("property", default_value)` when reading saves
-6. For property renames: migration copies old name to new name, deletes old
-7. For property removals: migration deletes the key (safe since Godot ignores unknown properties)
+1. Establish variance ratios by element before implementing: Physical 1:1.5 (e.g., 10-15), Cold 1:2 (e.g., 8-16), Fire 1:2.5 (e.g., 6-15), Lightning 1:4 (e.g., 5-20)
+2. Model survivability not as "HP > expected damage" but as "HP > mean + 2*stddev" per fight
+3. For lightning specifically: keep average DPS equal to or below fire/cold but with wider spread, ensuring variance is a strategic risk, not invisible RNG death
+4. Add variance indicator to the hero stat display (e.g., "Lightning hits: 5-20") so the player understands the risk profile
+5. Consider a minimum survivability floor: hero always survives at least 3 hits regardless of element (enforced in combat engine, not by HP math)
 
 **Warning signs:**
-- Loading save shows "Invalid resource format" errors
-- Loaded hero has 0 stats but save file shows correct values in text editor
-- Items from loaded save have empty affix arrays
-- Crashes on load with "Attempt to call function on null instance"
-- Fresh saves work but old saves from yesterday fail
+- Playtesters report lightning monsters feel "cheesy" or "unfair" even when hero has correct resistances
+- Hero death rate is 3x higher against lightning packs than fire packs of the same level despite equal expected DPS
+- Hero dies in fights where DPS display suggests comfortable margin
+- Players report not understanding why they died (no visible feedback of damage range)
 
 **Phase to address:**
-Phase 1 (Save/Load Foundation) - Implement versioning and empty migration pipeline BEFORE first playable save system. Easier to add migrations incrementally than retrofit later.
+Phase 2 (Balance Parameters) — Define variance ratios on paper before coding affix templates. Do not tune after implementation; this is a design decision that cascades through all affix values.
 
 ---
 
-### Pitfall 6: Crafting Inventory Dictionary Uses Strings, Equipment Uses null Checks
+### Pitfall 6: Stat Aggregation Sums Damage Incorrectly When Mixing Range and Scalar Affixes
 
 **What goes wrong:**
-GameState.hero.equipped_items uses slot strings as keys with null values for empty slots (game_state.gd:12-16). CraftingView.crafting_inventory uses same pattern (crafting_view.gd:247-248). But Item type checking uses `if item is Weapon` (item.gd:58, 88, crafting_view.gd:273-282). Adding new item types requires updating 6+ match/if chains across codebase. When adding Save/Load, inconsistent null handling causes saves to serialize `{"weapon": null}` but loads expect `{"weapon": <Item>}`, throwing "Cannot access property on null" errors.
+`StatCalculator.calculate_dps()` currently adds all `FLAT_DAMAGE` affixes as scalars. After conversion, some affixes are ranges (`rolled_damage_min`, `rolled_damage_max`) and the weapon base may remain a scalar. The aggregation must sum mins separately from maxes:
+```
+total_min = base_min + sum(affix.rolled_damage_min for range affixes)
+total_max = base_max + sum(affix.rolled_damage_max for range affixes)
+```
+If implementation instead sums the average: `total = base + sum((affix.min + affix.max) / 2)`, then applies the percentage multipliers to this average, the final min and max are NOT correct percentages of their respective values. A "+50% damage" affix applied to average-42.5 gives 63.75 for both min and max — losing the range entirely.
+
+Correct order:
+```
+total_min = (base_min + sum_flat_mins) * (1 + sum_percent_mults)
+total_max = (base_max + sum_flat_maxes) * (1 + sum_percent_mults)
+DPS_mean = (total_min + total_max) / 2.0 * speed * crit_mult
+```
 
 **Why it happens:**
-Two mental models mixed: Dictionary-with-nulls (empty slots are present keys with null values) vs. Dictionary-without-keys (empty slots are absent keys). Code sometimes checks `if slot in dict` (key presence), sometimes `if dict[slot] != null` (value presence), sometimes `if dict.get(slot)` (implicit null check). All work until serialization converts between formats.
+The existing code in `stat_calculator.gd:22-30` adds flat damage affixes in a loop, then applies the `additive_damage_mult` to the running total. This pattern works for scalars but silently collapses range pairs into a single number if average is used as the intermediate.
 
 **How to avoid:**
-1. Standardize on Dictionary-with-nulls: always initialize all slots with null
-2. Always check value presence: `if equipped_items.get("weapon")` not `if "weapon" in equipped_items`
-3. Create helper: `GameState.has_equipped(slot: String) -> bool` that encapsulates null check
-4. For save serialization: filter out null values before writing, restore on load: `equipped_items.get("weapon", null)`
-5. For new item types: extend ItemType enum instead of string literals, use enum for type safety
+1. Run two separate accumulator loops in `calculate_dps()`: one for min totals, one for max totals
+2. Apply percentage multipliers to each accumulator independently
+3. Return both `total_min_dps` and `total_max_dps` as well as `avg_dps`
+4. Verify: a weapon with base 10-20 and "+100% damage" suffix must show 20-40 DPS range (not 30-30)
+5. Add an assertion in debug builds: `assert(total_min <= total_max)`
 
 **Warning signs:**
-- "Invalid access of property on null" after loading save
-- Some items show as equipped in one view but not in another
-- Finishing item in crafting doesn't clear from hero view
-- Save file shows `"weapon": null` in JSON but load expects missing key
-- Dictionary.size() counts empty slots (should it?)
+- Adding a "+50% damage" affix collapses the displayed range to a single value
+- High-variance weapons show a narrower range after adding percentage modifiers (range is compressed, not scaled)
+- The min and max DPS values shown in tooltip are the same number despite the weapon having a range
 
 **Phase to address:**
-Phase 1 (Save/Load Foundation) - Before serializing equipped_items. Add helper methods and standardize null checks.
+Phase 2 (DPS Formula Refactor) — Implement dual-accumulator pattern immediately when extending `calculate_dps()`. This is the core math change; getting it wrong breaks all downstream display and balance.
 
 ---
 
-### Pitfall 7: UI Restructure from Sequential Tabs to Side-by-Side Breaks Signal Flow
+### Pitfall 7: UI Labels Overflow at Font Size 11 on 1280x720 — "Physical Damage: 10 to 45" Clips
 
 **What goes wrong:**
-Current architecture uses main_view as signal hub: crafting_view → hero_view, hero_view → gameplay_view (main_view.gd:20-23). When views are hidden via visibility toggle, signals still fire but recipients process stale data. Converting to side-by-side layout where multiple views are visible means ALL views process every signal. Example: equipping item in hero_view triggers `equipment_changed` → gameplay_view.refresh_clearing_speed() → recalculates DPS. But if crafting_view is also visible and responds to equipment_changed (to update UI preview), it reads hero.equipped_items while hero_view is mid-update, seeing partially-applied state.
+The item stats label in `forge_view.gd:782` currently formats damage affixes as `prefix.affix_name + ": " + str(prefix.value)`. At font size 11, "Physical Damage: 15" is approximately 160px wide. Replacing it with "Physical Damage: 10 to 45" adds 8-12 characters, reaching approximately 230-250px. The `ItemStatsPanel` label width is not known from the scene (it's a Label, not RichTextLabel, so no word wrap by default). If the panel is narrower than the rendered text width, the label silently clips — no overflow indicator, no wrapping, just truncation at the panel edge. The player sees "Physical Damage: 10 to 4" and has no idea a number is missing.
+
+Similar overflow risks exist in:
+- `hero_stats_label` (RichTextLabel — word-wraps but may push content off screen)
+- `format_stat_delta()` comparison strings (`forge_view.gd:588`): "Base Damage: 10 [+5]" becomes "Base Damage Range: 10-15 to 20-45 [+5-15]" — 40+ character gain
+- The `item_stats_label` (plain Label) used in `update_item_stats_display()` at line 498 — Label clips by default
 
 **Why it happens:**
-Signal-based architecture assumes sequential single-view processing. Signals fire synchronously in connection order. If multiple views connect to same signal and first view modifies shared state (GameState.hero), second view sees intermediate state. Side-by-side layout makes this race condition visible.
+Flat single values occupy at most 4-6 digits. Damage ranges use the format "X to Y" which adds 4 characters plus potentially two multi-digit numbers. The UI was sized for the shorter format. Since Label (not RichTextLabel) does not word-wrap by default in Godot, overflow is silent.
 
 **How to avoid:**
-1. Audit all signals: document which signals modify state vs. notify of changes
-2. State-modifying signals should be one-way: `hero_view.equipment_changed` means "I modified hero, please refresh"
-3. Never read GameState in signal handlers - use signal parameters: `equipment_changed(slot: String, item: Item)`
-4. For UI updates triggered by multiple views visible: use deferred calls: `refresh_ui.call_deferred()`
-5. Create signal ordering contract: state changes → UI updates → layout recalculations
-6. Consider replacing some signals with direct method calls when order matters
+1. Switch `item_stats_label` from Label to RichTextLabel with `fit_content = true` and a `ScrollContainer` parent, OR enable `autowrap_mode` on the Label
+2. Use abbreviated format for tight spaces: "Phys Dmg: 10-45" (dash instead of " to ") — saves 2 characters and is standard ARPG notation
+3. Measure expected max string length at design time: longest affix name "Physical Damage" (15 chars) + ": " (2) + "1000 to 9999" (12) = 29 chars at font size 11 ≈ ~190px; verify panel is at least 200px wide
+4. For the stat comparison panel (`format_stat_delta()`), show delta in range format: "[+5 to +15]" — do not try to show before/after ranges in one line
+5. Test explicitly: equip a weapon with maximum-value affixes (tier 1 lightning with highest possible numbers) and verify the label does not clip
 
 **Warning signs:**
-- Item appears equipped in one view but not another until view switch
-- Currency counts desync between views (one shows old count)
-- Clicking item in crafting updates hero_view but not currency display
-- Random "index out of range" errors when signals fire during state mutation
-- Race conditions that only occur when specific views are visible together
+- Affix lines in item panel end mid-number with no "..." indicator
+- "to" appears at end of line with the second number missing (soft-wrap cutting the line, not the number)
+- Different affixes display correctly but the longest one clips (only fails at maximum values)
+- The panel looks fine in editor preview (Godot previews with different font rendering than runtime)
 
 **Phase to address:**
-Phase 2 (UI Layout Restructure) - Before enabling concurrent view visibility. Refactor signal handlers to be state-query-free.
+Phase 3 (UI Display) — Before implementing range display strings. Audit all Label nodes that show affix values. Switch to RichTextLabel or enable autowrap. Test with longest possible strings before connecting data.
 
 ---
 
-### Pitfall 8: Balance Tuning Cascades Across DefenseCalculator, StatCalculator, CombatEngine Without Visibility
+### Pitfall 8: `is_item_better()` Comparison Uses `tier` — DPS Range Makes This Stale
 
 **What goes wrong:**
-Tweaking level 1 monster damage (from 10 → 15) seems safe, but triggers cascade: CombatEngine calculates raw damage → DefenseCalculator.calculate_armor_reduction() uses `armor / (armor + 5 * raw_damage)` → 5x multiplier in denominator amplifies damage change → at 100 armor, reduction changes from 66.7% (vs 10 damage) to 57.1% (vs 15 damage) → hero dies 2x faster. Without spreadsheet tracking, this is invisible until UAT. Worse: increasing starting armor (50 → 100) to compensate makes high armor even stronger due to diminishing returns curve shape, creating balance divergence between early/late game.
+`forge_view.gd:466`:
+```gdscript
+func is_item_better(new_item: Item, existing_item: Item) -> bool:
+    return new_item.tier > existing_item.tier
+```
+This comparison drives the auto-replace logic when a new item drops. With flat damage, higher tier = higher base_damage = more DPS. With ranges, a lower-tier weapon with a lucky high-end range roll may have higher actual DPS than a higher-tier weapon with a poor roll. A tier 5 weapon with max roll beats a tier 3 with min roll. The tier comparison will discard the better weapon.
+
+Additionally: the Weapon DPS stat comparison in `get_stat_comparison_text()` at `forge_view.gd:640` compares `weapon.dps` (a precomputed average) — this comparison remains correct for the display, but `is_item_better()` ignores DPS entirely.
 
 **Why it happens:**
-DefenseCalculator uses non-linear formulas (hyperbolic for armor, hyperbolic for evasion, capped linear for resistances). StatCalculator aggregates affixes linearly. CombatEngine applies in pipeline (evasion → resistance → armor → ES split). Changing any input value propagates through pipeline with different scaling at each stage. The 5x multiplier in armor formula and 200 constant in evasion formula are magic numbers with no design documentation - tuning without understanding their derivation breaks intended curve.
+The `tier` shortcut was acceptable when damage was a linear function of tier. Adding per-roll variance breaks the monotonic relationship between tier and DPS. This is a design assumption violation.
 
 **How to avoid:**
-1. Create balance spreadsheet with columns: Raw Damage | Armor | Armor Reduction % | Effective HP Multiplier | Time to Die
-2. Formula: `effective_hp = base_hp / (1 - armor_reduction)`, `time_to_die = effective_hp / dps`
-3. When tuning damage: fill rows with armor values [0, 50, 100, 200, 500] to see curve shape
-4. When tuning armor: fill rows with damage values [10, 50, 100, 200] to see diminishing returns
-5. Establish invariant: level 1 hero (assume 50 armor) should survive 20 seconds against level 1 monster
-6. Red flag: if tuning one stat requires tuning 3+ other stats to compensate, formula needs redesign
-7. Document magic numbers: why 5x? why 200? Reference ARPG balance theory or PoE formulas
+1. Replace `is_item_better()` for weapons and rings with a DPS-based comparison: `new_item.dps > existing_item.dps`
+2. For armor items (no DPS), keep tier comparison OR switch to `get_total_defense()` comparison
+3. Consider making the auto-replace threshold more conservative: only auto-replace if new item is strictly better by a margin (>5% DPS), otherwise let the player decide
+4. The stat comparison display already uses DPS (`forge_view.gd:641`) — it is already correct for display purposes; only `is_item_better()` needs fixing
 
 **Warning signs:**
-- Small stat changes have huge gameplay impact (1 point armor = 20% tankier)
-- High-stat builds become exponentially stronger (diminishing returns should prevent this)
-- Balance feels good at level 1, breaks at level 5
-- Spreadsheet calculations don't match in-game results (formula transcription error?)
-- Tuning becomes whack-a-mole: fix early game, break late game, repeat
+- A rare, high-DPS weapon is auto-discarded in favor of a just-dropped normal item with higher tier but lower DPS
+- Player equips a weapon manually and the inventory keeps offering "better" items that are visibly worse
+- The crafting bench displays a "better" item but the hero stat comparison shows a DPS loss
 
 **Phase to address:**
-Phase 4 (Level 1 Balance) - Before any numeric changes. Build spreadsheet first, then tune with data.
+Phase 3 (UI Integration) — When DPS becomes range-derived, update `is_item_better()`. This is a one-line fix but easy to miss since the feature appears to work correctly until a high-variance drop exposes it.
 
 ---
 
@@ -229,146 +263,101 @@ Phase 4 (Level 1 Balance) - Before any numeric changes. Build spreadsheet first,
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Skip save versioning, assume save schema never changes | Faster initial implementation | Every schema change breaks all existing saves, player frustration, support burden | Never - versioning is 10 lines of code |
-| Use string literals for item types instead of enum | Less boilerplate, faster typing | No type safety, typos cause runtime errors, refactoring requires grep | Prototype only |
-| Manual visibility sync for CanvasLayers | Works with current single-view design | Breaks silently when adding concurrent views, input blocking bugs | Single-view UI only |
-| Hard-code balance values in GDScript constants | Quick iteration during testing | Cannot tune without code changes, recompile required, no A/B testing | Pre-alpha only |
-| Shallow copy Resources for save/load | Assume Godot handles it | Silent data corruption, save files share references with runtime | Never - corruption is unfixable |
-| Mix anchor positioning with Container layout | Reuse existing positioned nodes in new Containers | 0x0 size bugs, viewport-dependent behavior, mobile breaks | Never - clean one or the other |
+| Use `(min + max) / 2` everywhere and never expose actual range to combat engine | Simpler implementation, no combat engine changes | Per-hit variance never surfaces; variance system is cosmetic only | Never — defeats the purpose |
+| Reuse `min_value`/`max_value` fields to mean "rolled_min_damage" / "rolled_max_damage" | No new Affix fields needed | Tuning Hammer reroll corrupts range (cannot recover template bounds) | Never |
+| Skip save migration, delete old saves, start fresh | Zero migration code | Player loses all progress; unacceptable for any non-alpha release | Alpha only, with explicit warning |
+| Format all damage as average in UI ("Physical Damage: 27") | UI unchanged, no overflow risk | Players cannot see variance; lightning vs physical feel identical on paper | Never — the feature becomes invisible |
+| Keep `is_item_better()` using tier | No change to inventory logic | Good high-variance drops auto-discarded | Acceptable until first playtest reveals it |
+
+---
 
 ## Integration Gotchas
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Save/Load with Resources | Use `Resource.duplicate(true)` assuming deep copy | Implement custom `deep_duplicate()` that manually copies typed arrays |
-| CanvasLayer in multi-view UI | Assume visibility inherits from parent Node2D | Explicitly sync `canvas_layer.visible = parent.visible` |
-| Container migration | Convert parent to Container but leave children with anchors | Reset all child anchors/offsets to 0, use Container properties |
-| Balance spreadsheet → GDScript | Copy formula from spreadsheet with integer division | Cast first operand to float or use `.0` literals |
-| Signal-based view communication | Connect all views to all signals | Use signal parameters, avoid state reads in handlers |
+| `calculate_dps()` with ranges | Pass average damage as the scalar base | Sum min/max separately through all steps; return mean, min, max |
+| CombatEngine per-hit damage | Continue using `total_dps / attack_speed` | Roll `randi_range(total_min, total_max)` per hit, then apply crit |
+| Affix.reroll() with damage ranges | Reroll `value` field (scalar) unchanged | Reroll `rolled_damage_min` and `rolled_damage_max` independently |
+| Save migration for old affixes | Leave `SAVE_VERSION = 1`, add new fields | Bump to v2, write migration that derives min/max from old `value` |
+| Stat comparison display (forge_view) | Show "Base Damage Range: X-Y to A-B [delta]" on one line | Show current DPS delta only; let dedicated tooltip show full range breakdown |
+
+---
 
 ## Performance Traps
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Deep copying Resources on every save | Save takes 1-2 seconds on item-heavy builds | Only deep copy when necessary, cache serialization | 100+ items in inventory |
-| CanvasLayers rendering when hidden | 30 FPS with 3 views despite only 1 visible | Explicitly set `canvas_layer.visible = false` | 3+ concurrent CanvasLayers |
-| Signal cascade during view switch | Frame spike when changing tabs | Use `call_deferred()` for non-critical UI updates | 5+ connected signals |
-| Recalculating stats on every frame | FPS drops when equipment window open | Cache stat totals, recalculate only on `equipment_changed` signal | 10+ affixes per item |
-| Container layout with deeply nested hierarchy | UI update lag (100ms+) on viewport resize | Flatten Container hierarchy, max 3 levels deep | 5+ nested Containers |
+| `randi_range()` called multiple times per timer tick per element type | Micro-stutter at 5+ affixes per hit | One consolidated roll: compute total_min/total_max first, one `randi_range()` call | 10+ affixes on weapon, 1.8 attacks/sec |
+| Recomputing `total_damage_min` / `total_damage_max` on every hit | CPU spike at fast attack speeds | Cache on `Hero.update_stats()`, only recompute on equipment change | Attack speed > 3.0/sec |
+| Label re-layout every hit (Label resize for longer range strings) | UI jank on high attack speed | Pre-size labels to maximum expected width; do not use `fit_content` on per-hit labels | Combat damage labels at > 2 attacks/sec |
+
+---
 
 ## UX Pitfalls
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| No feedback when hammer click does nothing | Click item with no hammer selected - nothing happens, no message | Show toast message "Select a hammer first" |
-| Side-by-side layout doesn't fit 1200x700 viewport | UI elements overlap or scroll off screen | Design for 1200x600 usable space (100px for nav) |
-| Crafting inventory auto-replaces lower tier items | Find rare helmet, auto-deletes magic helmet user was crafting | Show "Replace?" confirmation or use separate stash |
-| Save/load has no error messages on corruption | Load fails silently, player at main menu with no feedback | Show error popup: "Save file corrupted (version mismatch)" |
-| Balance changes between sessions break progression | Player balanced for old damage values, suddenly dies | Display patch notes on load, offer stat respec |
+| Show damage range on tooltip but single DPS number on hero panel | Player cannot understand why two similar-DPS weapons feel different in combat | Add "Damage: X to Y" line below DPS on hero panel |
+| No visual indicator of variance tier (tight vs swingy) | Lightning builds surprise players with high death rate | Color-code or tag the damage range: narrow range = blue, wide range = yellow |
+| Stat comparison shows old "Base Damage: X" label after range added | Player confused by mismatch between tooltip and comparison text | Update all display paths simultaneously; do not leave dead code paths |
+| Tuning Hammer re-rolls collapse range over time (if Pitfall 3 not fixed) | Crafted items get progressively worse on re-roll | Fix Affix data model before releasing Tuning Hammer functionality |
+| Auto-replace discards better weapon (Pitfall 8) | Player loses a good drop without knowing | Add console/UI notification: "Item discarded (lower tier): [name] [DPS]" |
+
+---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Save/Load:** Saves load successfully but have you tested loading v1 save after adding new Hero property? (Schema migration)
-- [ ] **Save/Load:** Deep copied Items but did you deep copy the Affix arrays inside? (Nested Resources)
-- [ ] **UI Layout:** Side-by-side views render but did you test CanvasLayer visibility sync? (Invisible input blocking)
-- [ ] **UI Layout:** Containers position correctly in editor but did you test at runtime 1200x700? (Anchor conflict)
-- [ ] **Crafting UX:** Item selection works but did you test clicking with no hammer selected? (Missing feedback)
-- [ ] **Crafting UX:** Currency buttons update counts but did you test when count hits 0 mid-click? (Race condition)
-- [ ] **Balance Tuning:** Damage values feel right but did you test with 0 armor? 500 armor? (Edge cases)
-- [ ] **Balance Tuning:** Formulas work in spreadsheet but did you verify no integer division in GDScript? (Type coercion)
-- [ ] **Signal Flow:** Signals fire correctly but did you test with all 3 views visible simultaneously? (State race)
+- [ ] **DPS Formula:** Tooltip shows correct DPS but have you verified per-hit combat rolls use `randi_range(min, max)` not `total_dps / speed`? (Pitfall 4)
+- [ ] **DPS Formula:** Percentage multipliers applied to average, not to min/max separately? (Pitfall 6 — verify with "+100% damage" test)
+- [ ] **Save Migration:** New affix fields added but SAVE_VERSION still 1? (Pitfall 1 — check `save_manager.gd:6`)
+- [ ] **Affix Re-roll:** Tuning Hammer applies to new rolled fields? Test 10 rerolls, verify max-damage never drops below original min-damage (Pitfall 3)
+- [ ] **Lightning Balance:** Hero dies 3x more often to lightning vs fire at same level? Check variance ratios (Pitfall 5)
+- [ ] **UI Labels:** Tested with maximum-tier lightning affix (widest possible number string)? (Pitfall 7 — "Lightning Damage: 1000 to 4000" test)
+- [ ] **is_item_better():** A tier-3 weapon with 200 DPS auto-replaced by a tier-5 weapon with 80 DPS? (Pitfall 8)
+- [ ] **Stat Aggregation:** Two flat damage range affixes sum to combined min+min and max+max? (Pitfall 6 — equip two range affixes, verify display range equals sum)
+- [ ] **Combat Variance Visible:** Floating damage numbers show different values hit-to-hit for a lightning weapon? (Pitfall 4 — watch combat for 10 hits)
+- [ ] **Export Save String:** HT1 base64 format includes all new Affix fields (`rolled_damage_min`, `rolled_damage_max`, template fields)? (Pitfall 1 — export, import, verify DPS unchanged)
+
+---
 
 ## Recovery Strategies
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Resource arrays not deep copied | HIGH | 1. Add `Item.deep_duplicate()` method 2. Replace all `item.duplicate(true)` calls 3. Wipe existing saves (no migration possible from corrupted references) 4. Apologize to alpha testers |
-| CanvasLayer visibility not synced | LOW | 1. Add `_sync_canvas_layers()` method to main_view 2. Call on `show_view()` 3. Test with all view combinations |
-| Anchor/Container conflict | MEDIUM | 1. Create new Container hierarchy in separate scene 2. Migrate children one-by-one, resetting anchors 3. Test layout at 1200x700 4. Replace old scene with new |
-| Integer division in stat formula | LOW | 1. Add `.0` to all division literals 2. Cast variables to float 3. Add unit test 4. Compare before/after in spreadsheet |
-| Save schema changed without versioning | HIGH | 1. Add versioning system NOW 2. Bump to v2 with migration v1→v2 3. Cannot recover v1 saves (wipe required) 4. Document lesson learned |
-| Balance cascade not modeled | MEDIUM | 1. Build spreadsheet from scratch with all formulas 2. Input current values, verify matches game 3. Tune in spreadsheet 4. Copy tuned values to GDScript 5. Playtest to verify |
+| Missing save migration (v1 loads with 0 damage) | MEDIUM | 1. Write migration immediately 2. Bump SAVE_VERSION to 2 3. Test with a v1 fixture save 4. Cannot recover player saves already corrupted — they must start fresh if deployed |
+| Wrong DPS formula (average not mean of separate min/max) | LOW | 1. Fix accumulator loop 2. Re-verify against formula sheet 3. No save impact (DPS is recomputed on load) |
+| Affix re-roll corrupts range (Pitfall 3) | HIGH | 1. Must add template fields to Affix 2. Must bump SAVE_VERSION again (to 3) 3. Migration v2→v3 must reconstruct template fields from rolled values (lossy — cannot recover true template if already corrupted) |
+| Lightning variance causing unfair deaths | LOW | 1. Reduce lightning max-damage ratio 2. No save migration needed (template values only in ItemAffixes, not saved) 3. Existing items retain old rolls until Tuning Hammer re-roll |
+| Label overflow clips numbers | LOW | 1. Switch affected Labels to RichTextLabel 2. Enable autowrap OR size panel wider 3. Test immediately — no data changes required |
+
+---
 
 ## Pitfall-to-Phase Mapping
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Resource.duplicate() doesn't deep copy arrays | Phase 1 (Save/Load Foundation) | Unit test: modify loaded item's affix, reload save, verify affix unchanged |
-| CanvasLayer visibility doesn't inherit | Phase 2 (UI Layout Restructure) | Manual test: show gameplay view, verify combat UI visible; hide gameplay, verify combat UI hidden |
-| Anchor/Container conflict causes 0x0 size | Phase 2 (UI Layout Restructure) | Launch at 1200x700, verify all UI visible; resize to 800x600, verify no overlap |
-| Integer division truncates stats | Phase 4 (Level 1 Balance) | Unit test: calculate armor reduction with float vs int, assert equal |
-| Save schema changes break old saves | Phase 1 (Save/Load Foundation) | Integration test: save as v1, add property, load as v2, verify migration ran |
-| Crafting inventory null handling inconsistent | Phase 1 (Save/Load Foundation) | Unit test: serialize empty slot, deserialize, verify null |
-| Signal flow breaks with concurrent views | Phase 2 (UI Layout Restructure) | Manual test: show all 3 views, equip item, verify all views update correctly |
-| Balance cascades not modeled | Phase 4 (Level 1 Balance) | Spreadsheet test: change damage by 50%, verify effective HP multiplier within 20% |
+| Old saves load with 0 flat damage (Pitfall 1) | Phase 1: Save Migration | Load a saved v1 fixture; assert weapon DPS unchanged after migration |
+| DPS formula uses wrong representative value (Pitfall 2) | Phase 2: DPS Formula Refactor | Simulate 10,000 hits; assert mean within 2% of sheet DPS |
+| Affix re-roll collapses range (Pitfall 3) | Phase 2: Affix Data Model | Apply Tuning Hammer 20x; assert `rolled_max >= original_min` throughout |
+| Combat always deals average damage (Pitfall 4) | Phase 3: Combat Integration | Watch 10 consecutive hits; assert standard deviation > 0 |
+| Lightning variance causes unfair deaths (Pitfall 5) | Phase 2: Balance Parameters | Simulate 100 fights vs lightning pack; assert hero death rate < 10% at designed survivability margin |
+| Percentage mults collapse min/max range (Pitfall 6) | Phase 2: DPS Formula Refactor | Assert: base 10-20 + 100% mult = 20-40 (not 30-30) |
+| Label overflow clips numbers (Pitfall 7) | Phase 3: UI Display | Display longest possible affix string; assert no clipping at 1280x720 |
+| is_item_better() discards better weapon (Pitfall 8) | Phase 3: UI Integration | Drop low-tier high-DPS weapon; assert it is not auto-discarded in favor of high-tier low-DPS item |
 
-## Godot 4.5 Specific Gotchas
-
-### Resource Serialization Quirks
-
-1. **Tres File External Resource Stripping**: When moving scene files with external resource references (`.tres` files for Items, Affixes), the scene writer may strip out external resources and parser has trouble reading the new files. **Mitigation**: Use internal resources for save data (JSON or binary), not external `.tres` files.
-
-2. **Resource Cache Prevents Reloading**: Godot's resource cache prevents reloading already-loaded resources like savegames. Loading `user://save_slot_1.res` multiple times returns the cached version, not disk version. **Mitigation**: Use `ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)` for save files.
-
-3. **Custom Resources Break on Upgrade**: Custom resource types that worked in Godot 4.3 may break in 4.4+, with Godot ignoring the custom script and treating as plain Resource. **Mitigation**: Avoid relying on Resource script inheritance for save data; use plain Dictionary serialization.
-
-### CanvasLayer Layering Issues
-
-1. **Dynamic UI on Layer 1024**: Dynamically generated UI elements (popups, menus) inherit from Window class and render on layer 1024, while static UI renders on layer 0. **Mitigation**: Set explicit `layer` property on all CanvasLayers to control render order. For side-by-side layout: Crafting UI layer 0, Hero UI layer 1, Gameplay UI layer 2.
-
-2. **First Control Node Detaches**: First Control node under CanvasLayer follows viewport instead of CanvasLayer, detaching from scene and becoming part of parent scene. **Mitigation**: Wrap first Control in a Container or add dummy Control as first child.
-
-### Container Sizing on Mobile Renderer
-
-1. **SubViewportContainer Stretch Undoes Itself**: Resizing SubViewportContainer with stretch enabled changes child SubViewport size to match, undoing the stretch effect. **Mitigation**: Don't use SubViewportContainer for side-by-side layout; use regular Containers with Control nodes.
-
-2. **CenterContainer Squishes Children**: If Control children have no minimum size, CenterContainer squishes them to 0x0. **Mitigation**: Set `custom_minimum_size` on all Controls or use `size_flags_expand` + `size_flags_fill`.
-
-3. **Viewport Rect_Scale Causes Distortion**: Changing ViewportContainer's `rect_scale` distorts contents. **Mitigation**: Adjust margins, not scale, to resize ViewportContainers.
-
-### GDScript Type System
-
-1. **Float is 64-bit in Godot 4**: Unlike Godot 3 (32-bit float), Godot 4 uses 64-bit double precision float. **Implication**: More precision for stat calculations, but ConfigFile saves large floats incorrectly (1234567.0 → 1234570.0). **Mitigation**: Use int for currencies and large numbers, float only for percentages and ratios.
-
-2. **Integer Division Auto-Truncates**: `5 / 2 = 2` not `2.5`. **Mitigation**: Cast first operand: `float(5) / 2 = 2.5` or use literal: `5.0 / 2 = 2.5`.
+---
 
 ## Sources
 
-**Godot Resource Serialization:**
-- [Saving and Loading Games in Godot 4 (with resources) | GDQuest Library](https://www.gdquest.com/library/save_game_godot4/)
-- [How to load and save things with Godot: a complete tutorial about serialization](https://forum.godotengine.org/t/how-to-load-and-save-things-with-godot-a-complete-tutorial-about-serialization/44515)
-- [Failed to create instances when loading nested resources · Issue #66973](https://github.com/godotengine/godot/issues/66973)
-- [Resource.duplicate(true) doesn't duplicate subresources stored in Array or Dictionary properties · Issue #74918](https://github.com/godotengine/godot/issues/74918)
-- [Duplicate Godot custom resources deeply, for real](https://simondalvai.org/blog/godot-duplicate-resources/)
-
-**CanvasLayer UI Issues:**
-- [Canvas layers — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/2d/canvas_layers.html)
-- [CanvasLayer not matching with first child control · Issue #81514](https://github.com/godotengine/godot/issues/81514)
-- [Bite-Sized Godot: The fix for UI and post-processing shaders in Godot 4](https://shaggydev.com/2025/04/09/godot-ui-postprocessing-shaders/)
-
-**Container Layout:**
-- [UI Layout using Containers in Godot](https://gdscript.com/solutions/ui-layout-using-containers-in-godot/)
-- [Resizing SubViewportContainer with stretch enabled · Issue #62041](https://github.com/godotengine/godot/issues/62041)
-- [Overview of Godot UI containers | GDQuest](https://school.gdquest.com/courses/learn_2d_gamedev_godot_4/start_a_dialogue/all_the_containers)
-
-**Crafting/Inventory UX:**
-- [How To Build An Inventory System In Godot 4](https://gamedevacademy.org/godot-inventory-system-tutorial/)
-- [Inventory System Design Fundamentals: Item Management with Resources and Signals](https://uhiyama-lab.com/en/notes/godot/inventory-system/)
-
-**Balance Tuning:**
-- [Balancing Tips: How We Managed Math on Idle Idol](https://www.gamedeveloper.com/design/balancing-tips-how-we-managed-math-on-idle-idol)
-- [How do you use spreadsheets to manage your game's data and balance?](https://www.linkedin.com/advice/0/how-do-you-use-spreadsheets-manage-your-games-data)
-- [Balance & Tuning | Understanding Games](https://medium.com/understanding-games/balance-tuning-8e0871ad0a0b)
-
-**Godot 4 Type System:**
-- [Godot Integer Division: Stop Losing Decimals! (Quick Fix)](https://the-scientist.blog/45208-godot-integer-division-stop-losing-decimals)
-- [float — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/classes/class_float.html)
-
-**Save Schema Migration:**
-- ["Godot 4" save system version migration data schema changes](https://www.gdquest.com/library/save_game_godot4/)
-- [Saving games — Godot Engine (stable) documentation](https://docs.godotengine.org/en/stable/tutorials/io/saving_games.html)
+- [Path of Exile Wiki: Lightning Damage — Variance Design](https://www.poewiki.net/wiki/Lightning_damage)
+- [Last Epoch: Damage Calculations Explained (Expected Value vs Hit Variance)](https://maxroll.gg/last-epoch/resources/damage-explained)
+- [Godot Issue #89795: randi() performance vs randi_range()](https://github.com/godotengine/godot/issues/89795)
+- [Godot Docs: Random Number Generation](https://docs.godotengine.org/en/stable/tutorials/math/random_number_generation.html)
+- [You Smack the Rat for ??? Damage — James Margaris (damage variance design essay)](https://jmargaris.substack.com/p/you-smack-the-rat-for-damage)
+- [Path of Exile 2: Item Modifiers Explained — tier + sub-range structure](https://mobalytics.gg/poe-2/guides/item-modifiers)
+- Codebase analysis: `affix.gd`, `stat_calculator.gd`, `combat_engine.gd`, `hero.gd`, `forge_view.gd`, `save_manager.gd`, `item_affixes.gd`, `light_sword.gd`
 
 ---
-*Pitfalls research for: Hammertime v1.3 Milestone - Save/Load, UI Restructure, Crafting UX, Balance Tuning*
-*Researched: 2026-02-17*
-*Confidence: HIGH - Based on official Godot documentation, GitHub issues, community patterns, and codebase analysis*
+*Pitfalls research for: Hammertime — Damage Range Milestone*
+*Researched: 2026-02-18*
+*Confidence: HIGH — Based on direct codebase analysis (all file paths verified), ARPG design references, and Godot-specific documentation*
