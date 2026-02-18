@@ -9,31 +9,31 @@ Requirements for v1.3 Save/Load & Polish milestone. Each maps to roadmap phases.
 
 ### Save/Load
 
-- [ ] **SAVE-01**: Player's full game state persists across sessions (hero equipment, currencies, area progress, crafting inventory)
-- [ ] **SAVE-02**: Game auto-saves every 5 minutes and on significant events (item crafted, area completed, item equipped)
-- [ ] **SAVE-03**: Save format includes version tracking for future migration compatibility
-- [ ] **SAVE-04**: Player can export save as a string and import a save string to restore state
+- [x] **SAVE-01**: Player's full game state persists across sessions (hero equipment, currencies, area progress, crafting inventory)
+- [x] **SAVE-02**: Game auto-saves every 5 minutes and on significant events (item crafted, area completed, item equipped)
+- [x] **SAVE-03**: Save format includes version tracking for future migration compatibility
+- [x] **SAVE-04**: Player can export save as a string and import a save string to restore state
 
 ### UI Layout
 
-- [ ] **LAYOUT-01**: Hero equipment and crafting views display side by side (equipment left, crafting right) instead of separate tabs
-- [ ] **LAYOUT-02**: Gameplay/combat view remains a separate full-width view toggled from the side-by-side view
+- [x] **LAYOUT-01**: Hero equipment and crafting views display side by side (equipment left, crafting right) instead of separate tabs
+- [x] **LAYOUT-02**: Gameplay/combat view remains a separate full-width view toggled from the side-by-side view
 
 ### Crafting UX
 
-- [ ] **CRAFT-01**: Each hammer button shows a tooltip describing what it does and its requirements
-- [ ] **CRAFT-02**: Hovering an equipment slot with a craftable item available shows before/after stat comparison (item-level deltas, not total hero stats)
-- [ ] **CRAFT-03**: Crafting view has one crafted-item slot per item type (weapon, helmet, armor, boots, ring) instead of a single shared slot
-- [ ] **CRAFT-04**: Finishing an item into an occupied slot requires two-click confirmation (button text changes to confirm message, second click overwrites)
+- [x] **CRAFT-01**: Each hammer button shows a tooltip describing what it does and its requirements
+- [x] **CRAFT-02**: Hovering an equipment slot with a craftable item available shows before/after stat comparison (item-level deltas, not total hero stats)
+- [x] **CRAFT-03**: Crafting view has one crafted-item slot per item type (weapon, helmet, armor, boots, ring) instead of a single shared slot
+- [x] **CRAFT-04**: Finishing an item into an occupied slot requires two-click confirmation (button text changes to confirm message, second click overwrites)
 
 ### Balance
 
-- [ ] **BAL-01**: New game starts with 1 Runic Hammer and 1 weapon base item so the player can craft their first gear
-- [ ] **BAL-02**: Level 1 area difficulty is reduced so a fresh hero with starter gear can survive early packs
+- [x] **BAL-01**: New game starts with 1 Runic Hammer and 1 weapon base item so the player can craft their first gear
+- [x] **BAL-02**: Level 1 area difficulty is reduced so a fresh hero with starter gear can survive early packs
 
 ### Polish
 
-- [ ] **UI-01**: Hero View stat panels fit within the viewport by reducing text size and whitespace
+- [x] **UI-01**: Hero View stat panels fit within the viewport by reducing text size and whitespace
 
 ## Future Requirements
 
@@ -73,23 +73,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SAVE-01 | Phase 18 | Pending |
-| SAVE-02 | Phase 18 | Pending |
-| SAVE-03 | Phase 18 | Pending |
-| SAVE-04 | Phase 21 | Pending |
-| LAYOUT-01 | Phase 19 | Pending |
-| LAYOUT-02 | Phase 19 | Pending |
-| CRAFT-01 | Phase 20 | Pending |
-| CRAFT-02 | Phase 20 | Pending |
-| CRAFT-03 | Phase 20 | Pending |
-| CRAFT-04 | Phase 20 | Pending |
-| BAL-01 | Phase 22 | Pending |
-| BAL-02 | Phase 22 | Pending |
-| UI-01 | Phase 22 | Pending |
+| SAVE-01 | Phase 18 | Satisfied |
+| SAVE-02 | Phase 18 | Satisfied |
+| SAVE-03 | Phase 18 | Satisfied |
+| SAVE-04 | Phase 21 | Satisfied |
+| LAYOUT-01 | Phase 19 | Satisfied |
+| LAYOUT-02 | Phase 19 | Satisfied |
+| CRAFT-01 | Phase 20 | Satisfied |
+| CRAFT-02 | Phase 20 | Satisfied |
+| CRAFT-03 | Phase 20 | Satisfied |
+| CRAFT-04 | Phase 20 | Satisfied |
+| BAL-01 | Phase 22 | Satisfied |
+| BAL-02 | Phase 22 | Satisfied |
+| UI-01 | Phase 22 | Satisfied |
 
 **Coverage:**
 - v1.3 requirements: 13 total
 - Mapped to phases: 13 (100%)
+- Satisfied: 13 (100%)
 - Unmapped: 0
 
 **Phase distribution:**
@@ -101,4 +102,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-17 — v1.3 traceability complete (100% coverage)*
+*Last updated: 2026-02-18 — all 13 requirements satisfied (100%)*
