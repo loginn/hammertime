@@ -16,9 +16,9 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 20 of 22 (Crafting UX Enhancements)
-Plan: 2 of 2 complete
+Plan: 3 of 3 complete
 Status: Complete
-Last activity: 2026-02-17 — Completed 20-02-PLAN.md (stat comparison display on equip hover)
+Last activity: 2026-02-18 — Completed 20-03-PLAN.md (UAT gap closure - tooltip delay and button state fix)
 
 Progress: [████████████████████░] 91% (20/22 phases)
 
@@ -117,17 +117,19 @@ Recent decisions affecting v1.3 work:
 |---|-------------|------|--------|-----------|
 | 1 | Fix Light Sword item type button regenerating a free weapon while other types do not | 2026-02-15 | c0bcfb8 | [1-fix-light-sword-item-type-button-regener](./quick/1-fix-light-sword-item-type-button-regener/) |
 | Phase 19 P03 | 3 | 2 tasks | 2 files |
+| Phase 20 P03 | 42 | 1 tasks | 2 files |
 
 ## Session Continuity
 
-**Last session:** 2026-02-17
-- Phase 20 (Crafting UX Enhancements) complete — 2 of 2 plans executed
+**Last session:** 2026-02-18T01:12:15.419Z
+- Phase 20 (Crafting UX Enhancements) complete — 3 of 3 plans executed
 - Plan 20-01: Added hammer tooltips, removed Finish Item workflow, added two-click equip confirmation
 - Plan 20-02: Added stat comparison display on equip hover with green/red BBCode-colored deltas
+- Plan 20-03: UAT gap closure - reduced tooltip delay (0.5s → 0.2s), fixed button state refresh on type switch
 - Requirements CRAFT-01, CRAFT-02, CRAFT-03, CRAFT-04 all delivered
 
 **Next step:** `/gsd:plan-phase 21` to begin Save Import/Export
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-17 — Phase 20 complete*
+*Last updated: 2026-02-18 — Phase 20 complete (including UAT gap closure)*
