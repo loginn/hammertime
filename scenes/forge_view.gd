@@ -139,18 +139,10 @@ func _ready() -> void:
 			break
 
 	# Only create starting items if inventory is empty (fresh game, no save)
+	# Player starts with only a weapon — must clear maps to get other items
 	if not has_saved_items:
 		var starting_weapon := LightSword.new()
-		var starting_helmet := BasicHelmet.new()
-		var starting_armor := BasicArmor.new()
-		var starting_boots := BasicBoots.new()
-		var starting_ring := BasicRing.new()
-
 		add_item_to_inventory(starting_weapon)
-		add_item_to_inventory(starting_helmet)
-		add_item_to_inventory(starting_armor)
-		add_item_to_inventory(starting_boots)
-		add_item_to_inventory(starting_ring)
 
 	# Set current item from saved bench type or default to weapon
 	var selected_type: String = GameState.crafting_bench_type
@@ -532,14 +524,20 @@ func update_hero_stats_display() -> void:
 				"Equipped " + currently_hovered_type.capitalize() + ":\n\n"
 				+ get_item_stats_text(equipped_item)
 			)
+			# Apply rarity color to the equipped item text
+			hero_stats_label.modulate = equipped_item.get_rarity_color()
 		else:
 			hero_stats_label.text = (
 				"Equipped " + currently_hovered_type.capitalize() + ":\n\n(Empty)"
 			)
+			hero_stats_label.modulate = Color.WHITE
 		return
 
 	# Default: show aggregate hero stats (no BBCode needed for default view)
 	var hero: Hero = GameState.hero
+
+	# Reset color to white for default view
+	hero_stats_label.modulate = Color.WHITE
 
 	# Offense section
 	hero_stats_label.text = "Hero Stats:\n\nOffense:\n"
@@ -549,6 +547,7 @@ func update_hero_stats_display() -> void:
 
 	# Defense section (only show non-zero types)
 	hero_stats_label.text += "\nDefense:\n"
+	hero_stats_label.text += "Health: %.0f/%.0f\n" % [hero.health, hero.max_health]
 
 	var total_armor: int = hero.get_total_armor()
 	var total_evasion: int = hero.get_total_evasion()

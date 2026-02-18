@@ -61,12 +61,12 @@ static func _build_biomes() -> Array[BiomeConfig]:
 		"Forest", 1, 100, "physical",
 		{"physical": 0.40, "fire": 0.20, "cold": 0.20, "lightning": 0.20},
 		[
-			MonsterType.create("Forest Bear", 72.0, 7.0, 0.8),
-			MonsterType.create("Timber Wolf", 48.0, 6.0, 1.2),
-			MonsterType.create("Wild Boar", 60.0, 8.0, 0.9),
-			MonsterType.create("Venomous Spider", 30.0, 7.0, 1.8),
-			MonsterType.create("Forest Sprite", 24.0, 5.0, 2.0),
-			MonsterType.create("Bramble Golem", 90.0, 4.0, 0.6),
+			MonsterType.create("Forest Bear", 36.0, 7.0, 0.8),
+			MonsterType.create("Timber Wolf", 24.0, 6.0, 1.2),
+			MonsterType.create("Wild Boar", 30.0, 8.0, 0.9),
+			MonsterType.create("Venomous Spider", 15.0, 7.0, 1.8),
+			MonsterType.create("Forest Sprite", 12.0, 5.0, 2.0),
+			MonsterType.create("Bramble Golem", 45.0, 4.0, 0.6),
 		]
 	))
 
@@ -75,11 +75,11 @@ static func _build_biomes() -> Array[BiomeConfig]:
 		"Dark Forest", 100, 200, "fire",
 		{"fire": 0.40, "physical": 0.25, "cold": 0.20, "lightning": 0.15},
 		[
-			MonsterType.create("Ember Hound", 85.0, 15.0, 1.5),
-			MonsterType.create("Charred Treant", 160.0, 11.0, 0.5),
-			MonsterType.create("Flame Wisp", 35.0, 16.0, 2.2),
-			MonsterType.create("Ash Stalker", 90.0, 13.0, 1.1),
-			MonsterType.create("Cinder Beetle", 70.0, 9.0, 1.7),
+			MonsterType.create("Ember Hound", 42.5, 15.0, 1.5),
+			MonsterType.create("Charred Treant", 80.0, 11.0, 0.5),
+			MonsterType.create("Flame Wisp", 17.5, 16.0, 2.2),
+			MonsterType.create("Ash Stalker", 45.0, 13.0, 1.1),
+			MonsterType.create("Cinder Beetle", 35.0, 9.0, 1.7),
 		]
 	))
 
@@ -88,11 +88,11 @@ static func _build_biomes() -> Array[BiomeConfig]:
 		"Cursed Woods", 200, 300, "cold",
 		{"cold": 0.40, "lightning": 0.25, "fire": 0.20, "physical": 0.15},
 		[
-			MonsterType.create("Frost Wraith", 45.0, 18.0, 1.6),
-			MonsterType.create("Frozen Troll", 170.0, 12.0, 0.5),
-			MonsterType.create("Ice Crawler", 75.0, 14.0, 1.3),
-			MonsterType.create("Cursed Dryad", 90.0, 15.0, 0.9),
-			MonsterType.create("Blizzard Imp", 40.0, 11.0, 2.3),
+			MonsterType.create("Frost Wraith", 22.5, 18.0, 1.6),
+			MonsterType.create("Frozen Troll", 85.0, 12.0, 0.5),
+			MonsterType.create("Ice Crawler", 37.5, 14.0, 1.3),
+			MonsterType.create("Cursed Dryad", 45.0, 15.0, 0.9),
+			MonsterType.create("Blizzard Imp", 20.0, 11.0, 2.3),
 		]
 	))
 
@@ -101,12 +101,12 @@ static func _build_biomes() -> Array[BiomeConfig]:
 		"Shadow Realm", 300, -1, "lightning",
 		{"lightning": 0.40, "fire": 0.25, "cold": 0.25, "physical": 0.10},
 		[
-			MonsterType.create("Void Stalker", 95.0, 20.0, 1.4),
-			MonsterType.create("Eldritch Horror", 200.0, 16.0, 0.4),
-			MonsterType.create("Storm Phantom", 50.0, 19.0, 2.0),
-			MonsterType.create("Shadow Fiend", 80.0, 17.0, 1.2),
-			MonsterType.create("Abyssal Crawler", 130.0, 13.0, 0.8),
-			MonsterType.create("Rift Elemental", 35.0, 22.0, 1.8),
+			MonsterType.create("Void Stalker", 47.5, 20.0, 1.4),
+			MonsterType.create("Eldritch Horror", 100.0, 16.0, 0.4),
+			MonsterType.create("Storm Phantom", 25.0, 19.0, 2.0),
+			MonsterType.create("Shadow Fiend", 40.0, 17.0, 1.2),
+			MonsterType.create("Abyssal Crawler", 65.0, 13.0, 0.8),
+			MonsterType.create("Rift Elemental", 17.5, 22.0, 1.8),
 		]
 	))
 

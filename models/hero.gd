@@ -114,6 +114,9 @@ func calculate_defense() -> int:
 	total_cold_resistance = 0
 	total_lightning_resistance = 0
 
+	# Start with base health (100)
+	var total_health: int = 100
+
 	# Add defense from armor pieces (base stats only from armor slots)
 	for slot in ["helmet", "armor", "boots"]:
 		if slot in equipped_items and equipped_items[slot] != null:
@@ -130,6 +133,10 @@ func calculate_defense() -> int:
 			# Check for base_energy_shield property
 			if "base_energy_shield" in armor_item:
 				total_energy_shield += armor_item.base_energy_shield
+
+			# Check for base_health property
+			if "base_health" in armor_item:
+				total_health += armor_item.base_health
 
 	# Add resistance from suffixes on ALL equipment slots
 	for slot in ["helmet", "armor", "boots", "weapon", "ring"]:
@@ -149,6 +156,9 @@ func calculate_defense() -> int:
 						total_fire_resistance += suffix.value
 						total_cold_resistance += suffix.value
 						total_lightning_resistance += suffix.value
+
+	# Update max_health from equipment
+	max_health = float(total_health)
 
 	# Backward compatibility - total_defense equals total_armor
 	total_defense = total_armor

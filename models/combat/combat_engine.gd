@@ -157,7 +157,8 @@ func _on_pack_killed() -> void:
 ## All packs cleared. Full ES recharge, drop items, advance area level, auto-start next map.
 func _on_map_completed() -> void:
 	state = State.MAP_COMPLETE
-	# Full ES recharge between maps
+	# Full HP and ES recharge between maps
+	GameState.hero.health = GameState.hero.max_health
 	GameState.hero.current_energy_shield = float(GameState.hero.total_energy_shield)
 
 	# Item drops on map completion (1-3 items scaled by area)
