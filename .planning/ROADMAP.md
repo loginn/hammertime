@@ -106,7 +106,8 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
   2. Loading a v2 save round-trips all items in all slots without loss or duplication
   3. The orphaned `crafting_bench_item` key is absent from both written saves and migrated saves
   4. A fresh game save (version 2) loads back to empty arrays for all five slots
-**Plans**: TBD
+**Plans**: 1 plan
+- [ ] 27-01-PLAN.md — v2 save format with per-slot arrays, v1 migration, orphaned key removal
 
 ### Phase 28: GameState Data Model and Drop Flow
 **Goal**: Items drop into per-slot inventory arrays with silent overflow discard enforced at a single add point
