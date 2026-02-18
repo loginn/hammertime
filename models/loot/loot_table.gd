@@ -123,31 +123,6 @@ static func get_map_item_count(area_level: int) -> int:
 		return 3
 
 
-## DEPRECATED: Use get_map_item_count() instead. Kept for drop_simulator compatibility.
-## Returns number of items to drop for this area clear
-## Scales logarithmically from 1 (area 1) to ~4.5 (area 300)
-static func get_item_drop_count(area_level: int) -> int:
-	# Logarithmic curve: rapid early gains, tapering late
-	# log(1 + level/85) / log(1 + 300/85) gives 0-1 range for levels 1-300
-	var progress: float = log(1.0 + float(area_level) / 85.0) / log(1.0 + 300.0 / 85.0)
-	var base_count: float = 1.0 + 3.5 * progress
-
-	# Mild bumps at tier boundaries (+0.3 items within 10 levels)
-	for boundary in [100, 200, 300]:
-		var dist: float = abs(area_level - boundary)
-		if dist <= 10:
-			base_count += 0.3 * (1.0 - dist / 10.0)
-			break
-
-	# Floor + fractional roll
-	var guaranteed: int = int(base_count)
-	var fractional: float = base_count - float(guaranteed)
-	if randf() < fractional:
-		guaranteed += 1
-
-	return max(1, guaranteed)
-
-
 ## Calculates currency drop chance with ramping for newly unlocked currencies
 ## Starts at 10% of base chance at unlock, linearly ramps to 100% over ramp_duration levels
 static func _calculate_currency_chance(
@@ -206,61 +181,6 @@ static func roll_pack_currency_drop(
 			# Roll quantity: 1 or up to max_qty
 			var quantity: int = randi_range(1, rule["max_qty"])
 			drops[currency_name] = quantity
-
-	return drops
-
-
-## DEPRECATED: Use roll_pack_currency_drop() instead. Per-pack drops replace bulk rolls.
-## Rolls currency drops for area clear based on area level
-## Returns dictionary mapping currency name to drop count
-## Currency names: "runic", "forge", "tack", "grand", "claw", "tuning"
-static func roll_currency_drops(area_level: int) -> Dictionary:
-	var drops: Dictionary = {}
-
-	# Per-currency drop chances and quantities
-	# Each currency has independent chance to drop
-	# Advanced currencies (grand, claw, tuning) are significantly rarer
-	var currency_rules: Dictionary = {
-		"runic": {"chance": 0.6, "min_qty": 1, "max_qty": 2},
-		"tack": {"chance": 0.45, "min_qty": 1, "max_qty": 2},
-		"forge": {"chance": 0.2, "min_qty": 1, "max_qty": 1},
-		"grand": {"chance": 0.1, "min_qty": 1, "max_qty": 1},
-		"claw": {"chance": 0.15, "min_qty": 1, "max_qty": 1},
-		"tuning": {"chance": 0.15, "min_qty": 1, "max_qty": 1},
-	}
-
-	# Roll each currency
-	for currency_name in currency_rules:
-		var unlock_level: int = CURRENCY_AREA_GATES[currency_name]
-		if area_level < unlock_level:
-			continue
-
-		var rule: Dictionary = currency_rules[currency_name]
-		var adjusted_chance: float = rule["chance"]
-		if unlock_level > 1:
-			adjusted_chance = _calculate_currency_chance(rule["chance"], area_level, unlock_level, 50)
-		if randf() < adjusted_chance:
-			var quantity: int = randi_range(rule["min_qty"], rule["max_qty"])
-			drops[currency_name] = quantity
-
-	# Logarithmic bonus drops: scales from 0 at area 1 to ~11 at area 300
-	# Replaces linear (area_level - 1) which gave 299 bonus at area 300
-	var bonus_drops: int = int(log(float(area_level)) * 2.0) if area_level > 1 else 0
-	if bonus_drops > 0:
-		var eligible_currencies: Array = []
-		for currency_name_check in currency_rules:
-			if area_level >= CURRENCY_AREA_GATES[currency_name_check]:
-				eligible_currencies.append(currency_name_check)
-		for i in range(bonus_drops):
-			var random_currency: String = eligible_currencies[randi() % eligible_currencies.size()]
-			if random_currency in drops:
-				drops[random_currency] += 1
-			else:
-				drops[random_currency] = 1
-
-	# Guarantee at least 1 runic hammer if nothing dropped
-	if drops.is_empty():
-		drops["runic"] = 1
 
 	return drops
 
