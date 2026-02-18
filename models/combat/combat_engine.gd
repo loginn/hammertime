@@ -42,10 +42,13 @@ func start_combat(level: int) -> void:
 	_start_pack_fight()
 
 
-## Stops combat and returns to idle state.
+## Stops combat and returns to idle state. Restores hero HP and ES to max.
 func stop_combat() -> void:
 	_stop_timers()
 	state = State.IDLE
+	# Restore hero to full HP and ES when combat is stopped by player
+	GameState.hero.health = GameState.hero.max_health
+	GameState.hero.current_energy_shield = float(GameState.hero.total_energy_shield)
 	GameEvents.combat_stopped.emit()
 
 

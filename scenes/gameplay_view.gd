@@ -36,6 +36,14 @@ var hero_damage_pos := Vector2(125.0, 200.0)  # Above hero HP bar
 var pack_damage_pos := Vector2(450.0, 200.0)  # Above pack HP bar
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED:
+		if not visible and is_combat_active:
+			is_combat_active = false
+			combat_engine.stop_combat()
+			start_clearing_button.text = "Start Combat"
+
+
 func _ready() -> void:
 	item_bases_collected = []
 	start_clearing_button.pressed.connect(_on_start_combat_pressed)
