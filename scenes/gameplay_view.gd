@@ -32,8 +32,8 @@ var combat_started_once: bool = false
 var default_label_color := Color(1.0, 1.0, 1.0)
 
 ## Floating text spawn positions (above health bars)
-var hero_damage_pos := Vector2(125.0, 160.0)  # Above hero HP bar
-var pack_damage_pos := Vector2(450.0, 160.0)  # Above pack HP bar
+var hero_damage_pos := Vector2(125.0, 200.0)  # Above hero HP bar
+var pack_damage_pos := Vector2(450.0, 200.0)  # Above pack HP bar
 
 
 func _ready() -> void:

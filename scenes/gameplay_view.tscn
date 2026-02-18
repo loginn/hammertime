@@ -51,9 +51,9 @@ mouse_filter = 2
 [node name="HeroHealthContainer" type="Control" parent="CombatUI/UIRoot"]
 layout_mode = 1
 offset_left = 50.0
-offset_top = 180.0
+offset_top = 220.0
 offset_right = 300.0
-offset_bottom = 210.0
+offset_bottom = 250.0
 mouse_filter = 2
 
 [node name="HeroHPBar" type="ProgressBar" parent="CombatUI/UIRoot/HeroHealthContainer"]
@@ -87,9 +87,9 @@ vertical_alignment = 1
 [node name="PackHealthContainer" type="Control" parent="CombatUI/UIRoot"]
 layout_mode = 1
 offset_left = 350.0
-offset_top = 180.0
+offset_top = 220.0
 offset_right = 600.0
-offset_bottom = 210.0
+offset_bottom = 250.0
 mouse_filter = 2
 
 [node name="PackHPBar" type="ProgressBar" parent="CombatUI/UIRoot/PackHealthContainer"]
@@ -114,9 +114,9 @@ vertical_alignment = 1
 [node name="PackProgressContainer" type="Control" parent="CombatUI/UIRoot"]
 layout_mode = 1
 offset_left = 150.0
-offset_top = 230.0
+offset_top = 270.0
 offset_right = 500.0
-offset_bottom = 255.0
+offset_bottom = 295.0
 mouse_filter = 2
 
 [node name="PackProgressBar" type="ProgressBar" parent="CombatUI/UIRoot/PackProgressContainer"]
@@ -141,9 +141,9 @@ vertical_alignment = 1
 [node name="CombatStateLabel" type="Label" parent="CombatUI/UIRoot"]
 layout_mode = 1
 offset_left = 50.0
-offset_top = 275.0
+offset_top = 315.0
 offset_right = 600.0
-offset_bottom = 305.0
+offset_bottom = 345.0
 text = "Ready to fight."
 
 [node name="FloatingTextContainer" type="Control" parent="CombatUI/UIRoot"]
