@@ -87,6 +87,7 @@ No known issues.
 | 1 | Fix Light Sword item type button regenerating a free weapon while other types do not | 2026-02-15 | c0bcfb8 | [1-fix-light-sword-item-type-button-regener](./quick/1-fix-light-sword-item-type-button-regener/) |
 | 2 | Adventure tab UI has overlaps - move HP bars lower so they dont overlap with buttons | 2026-02-18 | c4a180c | [2-adventure-tab-ui-has-overlaps-move-hp-ba](./quick/2-adventure-tab-ui-has-overlaps-move-hp-ba/) |
 | 3 | Remove deprecated loot tables and simulator tool | 2026-02-18 | bd481f5 | [3-remove-the-deprecated-loot-tables-and-si](./quick/3-remove-the-deprecated-loot-tables-and-si/) |
+| 4 | Fix orphan legacy files - delete if unused, track if needed | 2026-02-18 | 4210037 | [4-fix-the-orphan-legacy-files-delete-if-us](./quick/4-fix-the-orphan-legacy-files-delete-if-us/) |
 
 ## Session Continuity
 
@@ -98,4 +99,4 @@ No known issues.
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-18 — Milestone v1.4 started*
+*Last updated: 2026-02-18 — Quick task 4 completed*
