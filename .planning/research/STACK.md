@@ -1,16 +1,21 @@
-# Stack Research: Damage Range System
+# Stack Research: Per-Slot Multi-Item Inventory System
 
-**Domain:** Godot 4.5 Idle ARPG — Adding min-max damage ranges to weapons, monsters, and affixes
+**Domain:** Godot 4.5 Idle ARPG — Adding per-slot inventory arrays (10 items per slot) to existing single-item crafting system
 **Researched:** 2026-02-18
-**Confidence:** HIGH
+**Confidence:** HIGH (all patterns verified against existing codebase and official Godot documentation)
 
 ---
 
 ## Context
 
-This is a **subsequent milestone stack**. The engine, language, renderer, and data model are already validated (Godot 4.5, GDScript, mobile renderer, Resource-based model). This document covers only what changes for the damage range feature.
+This is a **subsequent milestone stack**. Godot 4.5, GDScript, mobile renderer, and the Resource-based data model are already validated. This document covers only what changes or is added for the per-slot inventory system.
 
-The existing codebase confirms `randi_range()` and `randf()` are already in production use across `affix.gd`, `defense_calculator.gd`, `loot_table.gd`, and currency scripts — no new RNG infrastructure is needed.
+The existing architecture to understand before touching anything:
+
+- `GameState.crafting_inventory` is a `Dictionary` keyed by slot string (`"weapon"`, `"helmet"`, etc.) with a single `Item` or `null` per slot
+- `SaveManager._build_save_data()` serializes that dict as `{slot: item.to_dict()}` — one item per slot
+- `ForgeView.add_item_to_inventory()` is the current drop entry point — it replaces the slot if `is_item_better()`, discards otherwise
+- `Item.to_dict()` / `Item.create_from_dict()` is the proven JSON serialization pattern — it is the pattern to extend
 
 ---
 
@@ -20,180 +25,206 @@ The existing codebase confirms `randi_range()` and `randf()` are already in prod
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| Godot Engine | 4.5 | Game engine | Already validated. No version change needed for damage ranges. |
-| GDScript | 4.5 | Scripting language | `randi_range(min, max)` and `randf_range(min, max)` are built-in global functions, already used in the codebase. No additions. |
-| Resource system | Godot 4.5 | Data model | Already proven for `Affix`, `Item`, `Hero`, `MonsterType`. Damage range properties follow the same pattern. |
+| Godot Engine | 4.5 | Game engine | Already in production. No version change needed. |
+| GDScript | 4.5 | Scripting language | All built-in array and container methods used below are 4.x globals or class methods already in use. |
+| Resource system | 4.5 | Data model (`Item`, `Hero`, `Affix`) | `Item.to_dict()` / `Item.create_from_dict()` is the proven round-trip pattern. Extend it, do not replace it. |
+| JSON via `JSON.stringify` / `JSON.parse_string` | 4.5 | Save file format | Already in `SaveManager`. Arrays of dictionaries serialize natively — no format change required. |
 
-### Damage Range Data Patterns (NEW)
+### GDScript Patterns for Per-Slot Arrays (NEW)
 
-| Pattern | GDScript Type | Where Applied | Why |
-|---------|--------------|---------------|-----|
-| Two int properties (`damage_min`, `damage_max`) | `int` | `Weapon`, `MonsterType`, elemental affix variants | Mirrors the already-working `Affix.min_value`/`max_value` pair. Serializes cleanly via existing `to_dict()`/`from_dict()` pattern. Readable at call sites. |
-| `randf_range(float, float)` per-hit roll | Global GDScript builtin | `CombatEngine._on_hero_attack()` | Already used as `randf()` for crit rolls in the same method. Returns `float` for continuous elemental variance. Correct type for damage math. |
-| `randi_range(int, int)` for affix rolling | Global GDScript builtin | `Affix._init()` and `Affix.reroll()` | Already used in `Affix` for `min_value`/`max_value` rolling. Same pattern, same call site, same serialization. |
-| Element variance constants | `const Dictionary` in `StatCalculator` or `Tag` | Applied during per-hit roll calculation | Codifies the Physical/Cold/Fire/Lightning spread ratios. Keeps variance logic out of `CombatEngine`. |
+#### 1. Typed Array Declaration
 
-### Random Function Reference (Verified in Codebase)
-
-| Function | Return Type | Signature | Use Case |
-|----------|-------------|-----------|----------|
-| `randi_range(from, to)` | `int` | Global builtin | Rolling integer affix values, selecting from discrete weapon damage tiers |
-| `randf_range(from, to)` | `float` | Global builtin | Per-hit float damage rolls where variance produces non-integer results |
-| `randf()` | `float` (0.0–1.0) | Global builtin | Probability checks (crit, dodge) — already used in `CombatEngine._on_hero_attack()` |
-| `pick_random()` | element type | Array method | Already used for affix pool selection in `Item.add_prefix()`/`add_suffix()` |
-
-**Confidence: HIGH** — `randi_range` appears in `affix.gd:32`, `affix.gd:38`, `affix.gd:46`, `forge_hammer.gd:23`, `tack_hammer.gd:31`, `grand_hammer.gd:31`, `loot_table.gd:182`. `randf()` appears in `defense_calculator.gd:123`, `loot_table.gd:86`, `loot_table.gd:117`, `loot_table.gd:180`, `runic_hammer.gd:23`. These are proven working globals, not imports.
-
-### Display Patterns (NEW)
-
-| Pattern | GDScript | Where Applied | Why |
-|---------|----------|---------------|-----|
-| `"%d-%d" % [min_d, max_d]` | String formatting | `item.gd:get_display_text()`, `item_view.gd` | Existing display methods use `%` string format throughout. Consistent extension. |
-| `"%.0f-%.0f" % [min_d, max_d]` | String formatting | Floating label combat numbers | Per-hit damage label already uses `int(damage)`. For range display, show rolled value as integer. |
-| Average damage for DPS tooltip | Arithmetic | `Weapon.update_value()` → `StatCalculator.calculate_dps()` | DPS stays a single-number summary. Range is shown on item card; DPS shows expected value. Matches PoE convention. |
-
----
-
-## Integration Points (What Changes)
-
-### 1. `Weapon` Resource — Add Range Fields
+Use `Array[Item]` typed arrays in `GameState` for slot inventories. Typed arrays give compile-time checks but serialize to plain `Array` when passed through JSON — this is fine because `SaveManager` already manually iterates and calls `to_dict()` / `create_from_dict()` per item. The type annotation is for code clarity and editor autocomplete, not for JSON round-trip.
 
 ```gdscript
-# models/items/weapon.gd — BEFORE
-var base_damage: int
-
-# AFTER
-var base_damage_min: int  # Replaces base_damage
-var base_damage_max: int
-# base_damage kept as computed average for backward-compat DPS display (optional)
-```
-
-**Why two properties, not Vector2i:** The existing `Affix` model uses `min_value: int` / `max_value: int` (not a Vector2). Matching that pattern keeps serialization consistent and avoids extra constructor calls. `to_dict()` / `from_dict()` already knows how to handle flat int properties.
-
-**Serialization:** Extend `Item.to_dict()` to include `"base_damage_min"` and `"base_damage_max"`. `from_dict()` restores them. No format breaking change if you keep `base_damage` as a computed fallback.
-
-### 2. `MonsterType` Resource — Add Range Fields
-
-```gdscript
-# models/monsters/monster_type.gd — BEFORE
-var base_damage: float
-
-# AFTER
-var base_damage_min: float
-var base_damage_max: float
-```
-
-`MonsterType` is not saved/loaded (it's built in `BiomeConfig._build_biomes()` at runtime), so no serialization change needed. `MonsterPack.damage` becomes a per-attack-roll value computed in `PackGenerator.create_pack()`.
-
-### 3. `MonsterPack` — Add Damage Range Fields
-
-```gdscript
-# models/monsters/monster_pack.gd — BEFORE
-var damage: float
-
-# AFTER
-var damage_min: float  # Scaled min from MonsterType
-var damage_max: float  # Scaled max from MonsterType
-# damage kept for backward-compat if needed, or removed
-```
-
-`MonsterPack.damage` is the value passed to `DefenseCalculator.calculate_damage_taken()`. Converting it to a per-hit roll means the roll happens in `CombatEngine._on_pack_attack()`, not in `PackGenerator`.
-
-### 4. `CombatEngine` — Per-Hit Roll Sites
-
-Two existing roll sites. Both extend naturally:
-
-```gdscript
-# _on_hero_attack() — BEFORE
-var damage_per_hit := hero.total_dps / hero_attack_speed
-
-# AFTER — roll from weapon range, then apply affix multipliers
-var raw_hit := randf_range(hero.damage_min, hero.damage_max)
-var damage_per_hit := StatCalculator.apply_multipliers(raw_hit, all_affixes) / hero_attack_speed
-```
-
-```gdscript
-# _on_pack_attack() — BEFORE
-var result := DefenseCalculator.calculate_damage_taken(pack.damage, ...)
-
-# AFTER — roll per hit
-var raw_pack_hit := randf_range(pack.damage_min, pack.damage_max)
-var result := DefenseCalculator.calculate_damage_taken(raw_pack_hit, pack.element, ...)
-```
-
-**Key insight:** The crit roll already happens here (`randf() < crit_chance`). Adding the damage range roll is the same pattern — another `randf_range()` call before the crit multiplier. The hero attack has the cleaner entry point.
-
-### 5. `StatCalculator` — DPS Uses Average
-
-`StatCalculator.calculate_dps()` currently takes `base_damage: float`. For the DPS summary number, pass the average of the range:
-
-```gdscript
-# In Weapon.update_value()
-var avg_base := (base_damage_min + base_damage_max) / 2.0
-self.dps = StatCalculator.calculate_dps(avg_base, base_speed, all_affixes, crit_chance, crit_damage)
-```
-
-This keeps `dps` as the expected-value summary (used in tooltips and hero stat display) while per-hit combat uses the actual range. No change to `StatCalculator.calculate_dps()` signature required.
-
-### 6. `Hero` — Add Range Tracking
-
-```gdscript
-# models/hero.gd — ADD
-var damage_min: float = 0.0
-var damage_max: float = 0.0
-
-# In calculate_dps():
-if weapon is Weapon:
-    damage_min = weapon.compute_scaled_min(all_affixes)
-    damage_max = weapon.compute_scaled_max(all_affixes)
-    total_dps = weapon.dps
-```
-
-`CombatEngine` reads `hero.damage_min` / `hero.damage_max` for the per-hit roll instead of deriving from `total_dps`.
-
-### 7. Elemental Variance Constants
-
-Define variance ratios in a central location (either `Tag` autoload or `StatCalculator`):
-
-```gdscript
-# Recommended: const in StatCalculator or a new models/stats/damage_range.gd
-# Variance ratio = max/min — how wide the damage spread is per element
-const ELEMENT_VARIANCE: Dictionary = {
-    "physical": 1.25,    # Tight: 80–100 (1.25x spread)
-    "cold":     1.5,     # Moderate: 67–100 (1.5x spread)
-    "fire":     2.0,     # Wide: 50–100 (2x spread)
-    "lightning": 4.0,    # Extreme: 25–100 (4x spread)
+# In game_state.gd — replaces the single-Item Dictionary
+var slot_inventories: Dictionary = {
+    "weapon": [],   # Array[Item], max 10
+    "helmet": [],
+    "armor":  [],
+    "boots":  [],
+    "ring":   [],
 }
 ```
 
-**How to use:** When `MonsterType` or `Affix` declares a target average damage, the min/max are derived from the variance ratio:
+**Why Dictionary of Arrays, not a nested typed array:** The existing `crafting_inventory` is a `Dictionary` keyed by slot string. Keeping the same key structure means all call sites that do `GameState.crafting_inventory.get(slot_name)` change minimally — just index into the array instead of referencing the single value. The switch from `Dictionary` to a new variable name (`slot_inventories`) also makes the breaking change explicit and searchable.
+
+#### 2. Array Bounds Check Pattern
+
+The 10-item cap must be enforced at the single add point (the new `add_item_to_slot()` function). Never scatter the cap check across callers.
 
 ```gdscript
-# Given: avg_damage = 100, element = "lightning", variance = 4.0
-# max = avg * 2 / (1 + 1/variance) = 133
-# min = max / variance = 33
-# Average of [33, 133] = 83 ≈ 100 ✓ (close enough for game balance)
+# game_state.gd or forge_view.gd — single authoritative add function
+const SLOT_CAPACITY: int = 10
 
-# Simpler formula used in practice:
-# min = avg * 2 / (1 + variance)
-# max = avg * 2 * variance / (1 + variance)
-static func get_range_from_avg(avg: float, variance_ratio: float) -> Vector2:
-    var min_d := avg * 2.0 / (1.0 + variance_ratio)
-    var max_d := min_d * variance_ratio
-    return Vector2(min_d, max_d)
+func add_item_to_slot(item: Item) -> bool:
+    var slot: String = _get_slot_for_item(item)
+    var inv: Array = slot_inventories[slot]
+    if inv.size() >= SLOT_CAPACITY:
+        return false   # Drop silently — inventory full
+    inv.append(item)
+    return true
 ```
 
-`Vector2` is appropriate here because this is a **computed output** (not stored in a Resource), so no serialization concern.
+**Why `const` not a magic number:** The constant is referenced by UI code (`"%d/%d" % [inv.size(), SLOT_CAPACITY]`). Keeping it in one place (either `GameState` or a shared autoload constant block) prevents the UI and logic from drifting.
 
-### 8. Affix Elemental Damage — Add Element Tag to Damage Affixes
+#### 3. Highest-Tier Auto-Selection for Crafting Bench
 
-Current flat damage affixes (`Lightning Damage`, `Fire Damage`, `Cold Damage`) use `FLAT_DAMAGE` stat type, which rolls a single `value: int`. For element-specific variance, either:
+The bench always shows the item with the highest comparison value in the slot. This is a pure sort + pick-first operation.
 
-**Option A (Recommended):** Add element-specific stat types (`FLAT_FIRE_DAMAGE`, `FLAT_COLD_DAMAGE`, `FLAT_LIGHTNING_DAMAGE`) to `Tag.StatType` enum. `StatCalculator` uses the element tag to apply the variance ratio when computing the per-hit min/max contribution from affixes.
+```gdscript
+# Get the "best" item for the crafting bench view
+func get_best_item_for_slot(slot: String) -> Item:
+    var inv: Array = slot_inventories.get(slot, [])
+    if inv.is_empty():
+        return null
+    # Sort descending by the same metric used in the old is_item_better()
+    var sorted := inv.duplicate()
+    sorted.sort_custom(func(a, b): return _item_sort_value(a) > _item_sort_value(b))
+    return sorted[0]
 
-**Option B:** Use existing `tags` array (e.g., `Tag.FIRE`) to look up the variance constant at combat time. No enum change needed, slightly more dynamic.
+func _item_sort_value(item: Item) -> float:
+    if item is Weapon or item is Ring:
+        return item.dps
+    return float(item.tier)
+```
 
-**Recommend Option A** — explicit types at the enum level are more robust and searchable. The `Tag.StatType` enum already has 19 values; adding 3 is low overhead.
+**Why sort-and-pick vs linear max scan:** Both are O(n) for n=10. Sort is clearer to read and makes it trivial to display items in tier order later if the UI expands to show all 10.
+
+**Why duplicate() before sort:** `Array.sort_custom()` sorts in place. Sorting the live inventory array would mutate state. Sorting a shallow duplicate leaves the inventory order stable (FIFO drop order) while bench shows best-first.
+
+#### 4. Item Removal Pattern
+
+Melt removes by reference, not by index. Use `Array.erase(item)` — it removes the first matching reference. For n=10 this is safe and the correct semantic ("destroy this specific item object").
+
+```gdscript
+func remove_item_from_slot(slot: String, item: Item) -> void:
+    slot_inventories[slot].erase(item)
+    # No index needed — erase by object reference
+```
+
+**Why not `remove_at(index)`:** Indices are unstable if items can be added or removed asynchronously (though they cannot in this single-threaded GDScript game). More importantly, the UI selection state tracks the `Item` object reference, not its position in the array. Erasing by reference keeps the UI and data model in sync without translating between index systems.
+
+---
+
+### UI Pattern: `ItemList` Node (NEW)
+
+For the inventory UI showing x/10 counters and selectable items per slot tab.
+
+| Node | Purpose | Why |
+|------|---------|-----|
+| `ItemList` | Built-in Godot control node displaying a vertical scrollable list of text + icon items | Has `add_item(text)`, `clear()`, `set_item_metadata(index, variant)`, `get_item_metadata(index)`, `item_selected(index)` signal. Stores the `Item` object reference as metadata, so selection resolves back to the data model without a parallel array. |
+| `Label` (x/10 counter) | Displays current slot count | Simple `"%d/%d" % [count, SLOT_CAPACITY]` text update on every inventory change. No separate node type needed. |
+| Tab or Button group | Slot type selector (weapon / helmet / armor / boots / ring) | Same pattern as existing `_on_item_type_selected()` in `ForgeView` — reuse or minimally extend. |
+
+#### ItemList Usage Pattern
+
+```gdscript
+# Rebuild the list whenever inventory changes (called after add, melt, equip)
+func _refresh_slot_list(slot: String) -> void:
+    item_list.clear()
+    var inv: Array = GameState.slot_inventories.get(slot, [])
+    for item in inv:
+        var label: String = item.item_name + " (" + _rarity_name(item) + ")"
+        item_list.add_item(label)
+        item_list.set_item_metadata(item_list.get_item_count() - 1, item)
+    slot_counter_label.text = "%d/%d" % [inv.size(), GameState.SLOT_CAPACITY]
+```
+
+**Why `ItemList` over `VBoxContainer` + instantiated scenes:** `ItemList` is a single built-in node with selection, scrolling, and metadata storage. A `VBoxContainer` + preloaded scene approach would require managing child node lifecycle (add/remove children, connect signals on each child, track selected child). For a list of simple text entries with associated data, `ItemList` eliminates that overhead entirely. The customization limit (text + icon only, no arbitrary child UI) is fine for a list of item names.
+
+**Why full rebuild (`clear()` then re-add) vs incremental update:** For n=10, clear-and-rebuild is O(10) and eliminates all stale-state bugs from partial updates. Incremental updates (insert at index, remove at index) require tracking list position against array position and break easily when items are reordered. At this scale, clear-and-rebuild is the correct choice.
+
+**Key ItemList signals:**
+- `item_selected(index: int)` — use `get_item_metadata(index)` to recover the `Item` reference. This drives the crafting bench display.
+- `item_activated(index: int)` — double-click to equip (optional pattern, same metadata lookup).
+
+---
+
+### Serialization Pattern for Arrays of Items (EXTENDED from existing)
+
+The existing `SaveManager._build_save_data()` iterates slots and calls `item.to_dict()`. Extend to iterate the array per slot.
+
+#### Save (build_save_data)
+
+```gdscript
+# Replace the single-item crafting_inventory block
+var slot_inv_data: Dictionary = {}
+for slot in ["weapon", "helmet", "armor", "boots", "ring"]:
+    var item_array: Array = GameState.slot_inventories.get(slot, [])
+    var dict_array: Array = []
+    for item in item_array:
+        dict_array.append(item.to_dict())
+    slot_inv_data[slot] = dict_array   # Array of dicts, never null
+
+return {
+    "version": SAVE_VERSION,           # Bump to 2 to trigger migration
+    "slot_inventories": slot_inv_data, # NEW key
+    # ... other fields unchanged
+}
+```
+
+#### Load (restore_state)
+
+```gdscript
+var slot_inv_data: Dictionary = data.get("slot_inventories", {})
+for slot in ["weapon", "helmet", "armor", "boots", "ring"]:
+    GameState.slot_inventories[slot] = []
+    var dict_array: Array = slot_inv_data.get(slot, [])
+    for item_dict in dict_array:
+        if item_dict is Dictionary:
+            var item := Item.create_from_dict(item_dict)
+            if item != null:
+                GameState.slot_inventories[slot].append(item)
+```
+
+#### Save Version Migration
+
+The save format change from `crafting_inventory` (single item) to `slot_inventories` (array) is a breaking change. Bump `SAVE_VERSION` from 1 to 2 and add a migration function:
+
+```gdscript
+# _migrate_v1_to_v2(data: Dictionary) -> Dictionary
+func _migrate_v1_to_v2(data: Dictionary) -> Dictionary:
+    # Old key: "crafting_inventory" -> {"weapon": {item_dict}, ...}
+    # New key: "slot_inventories"   -> {"weapon": [{item_dict}], ...}
+    var old_crafting: Dictionary = data.get("crafting_inventory", {})
+    var new_inv: Dictionary = {}
+    for slot in ["weapon", "helmet", "armor", "boots", "ring"]:
+        var old_item = old_crafting.get(slot)
+        if old_item != null and old_item is Dictionary:
+            new_inv[slot] = [old_item]   # Wrap single item in array
+        else:
+            new_inv[slot] = []
+    data["slot_inventories"] = new_inv
+    data.erase("crafting_inventory")
+    # Migrate bench item: if crafting_bench_item exists, add it to the correct slot array
+    var bench_item_data = data.get("crafting_bench_item")
+    if bench_item_data != null and bench_item_data is Dictionary:
+        var slot := str(data.get("crafting_bench_type", "weapon"))
+        if slot in new_inv:
+            new_inv[slot].append(bench_item_data)
+        data.erase("crafting_bench_item")
+    return data
+```
+
+**Why version bump, not silent field detection:** The existing `_migrate_save()` function has the version-gated migration pattern already (`if saved_version < 2`). Using it keeps migration logic in one place and makes save compat explicit. Silent detection (`data.has("crafting_inventory")`) works but is fragile if both keys ever coexist during development.
+
+**Confidence: HIGH** — `JSON.stringify` natively serializes `Array` of `Dictionary` as a JSON array. This is the same type that `JSON.parse_string` produces on load. The existing per-item `to_dict()` / `create_from_dict()` round-trip is already proven (verified in `save_manager.gd`). No new serialization infrastructure is needed.
+
+---
+
+### Signal Additions (NEW)
+
+The existing `GameEvents` autoload should gain one new signal for inventory array changes. The existing `equipment_changed` signal is sufficient for the equip flow.
+
+```gdscript
+# game_events.gd — ADD
+signal inventory_changed(slot: String)   # Emitted after any add/remove to a slot
+```
+
+**Why one signal, not separate `item_added` / `item_removed`:** The UI response to both events is identical: rebuild the `ItemList` for the affected slot and update the counter. One signal with a slot argument is sufficient and matches the granularity already used by `equipment_changed(slot, item)`.
+
+**Why not reuse `item_crafted`:** `item_crafted` is connected to `SaveManager._on_save_trigger`. Reusing it for inventory mutations would double-trigger saves on every drop. The new `inventory_changed` signal should connect to the save trigger separately (or SaveManager can connect to it as well — the debounce in `_trigger_save()` prevents duplicate saves in the same frame).
 
 ---
 
@@ -201,41 +232,44 @@ Current flat damage affixes (`Lightning Damage`, `Fire Damage`, `Cold Damage`) u
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `Vector2i` or `Vector2` as Resource property for damage range | No serialization precedent in this codebase. `Affix` uses two flat int properties (`min_value`, `max_value`). Mixing patterns creates inconsistency. | Two flat `int` or `float` properties matching `Affix` convention |
-| `RandomNumberGenerator` class instance | Adds state management (seed, instance lifecycle). Global `randf_range()` / `randi_range()` are identical output and already proven in the codebase. | Global `randi_range()` / `randf_range()` builtins |
-| Storing rolled damage in a field on `Hero` or `MonsterPack` | Damage is a per-hit ephemeral value. Storing it introduces stale-state bugs. | Roll inline in `_on_hero_attack()` / `_on_pack_attack()` every tick |
-| Separate `DamageRangeCalculator` class | Splits DPS math from range math. Makes `StatCalculator` incomplete. | Add `get_range_from_avg()` and `apply_multipliers_to_range()` as static methods in `StatCalculator` |
-| Plugins / addons for RNG or stat display | No external dependencies needed. GDScript builtins handle this entirely. | Built-in global functions |
-| Changing `StatCalculator.calculate_dps()` signature | `Weapon.update_value()` and `Hero.calculate_dps()` both call it. Changing breaks callers. | Keep signature, pass average damage as input. Compute average in `Weapon.update_value()`. |
-| Float per-hit damage shown in floating labels as float | `_spawn_floating_text()` already takes `int`. Casting to `int` is the correct pattern. | `int(rolled_damage)` before passing to floating label |
+| External inventory plugins (GodotDynamicInventorySystem, etc.) | The project has zero external dependencies by design. The feature is 50 lines of GDScript. | Native `Array`, `Dictionary`, `ItemList` — all built-in |
+| SQLite or file-per-item saves | Massive over-engineering for 50 items max total (5 slots × 10). JSON round-trip is <1ms. | Extend existing `SaveManager` JSON pattern |
+| `ResourceSaver.save()` / `.tres` files | Would require switching from the existing JSON save format. Breaks export/import string system (`HT1:base64:md5`). | Keep JSON, extend `to_dict()` / `create_from_dict()` |
+| `var_to_bytes()` / `store_var()` for typed arrays | Loading typed arrays via `get_var()` returns an untyped `Array` — a known Godot 4 issue. Requires a cast loop anyway. | Manual `for item in array: dict_array.append(item.to_dict())` already handles this cleanly |
+| `Node`-based item slots (one Node per inventory slot) | Godot nodes have lifecycle overhead (tree enter/exit, signal connection). Inventory slots are pure data. | `Dictionary` of `Array` in `GameState` autoload |
+| `VBoxContainer` + preloaded scene rows for the 10-item list | 10 child node instances, per-child signal management, layout recalculation on every add/remove. Correct for complex item rows (icons, multi-button). Overkill for a simple selectable name list. | `ItemList` with `set_item_metadata()` — single node, built-in selection, built-in scroll |
+| Stacked signal chains for drop → forge → inventory | Current flow: `gameplay_view` emits `item_base_found`, `main_view` routes it to `forge_view.set_new_item_base()`. This direct scene-to-scene wiring works fine for the current scope. | Keep existing signal routing. `set_new_item_base()` becomes the entry point for `add_item_to_slot()`. |
+| Auto-equip on drop | The milestone spec says items go to inventory, not auto-replace. `is_item_better()` logic is removed from the drop path. | Manual equip button from inventory selection |
 
 ---
 
-## Serialization Checklist
+## Integration Points (What Changes vs. What Stays)
 
-The `Affix` pattern (in `affix.gd:to_dict()`) is the serialization model for all new range fields:
+### Changes
 
-| New Field | Owner | `to_dict()` key | `from_dict()` restore |
-|-----------|-------|-----------------|----------------------|
-| `base_damage_min` | `Weapon` (via `Item.to_dict()`) | `"base_damage_min"` | `int(data.get("base_damage_min", 10))` |
-| `base_damage_max` | `Weapon` (via `Item.to_dict()`) | `"base_damage_max"` | `int(data.get("base_damage_max", 15))` |
-| `MonsterType` damage range | Not serialized (built at runtime) | — | — |
-| `MonsterPack` damage range | Not serialized (built at runtime) | — | — |
-| Affix elemental damage values | Already serialized (`value`, `min_value`, `max_value`) | Existing keys | Existing restore |
+| Location | Current | After |
+|----------|---------|-------|
+| `GameState.crafting_inventory` | `Dictionary` of `Item \| null` | Replaced by `GameState.slot_inventories`: `Dictionary` of `Array` |
+| `GameState.crafting_bench_item` | Single `Item \| null` | Removed — bench item is derived from `slot_inventories` at display time |
+| `SaveManager._build_save_data()` | Serializes single item per slot | Serializes `Array` of `to_dict()` per slot |
+| `SaveManager._restore_state()` | Restores single item per slot | Restores `Array`, appends `create_from_dict()` results |
+| `SaveManager.SAVE_VERSION` | 1 | 2 (triggers migration path) |
+| `ForgeView.add_item_to_inventory()` | Replaces slot if `is_item_better()`, discards if not | Appends to slot array if under capacity; returns bool for full-slot feedback |
+| `ForgeView._on_melt_pressed()` | Sets slot to null | Calls `Array.erase(current_item)` |
+| `ForgeView._on_equip_pressed()` | Equips and sets slot to null | Equips and calls `Array.erase(current_item)` — old item in hero slot is destroyed (not returned) |
+| `ForgeView.update_inventory_display()` | Label-based text summary | `ItemList` rebuild + counter label per slot |
 
-`LightSword._init()` hardcodes `base_damage = 10`. Change to `base_damage_min = 8`, `base_damage_max = 12`. All other item base stats follow the same update pattern.
+### Stays the Same
 
----
-
-## Alternatives Considered
-
-| Recommended | Alternative | Why Not |
-|-------------|-------------|---------|
-| Two flat properties (`damage_min`, `damage_max`) | `Vector2i` range property | `Affix` uses two flat properties already. Inconsistent to switch patterns mid-codebase. Vector2 serializes less cleanly with the existing `int(data.get(...))` restore pattern. |
-| Global `randi_range()` / `randf_range()` | `RandomNumberGenerator` instance | No benefit over globals for combat rolls. Adds unnecessary state. Already using globals everywhere in the codebase. |
-| Average damage for DPS display | Show range in DPS tooltip (e.g., "45–90 DPS") | The hero stat panel shows `total_dps` as a single number. Changing the display format is a separate UI task. Keep DPS as expected value; show range on item card only. |
-| Element variance via `const Dictionary` in `StatCalculator` | Hardcoded in `MonsterType` per-type or per-biome | Centralized constants are easier to tune (single edit site). Per-type hardcoding duplicates logic. |
-| New `FLAT_FIRE_DAMAGE` etc. in `Tag.StatType` | Dynamic lookup via `tags` array | Enum values are explicit, searchable, type-safe. Tags are already used for affix pool filtering (separate concern). |
+| What | Why Unchanged |
+|------|--------------|
+| `Item.to_dict()` / `Item.create_from_dict()` | The per-item serialization contract is not changing. |
+| `Hero.equip_item(item, slot)` | Equip logic is correct — slot gets the item, hero stats update. |
+| `GameEvents.equipment_changed` | Still emitted when hero's equipped item changes. |
+| `ForgeView` equip confirmation timer | The confirm-overwrite flow remains valid (old item is destroyed). |
+| `StatCalculator` / `DefenseCalculator` | Not touched by inventory changes. |
+| `SaveManager` export/import string format | `HT1:base64:md5` envelope is unchanged. Inner JSON gains a new key. |
+| `gameplay_view.item_base_found` signal | The signal interface is unchanged — drops still flow through it. |
 
 ---
 
@@ -243,35 +277,57 @@ The `Affix` pattern (in `affix.gd:to_dict()`) is the serialization model for all
 
 | API | Godot Version | Notes |
 |-----|--------------|-------|
-| `randi_range(int, int)` | 4.0+ | Global GDScript builtin. Confirmed working in this project (see `affix.gd:32`). |
-| `randf_range(float, float)` | 4.0+ | Global GDScript builtin. Added in Godot 4.0 (renamed from `rand_range()`). |
-| `randf()` | 4.0+ | Already in use at `defense_calculator.gd:123`. |
-| Two-property Resource pattern | 4.0+ | `Affix.min_value`/`max_value` already proven with save/load round-trip. |
-| `to_dict()`/`from_dict()` JSON save | 4.5 | Current save system is JSON via `SaveManager`. New int fields serialize as native JSON numbers. No format breaking change with default fallbacks. |
+| `Array.append(item)` | 4.0+ | Global Array method. Already used in `item.gd` for prefixes/suffixes arrays. |
+| `Array.erase(item)` | 4.0+ | Removes first matching reference. O(n) for n=10, correct semantic. |
+| `Array.size()` | 4.0+ | Already used throughout codebase. |
+| `Array.duplicate()` | 4.0+ | Shallow copy for sort. Already used in `hero.gd` for affix arrays. |
+| `Array.sort_custom(callable)` | 4.0+ | Lambda callable syntax (`func(a, b): ...`) is Godot 4.0+. Already used in `loot_table.gd`. |
+| `ItemList.add_item(text)` | 4.0+ | Built-in Control node. No import needed. |
+| `ItemList.set_item_metadata(idx, variant)` | 4.0+ | Stores any Variant (including Resource references). |
+| `ItemList.get_item_metadata(idx)` | 4.0+ | Retrieves the stored Variant. Cast to `Item` at call site. |
+| `ItemList.item_selected` signal | 4.0+ | Emits `index: int`. Use with `get_item_metadata(index)` for data. |
+| `JSON.stringify(array)` | 4.0+ | Natively serializes `Array[Dictionary]` to JSON array. Already used in `SaveManager`. |
+| `JSON.parse_string(text)` | 4.0+ | Returns `Array` when JSON root is an array, `Dictionary` otherwise. Already used. |
+| `Dictionary` of `Array` | 4.0+ | Standard GDScript. No version constraint. |
+| Typed arrays (`Array[Item]`) | 4.0+ | Type annotation only — does not affect runtime JSON serialization. |
+
+---
+
+## Alternatives Considered
+
+| Recommended | Alternative | Why Not |
+|-------------|-------------|---------|
+| `ItemList` with `set_item_metadata` | `VBoxContainer` + preloaded `item_row.tscn` scenes | `VBoxContainer` is correct when rows need complex layout (icon + multiple buttons). For a 10-item name list, `ItemList` eliminates all child node lifecycle management. |
+| `Array.erase(item)` by reference | `Array.remove_at(index)` | Index-based removal requires the UI to track list position. Reference-based removal works with any ordering and is stable if items are resorted. |
+| Clear-and-rebuild `ItemList` on every change | Incremental insert/remove on `ItemList` | Clear-rebuild is O(10) and eliminates stale-state bugs. For n=10, performance difference is immeasurable. |
+| `slot_inventories` as new `Dictionary` var | Repurpose `crafting_inventory` in place | Renaming makes the breaking change explicit and searchable. Easier to grep for migration completeness. |
+| Manual `to_dict()` / `create_from_dict()` loop for arrays | Plugin (godot-improved-json, godot-object-serializer) | The existing manual pattern already works and is proven. Adding a plugin for a 10-line serialization loop is not justified. |
+| Save version bump + migration function | Silent schema detection (`data.has("slot_inventories")`) | Version-gated migration is the existing pattern in `_migrate_save()`. Explicit is better — prevents ambiguous states during development. |
 
 ---
 
 ## Sources
 
-**HIGH Confidence (Codebase direct analysis):**
-- `/var/home/travelboi/Programming/hammertime/models/affixes/affix.gd` — `randi_range()` usage at lines 32, 38, 46; `min_value`/`max_value` two-property pattern
-- `/var/home/travelboi/Programming/hammertime/models/combat/combat_engine.gd` — Per-hit crit roll with `randf()` at line 83; `damage_per_hit` calculation at line 80
-- `/var/home/travelboi/Programming/hammertime/models/stats/stat_calculator.gd` — `base_damage: float` parameter; DPS formula structure
-- `/var/home/travelboi/Programming/hammertime/models/items/weapon.gd` — `base_damage: int` current field
-- `/var/home/travelboi/Programming/hammertime/models/monsters/monster_type.gd` — `base_damage: float` current field
-- `/var/home/travelboi/Programming/hammertime/models/monsters/monster_pack.gd` — `damage: float` passed to `DefenseCalculator`
+**HIGH Confidence (Direct codebase analysis):**
+- `/var/home/travelboi/Programming/hammertime/autoloads/save_manager.gd` — `_build_save_data()` and `_restore_state()` patterns; debounced save trigger; `SAVE_VERSION` migration gate
+- `/var/home/travelboi/Programming/hammertime/autoloads/game_state.gd` — `crafting_inventory` Dictionary structure; `initialize_fresh_game()` slot initialization
+- `/var/home/travelboi/Programming/hammertime/scenes/forge_view.gd` — `add_item_to_inventory()`, `is_item_better()`, `_on_melt_pressed()`, `_on_equip_pressed()` — all primary change sites
+- `/var/home/travelboi/Programming/hammertime/models/items/item.gd` — `to_dict()` / `create_from_dict()` proven round-trip; `Array[Affix]` typed array already in production
+- `/var/home/travelboi/Programming/hammertime/scenes/main_view.gd` — `item_base_found` signal routing from gameplay to forge
+- `/var/home/travelboi/Programming/hammertime/autoloads/game_events.gd` — existing signal declarations; `equipment_changed`, `item_crafted` save triggers
 
-**MEDIUM Confidence (Official docs, web search verified):**
-- [Godot Forum: Min-Max Export Variables](https://forum.godotengine.org/t/how-to-create-a-min-max-export-variable/129415) — Two flat properties recommended over Vector2 for inspector clarity
-- [PoE Wiki: Damage](https://www.poewiki.net/wiki/Damage) — Lightning has highest variance ("damage variance describes the difference between highest and lowest values"); Lightning min/max spread is substantially wider than Cold/Physical
-- [GDScript Random Numbers](https://gdscript.com/solutions/random-numbers/) — `randi_range()` preferred over `randi() % range` for cleaner semantics
-- [Godot GitHub: randi() vs randi_range() performance](https://github.com/godotengine/godot/issues/89795) — `randi_range()` is 1.25–4x faster than `randi()` equivalent
+**MEDIUM Confidence (Official Godot docs, verified via web):**
+- [Godot Engine — ItemList class reference](https://docs.godotengine.org/en/stable/classes/class_itemlist.html) — `add_item`, `clear`, `set_item_metadata`, `get_item_metadata`, `item_selected` signal confirmed
+- [GameDev Academy — ItemList Complete Guide](https://gamedevacademy.org/itemlist-in-godot-complete-guide/) — `set_item_metadata` pattern for binding data objects to list entries
+- [Godot Forum — How to save an array of Resources with JSON](https://forum.godotengine.org/t/how-to-save-an-array-of-resources-with-json/3258) — Confirms: convert Resource to Dictionary manually, iterate array, no automatic serialization for custom Resource objects
+- [Godot 4.5.1 release notes](https://godotengine.org/article/maintenance-release-godot-4-5-1/) — No changes to JSON, Array, or Resource serialization in this version
+- [Godot Forum — Issues with saving an array of items](https://forum.godotengine.org/t/issues-with-saving-an-array-of-items/46056) — Confirms parameterless `_init()` requirement (already satisfied by project's `Item.new()` pattern)
 
-**LOW Confidence (Design patterns, not Godot-specific):**
-- Element variance ratios (Physical 1.25x, Cold 1.5x, Fire 2x, Lightning 4x) — derived from PoE design intent ("Lightning has highest damage variance") and project milestone description. Specific ratios are design decisions, not documented facts.
+**LOW Confidence (Single source, not verified against official docs):**
+- `Array.sort_custom()` tween interaction issue [GitHub #114974](https://github.com/godotengine/godot/issues/114974) — VBoxContainer position recalculation on child add. Not applicable to `ItemList` (which manages layout internally).
 
 ---
 
-*Stack research for: Hammertime v1.4 Milestone — Damage Range System*
+*Stack research for: Hammertime — Per-Slot Multi-Item Inventory System*
 *Researched: 2026-02-18*
-*Confidence: HIGH — All RNG patterns, property conventions, and integration points verified directly against existing codebase*
+*Confidence: HIGH — All array patterns, serialization patterns, and ItemList API verified against existing codebase and official documentation*

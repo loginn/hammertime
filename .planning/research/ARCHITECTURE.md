@@ -1,680 +1,838 @@
 # Architecture Research
 
-**Domain:** Damage Range System — Integration with Existing ARPG Crafting Architecture
+**Domain:** Per-slot multi-item inventory system — integration with existing Hammertime ARPG architecture
 **Researched:** 2026-02-18
-**Confidence:** HIGH (based on direct codebase analysis)
+**Confidence:** HIGH (based on direct codebase analysis of all affected files)
 
 ---
 
 ## System Overview
 
-This document maps how min-max damage ranges integrate into the existing Hammertime architecture. The existing system uses single-value `affix.value` integers throughout. The new system introduces damage ranges (min-max) for weapons, monsters, and flat damage affixes, with per-element variance and per-hit rolling in combat.
+The v1.5 inventory rework replaces one key data shape: `crafting_inventory` values change from a single `Item` reference to an `Array[Item]`. Every component that touches `crafting_inventory` must be updated. No new autoloads, no new scenes. Two helpers (selection logic, best-item picker) get promoted into new standalone functions. The rest is plumbing.
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Scene Layer                                  │
-│  ┌──────────────┐  ┌───────────────┐  ┌────────────────────┐   │
-│  │  forge_view  │  │ gameplay_view │  │ floating_label     │   │
-│  │ (affix fmt)  │  │ (hit display) │  │ (shows range roll) │   │
-│  └──────┬───────┘  └──────┬────────┘  └──────────┬─────────┘   │
-│         │                 │                       │             │
-├─────────┴─────────────────┴───────────────────────┴─────────────┤
-│                     Combat Layer                                  │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │ CombatEngine._on_hero_attack()                              │  │
-│  │  damage_per_hit = roll_damage_range() / attack_speed       │  │  ← MODIFIED
-│  │  (was: hero.total_dps / hero_attack_speed)                 │  │
-│  └────────────────────────────────────────────────────────────┘  │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │ PackGenerator.create_pack()                                 │  │
-│  │  pack.damage_min, pack.damage_max = scaled range           │  │  ← MODIFIED
-│  └────────────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────┤
-│                     Stat Calculator Layer                         │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │ StatCalculator                                              │  │
-│  │  calculate_dps(base_min, base_max, ...) → avg DPS float    │  │  ← MODIFIED
-│  │  calculate_damage_range(base_min, base_max, affixes)       │  │  ← NEW
-│  │    → Vector2i(total_min, total_max)                        │  │
-│  └────────────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────┤
-│                     Data Layer (Resources)                        │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐   │
-│  │ Weapon           │  │ Affix (flat dmg) │  │ MonsterPack  │   │
-│  │ base_damage_min  │  │ damage_min: int  │  │ damage_min   │   │  ← MODIFIED
-│  │ base_damage_max  │  │ damage_max: int  │  │ damage_max   │   │
-│  └──────────────────┘  └──────────────────┘  └──────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Integration Point 1: Affix — Where Min-Max Values Live
-
-### Current State
-
-`Affix` already has `min_value` and `max_value` (int) — but these represent the **rolled stat value bounds** (e.g., "+5 to +20 flat damage for this tier"), not a **damage range delivered per hit**. The single `value` field is what gets summed into DPS.
-
-```gdscript
-# affix.gd (EXISTING)
-var min_value: int  # Lower bound for this tier's rolled value
-var max_value: int  # Upper bound for this tier's rolled value
-var value: int      # The rolled result — used by StatCalculator
-```
-
-### Required Change
-
-Flat damage affixes (those with `Tag.StatType.FLAT_DAMAGE`) need to express a per-hit damage range, not a single integer. The range is the actual damage spread delivered each hit after the affix rolls.
-
-**Option A (Recommended): Reuse existing fields with semantic clarity**
-
-The existing `min_value` / `max_value` on Affix already contain the correct data for range-typed flat damage affixes — they are the lower and upper bounds of what the affix contributes. The `value` field currently holds the single rolled result (used in DPS average). No new fields needed on Affix for flat damage affixes; the convention just changes:
-
-- DPS calculation uses average: `(min_value + max_value) / 2.0` instead of `value`
-- Per-hit combat rolls from `randi_range(min_value, max_value)` instead of using `value`
-
-**Option B: Add explicit range fields**
-
-Add `damage_min: int` and `damage_max: int` to Affix specifically for FLAT_DAMAGE affixes. Clearer intent, but adds fields to every Affix even when irrelevant.
-
-**Recommendation: Option A** — the existing `min_value`/`max_value` are the correct semantic fields for damage range. They are already serialized. No schema change, no migration needed. The `value` field becomes "the average for DPS display" and per-hit combat rolls from the min/max pair.
-
-**Confidence: HIGH** — Affix already serializes `min_value` and `max_value` in `to_dict()` / `from_dict()`. No save format change required for this integration point.
-
----
-
-## Integration Point 2: Weapon — Base Damage Range
-
-### Current State
-
-```gdscript
-# weapon.gd (EXISTING)
-var base_damage: int        # Single value — both DPS average and hit value
-var base_damage_type: String
-```
-
-### Required Change
-
-Replace `base_damage: int` with a min/max pair:
-
-```gdscript
-# weapon.gd (MODIFIED)
-var base_damage_min: int    # Minimum base weapon hit
-var base_damage_max: int    # Maximum base weapon hit
-# base_damage preserved as property for backward compat, returns average:
-var base_damage: int:
-    get: return (base_damage_min + base_damage_max) / 2
-```
-
-**Element-specific variance** is a property of the **weapon type definition** (LightSword, etc.), not a field on Weapon base class. Each concrete weapon class sets the ratio:
-
-```gdscript
-# light_sword.gd (MODIFIED)
-func _init() -> void:
-    self.base_damage_min = 8    # Physical: tight spread (8-12, ratio ~0.67)
-    self.base_damage_max = 12
-    # Lightning weapon example: 4-18 (ratio ~0.22) — much wider
-```
-
-The variance ratio lives in the concrete item class, not a generic `variance_factor` field. This keeps it explicit and designer-readable.
-
-### Save Format Impact
-
-`weapon.to_dict()` inherits from `item.to_dict()`, which doesn't directly serialize `base_damage`. The weapon's `base_damage` is used transiently for DPS calculation. Affixes (the rolling parts) are already serialized. However:
-
-- `base_damage_min` and `base_damage_max` must be added to weapon serialization if weapons can have variable base ranges (e.g., found items). For fixed base ranges (defined per class like LightSword), they can be reconstructed from `_init()` — **no serialization needed**.
-- For variable-base weapons in the future, add `base_damage_min`/`base_damage_max` to `Item.to_dict()` and `create_from_dict()`.
-
-**Save version bump required: YES** — but only if base damage range is not always reconstructible from item type. For now (fixed base ranges per class), no save schema change.
-
----
-
-## Integration Point 3: StatCalculator — Aggregating Ranges vs Flat Values
-
-### Current State
-
-```gdscript
-# stat_calculator.gd (EXISTING)
-static func calculate_dps(base_damage: float, base_speed: float, affixes: Array, ...) -> float:
-    var damage := base_damage
-    for affix: Affix in affixes:
-        if Tag.StatType.FLAT_DAMAGE in affix.stat_types:
-            damage += affix.value      # Single value summed
-    # ... rest of calculation
-```
-
-### Required Changes
-
-**New method: `calculate_damage_range()`**
-
-```gdscript
-# stat_calculator.gd (NEW METHOD)
-## Aggregates min and max damage from base weapon range + flat damage affixes.
-## Returns Vector2i(total_min, total_max).
-## Used for: UI display, per-hit combat rolling.
-static func calculate_damage_range(
-    base_min: int,
-    base_max: int,
-    affixes: Array
-) -> Vector2i:
-    var total_min := base_min
-    var total_max := base_max
-
-    for affix: Affix in affixes:
-        if Tag.StatType.FLAT_DAMAGE in affix.stat_types:
-            total_min += affix.min_value   # Add lower bound
-            total_max += affix.max_value   # Add upper bound
-
-    return Vector2i(total_min, total_max)
-```
-
-**Modified method: `calculate_dps()` signature**
-
-```gdscript
-# stat_calculator.gd (MODIFIED)
-static func calculate_dps(
-    base_min: int,        # was: base_damage: float
-    base_max: int,        # NEW
-    base_speed: float,
-    affixes: Array,
-    base_crit_chance: float = 5.0,
-    base_crit_damage: float = 150.0
-) -> float:
-    # DPS uses average damage for expected-value calculation
-    var damage := float(base_min + base_max) / 2.0   # was: base_damage
-
-    for affix: Affix in affixes:
-        if Tag.StatType.FLAT_DAMAGE in affix.stat_types:
-            damage += float(affix.min_value + affix.max_value) / 2.0  # was: affix.value
-    # ... rest unchanged
-```
-
-**Aggregation rules:**
-
-| Affix Type | Min Contribution | Max Contribution |
-|------------|-----------------|-----------------|
-| FLAT_DAMAGE | `affix.min_value` | `affix.max_value` |
-| INCREASED_DAMAGE | Applied to both min and max proportionally | Same |
-| CRIT_CHANCE / CRIT_DAMAGE | Flat additions (unchanged) | Unchanged |
-
-**Increased damage multiplier** applies identically to both min and max — it scales the range uniformly, preserving relative spread:
-
-```gdscript
-# After flat additions:
-total_min *= (1.0 + additive_damage_mult)
-total_max *= (1.0 + additive_damage_mult)
+┌──────────────────────────────────────────────────────────────────────┐
+│                        Scene Layer                                    │
+│  ┌───────────────────────────────────────────────────────────────┐   │
+│  │  scenes/forge_view.gd   (MODIFIED — largest surface area)     │   │
+│  │  - item type buttons → slot selection (unchanged concept)     │   │
+│  │  - item_image click → apply currency to bench_item (unchanged)│   │
+│  │  - inventory display → x/N counters + highest-tier name       │   │
+│  │  - equip → remove item from slot array, place on hero         │   │
+│  │  - melt  → remove item from slot array, destroy               │   │
+│  │  - current_item still tracks the single item on bench         │   │
+│  └──────────────┬────────────────────────────────────────────────┘   │
+│                 │ reads/writes                                        │
+├─────────────────┼────────────────────────────────────────────────────┤
+│                 │              Autoload Layer                         │
+│  ┌──────────────▼────────────┐   ┌───────────────────────────────┐   │
+│  │  autoloads/game_state.gd  │   │  autoloads/save_manager.gd    │   │
+│  │  (MODIFIED)               │   │  (MODIFIED)                   │   │
+│  │  crafting_inventory:      │   │  - _build_save_data():        │   │
+│  │    Dictionary[String,     │   │    serialize arrays           │   │
+│  │    Array[Item]]  ← CHANGE │   │  - _restore_state():         │   │
+│  │  crafting_bench_type:     │   │    deserialize arrays         │   │
+│  │    String (unchanged)     │   │  - _migrate_save(): v1→v2    │   │
+│  └──────────────┬────────────┘   └───────────────────────────────┘   │
+│                 │                                                     │
+├─────────────────┼────────────────────────────────────────────────────┤
+│                 │              Drop System                            │
+│  ┌──────────────▼────────────────────────────────────────────────┐   │
+│  │  scenes/gameplay_view.gd (MODIFIED — drop routing only)       │   │
+│  │  - item_base_found signal wired by main_view to forge_view    │   │
+│  │  - _on_items_dropped() generates items → emits item_base_found│   │
+│  │  - No change to combat, currency, or display logic            │   │
+│  └───────────────────────────────────────────────────────────────┘   │
+│                                                                       │
+├───────────────────────────────────────────────────────────────────────┤
+│                 Data Layer (Resources — UNCHANGED)                    │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌──────────┐  │
+│  │  Item   │  │ Weapon  │  │ Helmet  │  │  Armor  │  │  Boots   │  │
+│  │ (base)  │  │  Ring   │  │         │  │         │  │          │  │
+│  └─────────┘  └─────────┘  └─────────┘  └─────────┘  └──────────┘  │
+│  - to_dict() / create_from_dict() unchanged                          │
+│  - Item class identity (is Weapon, is Helmet etc.) unchanged          │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Integration Point 4: CombatEngine — Per-Hit Rolling from Ranges
-
-### Current State
-
-```gdscript
-# combat_engine.gd — _on_hero_attack() (EXISTING)
-var damage_per_hit := hero.total_dps / hero_attack_speed
-var is_crit := randf() < (hero.total_crit_chance / 100.0)
-if is_crit:
-    damage_per_hit *= (hero.total_crit_damage / 100.0)
-```
-
-`total_dps` is pre-calculated average DPS. Dividing by attack speed gives expected-value damage per hit — no per-hit variance.
-
-### Required Changes
-
-**Hero needs to expose damage range** alongside `total_dps`. The cleanest integration: add `total_damage_min: float` and `total_damage_max: float` to `Hero`, updated by `calculate_dps()` calls, mirroring how `total_dps` is maintained.
-
-```gdscript
-# hero.gd (ADD FIELDS)
-var total_damage_min: float = 0.0    # Per-hit minimum (before crit)
-var total_damage_max: float = 0.0    # Per-hit maximum (before crit)
-```
-
-```gdscript
-# hero.gd — calculate_dps() (MODIFIED)
-func calculate_dps() -> float:
-    total_dps = 0.0
-    total_damage_min = 0.0
-    total_damage_max = 0.0
-
-    if "weapon" in equipped_items and equipped_items["weapon"] is Weapon:
-        var weapon: Weapon = equipped_items["weapon"]
-        total_dps += weapon.dps
-        # NEW: track per-hit range
-        var range := weapon.get_damage_range()     # Vector2i
-        total_damage_min += float(range.x) / weapon.base_attack_speed
-        total_damage_max += float(range.y) / weapon.base_attack_speed
-
-    # ... ring handling same pattern
-```
-
-**CombatEngine per-hit roll:**
-
-```gdscript
-# combat_engine.gd — _on_hero_attack() (MODIFIED)
-var rolled_damage := randf_range(hero.total_damage_min, hero.total_damage_max)
-
-var is_crit := randf() < (hero.total_crit_chance / 100.0)
-if is_crit:
-    rolled_damage *= (hero.total_crit_damage / 100.0)
-
-pack.take_damage(rolled_damage)
-GameEvents.hero_attacked.emit(rolled_damage, is_crit)
-```
-
-This eliminates the `total_dps / hero_attack_speed` path for hero attacks. `total_dps` is retained as a display-only average — it still appears in Hero Stats and forge_view comparison panels.
-
-### MonsterPack — Range for Incoming Damage
-
-```gdscript
-# monster_pack.gd (ADD FIELDS)
-var damage_min: float = 0.0    # was: only damage: float
-var damage_max: float = 0.0
-```
-
-`PackGenerator.create_pack()` sets both:
-
-```gdscript
-# pack_generator.gd — create_pack() (MODIFIED)
-var element_variance := _get_element_variance(element)   # NEW helper
-pack.damage_min = monster_type.base_damage * multiplier * (1.0 - element_variance)
-pack.damage_max = monster_type.base_damage * multiplier * (1.0 + element_variance)
-pack.damage = pack.damage_min  # backward compat — DefenseCalculator uses pack.damage
-```
-
-**CombatEngine pack attack** rolls from range before passing to DefenseCalculator:
-
-```gdscript
-# combat_engine.gd — _on_pack_attack() (MODIFIED)
-var rolled_pack_damage := randf_range(pack.damage_min, pack.damage_max)
-
-var result := DefenseCalculator.calculate_damage_taken(
-    rolled_pack_damage,     # was: pack.damage
-    pack.element,
-    ...
-)
-```
-
-**Element variance table** (drives `_get_element_variance()`):
-
-| Element | Variance | Example (base 10) | Result Range |
-|---------|----------|-------------------|--------------|
-| physical | 0.10 | 10 | 9–11 |
-| cold | 0.20 | 10 | 8–12 |
-| fire | 0.30 | 10 | 7–13 |
-| lightning | 0.50 | 10 | 5–15 |
-
----
-
-## Integration Point 5: Weapon.update_value() — DPS and Range Cache
-
-### Current State
-
-```gdscript
-# weapon.gd (EXISTING)
-func update_value() -> void:
-    var all_affixes := self.prefixes + self.suffixes
-    all_affixes.append(self.implicit)
-    self.dps = StatCalculator.calculate_dps(
-        self.base_damage, self.base_speed, all_affixes, self.crit_chance, self.crit_damage
-    )
-```
-
-### Required Change
-
-```gdscript
-# weapon.gd (MODIFIED)
-var damage_range: Vector2i = Vector2i(0, 0)  # Cached per-hit range (NEW)
-
-func update_value() -> void:
-    var all_affixes := self.prefixes + self.suffixes
-    all_affixes.append(self.implicit)
-
-    self.damage_range = StatCalculator.calculate_damage_range(
-        self.base_damage_min, self.base_damage_max, all_affixes
-    )
-    self.dps = StatCalculator.calculate_dps(
-        self.base_damage_min, self.base_damage_max,
-        self.base_speed, all_affixes, self.crit_chance, self.crit_damage
-    )
-
-func get_damage_range() -> Vector2i:
-    return damage_range
-```
-
----
-
-## Integration Point 6: UI — Displaying Ranges
-
-### forge_view.gd — Item Stats Text
-
-`get_item_stats_text()` currently shows `"Base Damage: %d" % weapon.base_damage`. Must change to range format:
-
-```gdscript
-# forge_view.gd — get_item_stats_text() (MODIFIED)
-# Before:
-stats_text += "Base Damage: %d\n" % weapon.base_damage
-
-# After:
-var dr := weapon.damage_range
-stats_text += "Damage: %d-%d\n" % [dr.x, dr.y]
-stats_text += "DPS: %.1f\n" % weapon.dps      # unchanged — avg DPS for comparison
-```
-
-Flat damage affixes in the prefix list now also show range:
-
-```gdscript
-# forge_view.gd — prefix display (MODIFIED)
-for prefix in weapon.prefixes:
-    if Tag.StatType.FLAT_DAMAGE in prefix.stat_types:
-        stats_text += "%s: %d-%d\n" % [prefix.affix_name, prefix.min_value, prefix.max_value]
-    else:
-        stats_text += "%s: %d\n" % [prefix.affix_name, prefix.value]
-```
-
-### gameplay_view.gd — Floating Damage Labels
-
-No change required. `_spawn_floating_text()` already receives a rolled per-hit value (int). The combat engine will now supply a rolled value from a range rather than a flat DPS-derived value. The floating label format is unchanged.
-
-### Hero Stats Panel (forge_view.gd update_hero_stats_display)
-
-```gdscript
-# forge_view.gd — update_hero_stats_display() (MODIFIED)
-# After DPS line:
-hero_stats_label.text += "Total DPS: %.1f\n" % hero.get_total_dps()
-# NEW range line:
-hero_stats_label.text += "Hit Range: %d-%d\n" % [int(hero.total_damage_min), int(hero.total_damage_max)]
-```
-
----
-
-## Integration Point 7: Save Format
-
-### What Changes
-
-**Affix serialization (NO CHANGE NEEDED):** `min_value` and `max_value` are already in `Affix.to_dict()` and `Affix.from_dict()`. If flat damage affixes reuse these fields for damage range, nothing new needs to be serialized.
-
-**Weapon serialization (MINOR CHANGE):** If `base_damage_min` / `base_damage_max` are fixed per class (LightSword always 8-12), they do not need serialization — `_init()` reconstructs them. If future weapons can have randomized base ranges, add to `Item.to_dict()`:
-
-```gdscript
-# item.to_dict() (ADD IF NEEDED)
-"base_damage_min": base_damage_min if "base_damage_min" in self else 0,
-"base_damage_max": base_damage_max if "base_damage_max" in self else 0,
-```
-
-**MonsterPack:** Not serialized. Generated fresh each combat. No save change.
-
-**Hero cached ranges (total_damage_min, total_damage_max):** Not serialized. Recalculated by `Hero.update_stats()` after load, same as `total_dps`. No save change.
-
-### Save Version
-
-**Recommendation: bump SAVE_VERSION to 2 in save_manager.gd** when base_damage_min/max are added to weapon serialization. Add migration in `_migrate_save()`:
-
-```gdscript
-# save_manager.gd (MIGRATION)
-if saved_version < 2:
-    # Migrate weapons: base_damage_min/max missing → derive from existing base_damage
-    # (backward compat: old saves only have single base_damage on Item)
-    data = _migrate_v1_to_v2(data)
-```
-
----
-
-## Component Boundaries: New vs Modified
-
-### New Components
-
-| File | Type | Purpose |
-|------|------|---------|
-| None | — | No new files required. All changes are modifications to existing files. |
+## Component Boundaries: New vs Modified vs Unchanged
 
 ### Modified Components
 
-| File | Change Type | Specific Changes |
+| File | What Changes | Specific Changes |
 |------|-------------|-----------------|
-| `models/affixes/affix.gd` | Semantic | `min_value`/`max_value` now serve as damage range for FLAT_DAMAGE affixes; `value` becomes avg for DPS display only |
-| `models/items/weapon.gd` | Fields + method | `base_damage` → `base_damage_min` + `base_damage_max`; add `damage_range: Vector2i`; update `update_value()` |
-| `models/items/light_sword.gd` | Init values | Set `base_damage_min` / `base_damage_max` instead of `base_damage` |
-| `models/monsters/monster_pack.gd` | Fields | Add `damage_min: float` + `damage_max: float` alongside existing `damage: float` |
-| `models/monsters/pack_generator.gd` | create_pack() | Set `damage_min`/`damage_max` from element variance; add `_get_element_variance()` helper |
-| `models/monsters/monster_type.gd` | No change | `base_damage` stays single — PackGenerator applies variance per element |
-| `models/stats/stat_calculator.gd` | New method + modified signature | Add `calculate_damage_range()` returning Vector2i; change `calculate_dps()` to accept `base_min`/`base_max` |
-| `models/hero.gd` | Fields + calculate_dps() | Add `total_damage_min`/`total_damage_max` floats; update `calculate_dps()` to populate them |
-| `models/combat/combat_engine.gd` | _on_hero_attack(), _on_pack_attack() | Hero attack rolls `randf_range(total_damage_min, total_damage_max)`; pack attack rolls from pack range before passing to DefenseCalculator |
-| `autoloads/save_manager.gd` | Version + migration | Bump `SAVE_VERSION` to 2; add `_migrate_v1_to_v2()` if base ranges serialized |
-| `scenes/forge_view.gd` | Display strings | Weapon shows "Damage: X-Y"; flat damage affixes show min-max; hero stats show Hit Range |
+| `autoloads/game_state.gd` | Data shape | `crafting_inventory` values: `Item` → `Array[Item]`; `crafting_bench_item` removed (was already unused in save); `initialize_fresh_game()` initializes arrays |
+| `autoloads/save_manager.gd` | Serialize + migrate | `_build_save_data()` serializes arrays; `_restore_state()` deserializes arrays; `_migrate_save()` converts v1 single-item format to v2 array format; bump `SAVE_VERSION` to 2 |
+| `scenes/forge_view.gd` | Inventory logic + display | `add_item_to_inventory()` appends to array with cap check; `_on_melt_pressed()` removes from array; `_on_equip_pressed()` removes from array; `update_inventory_display()` shows x/N format; `_load_bench_item()` picks highest-tier item from slot array |
+| `scenes/main_view.gd` | None (signal wiring unchanged) | No change required — `item_base_found` signal wiring stays the same |
+
+### New Components
+
+No new files are required. The helpers needed (best-item selection, slot-capacity check) live as private functions inside `forge_view.gd`, which already owns inventory management logic.
 
 ### Unchanged Components
 
-| File | Reason Unchanged |
-|------|-----------------|
-| `models/stats/defense_calculator.gd` | Receives rolled float damage — no change to interface |
-| `models/items/item.gd` | `to_dict()` / `create_from_dict()` — affix serialization unchanged |
-| `models/affixes/implicit.gd` | Extends Affix — inherits range fields |
-| `autoloads/item_affixes.gd` | Affix pool definitions — adjust base_min/base_max values per element but no structural change |
-| `autoloads/game_events.gd` | Signal signatures unchanged |
-| `autoloads/game_state.gd` | No structural change |
-| `scenes/gameplay_view.gd` | Floating label receives rolled int — no change |
-| `models/loot/loot_table.gd` | Drop system unaffected |
-| `models/monsters/biome_config.gd` | BiomeConfig doesn't store damage — PackGenerator handles it |
+| File | Reason |
+|------|--------|
+| `models/items/item.gd` | `to_dict()` / `create_from_dict()` unchanged — serializes a single item |
+| `models/items/*.gd` (all item subclasses) | No structural changes |
+| `models/hero.gd` | Equipment slots untouched; `equip_item()` / `update_stats()` unchanged |
+| `models/loot/loot_table.gd` | Drop generation unchanged |
+| `models/stats/stat_calculator.gd` | Stat calculation unchanged |
+| `models/stats/defense_calculator.gd` | Damage mitigation unchanged |
+| `models/combat/combat_engine.gd` | Combat logic unchanged |
+| `autoloads/game_events.gd` | No new signals needed; `equipment_changed` still fires on equip |
+| `autoloads/item_affixes.gd` | Affix pool unchanged |
+| `autoloads/tag.gd` | Tag definitions unchanged |
+| `scenes/gameplay_view.gd` | Drop generation is identical — emits `item_base_found` per item; routing to forge unchanged |
 
 ---
 
-## Data Flow: Damage Range Through the System
+## Integration Point 1: GameState — Data Shape Change
 
-### Flow 1: Weapon Created / Affix Added
+### Current State
 
-```
-[LightSword._init()]
-    base_damage_min = 8, base_damage_max = 12
-         ↓
-[weapon.update_value()]
-    damage_range = StatCalculator.calculate_damage_range(8, 12, affixes)
-    dps = StatCalculator.calculate_dps(8, 12, base_speed, affixes, ...)
-         ↓
-[forge_view.get_item_stats_text()]
-    "Damage: 10-18"  (after flat affix min_value/max_value added)
-    "DPS: 14.0"      (average × speed × crit multiplier)
-```
+```gdscript
+# game_state.gd (CURRENT)
+var crafting_inventory: Dictionary = {}
+var crafting_bench_item: Item = null   # separate bench state
+var crafting_bench_type: String = "weapon"
 
-### Flow 2: Hero Equips Weapon → Stats Update
-
-```
-[hero.equip_item(weapon, "weapon")]
-    hero.update_stats()
-         ↓
-[hero.calculate_dps()]
-    total_dps = weapon.dps
-    total_damage_min = weapon.damage_range.x / weapon.base_attack_speed
-    total_damage_max = weapon.damage_range.y / weapon.base_attack_speed
-         ↓
-[forge_view.update_hero_stats_display()]
-    "Total DPS: 25.2"
-    "Hit Range: 9-17"   ← NEW display
+# initialize_fresh_game()
+crafting_inventory = {
+    "weapon": null,
+    "helmet": null,
+    "armor": null,
+    "boots": null,
+    "ring": null,
+}
+crafting_bench_item = null
 ```
 
-### Flow 3: Per-Hit Combat Roll (Hero Attacks)
+### Required Change
 
-```
-[hero_attack_timer.timeout → CombatEngine._on_hero_attack()]
-    rolled_damage = randf_range(hero.total_damage_min, hero.total_damage_max)
-         ↓
-[crit roll]
-    if randf() < crit_chance:
-        rolled_damage *= (crit_damage / 100.0)
-         ↓
-[pack.take_damage(rolled_damage)]
-[GameEvents.hero_attacked.emit(rolled_damage, is_crit)]
-         ↓
-[gameplay_view._on_hero_attacked(damage, is_crit)]
-    _spawn_floating_text(pack_damage_pos, int(damage), is_crit)
-```
+```gdscript
+# game_state.gd (MODIFIED)
+var crafting_inventory: Dictionary = {}
+# crafting_bench_item removed — bench item lives in ForgeView.current_item only
+var crafting_bench_type: String = "weapon"
 
-### Flow 4: Per-Hit Combat Roll (Monster Attacks)
-
-```
-[pack_attack_timer.timeout → CombatEngine._on_pack_attack()]
-    rolled_pack_damage = randf_range(pack.damage_min, pack.damage_max)
-         ↓
-[DefenseCalculator.calculate_damage_taken(rolled_pack_damage, pack.element, ...)]
-    → result: {dodged, life_damage, es_damage}
-         ↓
-[hero.apply_damage(result.life_damage, result.es_damage)]
-[GameEvents.pack_attacked.emit(result)]
+# initialize_fresh_game()
+crafting_inventory = {
+    "weapon": [],
+    "helmet": [],
+    "armor": [],
+    "boots": [],
+    "ring": [],
+}
+# crafting_bench_item = null  ← REMOVE THIS LINE
 ```
 
-### Flow 5: Save / Load Round-Trip
+`crafting_bench_item` on GameState has been unused since direct equip/melt was implemented (ForgeView tracks `current_item` locally). Remove it to avoid confusion. `SaveManager` currently serializes it as `bench_item_data` — this field gets dropped in v2 save format.
+
+**Confidence: HIGH** — `crafting_bench_item` is set to `null` in `_build_save_data()` at line 93 only if `GameState.crafting_bench_item != null` — and `GameState.crafting_bench_item` is never assigned anywhere except `initialize_fresh_game()` (null) and `_restore_state()` (re-null on restore). The field is orphaned state.
+
+---
+
+## Integration Point 2: ForgeView — Inventory Management Logic
+
+This is the largest surface area. ForgeView manages all inventory interactions. The concept map:
+
+| Old concept | New concept |
+|-------------|------------|
+| `crafting_inventory[slot]` = one `Item` or `null` | `crafting_inventory[slot]` = `Array[Item]` (0..N items) |
+| `add_item_to_inventory()`: replace if better | `add_item_to_inventory()`: append if under cap, drop if full |
+| `_on_melt_pressed()`: null out slot | `_on_melt_pressed()`: erase `current_item` from slot array |
+| `_on_equip_pressed()`: null out slot | `_on_equip_pressed()`: erase `current_item` from slot array |
+| `update_current_item()`: load from single slot | `_load_bench_item()`: pick highest-tier/DPS item from array |
+| `_on_item_type_selected()`: show item if slot non-null | `_on_item_type_selected()`: show item if slot non-empty |
+| inventory display: "Weapon: LightSword (Normal)" | inventory display: "Weapon (3/10): LightSword (Normal)" |
+
+### Key Function Changes
+
+**`add_item_to_inventory()` — no auto-replacement, cap-gated append:**
+
+```gdscript
+# forge_view.gd (MODIFIED)
+const SLOT_CAPACITY: int = 10
+
+func add_item_to_inventory(item: Item) -> void:
+    var item_type: String = get_item_type(item)
+    if item_type == "None":
+        return
+
+    var slot: Array = GameState.crafting_inventory[item_type]
+    if slot.size() >= SLOT_CAPACITY:
+        # Silently discard — slot is full
+        return
+
+    LootTable.spawn_item_with_mods(item, item.rarity)  # if not already modded
+    slot.append(item)
+    update_inventory_display()
+    # Auto-select if bench is currently empty for this slot type
+    if current_item == null and GameState.crafting_bench_type == item_type:
+        _load_bench_item(item_type)
+```
+
+Note: `gameplay_view._on_items_dropped()` already calls `LootTable.spawn_item_with_mods()` before emitting the signal, so `add_item_to_inventory()` receives an already-modded item. No double-modding issue.
+
+**`_load_bench_item()` — select highest-tier item for the slot:**
+
+```gdscript
+# forge_view.gd (NEW PRIVATE FUNCTION)
+func _load_bench_item(slot_type: String) -> void:
+    var slot: Array = GameState.crafting_inventory.get(slot_type, [])
+    if slot.is_empty():
+        current_item = null
+        return
+
+    # For damage slots (weapon, ring): pick highest DPS
+    # For defense slots (helmet, armor, boots): pick highest tier
+    var best: Item = slot[0]
+    for item: Item in slot:
+        if best is Weapon or best is Ring:
+            if item.dps > best.dps:
+                best = item
+        else:
+            if item.tier > best.tier:
+                best = item
+    current_item = best
+```
+
+**`_on_melt_pressed()` — erase from array:**
+
+```gdscript
+# forge_view.gd (MODIFIED)
+func _on_melt_pressed() -> void:
+    if current_item == null:
+        return
+    var slot_name: String = get_item_type(current_item)
+    if slot_name == "None":
+        return
+
+    var slot: Array = GameState.crafting_inventory[slot_name]
+    slot.erase(current_item)
+    current_item = null
+
+    _load_bench_item(slot_name)  # pick next-best item for bench
+    update_item_stats_display()
+    update_melt_equip_states()
+    update_inventory_display()
+```
+
+**`_on_equip_pressed()` — erase from array, old equipped item deleted:**
+
+```gdscript
+# forge_view.gd (MODIFIED)
+func _on_equip_pressed() -> void:
+    if current_item == null:
+        return
+    var slot_name: String = get_item_type(current_item)
+    if slot_name == "None":
+        return
+
+    var existing: Item = GameState.hero.equipped_items.get(slot_name)
+    if existing != null and not equip_confirm_pending:
+        equip_confirm_pending = true
+        equip_button.text = "Confirm Overwrite?"
+        equip_timer.start()
+        return
+
+    equip_confirm_pending = false
+    equip_timer.stop()
+    equip_button.text = "Equip"
+
+    # Equip: old equipped item is destroyed (not returned to inventory)
+    GameState.hero.equip_item(current_item, slot_name)
+    GameEvents.equipment_changed.emit(slot_name, current_item)
+    GameEvents.item_crafted.emit(current_item)
+
+    # Remove from inventory array
+    GameState.crafting_inventory[slot_name].erase(current_item)
+    current_item = null
+
+    _load_bench_item(slot_name)  # load next-best for bench
+    update_hero_stats_display()
+    update_item_stats_display()
+    update_melt_equip_states()
+    update_inventory_display()
+    equipment_changed.emit()
+```
+
+**`_on_item_type_selected()` — guard on empty array:**
+
+```gdscript
+# forge_view.gd (MODIFIED)
+func _on_item_type_selected(item_type: String) -> void:
+    equip_confirm_pending = false
+    if equip_timer != null:
+        equip_timer.stop()
+    equip_button.text = "Equip"
+
+    # Guard: no items in this slot
+    var slot: Array = GameState.crafting_inventory.get(item_type, [])
+    if slot.is_empty():
+        print("No ", item_type, " in inventory - selection ignored")
+        return
+
+    GameState.crafting_bench_type = item_type
+    _load_bench_item(item_type)
+    update_item_type_button_states()
+    update_item_stats_display()
+    update_melt_equip_states()
+```
+
+**`update_inventory_display()` — x/N counter format:**
+
+```gdscript
+# forge_view.gd (MODIFIED)
+func update_inventory_display() -> void:
+    if inventory_label == null:
+        return
+
+    var display_text: String = "Crafting Inventory:\n\n"
+
+    for item_type in inventory_types:
+        var slot: Array = GameState.crafting_inventory.get(item_type, [])
+        var type_name: String = item_type.capitalize()
+        var count: int = slot.size()
+
+        display_text += "%s (%d/%d)" % [type_name, count, SLOT_CAPACITY]
+        if count > 0:
+            # Show the current bench item name, or best item name
+            var display_item: Item = current_item if (
+                current_item != null and get_item_type(current_item) == item_type
+            ) else null
+            if display_item == null:
+                display_item = slot[0]  # fallback to first
+            var rarity_name: String = "Normal"
+            match display_item.rarity:
+                Item.Rarity.MAGIC: rarity_name = "Magic"
+                Item.Rarity.RARE:  rarity_name = "Rare"
+            display_text += ": " + display_item.item_name + " (" + rarity_name + ")"
+        display_text += "\n"
+
+    inventory_label.text = display_text
+```
+
+**`_ready()` initialization — starting item goes into array, no saved items check:**
+
+```gdscript
+# forge_view.gd (MODIFIED)
+func _ready() -> void:
+    # ... (all button/signal wiring unchanged) ...
+
+    # Load crafting inventory from GameState
+    var has_saved_items := false
+    for type_name in inventory_types:
+        if not GameState.crafting_inventory.get(type_name, []).is_empty():
+            has_saved_items = true
+            break
+
+    if not has_saved_items:
+        var starting_weapon := LightSword.new()
+        add_item_to_inventory(starting_weapon)
+
+    # Set bench from saved type or first available
+    var selected_type: String = GameState.crafting_bench_type
+    var slot: Array = GameState.crafting_inventory.get(selected_type, [])
+    if slot.is_empty():
+        selected_type = ""
+        for type_name in inventory_types:
+            if not GameState.crafting_inventory.get(type_name, []).is_empty():
+                selected_type = type_name
+                break
+    if selected_type != "":
+        GameState.crafting_bench_type = selected_type
+        _load_bench_item(selected_type)
+    else:
+        current_item = null
+
+    # ... (update_* calls unchanged) ...
+```
+
+---
+
+## Integration Point 3: SaveManager — Array Serialization and Migration
+
+### What Must Change
+
+The save format changes from a dict of single item dictionaries to a dict of arrays of item dictionaries.
+
+**Old format (v1) — `crafting_inventory`:**
+```json
+"crafting_inventory": {
+  "weapon": { "item_type": "LightSword", "tier": 3, ... },
+  "helmet": null,
+  "armor":  null,
+  "boots":  null,
+  "ring":   null
+},
+"crafting_bench_item": null
+```
+
+**New format (v2) — `crafting_inventory`:**
+```json
+"crafting_inventory": {
+  "weapon": [
+    { "item_type": "LightSword", "tier": 3, ... },
+    { "item_type": "LightSword", "tier": 5, ... }
+  ],
+  "helmet": [],
+  "armor":  [],
+  "boots":  [],
+  "ring":   []
+}
+```
+
+`crafting_bench_item` is dropped entirely from v2 format. `crafting_bench_type` is preserved unchanged.
+
+### `_build_save_data()` — serialize arrays:
+
+```gdscript
+# save_manager.gd (MODIFIED)
+var crafting_inv := {}
+for type_name in GameState.crafting_inventory:
+    var slot: Array = GameState.crafting_inventory[type_name]
+    var serialized_slot: Array = []
+    for item in slot:
+        if item != null:
+            serialized_slot.append(item.to_dict())
+    crafting_inv[type_name] = serialized_slot
+
+return {
+    "version": SAVE_VERSION,   # now 2
+    "timestamp": Time.get_unix_time_from_system(),
+    "hero_equipment": hero_equipment,
+    "currencies": GameState.currency_counts.duplicate(),
+    "crafting_inventory": crafting_inv,
+    # "crafting_bench_item" dropped
+    "crafting_bench_type": GameState.crafting_bench_type,
+    "max_unlocked_level": GameState.max_unlocked_level,
+    "area_level": GameState.area_level,
+}
+```
+
+### `_restore_state()` — deserialize arrays:
+
+```gdscript
+# save_manager.gd (MODIFIED)
+var saved_crafting: Dictionary = data.get("crafting_inventory", {})
+for type_name in saved_crafting:
+    var raw_slot = saved_crafting[type_name]
+    var restored_slot: Array = []
+    if raw_slot is Array:
+        for item_data in raw_slot:
+            if item_data is Dictionary:
+                var item := Item.create_from_dict(item_data)
+                if item != null:
+                    restored_slot.append(item)
+    elif raw_slot is Dictionary:
+        # Shouldn't happen post-migration but guard gracefully
+        var item := Item.create_from_dict(raw_slot)
+        if item != null:
+            restored_slot.append(item)
+    GameState.crafting_inventory[type_name] = restored_slot
+
+# crafting_bench_item restore removed
+GameState.crafting_bench_type = str(data.get("crafting_bench_type", "weapon"))
+```
+
+### `_migrate_save()` — v1 to v2:
+
+```gdscript
+# save_manager.gd (MODIFIED)
+const SAVE_VERSION = 2   # bumped from 1
+
+func _migrate_save(data: Dictionary) -> Dictionary:
+    var saved_version: int = int(data.get("version", 1))
+
+    if saved_version < 2:
+        print("SaveManager: Migrating save from v%d to v2" % saved_version)
+        data = _migrate_v1_to_v2(data)
+
+    data["version"] = SAVE_VERSION
+    return data
+
+func _migrate_v1_to_v2(data: Dictionary) -> Dictionary:
+    # Convert crafting_inventory from single-item to array format
+    var old_inv: Dictionary = data.get("crafting_inventory", {})
+    var new_inv: Dictionary = {}
+    for type_name in old_inv:
+        var old_item = old_inv[type_name]
+        if old_item is Dictionary:
+            new_inv[type_name] = [old_item]  # wrap single item in array
+        else:
+            new_inv[type_name] = []          # null → empty array
+    data["crafting_inventory"] = new_inv
+
+    # Drop crafting_bench_item (was always null in practice)
+    data.erase("crafting_bench_item")
+
+    return data
+```
+
+**Confidence: HIGH** — `_migrate_save()` stub already exists at `save_manager.gd:159` with the exact comment placeholder shown in the file. `SAVE_VERSION = 1` is line 4. The migration pattern is established.
+
+---
+
+## Integration Point 4: Drop Flow — LootTable to Inventory Array
+
+### Current Drop Flow
 
 ```
-[Affix.to_dict()]  — min_value, max_value already serialized (no change)
-[Weapon.to_dict()] — if base ranges are fixed per class: not needed
-                     if base ranges are variable: add base_damage_min/max
-[Hero.calculate_dps()] called after load → total_damage_min/max recalculated
+gameplay_view._on_items_dropped(level, count)
+    → for i in range(count):
+        item_base = get_random_item_base(level)  # creates + mods item
+        item_bases_collected.append(item_base)
+        item_base_found.emit(item_base)
+    ↓ (wired by main_view)
+forge_view.set_new_item_base(item_base)
+    → add_item_to_inventory(item_base)
+        → existing item replaced if new is better
+```
+
+### New Drop Flow
+
+```
+gameplay_view._on_items_dropped(level, count)
+    → (UNCHANGED — same code)
+    item_base_found.emit(item_base)
+    ↓ (wired by main_view — UNCHANGED)
+forge_view.set_new_item_base(item_base)
+    → add_item_to_inventory(item_base)
+        → append to slot array if under cap
+        → silently discard if at cap
+```
+
+`gameplay_view.gd` requires zero changes. `main_view.gd` signal wiring requires zero changes. Only `add_item_to_inventory()` in `forge_view.gd` changes behavior.
+
+The existing `is_item_better()` function in `forge_view.gd` is no longer used for drop routing (drops always append now). It remains useful only for the equip comparison display (`get_stat_comparison_text()` and `update_hero_stats_display()` contexts) — but the function itself can stay as-is since those paths still use it for UI display. Alternatively, it can be renamed to make purpose clear. No behavior change required.
+
+---
+
+## Integration Point 5: ForgeView Starting Item — Fresh Game Guard
+
+The existing `_ready()` guard checks `crafting_inventory.get(type_name) != null` for each slot. After the change, the guard must check `.is_empty()` on the array. The logic is otherwise identical.
+
+Starting weapon adds via `add_item_to_inventory()` which now appends to the array. The `LightSword.new()` creation does not call `spawn_item_with_mods` — it was always created without mods (Normal rarity, no affixes), and that behavior is unchanged.
+
+---
+
+## Data Flow Diagrams
+
+### Flow 1: Item Drop → Inventory Array
+
+```
+[map_completed signal → gameplay_view._on_map_completed()]
+    ↓
+[GameEvents.items_dropped.emit(level, count)]
+    ↓
+[gameplay_view._on_items_dropped(level, count)]
+    for each item:
+        item_base = get_random_item_base(level)   # creates + mods via LootTable
+        item_base_found.emit(item_base)
+    ↓ (wired by main_view.gd — UNCHANGED)
+[forge_view.set_new_item_base(item_base)]
+    ↓
+[forge_view.add_item_to_inventory(item)]
+    slot = GameState.crafting_inventory[item_type]  # Array
+    if slot.size() >= SLOT_CAPACITY:
+        return   # discard silently
+    slot.append(item)
+    if current_item == null:
+        _load_bench_item(item_type)   # auto-select if bench empty
+    update_inventory_display()
+```
+
+### Flow 2: Player Selects Slot → Bench Loads Best Item
+
+```
+[Player clicks WeaponButton]
+    ↓
+[forge_view._on_item_type_selected("weapon")]
+    slot = GameState.crafting_inventory["weapon"]
+    if slot.is_empty(): return
+    GameState.crafting_bench_type = "weapon"
+    _load_bench_item("weapon")
+        → iterate slot array
+        → pick highest DPS (weapon/ring) or highest tier (armor slots)
+        → current_item = best
+    update_item_type_button_states()
+    update_item_stats_display()
+    update_melt_equip_states()
+```
+
+### Flow 3: Player Equips Bench Item
+
+```
+[Player clicks Equip]
+    ↓
+[forge_view._on_equip_pressed()]
+    existing = GameState.hero.equipped_items.get(slot_name)
+    if existing != null and not confirmed:
+        → show "Confirm Overwrite?" (unchanged behavior)
+        return
+    GameState.hero.equip_item(current_item, slot_name)   # old equipped DELETED
+    GameEvents.equipment_changed.emit(slot_name, current_item)
+    GameState.crafting_inventory[slot_name].erase(current_item)
+    current_item = null
+    _load_bench_item(slot_name)   # load next-best item for bench
+    update_hero_stats_display()
+    update_item_stats_display()
+    update_inventory_display()
+```
+
+### Flow 4: Save / Load Round-Trip
+
+```
+[SaveManager._build_save_data()]
+    for each slot in crafting_inventory:
+        serialize Array[Item] → Array[Dict]
+    write "version": 2, "crafting_inventory": {...arrays...}
+
+[SaveManager.load_game()]
+    parse JSON
+    _migrate_save(data):
+        if version < 2:
+            wrap single-item dicts in arrays
+            erase "crafting_bench_item"
+    _restore_state(data):
+        for each slot:
+            deserialize Array[Dict] → Array[Item]
+            GameState.crafting_inventory[slot] = restored array
+        crafting_bench_type restored (unchanged)
+
+[forge_view._ready()]
+    reads GameState.crafting_inventory[type] arrays
+    sets current_item via _load_bench_item()
 ```
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: Average-for-DPS, Roll-for-Combat
+### Pattern 1: Array-as-Slot-Inventory with Const Capacity
 
-**What:** `StatCalculator.calculate_dps()` uses `(min + max) / 2` for the DPS average shown in UI. `CombatEngine` rolls `randf_range(min, max)` per hit.
+**What:** Each slot holds an `Array[Item]` with a compile-time capacity constant. All write paths check `slot.size() >= SLOT_CAPACITY` before appending. No dedicated Inventory class needed.
 
-**Why:** DPS is an expected-value metric — the correct formula uses average damage. Combat gives variance and tactile feel. These are separate use cases and should use separate code paths.
+**When to use:** When the inventory structure is simple (same capacity per slot, no slot metadata) and all access is through one owner (ForgeView). A dedicated class would add indirection with no benefit at this scale.
 
-**Anti-pattern to avoid:** Do not pass a rolled value into `calculate_dps()`. DPS must always use average damage — it is a planning metric, not a combat metric.
+**Why not Dictionary-of-Item:** The previous single-item-per-slot model stored `null` as absence. Arrays express "zero items" naturally — no null checks, no ambiguity between "slot exists but empty" and "slot doesn't exist."
 
-### Pattern 2: Range Propagation via Min/Max Pair Accumulation
+**Example:**
+```gdscript
+# GameState — slots are always initialized as empty arrays:
+crafting_inventory = {
+    "weapon": [],
+    "helmet": [],
+    "armor":  [],
+    "boots":  [],
+    "ring":   [],
+}
 
-**What:** Each layer accumulates `total_min` and `total_max` independently. Multiplicative modifiers (INCREASED_DAMAGE) scale both ends proportionally. Result is Vector2i handed to the next layer.
-
-**Why:** Preserves spread. If you collapse to a single value anywhere in the pipeline, you lose the variance the feature is adding.
-
-**Example accumulation:**
+# ForgeView write guard:
+const SLOT_CAPACITY: int = 10
+var slot: Array = GameState.crafting_inventory[item_type]
+if slot.size() >= SLOT_CAPACITY:
+    return  # drop the item
+slot.append(item)
 ```
-Base weapon: 8-12
-+ Flat affix min_value=4, max_value=8  →  12-20
-× INCREASED_DAMAGE 50%                 →  18-30
+
+### Pattern 2: Best-Item Selection at Bench Load Time
+
+**What:** The "bench item" is the item currently selected for crafting. It is chosen from the slot array at load time (`_load_bench_item()`), not on every frame. The selection criteria match the existing `is_item_better()` logic: DPS for weapon/ring, tier for armor slots.
+
+**When to use:** Whenever there are multiple items in a slot and the UI needs to show one. Selection is deferred until the slot is activated (tab switch, drop received into empty slot).
+
+**Why not auto-select on every item added:** If the player is crafting an item on the bench and a new drop arrives in the same slot, the bench item should not silently switch. Only switch when bench is null (slot was empty).
+
+**Example:**
+```gdscript
+func _load_bench_item(slot_type: String) -> void:
+    var slot: Array = GameState.crafting_inventory.get(slot_type, [])
+    if slot.is_empty():
+        current_item = null
+        return
+    var best: Item = slot[0]
+    for item: Item in slot:
+        if best is Weapon or best is Ring:
+            if item.dps > best.dps:
+                best = item
+        else:
+            if item.tier > best.tier:
+                best = item
+    current_item = best
 ```
 
-### Pattern 3: Element Variance at Pack Generation, Not in DefenseCalculator
+### Pattern 3: Erase-by-Reference for Array Item Removal
 
-**What:** Variance factor is applied in `PackGenerator.create_pack()` when setting `damage_min`/`damage_max`. `DefenseCalculator` receives a single pre-rolled float — unchanged interface.
+**What:** `Array.erase(item)` removes the first element that matches the reference. Since Items are Resource objects and the same reference is used throughout (ForgeView holds the same object that's in the array), this is safe and requires no index tracking.
 
-**Why:** DefenseCalculator's contract is "given raw damage, apply mitigation stages." Adding variance inside it would break separation of concerns and make DefenseCalculator harder to reason about (it already has four stages).
+**When to use:** When the item reference is available at removal time (which it always is — `current_item` is the reference we want to erase).
+
+**Why not index-based removal:** Index tracking introduces state that can go stale if items are added or removed from other paths. Reference-based erase is O(n) on the array but n is at most 10, making it negligible.
+
+**Example:**
+```gdscript
+# current_item is the reference to the Item object in the array:
+GameState.crafting_inventory[slot_name].erase(current_item)
+current_item = null
+```
+
+### Pattern 4: Migration-Before-Schema: Write Migration Before Changing Format
+
+**What:** `_migrate_v1_to_v2()` in `save_manager.gd` must be written and tested before any `crafting_inventory` format changes are made to `_build_save_data()` or `_restore_state()`. This means the migration runs on v1 saves to produce v2 format before the restore path reads them.
+
+**Why this order:** If `_restore_state()` is changed to expect arrays before migration is written, any existing save file will fail to load. The window between those two changes is a save-corruption risk even in development.
+
+**Example migration:**
+```gdscript
+func _migrate_v1_to_v2(data: Dictionary) -> Dictionary:
+    var old_inv: Dictionary = data.get("crafting_inventory", {})
+    var new_inv: Dictionary = {}
+    for type_name in old_inv:
+        var old_item = old_inv[type_name]
+        if old_item is Dictionary:
+            new_inv[type_name] = [old_item]
+        else:
+            new_inv[type_name] = []
+    data["crafting_inventory"] = new_inv
+    data.erase("crafting_bench_item")
+    return data
+```
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Collapsing Range to Single Value Too Early
+### Anti-Pattern 1: Auto-Replacing Bench Item on Every Drop
 
-**What people do:** Store `(min + max) / 2` as the affix value immediately on creation, then use that single value everywhere.
+**What people do:** Call `_load_bench_item()` every time `add_item_to_inventory()` is called, unconditionally refreshing the bench.
 
-**Why it's wrong:** UI cannot show "12-20" if the range was collapsed to "16". Per-hit combat cannot roll variance. The range information is lost before it can be used.
+**Why it's wrong:** If the player has a crafted item on the bench with rare mods applied and a new drop arrives in the same slot, the bench switches away from their work-in-progress. This is disorienting and could cause accidental hammer application to the wrong item.
 
-**Do this instead:** Keep `min_value` and `max_value` as the canonical fields for FLAT_DAMAGE affixes. Compute average only when needed for DPS (in StatCalculator). Roll per-hit only in CombatEngine.
+**Do this instead:** Only call `_load_bench_item()` when `current_item == null` (bench was empty). When a new item arrives and the bench already has an item for that slot, just update `inventory_display` and let the player manually switch if they want to.
 
-### Anti-Pattern 2: Adding Variance to DefenseCalculator
+### Anti-Pattern 2: Returning Old Equipped Item to Inventory on Equip
 
-**What people do:** "Lightning does more variable damage, so let's make DefenseCalculator roll variance when element is lightning."
+**What people do:** When equipping a bench item that replaces an existing equipped item, push the old equipped item back into the slot array.
 
-**Why it's wrong:** DefenseCalculator is downstream of rolling. It receives a specific damage number and applies mitigation math. Adding RNG inside it makes it stateful and harder to test. It also breaks the "evasion happens before mitigation" pipeline.
+**Why it's wrong:** The v1.5 design explicitly specifies "equip commits: old equipped item deleted, not returned." Returning it creates unbounded inventory growth (equip-unequip cycles fill the slot) and complicates the equip flow. The two-click confirmation already protects against accidental overwrites.
 
-**Do this instead:** Roll in CombatEngine before calling DefenseCalculator. Pack attack code: `rolled = randf_range(pack.damage_min, pack.damage_max)` → pass rolled value to DefenseCalculator.
+**Do this instead:** `GameState.hero.equip_item(current_item, slot_name)` already overwrites the dict reference. The old item's memory is freed by GDScript's reference counting. No return path needed.
 
-### Anti-Pattern 3: Storing total_damage_min/max in Save Data
+### Anti-Pattern 3: Storing Inventory Arrays as Typed Array[Item] on GameState
 
-**What people do:** Serialize `hero.total_damage_min` and `hero.total_damage_max` to avoid recalculating.
+**What people do:** Use `var crafting_inventory: Dictionary[String, Array[Item]]` or typed slot properties.
 
-**Why it's wrong:** These are derived values, computed from equipped items + affixes. Saving them creates a second source of truth. On load, if an affix was changed or the formula adjusted, the saved cached value becomes stale.
+**Why it's wrong:** Godot 4.x Dictionary does not support generic type parameters in GDScript at this time. Using `Array[Item]` as a value type in an untyped Dictionary causes type erasure and potentially runtime errors when assigning. The existing code uses untyped Dictionary values throughout (`item = GameState.crafting_inventory[slot]`).
 
-**Do this instead:** Do not serialize `total_damage_min` / `total_damage_max`. They recalculate in `hero.update_stats()` which is already called after load in `_restore_state()`.
+**Do this instead:** Keep `crafting_inventory: Dictionary` with untyped values, but document and enforce via code comments that each value is an `Array` of `Item`. Cast locally when needed: `var slot: Array = GameState.crafting_inventory[item_type]`.
 
-### Anti-Pattern 4: Per-Element Variance in MonsterType
+### Anti-Pattern 4: Serializing `current_item` or Bench Selection Index
 
-**What people do:** Add `damage_variance: float` to MonsterType so each monster has its own variance regardless of element.
+**What people do:** Save `current_item` reference or its index in the slot array to restore bench state exactly on load.
 
-**Why it's wrong:** The milestone requirement is element-specific variance (Lightning is extreme, Physical is tight). Variance is a property of the damage element, not the monster species. Goblins hitting with lightning should have the same spread as bears hitting with lightning.
+**Why it's wrong:** `current_item` is a transient UI state. The item reference is not stable across save/load (new object instances are created by `create_from_dict()`). Trying to restore by index is fragile if array order changes. `crafting_bench_type` (which slot was selected) is sufficient and already saved.
 
-**Do this instead:** Keep variance in `PackGenerator._get_element_variance(element: String) -> float`. It is a lookup table by element string. MonsterType stays clean.
+**Do this instead:** On load, restore `crafting_bench_type` from save (already done), then call `_load_bench_item(crafting_bench_type)` which picks the best item automatically. Players accept that the highest-tier item is pre-selected after loading.
+
+### Anti-Pattern 5: Adding an Inventory Signal to GameEvents
+
+**What people do:** Add `signal inventory_changed(slot: String)` to `game_events.gd` to propagate inventory updates across scenes.
+
+**Why it's wrong:** Nothing outside `forge_view.gd` needs to react to inventory changes. `gameplay_view.gd` does not display inventory. `save_manager.gd` reads `GameState.crafting_inventory` directly at save time (event-driven by `item_crafted` and `equipment_changed`, both of which are already wired). Adding a new signal creates public surface area for a private concern.
+
+**Do this instead:** Keep all inventory update calls (`update_inventory_display()`, `update_melt_equip_states()`) inside `forge_view.gd`. This is already the pattern for all existing inventory display calls.
 
 ---
 
-## Build Order and Dependencies
+## Build Order and Phase Dependencies
 
-Dependencies flow bottom-up. Build data model first, then calculator, then combat, then UI last.
+Dependencies flow data-model-first, then persistence, then UI. The UI cannot be tested until GameState holds the right shape; save/load cannot be tested until the shape is right and the migration exists.
 
 ```
-Step 1: Affix (semantic clarity only)
-    No code change — min_value/max_value already exist and are serialized.
-    Document the convention: FLAT_DAMAGE affixes use min_value/max_value as damage range.
-    Adjust affix pool definitions in item_affixes.gd to set element-appropriate spreads.
-
-Step 2: Weapon (base damage range fields)
-    Depends on: Affix convention established (Step 1)
+Phase 1: GameState data shape change (prerequisite for everything)
+    Files: autoloads/game_state.gd
     Changes:
-    - weapon.gd: base_damage_min + base_damage_max fields; base_damage computed property
-    - weapon.gd: add damage_range: Vector2i field
-    - light_sword.gd: set base_damage_min/max in _init()
+      - crafting_inventory values: null → []
+      - initialize_fresh_game(): initialize arrays not nulls
+      - crafting_bench_item: remove field
+    Gate: ForgeView._ready() can read arrays without crashing
 
-Step 3: StatCalculator (new method + modified signature)
-    Depends on: Weapon fields in place (Step 2)
+Phase 2: SaveManager — migration first, then serialization
+    Files: autoloads/save_manager.gd
+    CRITICAL: Write _migrate_v1_to_v2() BEFORE changing _build_save_data()
     Changes:
-    - Add calculate_damage_range(base_min, base_max, affixes) → Vector2i
-    - Modify calculate_dps() to accept base_min + base_max, use average internally
+      - SAVE_VERSION = 2
+      - _migrate_v1_to_v2(): wrap single items in arrays, drop bench_item key
+      - _build_save_data(): serialize Array[Item] → Array[Dict]
+      - _restore_state(): deserialize Array[Dict] → Array[Item]
+    Gate: Load an existing v1 save file and verify items survive migration
 
-Step 4: Weapon.update_value() (uses new StatCalculator)
-    Depends on: StatCalculator updated (Step 3)
+Phase 3: ForgeView core logic (depends on Phase 1)
+    Files: scenes/forge_view.gd
     Changes:
-    - weapon.gd: call calculate_damage_range() and cache result
-    - weapon.gd: call calculate_dps() with new signature
+      - SLOT_CAPACITY constant
+      - add_item_to_inventory(): append with cap check
+      - _load_bench_item(): best-item picker (NEW private function)
+      - _on_item_type_selected(): guard on empty array
+      - _on_melt_pressed(): erase from array
+      - _on_equip_pressed(): erase from array
+      - update_current_item(): replaced by _load_bench_item()
+      - _ready(): fresh-game guard uses is_empty()
+    Gate: Can add items, melt items, equip items without crashing
 
-Step 5: MonsterPack + PackGenerator (monster damage ranges)
-    Depends on: Nothing from Steps 1-4 (independent data model change)
+Phase 4: ForgeView display (depends on Phase 3)
+    Files: scenes/forge_view.gd
     Changes:
-    - monster_pack.gd: add damage_min + damage_max
-    - pack_generator.gd: set damage_min/max from element variance table
+      - update_inventory_display(): x/N counter format
+    Gate: Inventory panel shows correct counts; label does not overflow
 
-Step 6: Hero (total_damage_min/max fields)
-    Depends on: Weapon.get_damage_range() available (Step 4)
-    Changes:
-    - hero.gd: add total_damage_min + total_damage_max
-    - hero.gd: calculate_dps() populates both from weapon damage_range
-
-Step 7: CombatEngine (per-hit rolling)
-    Depends on: Hero fields (Step 6), MonsterPack fields (Step 5)
-    Changes:
-    - _on_hero_attack(): roll from hero.total_damage_min/max
-    - _on_pack_attack(): roll from pack.damage_min/max before DefenseCalculator
-
-Step 8: Save format (if needed)
-    Depends on: All model changes (Steps 1-6)
-    Changes:
-    - Only if base_damage_min/max are variable (not reconstructible from class _init)
-    - Bump SAVE_VERSION + add migration
-
-Step 9: UI (display ranges)
-    Depends on: All model changes (Steps 1-6)
-    Changes:
-    - forge_view.gd: weapon shows "Damage: X-Y", flat affixes show min-max
-    - forge_view.gd: hero stats shows "Hit Range: X-Y"
+Phase 5: Integration verification
+    - New game: starts with 1 weapon, inventory shows "Weapon (1/10)"
+    - Drop received: weapon slot increases to 2/10
+    - Drop at cap (10): additional drop silently discarded, count stays 10/10
+    - Melt: count decreases, bench loads next-best item
+    - Equip: count decreases, old equipped item gone, bench loads next-best
+    - Save/load round-trip: all arrays survive, crafting_bench_type restored
+    - V1 save migration: single items promoted to arrays with no data loss
 ```
 
-**Critical path:** Steps 1 → 2 → 3 → 4 → 6 → 7 → 9
+**Critical path:** Phase 1 → Phase 2 (migration written) → Phase 3 → Phase 4 → Phase 5
 
-Steps 5 and 8 are parallel to the critical path (monster damage range can be done anytime before Step 7; save format after all models).
+Phase 2 migration must be written before Phase 3 is merged, because Phase 3 changes `_restore_state()` which must work with both v1 (migrated) and v2 saves.
+
+---
+
+## Save Format Versioning
+
+| Version | Crafting Inventory Format | `crafting_bench_item` |
+|---------|--------------------------|----------------------|
+| v1 (current) | `{"weapon": {item_dict} or null, ...}` | present (always null in practice) |
+| v2 (new) | `{"weapon": [{item_dict}, ...], ...}` (empty arrays for empty slots) | absent |
+
+**Existing saves:** When `SAVE_VERSION = 2` ships, any v1 save is migrated automatically on first load. The v1 → v2 migration wraps non-null single item dicts in `[...]` arrays and converts nulls to `[]`. Item data within the dicts is unchanged — all the affix fields, tier, rarity, etc. survive exactly. DPS and stats recalculate from affixes as they always have.
+
+**Export strings:** `export_save_string()` calls `_build_save_data()` which will now produce v2 format. Old export strings (v1) can still be imported — `import_save_string()` calls `_migrate_save()` which handles v1 → v2 conversion. Existing import/export flow requires no change beyond the save_manager modifications above.
 
 ---
 
 ## Sources
 
-- Direct codebase analysis: `models/affixes/affix.gd`, `models/stats/stat_calculator.gd`, `models/combat/combat_engine.gd`, `models/items/weapon.gd`, `models/monsters/monster_pack.gd`, `models/monsters/pack_generator.gd`, `models/hero.gd`, `autoloads/save_manager.gd`, `scenes/forge_view.gd`
-- Existing save format: `Affix.to_dict()` confirms `min_value`/`max_value` already serialized (line 58-63 of affix.gd)
-- `SAVE_VERSION = 1` in `save_manager.gd` — current save schema baseline for migration planning
+- Direct codebase analysis: `autoloads/game_state.gd`, `autoloads/save_manager.gd`, `scenes/forge_view.gd`, `scenes/gameplay_view.gd`, `scenes/main_view.gd`, `models/hero.gd`, `models/items/item.gd`, `autoloads/game_events.gd`
+- `save_manager.gd:159` — `_migrate_save()` stub confirmed, placeholder comment already present
+- `save_manager.gd:4` — `SAVE_VERSION = 1` confirmed as current baseline
+- `game_state.gd:9-10` — `crafting_bench_item` and `crafting_inventory` field declarations
+- `forge_view.gd:420-434` — `add_item_to_inventory()` current implementation confirms single-item replacement logic
+- `forge_view.gd:465-472` — `is_item_better()` DPS vs tier logic confirmed; reusable for `_load_bench_item()`
+- `gameplay_view.gd:185-189` — `_on_items_dropped()` already calls `LootTable.spawn_item_with_mods()` before emitting; no double-modding risk
+- `main_view.gd:25-26` — Signal wiring `item_base_found` → `forge_view.set_new_item_base` confirmed; unchanged
 
 ---
-*Architecture research for: Hammertime — Damage Range System integration*
+*Architecture research for: Hammertime v1.5 — Per-slot multi-item inventory rework*
 *Researched: 2026-02-18*
-*Confidence: HIGH — based on direct code analysis of all relevant files*
+*Confidence: HIGH — based on direct code analysis of all 8 affected files*

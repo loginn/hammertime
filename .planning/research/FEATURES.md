@@ -1,8 +1,8 @@
 # Feature Research
 
-**Domain:** ARPG Damage Range System — Hammertime v1.4
+**Domain:** Idle ARPG Per-Slot Inventory System — Hammertime v1.5
 **Researched:** 2026-02-18
-**Confidence:** HIGH (ARPG conventions verified via PoE Wiki, Diablo 2/4 documentation; codebase analysis confirms integration points)
+**Confidence:** HIGH (codebase analysis confirmed; idle ARPG conventions verified via NGU Idle, Melvor Idle, Lootlands, AFK Arena/Journey pattern analysis; WebSearch MEDIUM for genre conventions)
 
 ---
 
@@ -10,102 +10,119 @@
 
 ### Table Stakes (Users Expect These)
 
-Features users assume exist in any ARPG with elemental damage. Missing these = system feels unfinished.
+Features users assume exist in any ARPG idle game with persistent loot. Missing these = system feels incomplete or hostile.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Weapon base damage as min-max range | Every ARPG (Diablo, PoE) expresses weapon damage as "X-Y damage" — a single flat number reads as a mobile game prototype | LOW | Replace `base_damage: int` with `base_min_damage: int` + `base_max_damage: int` on Weapon; LightSword already has `base_damage = 10`, convert to e.g. 8-12 |
-| Per-hit damage rolling in CombatEngine | Rolling each hit separately is what makes combat exciting vs. pure expected-value math — players expect to see variance in floating numbers | LOW | `randi_range(min_damage, max_damage)` per hit in `_on_hero_attack()`; replaces current `damage_per_hit = hero.total_dps / hero_attack_speed` |
-| Flat damage affixes as "adds X to Y" ranges | PoE/Diablo standard: affixes read "Adds 5 to 12 Fire Damage" not "Adds 8 Fire Damage" | MEDIUM | Affix already has `min_value`/`max_value` fields; need to store two values (add_min, add_max) that roll independently per hit instead of a single rolled `value` |
-| DPS display using average | Every ARPG tooltip shows DPS as `(min+max)/2 * speed * crit_multiplier` — players need a stable number for gear comparison, not a range | LOW | StatCalculator.calculate_dps() currently takes `base_damage: float`; change call site to pass `(base_min + base_max) / 2.0` as the average |
-| Item tooltip shows "X to Y" damage range | Weapons in Diablo 4 and PoE display the raw range, not the average, so players can evaluate variance — "8 to 42 Lightning Damage" communicates both floor and ceiling | LOW | Update item_view / forge_view stat display strings from `"%d" % value` to `"%d to %d" % [min_val, max_val]` for damage affixes and weapon base |
-| Element-specific variance identity | Lightning is "spiky and extreme" in all ARPGs (PoE: "Adds 1 to 1000 Lightning Damage"); Physical is consistent/reliable; Cold is moderate — this is genre convention | MEDIUM | Define variance multipliers per element type; apply when generating affix min/max values. Physical: tight (ratio ~1.5:1), Cold: moderate (~3:1), Fire: wide (~5:1), Lightning: extreme (~10:1+) |
-| Monster damage ranges | Monster hits should also vary — static pack.damage reads as unpolished | LOW | `MonsterPack.damage` is currently a scalar; convert to min/max range, roll per hit in `_on_pack_attack()` |
+| Multiple items per slot (queue/stash per gear type) | Players find 2-3 items per area clear; a single-item bench means every drop immediately tramples the crafting project in progress — this reads as broken, not a design choice | MEDIUM | Replace `crafting_inventory: Dictionary` (single item per key) with `Array[Item]` per key (max 10); GameState and SaveManager both need updates |
+| Item count display per slot (x/10 counter) | The x/10 counter is the primary feedback that the slot is finite — without it, players don't know if overflow is silently discarding items | LOW | Already specified in milestone context; one label per item type button in ForgeView |
+| Crafting bench shows best/highest-tier item | Players use the bench to craft the best candidate for equipping; showing a random or oldest item wastes time and causes confusion | MEDIUM | `get_bench_item(slot)` returns the highest-tier item from the Array using existing `is_item_better()` comparison logic |
+| Drops go directly to slot inventory | Every idle ARPG routes loot directly to stash — players expect zero friction between area clear and having items available to inspect | LOW | `add_item_to_inventory()` already routes drops; logic changes from replace-if-better to append-if-capacity |
+| Overflow silently discards (not blocks combat) | Idle game convention: full stash silently ignores new drops rather than pausing combat or showing a blocking dialog — NGU Idle, Melvor Idle both use this pattern | LOW | At capacity (10/10), `add_item_to_inventory()` early-returns without error; no player-facing message needed beyond counter staying at 10 |
+| Melt removes bench item from inventory | Players expect Melt to destroy the item on the bench and update the counter — if melt didn't remove it from inventory, the slot would appear full without the item visible | LOW | `_on_melt_pressed()` removes the returned item from its slot Array instead of setting a single key to null |
+| Equip removes bench item from inventory | Players expect equipping to consume the item from the crafting queue — leaving it in the Array after equip would create phantom items | LOW | `_on_equip_pressed()` removes the equipped item from its slot Array; old equipped item is deleted as before |
+| Save/load preserves full slot inventories | Players closing the game expect their full crafting queue to survive — saving only the bench item (one per slot) would feel like data loss | MEDIUM | SaveManager `_build_save_data()` must serialize Array per slot; `_restore_state()` must rebuild Arrays; save version bump required |
 
 ### Differentiators (Competitive Advantage)
 
-Features not required by convention but meaningful for this specific game's identity.
+Features not mandatory for idle ARPG genre conventions but meaningful for Hammertime's crafting identity.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Element variance shown in tooltip hint | Instead of just "8 to 42", a small text hint like "High variance" for lightning and "Consistent" for physical — makes the variance system legible to players | LOW | Simple string lookup by element type; adds storytelling to damage numbers |
-| Hero View DPS breakdown by element | Show Physical DPS, Fire DPS, Cold DPS, Lightning DPS separately so players understand their damage composition | MEDIUM | Requires StatCalculator to track per-element averages; hero.gd currently exposes only `total_dps` |
-| Min DPS and Max DPS as secondary stats | Show "DPS range: 40-120" alongside "Avg DPS: 80" so players understand their hit floor and ceiling | LOW | Simple: `(min_damage * speed)` and `(max_damage * speed)` × crit multiplier; display alongside avg DPS |
-| Floating number variance feedback | Players see numbers ranging from small hits to giant crits — especially dramatic with high-variance lightning | NONE | Already works once per-hit rolling is in place; floating_label.gd already handles crit styling |
+| "Highest tier on bench" as the default view | Showing the best candidate automatically reduces decision fatigue — players can immediately evaluate whether to craft or equip without scrolling | MEDIUM | Requires `get_bench_item()` using tier-comparison; ties broken by rarity (Rare > Magic > Normal) then DPS for weapons/rings |
+| Per-slot counter as crafting progress feedback | The x/10 counter communicates how productive the farming session was without requiring a separate loot log screen — "weapon 7/10" tells a clear story | LOW | Already in milestone spec; label updates on every `add_item_to_inventory()` and every melt/equip |
+| Silent overflow (zero friction) | Blocking popups or sound-on-overflow would interrupt idle flow — NGU Idle's "full = silently discard" is the right pattern for an idle game; players check occasionally, not constantly | LOW | The behavior itself; no additional UI needed |
+| Overflow feedback on return (counter at cap) | Players returning after idle time can glance at 10/10 counters and understand the slot filled — this is richer feedback than a single item showing "best found" | LOW | The counter at 10/10 is the feedback; no additional system needed |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Store rolled per-hit value on Affix.value | Simplest approach — just roll once at item creation and show that | Misleads players: "5 fire damage" hides that the affix could have rolled 1-12; loses variance identity entirely | Keep `add_min`/`add_max` as the affix's data; roll at combat time |
-| Lucky/Unlucky damage rolls (PoE mechanic) | Advanced PoE feature — roll twice, take better/worse | Adds significant complexity, needs UI explanation, zero value for idle game | Skip; standard uniform roll is sufficient |
-| DPS tooltip using maximum damage only | "Looks bigger" to players | Misleading; makes all items look better than they perform; breaks gear comparison math | Always use average `(min+max)/2` for DPS display |
-| Separate weapon and affix ranges summed separately in tooltip | Technically correct breakdown | Creates tooltip complexity players don't need in an idle game — they want one number to compare | Sum all flat damage ranges into total weapon range, show one "X to Y Damage" line |
-| Storing weapon range on Hero as `hero.min_dps` / `hero.max_dps` | Feels natural | Hero.gd is already complex; adding more DPS variants bloats the API | Compute min/max DPS on-demand in UI layer; Hero exposes `total_dps` (avg) only |
-| Float damage ranges on affixes | More granularity | Existing affixes use `int` throughout — floats would require migration across serialization, display, and math | Keep all damage values as `int`; float only at DPS calculation step |
+| Return old equipped item to inventory on equip | Players from full ARPGs (Diablo, PoE) expect swapping gear to return the old piece | Breaks the defined equip contract ("old item DELETED") and would fill slots with used gear — the crafting loop is find-craft-equip, not manage-swap-hoard | Delete old equipped item on equip; this is already the existing behavior and must stay |
+| Let players scroll/navigate all 10 items per slot in the bench UI | Seems natural if you have 10 items | Creates a browsing UI that fights the idle game identity — the game finds loot, shows you the best candidate, you craft or equip | Always show highest-tier item only; let players melt unwanted items one at a time via the bench |
+| Per-item drop notification ("Helmet dropped!") | Common in mobile ARPGs | Notification spam for an idle game that may drop 30 items across a session; high-signal items (rares) already stand out via counter going up | Counter update is sufficient feedback; no per-drop toast needed |
+| Loot filter (hide item types you don't want) | Power feature in NGU Idle and Path of Exile | Adds significant configuration surface to a small indie game with 5 item types and a 10-item cap; cap is the natural filter | 10-item cap with silent discard is the filter; complexity is not warranted until item type variety expands significantly |
+| Manual item selection from the bench (pick which of the 10 to show) | Gives players full control | Adds UI browsing mode that makes the bench a mini-inventory manager — contradicts the "view into inventory, not removal" contract | Surface only the best item; all 10 remain in storage for the crafting queue until melted |
+| Overflow notification popup or sound | Players want to know the slot is full | Blocking or intrusive feedback interrupts idle loop — players check the counter on return; a popup during auto-clear would be disruptive | x/10 counter turning 10/10 is the passive signal |
+| Auto-equip best item when slot fills | Players want zero friction | Removes the crafting decision entirely; the loop is find → craft → equip, and auto-equipping bypasses the craft step | Keep the equip button explicit; auto-equip removes player agency over crafting |
+| Melt-all or bulk melt | Inventory management convenience | With 10 items max per slot, manual melt is trivial; bulk-melt removes player attention from individual items they might want to craft | One-at-a-time melt via bench is sufficient at this scale |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[1] Weapon Base Damage Range (min/max on Weapon)
-    └──required-by──> [3] Per-Hit Rolling (needs values to roll between)
-    └──required-by──> [5] DPS Average Calculation (needs min+max to average)
-    └──required-by──> [6] Tooltip "X to Y" Display (needs range to show)
+[1] Per-Slot Array Storage (GameState: crafting_inventory[type] = Array[Item])
+    └──required-by──> [2] Add to Inventory Logic (append vs. replace)
+    └──required-by──> [3] Get Bench Item (highest-tier selector)
+    └──required-by──> [4] Melt/Equip Removal (remove-from-array vs. null-assign)
+    └──required-by──> [5] x/10 Counter Display
+    └──required-by──> [6] Save/Load Array Serialization
 
-[2] Affix Damage Range (add_min / add_max stored, rolled per hit)
-    └──required-by──> [3] Per-Hit Rolling (affix flat added to weapon roll)
-    └──required-by──> [5] DPS Average Calculation (affixes averaged separately)
-    └──required-by──> [6] Tooltip "X to Y" Display (affix shows range)
+[2] Add to Inventory Logic (append if capacity, discard if full)
+    └──required-by──> [5] x/10 Counter Display (counter updates on add)
+    └──requires──> [1] Per-Slot Array Storage
 
-[4] Element Variance Identity (variance ratio per element)
-    └──required-by──> [2] Affix Damage Range (determines how wide the affix range is)
-    └──enhances──> [7] Variance Hint in Tooltip (labels the element character)
+[3] Get Bench Item / Highest-Tier Selector
+    └──required-by──> [ForgeView current_item] (bench always shows best)
+    └──required-by──> [7] Stat Comparison (compare equipped vs. bench item)
+    └──requires──> [1] Per-Slot Array Storage
+    └──uses-existing──> is_item_better() (already implemented in ForgeView)
 
-[3] Per-Hit Rolling in CombatEngine
-    └──required-by──> [8] Monster Damage Range (same rolling pattern for pack attacks)
-    └──enhances──> [Floating Numbers] (already exists; range rolling adds visual drama)
+[4] Melt/Equip Removal
+    └──required-by──> [5] x/10 Counter Display (counter decrements on melt/equip)
+    └──requires──> [3] Get Bench Item (know which item to remove)
+    └──requires──> [1] Per-Slot Array Storage
 
-[5] DPS Average Calculation
-    └──required-by──> StatCalculator.calculate_dps() signature change
-    └──required-by──> Hero.total_dps (computed from averaged range)
-    └──independent──> [3] Per-Hit Rolling (display vs. combat are separate)
+[5] x/10 Counter Display (per item-type button label)
+    └──requires──> [1] Per-Slot Array Storage (Array.size() for count)
+    └──updates-on──> [2] Add, [4] Melt/Equip
+
+[6] Save/Load Array Serialization
+    └──requires──> [1] Per-Slot Array Storage
+    └──integrates-with──> SaveManager._build_save_data() / _restore_state()
+    └──requires──> Save version bump (SAVE_VERSION += 1)
+
+[7] Stat Comparison (existing: hover equip button shows delta)
+    └──requires──> [3] Get Bench Item (must compare the bench item, which is now "best of slot")
+    └──uses-existing──> get_stat_comparison_text() in ForgeView (unchanged logic)
 ```
 
 ### Dependency Notes
 
-- **Weapon base damage range blocks everything:** Until `base_min_damage`/`base_max_damage` exist on Weapon, neither rolling nor display works. This is Phase 1.
-- **Affix damage range is independent from weapon range at the data layer:** `Affix.min_value`/`Affix.max_value` already exist but currently represent the tier-scaled value band; for damage affixes, these become `add_min`/`add_max` rolled per hit rather than at item generation. Requires careful reading of how existing code uses `affix.value`.
-- **StatCalculator and CombatEngine are decoupled correctly:** StatCalculator computes expected-value DPS (shown in UI); CombatEngine rolls actual per-hit damage. These should remain separate — do not merge.
-- **Monster damage range is lowest-risk change:** `MonsterPack.damage` is a scalar used only in `_on_pack_attack()`; converting to min/max range touches one call site.
+- **Per-slot Array storage blocks everything:** The GameState data model is the root change. Until `crafting_inventory[type]` holds an Array instead of a single Item reference, no other feature can be built. This must be Phase 1.
+- **`is_item_better()` is already correct:** The existing comparison function works for selecting the highest-tier bench item from the Array. No changes needed to comparison logic.
+- **Save/load is high-risk:** The serialization format for `crafting_inventory` changes from `{type: item_dict}` to `{type: [item_dict, ...]}`. The save version must be bumped and the migration path defined (old single-item save loads as a single-element Array).
+- **`current_item` in ForgeView becomes computed, not stored:** Currently `current_item` is set directly. With the Array model, `current_item` becomes the result of calling `get_bench_item(selected_type)` — recalculated after every add/melt/equip. This prevents stale references.
+- **Equip and Melt share removal logic:** Both need to remove a specific item from its slot Array. A shared `remove_from_slot(item, slot_type)` helper in GameState or ForgeView prevents duplication.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v1.4 milestone)
+### Launch With (v1.5 milestone)
 
-Minimum set to replace the flat damage model with ranges.
+Minimum to replace single-item bench with per-slot 10-item inventory.
 
-- [ ] **Weapon base damage as min-max range** — `LightSword.base_damage = 10` becomes `base_min = 8, base_max = 12`; every Weapon subclass updated
-- [ ] **Element variance ratios defined** — Per-element constants (Physical 1.5:1, Cold 3:1, Fire 5:1, Lightning 10:1) used when building affix ranges
-- [ ] **Flat damage affixes store add_min / add_max** — Affix data model extended; existing `affix.value` field retired for damage affixes (or repurposed as the per-hit roll result)
-- [ ] **Per-hit rolling in CombatEngine** — Hero attacks roll `randi_range(total_min, total_max)` per hit; replaces `total_dps / attack_speed` for actual combat
-- [ ] **Monster damage range** — MonsterPack.damage becomes min/max; pack attacks roll per hit
-- [ ] **DPS display uses average** — StatCalculator receives `(min+max)/2` as base_damage; display unchanged from player's perspective but now mathematically accurate
-- [ ] **Item tooltip shows "X to Y"** — Weapon stat panel shows e.g. "8 to 42 Lightning Damage"; damage affixes show "Adds 5 to 18 Fire Damage"
+- [ ] **GameState: Array per slot** — `crafting_inventory[type]` becomes `Array[Item]` with max size 10; all existing code that reads/writes this key updated
+- [ ] **Add to inventory appends, not replaces** — `add_item_to_inventory()` appends when `size < 10`, silently returns when full; the is-item-better check is removed (keep everything up to cap)
+- [ ] **Get bench item = highest tier** — `get_bench_item(slot_type)` iterates the Array and returns the item with the best `is_item_better()` ranking; used everywhere `current_item` is set
+- [ ] **Melt removes from Array** — `_on_melt_pressed()` removes the bench item from its slot Array via `erase()` or index removal
+- [ ] **Equip removes from Array** — `_on_equip_pressed()` removes the equipped item from its slot Array after equipping to hero
+- [ ] **x/10 counter per slot button** — Each of the 5 item type buttons shows "WEAPON 7/10" label; updates on every add/melt/equip
+- [ ] **Save/load Array serialization** — `_build_save_data()` serializes Arrays; `_restore_state()` rebuilds Arrays; SAVE_VERSION bumped; migration from v1 (single item per slot) handled gracefully
+- [ ] **Bench type button disabled when slot empty** — If slot Array is empty, item type button is disabled (already existing behavior; must work with Array emptiness check)
 
 ### Add After Validation (v1.x)
 
-- [ ] **Element variance hint in tooltip** — "High variance" / "Consistent" label once players understand the range display
-- [ ] **Per-element DPS breakdown in Hero View** — Physical/Fire/Cold/Lightning DPS separately when build diversity grows
-- [ ] **Min/Max DPS display alongside Avg DPS** — "DPS range: 40-120 (avg 80)" as secondary stat once core ranges ship
+- [ ] **x/10 visual urgency at cap** — Color or style change when counter reaches 10/10 to signal "slot is full, items being discarded" — useful once players learn the system
+- [ ] **Drop notification on full slot (opt-in)** — Small non-blocking indicator when a drop is discarded due to full capacity; only if playtesting reveals players miss this
 
 ### Future Consideration (v2+)
 
-- [ ] **Lucky/Unlucky damage rolls** — PoE mechanic; only relevant if status ailments or buffs are added
-- [ ] **Damage range visualization** — Bar or histogram showing spread; heavy UI investment for an idle game
+- [ ] **Slot capacity upgrade** — Expand beyond 10 via progression unlock; only relevant if item variety grows significantly
+- [ ] **Loot filter** — Filter which item types drop; only relevant if item type count grows beyond current 5 or players have builds that ignore certain slots
+- [ ] **Item browsing in bench** — Ability to view all items in a slot, not just the best; only if crafting complexity grows such that the best-first heuristic fails players regularly
 
 ---
 
@@ -113,126 +130,56 @@ Minimum set to replace the flat damage model with ranges.
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Weapon base damage range | HIGH | LOW | P1 |
-| Element variance ratios | HIGH | LOW | P1 |
-| Affix add_min / add_max data model | HIGH | MEDIUM | P1 |
-| Per-hit rolling in CombatEngine | HIGH | LOW | P1 |
-| Monster damage range | MEDIUM | LOW | P1 |
-| DPS display using average | HIGH | LOW | P1 |
-| Item tooltip "X to Y" display | HIGH | LOW | P1 |
-| Variance hint in tooltip | MEDIUM | LOW | P2 |
-| Per-element DPS breakdown | MEDIUM | MEDIUM | P2 |
-| Min/Max DPS alongside Avg DPS | LOW | LOW | P2 |
-| Lucky/Unlucky rolls | LOW | HIGH | P3 |
+| GameState Array per slot | HIGH | MEDIUM | P1 |
+| Add to inventory (append, discard on full) | HIGH | LOW | P1 |
+| Get bench item (highest tier) | HIGH | LOW | P1 |
+| Melt removes from Array | HIGH | LOW | P1 |
+| Equip removes from Array | HIGH | LOW | P1 |
+| x/10 counter per slot | HIGH | LOW | P1 |
+| Save/load Array serialization | HIGH | MEDIUM | P1 |
+| Bench type button disabled when empty | MEDIUM | LOW | P1 |
+| x/10 visual urgency at cap | LOW | LOW | P2 |
+| Drop notification on full slot | LOW | LOW | P2 |
+| Slot capacity upgrade | LOW | MEDIUM | P3 |
+| Loot filter | LOW | HIGH | P3 |
+| Item browsing in bench | LOW | HIGH | P3 |
 
 **Priority key:**
-- P1: Required for v1.4 milestone — the feature is the milestone
-- P2: Polish pass after core ranges work
+- P1: Required for v1.5 milestone — the feature is the milestone
+- P2: Polish after core inventory works; add if playtesting reveals friction
 - P3: Deferred; needs design justification to add
 
 ---
 
-## ARPG Convention Reference
+## Idle ARPG Convention Reference
 
-Sourced from Path of Exile, Diablo 2, and Diablo 4 to establish what "correct" looks like.
+Sourced from NGU Idle, Melvor Idle, Lootlands, AFK Arena, and AFK Journey to establish what "correct" looks like for this genre specifically.
 
-### (1) Weapon Base Damage Ranges
+### (1) Overflow Handling: Silent Discard is Standard
 
-In all ARPGs studied, weapon base damage is expressed as a min-max range, not a scalar:
-- Diablo 4: weapon tooltip shows "43-81 Damage" with attacks per second below it; DPS is `(43+81)/2 * 1.4 = 86.8`
-- Path of Exile: base weapon shows "9-22 Physical Damage" — multiplied by all modifiers
-- Design rule: the range represents the variance envelope of the weapon archetype; a dagger has tight physical range, a scepter has wide elemental range
+NGU Idle (2018, established idle ARPG): "If your inventory is full, any items that drop are immediately discarded." No blocking dialog, no sound, no toast. Players are expected to manage their stash before it caps.
 
-**Application to Hammertime:** `LightSword.base_damage = 10` becomes a range. Fast weapons (high attack speed) conventionally have tighter ranges than slow heavy weapons. Suggested: LightSword 8-12, heavier weapons wider.
+Melvor Idle: Inventory discussions on Steam reveal player frustration with managed bank slots — the cap itself is the signal, not a per-overflow notification. "If you rarely use items, remove them" is the player-facing advice.
 
-### (2) Flat Damage Affix Ranges ("Adds X to Y")
+**Application to Hammertime:** Silent discard at 10/10 is correct for the idle genre. The x/10 counter turning 10/10 is sufficient feedback. A popup or toast on discard would be an anti-pattern that interrupts the idle loop.
 
-PoE affixes are explicitly defined with add_min and add_max — the item tooltips display "Adds 11 to 19 Physical Damage." This range is separate from the weapon base range. At hit time, the weapon base rolls its range AND the affix rolls its range independently; both are summed. DPS is computed as `(weapon_avg + affix_avg) * speed * crit`.
+### (2) Stash Organization: Per-Type, Not Grid
 
-Existing `Affix` class in Hammertime already has `min_value` and `max_value` fields (tier-scaled), but currently the affix rolls a single `value` at item generation. For damage ranges, the affix must instead store two range boundaries and roll at combat time.
+AFK Arena used per-character item inventories (individual 6-slot inventories per character). AFK Journey simplified to per-archetype organization. Neither uses a free-form grid for an idle context — grid management adds the exact overhead idle games are designed to eliminate.
 
-**Current code path to change:**
-```gdscript
-# Current (item generation time roll):
-self.value = randi_range(self.min_value, self.max_value)
+Hammertime's per-slot Array (weapon/helmet/armor/boots/ring) maps directly to the per-archetype pattern AFK Journey converged on. This is correct for the genre.
 
-# Target (combat time roll for damage affixes):
-# affix.add_min and affix.add_max define the range
-# CombatEngine does: randi_range(affix.add_min, affix.add_max) per hit
-```
+### (3) Crafting Bench: Show Best, Not a Browser
 
-**Serialization note:** `add_min`/`add_max` must be included in `Affix.to_dict()` / `from_dict()` for save compatibility.
+The primary pain point across ARPGs at crafting stations (documented in ESO and PoE player feedback) is **needing to leave the crafting interface to check your equipped items**. Hammertime already solves this with the stat comparison on equip hover. The "show best item on bench" pattern extends this philosophy: the bench pre-selects the most relevant item so players can make one decision (craft or equip) rather than browsing.
 
-### (3) Element Variance Identity
+### (4) Item Comparison is the Critical UX
 
-Verified from Diablo 2 community documentation and PoE Wiki:
+The existing `get_stat_comparison_text()` in ForgeView already implements the core comparison pattern. With the per-slot inventory, the bench item changes to "highest-tier in slot" — the comparison logic remains unchanged. This is the right coupling point: the data model changes, the UX logic stays.
 
-| Element | Variance Profile | Design Intent | Ratio Example |
-|---------|-----------------|---------------|---------------|
-| Physical | Tight, consistent | Reliable baseline; mastery of fundamentals | 8 to 12 (1.5:1) |
-| Cold | Moderate | Balanced; cold is controlled, precise | 5 to 15 (3:1) |
-| Fire | Wide | Explosive, chaotic; fire burns unpredictably | 3 to 18 (6:1) |
-| Lightning | Extreme | "1 to 1000" — massive ceiling, near-zero floor; pure gambler's damage | 1 to 30 (30:1 extreme) |
+### (5) Equip Destroys Old Item — Correct for Idle
 
-The Diablo 2 wiki explicitly documents lightning: "Lightning Damage has an extremely large damage range, sometimes ranging from a measly 1 to a player-killing 2000." This is intentional genre convention — lightning identity is variance.
-
-**Implementation approach for Hammertime:** Define a `VARIANCE_RATIO` constant per element. When building an affix range for a given element and tier, set:
-```
-add_min = base_roll / variance_ratio  (rounded down, minimum 1)
-add_max = base_roll * variance_ratio
-```
-This keeps the average damage equal across elements (same DPS at same tier) while dramatically differing the distribution.
-
-### (4) Per-Hit Rolling
-
-PoE Wiki confirms: "The damage number rolled is rolled per hit, and not per skill use." Guild Wars 2 uses the same pattern: "whenever a weapon skill deals damage, a value is chosen at random from the range of weapon strength."
-
-This means:
-- The DPS stat in the UI is a theoretical average (`(min+max)/2 * speed * crit`)
-- Every actual hit in combat generates a fresh roll
-- Crit rolls happen separately on top of the damage roll (already implemented in CombatEngine)
-
-**Current CombatEngine hit path:**
-```gdscript
-var damage_per_hit := hero.total_dps / hero_attack_speed  # expected value
-```
-**Target:**
-```gdscript
-var base_hit := randi_range(hero.total_min_damage, hero.total_max_damage)
-var damage_per_hit := float(base_hit)
-if is_crit:
-    damage_per_hit *= (hero.total_crit_damage / 100.0)
-```
-
-### (5) DPS Calculation with Ranges
-
-Standard formula across all ARPGs studied:
-```
-DPS = average_damage * attacks_per_second * crit_multiplier
-average_damage = (min_damage + max_damage) / 2
-```
-
-Where `min_damage` and `max_damage` are the sum of weapon base min/max and all flat added damage affix min/max.
-
-StatCalculator currently receives `base_damage: float` (a scalar). The change: call site in `Weapon.update_value()` passes `(base_min_damage + base_max_damage) / 2.0` as the base, and affix averaging is unchanged (affixes also provide their average at DPS time).
-
-Alternatively, StatCalculator's signature could be updated to accept `base_min` and `base_max` and average internally — cleaner long-term.
-
-### (6) Display Conventions
-
-From Diablo 4 and PoE, confirmed:
-- **Weapon tooltip:** Shows raw range "43 to 81 Physical Damage" — not the average
-- **DPS stat:** Shows computed average as a single number (largest number on the tooltip)
-- **Affix display:** "Adds 11 to 19 Fire Damage" — the range, not a single value
-- **Hero stat panel:** Shows "DPS: 86.8" — the theoretical average, matching Diablo 4's approach
-
-Guild Wars 2 confirms the midpoint convention: "when a damage value is displayed in skill tooltips, the midpoint of the range is used to calculate the displayed value."
-
-**Application to Hammertime:**
-- Weapon item card: "8 to 42 Lightning Damage" (base + elemental implicit)
-- Damage affix line: "Adds 3 to 18 Fire Damage" (the stored range, not a rolled snapshot)
-- Hero Offense section: "DPS: 84.2" (unchanged; still average-based)
-- Floating combat numbers: the actual per-hit roll (already working; will now vary more)
+In full ARPGs (Diablo, PoE), equipping returns the old item to inventory. In idle ARPGs with constrained stash space, this creates automatic overflow and management overhead. AFK Journey eliminated gear-swapping overhead by moving to class-based gear abstraction. Hammertime's "equip destroys old item" contract is the correct idle-genre choice — it keeps the loop clean and the stash bounded.
 
 ---
 
@@ -240,44 +187,47 @@ Guild Wars 2 confirms the midpoint convention: "when a damage value is displayed
 
 | Existing Component | Current State | Required Change | Complexity |
 |-------------------|---------------|-----------------|------------|
-| `Weapon.base_damage: int` | Single scalar | Split to `base_min_damage`/`base_max_damage` | LOW |
-| `LightSword._init()` | `base_damage = 10` | `base_min_damage = 8, base_max_damage = 12` | LOW |
-| `StatCalculator.calculate_dps(base_damage: float)` | Takes single value | Accept min+max or average; average at call site | LOW |
-| `Weapon.update_value()` | Passes `base_damage` to StatCalculator | Pass `(base_min + base_max) / 2.0` | LOW |
-| `Affix` data model | `min_value`/`max_value` for tier scaling; single `value` rolled at init | Add `add_min`/`add_max` for damage affixes; retain `value` for non-damage affixes | MEDIUM |
-| `Affix.to_dict()` / `from_dict()` | Does not include add_min/add_max | Add both fields; save format version bump | LOW |
-| `CombatEngine._on_hero_attack()` | `hero.total_dps / hero_attack_speed` | `randi_range(hero.total_min_damage, hero.total_max_damage)` | LOW |
-| `Hero.total_dps` | Single float, computed by StatCalculator avg | Unchanged; avg DPS is still the display value | NONE |
-| `Hero` (new fields needed) | No min/max damage tracking | Add `total_min_damage: int` + `total_max_damage: int` computed by Hero.calculate_dps() | LOW |
-| `MonsterPack.damage` | Scalar float | Add `min_damage`/`max_damage`; roll in CombatEngine | LOW |
-| `CombatEngine._on_pack_attack()` | `pack.damage` as scalar | `randi_range(pack.min_damage, pack.max_damage)` | LOW |
-| Forge/Item tooltip display | Single value strings | Range strings for damage fields | LOW |
-| `item_affixes.gd` affix definitions | `Affix.new("Fire Damage", ...)` with single base_min/base_max | New damage affixes need element variance applied to their ranges | MEDIUM |
+| `GameState.crafting_inventory` | `{type: Item or null}` | `{type: Array[Item]}` — empty Array replaces null | MEDIUM |
+| `ForgeView.add_item_to_inventory()` | Replaces if `is_item_better()` | Appends if `size() < 10`, else silently returns | LOW |
+| `ForgeView.get_bench_item()` (new) | Does not exist | Iterates slot Array, returns best by `is_item_better()` | LOW |
+| `ForgeView.current_item` (usage) | Set directly by type selection | Computed from `get_bench_item(selected_type)` on every update | LOW |
+| `ForgeView._on_melt_pressed()` | Sets `crafting_inventory[slot] = null` | Removes bench item from Array via erase/index | LOW |
+| `ForgeView._on_equip_pressed()` | Sets `crafting_inventory[slot] = null` after equip | Removes equipped item from Array | LOW |
+| `ForgeView.update_inventory_display()` | Shows type name + single item name | Shows type name + x/10 counter | LOW |
+| `ForgeView.update_item_type_button_states()` | Checks `crafting_inventory[type] != null` | Checks `crafting_inventory[type].size() > 0` | LOW |
+| `SaveManager._build_save_data()` | Single item dict per slot | Array of item dicts per slot | MEDIUM |
+| `SaveManager._restore_state()` | Restores single item per slot | Restores Array per slot; v1 migration wraps single item in Array | MEDIUM |
+| `SaveManager.SAVE_VERSION` | `1` | Increment to `2`; migration v1→v2 defined | LOW |
+| `GameState.initialize_fresh_game()` | `crafting_inventory = {type: null}` | `crafting_inventory = {type: []}` | LOW |
 
 ---
 
 ## Sources
 
-**Path of Exile Damage Wiki (HIGH confidence — official wiki):**
-- [Flat damage | PoE Wiki](https://www.poewiki.net/wiki/Flat_damage) — Confirms "adds X to Y" format, per-hit rolling, DPS = (min+max)/2
-- [Damage | PoE Wiki](https://www.poewiki.net/wiki/Damage) — Per-hit rolling confirmed: "rolled per hit, not per skill use"; lightning high variance documented
-- [Lightning damage | PoE Wiki](https://www.poewiki.net/wiki/Lightning_damage) — Element variance identity confirmed
+**NGU Idle (MEDIUM confidence — community wiki and player guides):**
+- [NGU Idle Inventory Wiki](https://ngu-idle.fandom.com/wiki/Inventory) — Auto-discard when full confirmed; Loot Filters as post-launch addition
+- [NGU Idle Inventory Management Guide (2025)](https://tap-guides.com/2025/10/24/ngu-idle-inventory-management-guide/) — "If inventory is full you won't get any new drops"; filter pattern documented
 
-**Diablo 2 (HIGH confidence — established game documentation):**
-- [Lightning (Damage) | Diablo Wiki](https://diablo.fandom.com/wiki/Lightning_(Damage)) — "extremely large damage range, sometimes ranging from 1 to 2000"; cold as lowest damage/highest control
-- [Elemental Damage | Diablo Wiki](https://diablo.fandom.com/wiki/Elemental_Damage) — Lightning adds highest max damage; cold adds lowest damage values
+**Melvor Idle (MEDIUM confidence — Steam community discussions):**
+- [Melvor Idle Inventory Management](https://tap-guides.com/2025/10/24/melvor-idle-inventory-bank-management-tips/) — Bank slot management patterns; cap-as-signal behavior documented
+- [Melvor Idle General Discussions](https://steamcommunity.com/app/1267910/discussions/0/3828665107790112513/) — Player frustration with managed bank slots; confirms cap behavior
 
-**Diablo 4 (HIGH confidence — documented mechanic):**
-- [Damage Per Second | Diablo Wiki](https://www.diablowiki.net/Damage_Per_Second) — DPS = avg(min, max) * attacks/sec; "2-5 Damage = 3.5 average"
-- [In-Depth Damage Guide | Maxroll D4](https://maxroll.gg/d4/resources/in-depth-damage-guide) — Flat affixes incorporated before DPS display
+**Lootlands: Idle ARPG (MEDIUM confidence — Steam store page):**
+- [Lootlands on Steam](https://store.steampowered.com/app/3397910/Lootlands_Idle_ARPG/) — "Storage, shops, and itemization decide how sticky an ARPG feels after the first hour"; shared stash design noted
 
-**Guild Wars 2 (HIGH confidence — official wiki):**
-- [Damage calculation | GW2 Wiki](https://wiki.guildwars2.com/wiki/Damage_calculation) — "midpoint of range used for tooltip DPS"; per-hit random from range confirmed
+**AFK Arena / AFK Journey (MEDIUM confidence — game analysis article):**
+- [Evolution of Idle RPG Systems](https://www.pocketgamer.biz/game-analysis-the-evolution-of-idle-rpg-systems/) — Per-character inventory overhead documented as friction source; AFK Journey's simplification to archetype-based gear as industry response
 
-**Path of Exile 2 (MEDIUM confidence — WebSearch):**
-- [Damage Scaling | Maxroll PoE2](https://maxroll.gg/poe2/getting-started/damage-scaling) — "Adds X to Y" format consistent with PoE1
+**Path of Exile / ARPG Crafting Bench UX (MEDIUM confidence — player forums):**
+- [ESO Crafting Bench Comparison Thread](https://forums.elderscrollsonline.com/en/discussion/68072/compare-item-to-be-crafted-with-currently-equipped) — "Can't see equipped items at crafting station" documented as widespread UX pain; Hammertime's stat comparison hover already addresses this
+
+**Codebase analysis (HIGH confidence — direct code review):**
+- `game_state.gd` — `crafting_inventory: Dictionary = {}` with `{type: null}` per slot; single-item model confirmed
+- `forge_view.gd` — `add_item_to_inventory()`, `_on_melt_pressed()`, `_on_equip_pressed()` all operate on single item per slot; `is_item_better()` comparison logic reusable for best-item selection
+- `save_manager.gd` — `SAVE_VERSION = 1`; `crafting_inventory` serialized as `{type: item_dict}` — confirms version bump and migration scope
 
 ---
-*Feature research for: Hammertime v1.4 Damage Range System*
+
+*Feature research for: Hammertime v1.5 Per-Slot Inventory System*
 *Researched: 2026-02-18*
-*Confidence: HIGH (PoE Wiki, Diablo 2/4 docs verified; codebase analysis HIGH confidence)*
+*Confidence: HIGH (codebase confirmed; MEDIUM for idle ARPG genre conventions from WebSearch)*
