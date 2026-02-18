@@ -70,14 +70,14 @@ No known issues.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 5 | Remove caster mods from physical weapons | 2026-02-18 | 682ac7c | [5-remove-caster-mods-from-physical-weapons](./quick/5-remove-caster-mods-from-physical-weapons/) |
+| 6 | Restore hero HP/ES on combat stop and tab leave | 2026-02-18 | a198535 | [6-on-stopping-combat-hero-should-go-back-t](./quick/6-on-stopping-combat-hero-should-go-back-t/) |
 
 ## Session Continuity
 
-**Last session:** 2026-02-18T13:46:36.851Z
-- Milestone v1.4 Damage Ranges shipped and archived
-- All artifacts archived to .planning/milestones/
+**Last session:** 2026-02-18T14:10:06Z
+- Completed quick task 6: Restore hero HP/ES on combat stop
 
-**Next step:** Define requirements and create roadmap
+**Next step:** Define requirements and create roadmap for v1.5
 
 ---
 *State initialized: 2026-02-15*
