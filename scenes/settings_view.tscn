@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://dsettings1view"]
+[gd_scene format=3 uid="uid://k6t7vx0jmdv7"]
 
 [ext_resource type="Script" path="res://scenes/settings_view.gd" id="1_settings"]
 
@@ -32,6 +32,36 @@ offset_top = 190.0
 offset_right = 740.0
 offset_bottom = 240.0
 text = "New Game"
+
+[node name="SeparatorLabel" type="Label" parent="."]
+offset_left = 540.0
+offset_top = 270.0
+offset_right = 740.0
+offset_bottom = 295.0
+text = "── Import / Export ──"
+horizontal_alignment = 1
+modulate = Color(0.5, 0.5, 0.5, 1)
+
+[node name="ExportButton" type="Button" parent="."]
+offset_left = 540.0
+offset_top = 300.0
+offset_right = 740.0
+offset_bottom = 350.0
+text = "Export Save"
+
+[node name="ImportTextEdit" type="TextEdit" parent="."]
+offset_left = 540.0
+offset_top = 370.0
+offset_right = 740.0
+offset_bottom = 450.0
+placeholder_text = "Paste save string here..."
+
+[node name="ImportButton" type="Button" parent="."]
+offset_left = 540.0
+offset_top = 465.0
+offset_right = 740.0
+offset_bottom = 515.0
+text = "Import Save"
 
 [node name="VersionLabel" type="Label" parent="."]
 offset_left = 540.0

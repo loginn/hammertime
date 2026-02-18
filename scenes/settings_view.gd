@@ -4,13 +4,21 @@ signal new_game_started()
 
 @onready var save_button: Button = $SaveButton
 @onready var new_game_button: Button = $NewGameButton
+@onready var export_button: Button = $ExportButton
+@onready var import_text_edit: TextEdit = $ImportTextEdit
+@onready var import_button: Button = $ImportButton
 
 var _new_game_confirming: bool = false
+var _import_confirming: bool = false
 
 
 func _ready() -> void:
 	save_button.pressed.connect(_on_save_pressed)
 	new_game_button.pressed.connect(_on_new_game_pressed)
+	export_button.pressed.connect(_on_export_pressed)
+	import_button.pressed.connect(_on_import_pressed)
+	import_text_edit.text_changed.connect(_on_import_text_changed)
+	import_button.disabled = true  # Disabled until text entered
 
 
 func _on_save_pressed() -> void:
@@ -33,6 +41,46 @@ func _on_new_game_pressed() -> void:
 		new_game_started.emit()
 
 
+func _on_export_pressed() -> void:
+	var save_string := SaveManager.export_save_string()
+	DisplayServer.clipboard_set(save_string)
+	GameEvents.export_completed.emit()
+
+
+func _on_import_text_changed() -> void:
+	import_button.disabled = import_text_edit.text.strip_edges().is_empty()
+	# Reset confirmation state when text changes
+	if _import_confirming:
+		_import_confirming = false
+		import_button.text = "Import Save"
+
+
+func _on_import_pressed() -> void:
+	if import_text_edit.text.strip_edges().is_empty():
+		return
+	if not _import_confirming:
+		_import_confirming = true
+		import_button.text = "Confirm overwrite?"
+	else:
+		_import_confirming = false
+		import_button.text = "Import Save"
+		_do_import()
+
+
+func _do_import() -> void:
+	var result := SaveManager.import_save_string(import_text_edit.text)
+	if result["success"]:
+		# Full UI refresh via scene reload (same as New Game)
+		new_game_started.emit()
+	else:
+		# Show generic error toast — red-tinted
+		GameEvents.import_failed.emit()
+
+
 func reset_state() -> void:
 	_new_game_confirming = false
 	new_game_button.text = "New Game"
+	_import_confirming = false
+	import_button.text = "Import Save"
+	import_text_edit.text = ""
+	import_button.disabled = true
