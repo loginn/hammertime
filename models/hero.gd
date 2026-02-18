@@ -19,6 +19,16 @@ var current_energy_shield: float = 0.0
 var total_crit_chance: float = 5.0
 var total_crit_damage: float = 150.0
 
+# Per-element damage ranges -- populated from equipment, NOT serialized
+# Keys: "physical", "fire", "cold", "lightning"
+# Values: {"min": float, "max": float}
+var damage_ranges: Dictionary = {
+	"physical": {"min": 0.0, "max": 0.0},
+	"fire": {"min": 0.0, "max": 0.0},
+	"cold": {"min": 0.0, "max": 0.0},
+	"lightning": {"min": 0.0, "max": 0.0},
+}
+
 # Hero state
 var is_alive: bool = true
 var is_clearing: bool = false
@@ -80,28 +90,84 @@ func unequip_item(slot: String) -> void:
 
 func update_stats() -> void:
 	"""Recalculate all hero stats based on equipped items"""
+	calculate_crit_stats()
+	calculate_damage_ranges()
 	calculate_dps()
 	calculate_defense()
 	current_energy_shield = float(total_energy_shield)
-	calculate_crit_stats()
 
 
-func calculate_dps() -> float:
-	"""Calculate total DPS from equipped weapon and rings"""
-	total_dps = 0.0
+func calculate_damage_ranges() -> void:
+	"""Populate per-element damage ranges from equipped weapon and ring affixes."""
+	# Reset to zero
+	for element in damage_ranges:
+		damage_ranges[element]["min"] = 0.0
+		damage_ranges[element]["max"] = 0.0
 
-	# Add DPS from weapon
+	# Weapon contribution: base damage + weapon affixes
 	if "weapon" in equipped_items and equipped_items["weapon"] != null:
 		var weapon = equipped_items["weapon"]
 		if weapon is Weapon:
-			total_dps += weapon.dps
+			var all_affixes := weapon.prefixes.duplicate()
+			all_affixes.append_array(weapon.suffixes)
+			if weapon.implicit:
+				all_affixes.append(weapon.implicit)
+			var weapon_ranges := StatCalculator.calculate_damage_range(
+				weapon.base_damage_min, weapon.base_damage_max, all_affixes
+			)
+			for element in weapon_ranges:
+				damage_ranges[element]["min"] += weapon_ranges[element]["min"]
+				damage_ranges[element]["max"] += weapon_ranges[element]["max"]
 
-	# Add DPS from rings (damage slots)
+	# Ring contribution: ring has base_damage but no base_damage_min/max
+	# Pass base_damage as both min and max (deterministic base, affixes add variance)
 	if "ring" in equipped_items and equipped_items["ring"] != null:
 		var ring = equipped_items["ring"]
 		if ring is Ring:
-			total_dps += ring.dps
+			var all_affixes := ring.prefixes.duplicate()
+			all_affixes.append_array(ring.suffixes)
+			if ring.implicit:
+				all_affixes.append(ring.implicit)
+			var ring_ranges := StatCalculator.calculate_damage_range(
+				ring.base_damage, ring.base_damage, all_affixes
+			)
+			for element in ring_ranges:
+				damage_ranges[element]["min"] += ring_ranges[element]["min"]
+				damage_ranges[element]["max"] += ring_ranges[element]["max"]
 
+
+func calculate_dps() -> float:
+	"""Calculate total DPS from per-element damage range averages."""
+	# Sum average damage across all elements
+	var total_avg_damage := 0.0
+	for element in damage_ranges:
+		var el_min: float = damage_ranges[element]["min"]
+		var el_max: float = damage_ranges[element]["max"]
+		total_avg_damage += (el_min + el_max) / 2.0
+
+	# Apply speed multiplier from weapon
+	var speed := 1.0
+	if "weapon" in equipped_items and equipped_items["weapon"] != null:
+		var weapon = equipped_items["weapon"]
+		if weapon is Weapon:
+			speed = float(weapon.base_speed)
+			# Apply speed modifiers from affixes
+			var all_affixes := weapon.prefixes.duplicate()
+			all_affixes.append_array(weapon.suffixes)
+			if weapon.implicit:
+				all_affixes.append(weapon.implicit)
+			var additive_speed_mult := 0.0
+			for affix: Affix in all_affixes:
+				if Tag.StatType.INCREASED_SPEED in affix.stat_types:
+					additive_speed_mult += affix.value / 100.0
+			speed *= (1.0 + additive_speed_mult)
+
+	# Apply crit multiplier (crit stats already calculated in update_stats order)
+	var crit_multiplier := StatCalculator._calculate_crit_multiplier(
+		total_crit_chance, total_crit_damage
+	)
+
+	total_dps = total_avg_damage * speed * crit_multiplier
 	return total_dps
 
 
