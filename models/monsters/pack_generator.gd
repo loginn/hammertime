@@ -61,7 +61,13 @@ static func create_pack(
 	pack.pack_name = monster_type.type_name
 	pack.hp = monster_type.base_hp * multiplier
 	pack.max_hp = pack.hp
-	pack.damage = monster_type.base_damage * multiplier
+	# Compute damage range using element variance constants
+	var scaled_base := monster_type.base_damage * multiplier
+	var variance: Dictionary = ELEMENT_VARIANCE.get(element, ELEMENT_VARIANCE["physical"])
+	pack.damage_min = scaled_base * variance["min_mult"]
+	pack.damage_max = scaled_base * variance["max_mult"]
+	# Backward compat: existing damage field = average of range
+	pack.damage = (pack.damage_min + pack.damage_max) / 2.0
 	pack.attack_speed = monster_type.base_attack_speed
 	pack.element = element
 
@@ -110,8 +116,8 @@ static func debug_generate(area_level: int) -> void:
 	for i in range(packs.size()):
 		var pack := packs[i]
 		print(
-			"Pack %d: %s | HP: %.0f | DMG: %.1f | SPD: %.1f/s | %s"
-			% [i + 1, pack.pack_name, pack.hp, pack.damage, pack.attack_speed, pack.element]
+			"Pack %d: %s | HP: %.0f | DMG: %.1f-%.1f | SPD: %.1f/s | %s"
+			% [i + 1, pack.pack_name, pack.hp, pack.damage_min, pack.damage_max, pack.attack_speed, pack.element]
 		)
 		if pack.element in element_counts:
 			element_counts[pack.element] += 1
