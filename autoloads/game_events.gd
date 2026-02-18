@@ -21,3 +21,7 @@ signal items_dropped(area_level: int, item_count: int)  # Map completion item dr
 # Save system signals (Phase 18)
 signal save_completed()
 signal save_failed()
+
+# Import/Export signals (Phase 21)
+signal export_completed()
+signal import_failed()

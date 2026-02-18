@@ -170,6 +170,71 @@ func _migrate_save(data: Dictionary) -> Dictionary:
 	return data
 
 
+# --- Export/Import save strings ---
+
+
+## Exports the full game state as a portable save string (HT1:base64:md5 format).
+func export_save_string() -> String:
+	var save_data := _build_save_data()
+	var json_string := JSON.stringify(save_data)
+	var base64 := Marshalls.utf8_to_base64(json_string)
+	var checksum := base64.md5_text()
+	return "HT1:" + base64 + ":" + checksum
+
+
+## Imports a save string, validates it, restores game state, and persists to disk.
+## Returns {"success": bool, "error": String}.
+func import_save_string(save_string: String) -> Dictionary:
+	# Strip whitespace/newlines that clipboard managers may insert
+	var cleaned := save_string.strip_edges().replace("\n", "").replace("\r", "").replace(" ", "")
+
+	# Prefix check
+	if not cleaned.begins_with("HT1:"):
+		return {"success": false, "error": "not_hammertime"}
+
+	# Strip prefix, split base64 and checksum at last colon
+	var payload := cleaned.substr(4)
+	var colon_pos := payload.rfind(":")
+	if colon_pos < 0:
+		return {"success": false, "error": "invalid_format"}
+
+	var base64_part := payload.substr(0, colon_pos)
+	var checksum_part := payload.substr(colon_pos + 1)
+
+	# Verify checksum
+	if base64_part.md5_text() != checksum_part:
+		return {"success": false, "error": "corrupted"}
+
+	# Decode Base64
+	var json_string := Marshalls.base64_to_utf8(base64_part)
+	if json_string.is_empty():
+		return {"success": false, "error": "decode_failed"}
+
+	# Parse JSON
+	var parsed = JSON.parse_string(json_string)
+	if parsed == null or not (parsed is Dictionary):
+		return {"success": false, "error": "invalid_json"}
+
+	var data: Dictionary = parsed
+
+	# Version check — reject saves from newer game versions
+	if int(data.get("version", 0)) > SAVE_VERSION:
+		return {"success": false, "error": "newer_version"}
+
+	# Migrate and restore
+	data = _migrate_save(data)
+	if not _restore_state(data):
+		return {"success": false, "error": "restore_failed"}
+
+	# Persist to disk immediately
+	save_game()
+
+	# Set flag for post-reload toast (scene reloads after import)
+	GameState.import_just_completed = true
+
+	return {"success": true, "error": ""}
+
+
 # --- Auto-save and event-driven save triggers ---
 
 

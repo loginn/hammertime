@@ -17,6 +17,9 @@ var area_level: int = 1
 # Save corruption flag — checked by toast on scene ready
 var save_was_corrupted: bool = false
 
+# Import success flag — survives scene reload, checked by toast on scene ready
+var import_just_completed: bool = false
+
 
 func _ready() -> void:
 	initialize_fresh_game()
