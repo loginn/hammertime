@@ -55,9 +55,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Roadmap created for v1.5. Phase 27 ready to plan.
-Resume file: None
+Stopped at: Phase 27 context gathered
+Resume file: .planning/phases/27-save-format-migration/27-CONTEXT.md
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-18 — v1.5 roadmap created, ready to plan Phase 27*
+*Last updated: 2026-02-18 — Phase 27 context gathered, ready to plan*
