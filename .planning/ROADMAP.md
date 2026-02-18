@@ -138,7 +138,10 @@ Plans:
   3. DPS shown in hero stats and item comparison uses the average-of-ranges formula across all elements with modifiers applied; it matches the value used by is_item_better() for weapon comparison
   4. UI labels do not overflow at 1280x720 with the longest realistic lightning affix string
   5. Gameplay view displays the current pack's name and damage element type during combat
-**Plans**: TBD
+**Plans:** 2 plans in 1 wave
+Plans:
+- [ ] 26-01-PLAN.md -- Weapon range tooltip, affix range display, stat comparison update
+- [ ] 26-02-PLAN.md -- Pack name and element display in gameplay view
 
 ## Progress
 
@@ -169,7 +172,7 @@ Plans:
 | 23. Damage Range Data Model | v1.4 | 2/2 | ✓ Complete | 2026-02-18 |
 | 24. Stat Calculation and Hero Range Caching | v1.4 | 2/2 | ✓ Complete | 2026-02-18 |
 | 25. Per-Hit Combat Rolling | v1.4 | 1/1 | ✓ Complete | 2026-02-18 |
-| 26. UI Range Display | v1.4 | 0/? | Not started | - |
+| 26. UI Range Display | v1.4 | 0/2 | Planned | - |
 
 ---
 *Roadmap created: 2026-02-14*
