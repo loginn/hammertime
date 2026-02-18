@@ -60,7 +60,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Return old equipped item to inventory on equip | Breaks inventory cap bounds and contradicts idle genre; equip is a commitment |
 | Auto-equip best item when slot fills | Removes the craft decision; keep explicit equip button |
 | Per-item drop notification toast | Spam for idle game; x/10 counter is sufficient feedback |
-| v1→v2 save migration | No external players; fresh saves only |
+| v1→v2 save migration for external players | No external players; fresh saves only |
 | Item sorting within slot | Not needed when bench always picks highest tier |
 
 ## Traceability
@@ -69,21 +69,21 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INV-01 | — | Pending |
-| INV-02 | — | Pending |
-| INV-03 | — | Pending |
-| BENCH-01 | — | Pending |
-| BENCH-02 | — | Pending |
-| EQUIP-01 | — | Pending |
-| EQUIP-02 | — | Pending |
-| SAVE-01 | — | Pending |
-| DISP-01 | — | Pending |
+| INV-01 | Phase 28 | Pending |
+| INV-02 | Phase 28 | Pending |
+| INV-03 | Phase 29 | Pending |
+| BENCH-01 | Phase 29 | Pending |
+| BENCH-02 | Phase 29 | Pending |
+| EQUIP-01 | Phase 29 | Pending |
+| EQUIP-02 | Phase 29 | Pending |
+| SAVE-01 | Phase 27 | Pending |
+| DISP-01 | Phase 30 | Pending |
 
 **Coverage:**
 - v1.5 requirements: 9 total
-- Mapped to phases: 0
-- Unmapped: 9 ⚠️
+- Mapped to phases: 9
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-18*
-*Last updated: 2026-02-18 after initial definition*
+*Last updated: 2026-02-18 — traceability filled after roadmap creation (Phases 27-30)*

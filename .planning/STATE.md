@@ -7,78 +7,57 @@
 
 See: .planning/PROJECT.md (updated 2026-02-18)
 
-**Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
+**Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Defining requirements for v1.5
+**Current focus:** Phase 27 — Save Format Migration
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-18 - Completed quick task 6: restore hero HP/ES on combat stop
+Phase: 27 of 30 (Save Format Migration)
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-02-18 — v1.5 roadmap created, phases 27-30 defined
+
+Progress: [░░░░░░░░░░] 0% (milestone v1.5)
 
 ## Performance Metrics
 
 **Milestone v1.4 (shipped 2026-02-18):**
-- Phases: 4 (23-26)
-- Plans executed: 7
-- Requirements delivered: 11/11
-- Timeline: 1 day (2026-02-18)
-- Final LOC: 4,849 GDScript
+- Phases: 4 (23-26) | Plans: 7 | Requirements: 11/11 | Timeline: 1 day
 
 **Milestone v1.3 (shipped 2026-02-18):**
-- Phases: 5 (18-22)
-- Plans executed: 11
-- Requirements delivered: 13/13
-- Timeline: 2 days (2026-02-17 → 2026-02-18)
-- Final LOC: 5,464 GDScript
-
-**Milestone v1.2 (shipped 2026-02-17):**
-- Phases: 5 (13-17) | Plans: 11 | Requirements: 21/21
-
-**Milestone v1.1 (shipped 2026-02-16):**
-- Phases: 4 (9-12) | Plans: 7 | Requirements: 18/18
+- Phases: 5 (18-22) | Plans: 11 | Requirements: 13/13 | Timeline: 2 days
 
 ## Accumulated Context
 
 ### Decisions
 
-All decisions logged in PROJECT.md Key Decisions table (176 entries through v1.4).
+All decisions logged in PROJECT.md Key Decisions table.
 
-### Known Issues
+Recent decisions affecting v1.5:
+- Migration-before-schema: write `_migrate_v1_to_v2()` and `_restore_state()` together before touching `_build_save_data()`
+- No save migration needed for external players (fresh saves only); v1→v2 migration still needed for dev saves
+- `crafting_bench_item` confirmed orphaned in GameState — remove entirely in Phase 28
+- `is_item_better()` guard must be deleted from the drop path (Phase 28); keep in stat comparison display
+- x/10 counter display uses existing `inventory_label` Label node (not ItemList) — minimal scope
 
-No known issues.
+### Pending Todos
 
-### Deferred Items
+- [ ] Add item drop filter for unwanted loot (FILT-01, FILT-02, FILT-03 — deferred to future)
+- [ ] Rebalance early progression difficulty curve
 
-**From v1.4:**
-- Element variance hint in tooltip ("High variance" / "Consistent")
-- Per-element DPS breakdown in Hero View
-- Min/Max DPS shown alongside average DPS
-- Lucky/Unlucky damage rolls
-- Damage range visualization
+### Blockers/Concerns
 
-**Carried from v1.3:**
-- Totem system, hybrid defense prefixes, visual prefix/suffix separation
-- Multiple save slots, save backup rotation, crafting preview/audio/history
-
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 5 | Remove caster mods from physical weapons | 2026-02-18 | 682ac7c | [5-remove-caster-mods-from-physical-weapons](./quick/5-remove-caster-mods-from-physical-weapons/) |
-| 6 | Restore hero HP/ES on combat stop and tab leave | 2026-02-18 | b4617df | [6-on-stopping-combat-hero-should-go-back-t](./quick/6-on-stopping-combat-hero-should-go-back-t/) |
+None.
 
 ## Session Continuity
 
-**Last session:** 2026-02-18T14:10:06Z
-- Completed quick task 6: Restore hero HP/ES on combat stop
-
-**Next step:** Define requirements and create roadmap for v1.5
+Last session: 2026-02-18
+Stopped at: Roadmap created for v1.5. Phase 27 ready to plan.
+Resume file: None
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-18 — Milestone v1.5 started*
+*Last updated: 2026-02-18 — v1.5 roadmap created, ready to plan Phase 27*
