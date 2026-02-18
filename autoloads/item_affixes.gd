@@ -1,13 +1,16 @@
 class_name Affixes extends Node
 
 var prefixes: Array[Affix] = [
+	# Physical Damage — tight 1:1.5 ratio
 	Affix.new(
 		"Physical Damage",
 		Affix.AffixType.PREFIX,
 		2,
 		10,
 		[Tag.PHYSICAL, Tag.FLAT, Tag.WEAPON],
-		[Tag.StatType.FLAT_DAMAGE]
+		[Tag.StatType.FLAT_DAMAGE],
+		Vector2i(1, 8),
+		3, 5, 7, 10  # dmg_min_lo=3, dmg_min_hi=5, dmg_max_lo=7, dmg_max_hi=10
 	),
 	Affix.new(
 		"%Physical Damage",
@@ -49,29 +52,38 @@ var prefixes: Array[Affix] = [
 		[Tag.ELEMENTAL, Tag.WEAPON],
 		[Tag.StatType.INCREASED_DAMAGE]
 	),
+	# Lightning Damage — extreme 1:4 ratio (widest spread)
 	Affix.new(
 		"Lightning Damage",
 		Affix.AffixType.PREFIX,
 		2,
 		10,
 		[Tag.ELEMENTAL, Tag.LIGHTNING, Tag.WEAPON],
-		[Tag.StatType.FLAT_DAMAGE]
+		[Tag.StatType.FLAT_DAMAGE],
+		Vector2i(1, 8),
+		1, 3, 8, 16  # dmg_min_lo=1, dmg_min_hi=3, dmg_max_lo=8, dmg_max_hi=16
 	),
+	# Fire Damage — wide 1:2.5 ratio
 	Affix.new(
 		"Fire Damage",
 		Affix.AffixType.PREFIX,
 		2,
 		10,
 		[Tag.ELEMENTAL, Tag.FIRE, Tag.WEAPON],
-		[Tag.StatType.FLAT_DAMAGE]
+		[Tag.StatType.FLAT_DAMAGE],
+		Vector2i(1, 8),
+		2, 4, 8, 14  # dmg_min_lo=2, dmg_min_hi=4, dmg_max_lo=8, dmg_max_hi=14
 	),
+	# Cold Damage — moderate 1:2 ratio
 	Affix.new(
 		"Cold Damage",
 		Affix.AffixType.PREFIX,
 		2,
 		10,
 		[Tag.ELEMENTAL, Tag.COLD, Tag.WEAPON],
-		[Tag.StatType.FLAT_DAMAGE]
+		[Tag.StatType.FLAT_DAMAGE],
+		Vector2i(1, 8),
+		2, 5, 7, 12  # dmg_min_lo=2, dmg_min_hi=5, dmg_max_lo=7, dmg_max_hi=12
 	),
 	# Defensive prefixes (30-tier range)
 	Affix.new(
@@ -242,6 +254,10 @@ static func from_affix(template: Affix) -> Affix:
 		template.base_max,
 		template.tags,
 		template.stat_types,
-		template.tier_range
+		template.tier_range,
+		template.base_dmg_min_lo,
+		template.base_dmg_min_hi,
+		template.base_dmg_max_lo,
+		template.base_dmg_max_hi
 	)
 	return affix_copy

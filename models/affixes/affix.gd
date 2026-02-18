@@ -14,6 +14,22 @@ var tier_range: Vector2i = Vector2i(1, 8)
 var base_min: int = 0
 var base_max: int = 0
 
+# Base (unscaled) template bounds for flat damage affixes — stored for from_affix() cloning
+var base_dmg_min_lo: int = 0
+var base_dmg_min_hi: int = 0
+var base_dmg_max_lo: int = 0
+var base_dmg_max_hi: int = 0
+
+# Template bounds for flat damage affixes — NEVER changed after construction (tier-scaled)
+var dmg_min_lo: int = 0   # Lowest possible add_min for this tier
+var dmg_min_hi: int = 0   # Highest possible add_min for this tier
+var dmg_max_lo: int = 0   # Lowest possible add_max for this tier
+var dmg_max_hi: int = 0   # Highest possible add_max for this tier
+
+# Rolled results — set at item creation, re-rolled by Tuning Hammer
+var add_min: int = 0      # Rolled minimum damage contribution per hit
+var add_max: int = 0      # Rolled maximum damage contribution per hit
+
 
 func _init(
 	p_name: String = "",
@@ -22,7 +38,11 @@ func _init(
 	p_max: int = 0,
 	p_tags: Array[String] = [],
 	p_stat_types: Array[int] = [],
-	p_tier_range: Vector2i = Vector2i(1, 8)
+	p_tier_range: Vector2i = Vector2i(1, 8),
+	p_dmg_min_lo: int = 0,
+	p_dmg_min_hi: int = 0,
+	p_dmg_max_lo: int = 0,
+	p_dmg_max_hi: int = 0
 ) -> void:
 	self.affix_name = p_name
 	self.type = p_type
@@ -37,14 +57,47 @@ func _init(
 	self.max_value = p_max * (tier_range.y + 1 - tier)
 	self.value = randi_range(self.min_value, self.max_value)
 
+	# Store unscaled base damage bounds (for from_affix() cloning)
+	self.base_dmg_min_lo = p_dmg_min_lo
+	self.base_dmg_min_hi = p_dmg_min_hi
+	self.base_dmg_max_lo = p_dmg_max_lo
+	self.base_dmg_max_hi = p_dmg_max_hi
+
+	# Store tier-scaled template bounds
+	self.dmg_min_lo = p_dmg_min_lo * (tier_range.y + 1 - tier)
+	self.dmg_min_hi = p_dmg_min_hi * (tier_range.y + 1 - tier)
+	self.dmg_max_lo = p_dmg_max_lo * (tier_range.y + 1 - tier)
+	self.dmg_max_hi = p_dmg_max_hi * (tier_range.y + 1 - tier)
+
+	# Roll initial damage range if this is a flat damage affix
+	if Tag.StatType.FLAT_DAMAGE in self.stat_types and (dmg_min_hi > 0 or dmg_max_hi > 0):
+		self.add_min = randi_range(self.dmg_min_lo, self.dmg_min_hi)
+		self.add_max = randi_range(self.dmg_max_lo, self.dmg_max_hi)
+		# Guard: ensure add_min <= add_max
+		if self.add_min > self.add_max:
+			var tmp = self.add_min
+			self.add_min = self.add_max
+			self.add_max = tmp
+
 
 func is_prefix() -> bool:
 	return self.type == AffixType.PREFIX
 
 
 func reroll() -> void:
-	self.value = randi_range(self.min_value, self.max_value)
-	print("reroll ", self.value)
+	if Tag.StatType.FLAT_DAMAGE in self.stat_types and (dmg_min_hi > 0 or dmg_max_hi > 0):
+		# Damage range affix: re-roll from TEMPLATE bounds (never from rolled values)
+		self.add_min = randi_range(self.dmg_min_lo, self.dmg_min_hi)
+		self.add_max = randi_range(self.dmg_max_lo, self.dmg_max_hi)
+		if self.add_min > self.add_max:
+			var tmp = self.add_min
+			self.add_min = self.add_max
+			self.add_max = tmp
+		print("reroll add_min=%d add_max=%d" % [add_min, add_max])
+	else:
+		# Non-damage affix: existing scalar reroll unchanged
+		self.value = randi_range(self.min_value, self.max_value)
+		print("reroll ", self.value)
 
 
 func to_dict() -> Dictionary:
@@ -61,6 +114,16 @@ func to_dict() -> Dictionary:
 		"base_max": base_max,
 		"min_value": min_value,
 		"max_value": max_value,
+		"base_dmg_min_lo": base_dmg_min_lo,
+		"base_dmg_min_hi": base_dmg_min_hi,
+		"base_dmg_max_lo": base_dmg_max_lo,
+		"base_dmg_max_hi": base_dmg_max_hi,
+		"dmg_min_lo": dmg_min_lo,
+		"dmg_min_hi": dmg_min_hi,
+		"dmg_max_lo": dmg_max_lo,
+		"dmg_max_hi": dmg_max_hi,
+		"add_min": add_min,
+		"add_max": add_max,
 	}
 
 
@@ -93,6 +156,16 @@ static func from_dict(data: Dictionary) -> Affix:
 	affix.value = int(data.get("value", affix.value))
 	affix.min_value = int(data.get("min_value", affix.min_value))
 	affix.max_value = int(data.get("max_value", affix.max_value))
+	affix.base_dmg_min_lo = int(data.get("base_dmg_min_lo", 0))
+	affix.base_dmg_min_hi = int(data.get("base_dmg_min_hi", 0))
+	affix.base_dmg_max_lo = int(data.get("base_dmg_max_lo", 0))
+	affix.base_dmg_max_hi = int(data.get("base_dmg_max_hi", 0))
+	affix.dmg_min_lo = int(data.get("dmg_min_lo", 0))
+	affix.dmg_min_hi = int(data.get("dmg_min_hi", 0))
+	affix.dmg_max_lo = int(data.get("dmg_max_lo", 0))
+	affix.dmg_max_hi = int(data.get("dmg_max_hi", 0))
+	affix.add_min = int(data.get("add_min", 0))
+	affix.add_max = int(data.get("add_max", 0))
 
 	return affix
 
