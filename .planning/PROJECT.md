@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An ARPG-style crafting idle game built in Godot 4.5. Players send a hero to fight monster packs across 4 biomes (Forest → Shadow Realm), collect item bases and crafting hammers, then use those hammers to craft and equip gear. Better gear lets the hero survive harder packs, which drop better and more plentiful loot. Items come in Normal, Magic, and Rare tiers with defensive and offensive affixes, each craftable with 6 themed hammers that add, remove, or reroll mods. Combat is pack-based idle auto-combat with death mechanics, defensive stat integration, and floating damage feedback.
+An ARPG-style crafting idle game built in Godot 4.5. Players send a hero to fight monster packs across 4 biomes (Forest → Shadow Realm), collect item bases and crafting hammers, then use those hammers to craft and equip gear. Better gear lets the hero survive harder packs, which drop better and more plentiful loot. Items come in Normal, Magic, and Rare tiers with defensive and offensive affixes, each craftable with 6 themed hammers that add, remove, or reroll mods. Combat is pack-based idle auto-combat with death mechanics, defensive stat integration, and floating damage feedback. Game state persists via JSON save/load with auto-save and export/import strings.
 
 ## Core Value
 
@@ -53,22 +53,24 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ ProgressBar-based combat UI with HP, ES overlay, pack HP, pack progress bars -- v1.2
 - ✓ Floating damage numbers with crit styling and dodge text -- v1.2
 - ✓ Explicit CanvasLayer visibility management for tab navigation -- v1.2
+- ✓ JSON save/load with auto-save (5 min) and event-driven triggers (craft, equip, area clear) -- v1.3
+- ✓ Save format versioning with migration pipeline for future compatibility -- v1.3
+- ✓ Save string export/import with Base64 encoding and MD5 checksum validation -- v1.3
+- ✓ Side-by-side ForgeView layout (equipment left, crafting right) with tab bar navigation -- v1.3
+- ✓ Gameplay/combat view as separate full-width Adventure tab -- v1.3
+- ✓ Hammer button tooltips describing behavior and rarity requirements -- v1.3
+- ✓ Stat comparison on equip hover with color-coded deltas (green/red) -- v1.3
+- ✓ Per-item-type crafting slots (weapon, helmet, armor, boots, ring) -- v1.3
+- ✓ Two-click equip confirmation preventing accidental gear overwrites -- v1.3
+- ✓ Starter Runic Hammer + weapon base for new game crafting tutorial -- v1.3
+- ✓ Reduced Forest difficulty (40% reduction) for fresh hero survival -- v1.3
+- ✓ Stat panels fit viewport with font size 11 and proper spacing -- v1.3
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-## Current Milestone: v1.3 Save/Load & Polish
-
-**Goal:** Persist full game state across sessions and fix UX pain points — side-by-side hero/crafting layout, item safety, stats overflow, crafting feedback, and level 1 balance.
-
-**Target features:**
-- Full save/load (hero, inventory, currencies, area progress)
-- Side-by-side Hero + Crafting layout (equipment left, crafting/inventory right)
-- Item safety — finishing an item cannot silently overwrite equipped gear
-- Stats overflow fix — Hero View stats fit within viewport
-- Crafting feedback — clearer hammer descriptions and post-application changes
-- Level 1 balance tuning — fresh heroes can survive early packs
+(No active milestone — planning next)
 
 ### Out of Scope
 
@@ -76,10 +78,9 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - Item melting/salvage system -- future feature
 - Chaos-style full reroll -- deliberate design choice: no full rerolls, craft carefully or equip as-is
 - Drag-and-drop crafting UI -- select-and-click is sufficient
-- Save/load system -- now in scope for v1.3
-- Hybrid defense prefixes (armor+evasion single-slot) -- v1.3+ scope
-- Visual prefix/suffix separation in UI (color-coded or sectioned) -- v1.3+ scope
-- Totem system (forge god shrine with slottable pieces, favor mechanic, map modifiers) -- v1.3+ scope, builds on pack-based mapping
+- Hybrid defense prefixes (armor+evasion single-slot) -- future scope
+- Visual prefix/suffix separation in UI (color-coded or sectioned) -- future scope
+- Totem system (forge god shrine with slottable pieces, favor mechanic, map modifiers) -- future scope, builds on pack-based mapping
 - Real-time combat with player timing -- fundamentally conflicts with idle genre
 - Per-monster loot drops -- item explosion in idle game = inventory nightmare
 - 100% damage immunity -- removes challenge; 75% resistance cap is ARPG standard
@@ -87,10 +88,11 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 ## Context
 
 - Built with Godot 4.5 (GDScript), targeting mobile renderer
-- 3,943 LOC GDScript across ~42 files
+- 5,464 LOC GDScript across ~50 files
 - Feature-based folder structure: models/, scenes/, autoloads/, utils/, tools/
-- Autoloads: ItemAffixes, Tag, GameState (Hero singleton + currency inventory), GameEvents (event bus)
-- Scene structure: main.tscn with main_view coordinating hero_view, crafting_view, gameplay_view via signals
+- Autoloads: ItemAffixes, Tag, GameState (Hero singleton + currency inventory), GameEvents (event bus), SaveManager (JSON persistence)
+- Scene structure: main.tscn with main_view coordinating forge_view, gameplay_view via tab bar
+- ForgeView combines hero equipment (left) and crafting inventory (right) in side-by-side layout
 - StatCalculator handles all DPS/defense calculations with flat + percentage stacking
 - DefenseCalculator handles all incoming damage with 4-stage pipeline
 - All data classes extend Resource (Item, Affix, Implicit, Hero, Currency, MonsterType, MonsterPack, BiomeConfig)
@@ -98,14 +100,14 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - LootTable provides per-pack currency drops and map completion item drops with area scaling
 - CombatEngine manages pack-by-pack combat with state machine lifecycle and dual attack timers
 - BiomeConfig defines biome element weight arrays and pack count ranges for 4 biomes
+- SaveManager handles JSON save/load, auto-save timer, event triggers, and Base64 export/import
 - 18 prefix types (9 offensive + 9 defensive) and 19 suffix types (15 original + 4 resistance)
-- Shipped 4 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat)
-- v1.3 focus: save/load persistence, UI layout overhaul, crafting UX, balance tuning
+- Shipped 5 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish)
 
 ## Constraints
 
 - **Tech stack**: Godot 4.5, GDScript only
-- **Platform**: Mobile target renderer, 1200x700 viewport
+- **Platform**: Mobile target renderer, 1280x720 viewport
 - **Architecture**: Feature-based folders, signal-based communication, Resource-based data model
 
 ## Key Decisions
@@ -142,6 +144,15 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Stacked ProgressBar ES overlay | Blue ES bar overlaid on red HP bar (PoE pattern) | ✓ Good -- intuitive health display |
 | Explicit mouse_filter=IGNORE on containers | Godot defaults to STOP; non-interactive containers must be set to IGNORE | ✓ Good -- prevents phantom click blocking |
 | Explicit CanvasLayer visibility management | CanvasLayer ignores parent visibility; must toggle in show_view() | ✓ Good -- tab navigation works correctly |
+| JSON save over ResourceSaver | JSON enables export strings; ResourceSaver doesn't | ✓ Good -- Phase 21 export/import validated this |
+| SaveManager autoload before GameState | Save infrastructure must exist before GameState._ready() calls load_game() | ✓ Good -- clean startup order |
+| Unified ForgeView over separate tabs | Side-by-side layout shows equipment + crafting simultaneously | ✓ Good -- eliminates tab switching during crafting |
+| Two-click equip confirmation | Prevents accidental overwrites without modal dialogs | ✓ Good -- non-intrusive safety |
+| Godot tooltip_text for hammer tooltips | Built-in auto show/hide behavior, zero custom tooltip code | ✓ Good -- minimal implementation |
+| Direct equip/melt on current_item | Removed finished_item state; Equip/Melt operate on crafting bench item directly | ✓ Good -- simpler state model |
+| MD5 checksum on save export strings | Detects clipboard corruption without crypto overhead | ✓ Good -- catches copy errors |
+| 40% Forest difficulty reduction | Fresh heroes survive 3+ packs with starter gear | ✓ Good -- playable from level 1 |
+| Font size 11 for ForgeView | Prevents text overflow in 1280x720 viewport | ✓ Good -- readable and fits |
 
 ---
-*Last updated: 2026-02-17 after v1.3 milestone started*
+*Last updated: 2026-02-18 after v1.3 milestone shipped*

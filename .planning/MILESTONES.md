@@ -96,3 +96,22 @@
 
 ---
 
+
+## v1.3 — Save/Load & Polish (Shipped: 2026-02-18)
+
+**Goal:** Persist full game state across sessions and fix UX pain points — side-by-side hero/crafting layout, item safety, stats overflow, crafting feedback, and level 1 balance.
+
+**Phases:** 5 phases (18-22), 11 plans | **Timeline:** 2 days (2026-02-17 → 2026-02-18)
+**Stats:** 74 commits, 128 files changed, 5,464 LOC GDScript (up from 3,943)
+
+**Key accomplishments:**
+- JSON save/load with auto-save timer (5 min) and event-driven triggers (craft, equip, area clear)
+- Unified ForgeView side-by-side layout (equipment left, crafting right) with tab bar navigation
+- Hammer tooltips, direct equip/melt workflow, two-click overwrite confirmation, and stat comparison hover
+- Save string export/import with Base64 encoding, MD5 checksums, clipboard auto-copy, and colored toast notifications
+- Starter Runic Hammer + weapon base for new games, Forest difficulty reduced 40% for fresh hero survival
+
+**Archives:** `.planning/milestones/v1.3-ROADMAP.md`, `.planning/milestones/v1.3-REQUIREMENTS.md`
+
+---
+
