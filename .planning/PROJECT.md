@@ -79,7 +79,18 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 
 <!-- Current scope. Building toward these. -->
 
-No active milestone. v1.4 Damage Ranges shipped 2026-02-18.
+## Current Milestone: v1.5 Inventory Rework
+
+**Goal:** Replace single-item crafting slots with per-slot inventory (10 items each), giving players a stash of bases to craft on and meaningful equip/melt decisions.
+
+**Target features:**
+- Multi-item inventory per equipment slot (weapon, helmet, armor, boots, ring) with 10-item cap
+- Drops go directly into slot inventory; overflow silently discarded
+- Crafting bench is a view into inventory — clicking slot button loads highest-tier item
+- Equip commits: bench item goes on hero, old equipped item deleted (not returned)
+- Melt destroys bench item from inventory (future: yields materials)
+- x/10 inventory counter per slot in crafting view UI
+- Save/load support for per-slot inventory arrays
 
 ### Out of Scope
 
@@ -178,4 +189,4 @@ No active milestone. v1.4 Damage Ranges shipped 2026-02-18.
 | Stat comparison shows damage ranges | Weapons show "Damage: X-Y (was X-Y)" instead of single-value delta | ✓ Good -- meaningful comparison for ranged damage |
 
 ---
-*Last updated: 2026-02-18 after Phase 26 — milestone v1.4 complete*
+*Last updated: 2026-02-18 after milestone v1.5 started*

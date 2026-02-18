@@ -1,7 +1,7 @@
 # Project State: Hammertime
 
 **Updated:** 2026-02-18
-**Milestone:** v1.4 Damage Ranges (shipped)
+**Milestone:** v1.5 Inventory Rework
 
 ## Project Reference
 
@@ -9,15 +9,16 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current Focus:** Planning next milestone
+**Current Focus:** Defining requirements for v1.5
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Milestone: v1.4 complete (all 4 phases shipped)
-Status: Between milestones
-Last activity: 2026-02-18 - Completed quick task 5: remove caster mods from physical weapons
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-18 — Milestone v1.5 started
 
 ## Performance Metrics
 
@@ -76,8 +77,8 @@ No known issues.
 - Milestone v1.4 Damage Ranges shipped and archived
 - All artifacts archived to .planning/milestones/
 
-**Next step:** `/gsd:new-milestone` to start next milestone
+**Next step:** Define requirements and create roadmap
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-18 — v1.4 milestone archived*
+*Last updated: 2026-02-18 — Milestone v1.5 started*
