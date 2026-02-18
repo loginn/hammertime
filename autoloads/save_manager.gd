@@ -85,13 +85,9 @@ func _build_save_data() -> Dictionary:
 	for type_name in GameState.crafting_inventory:
 		var item = GameState.crafting_inventory[type_name]
 		if item != null:
-			crafting_inv[type_name] = item.to_dict()
+			crafting_inv[type_name] = [item.to_dict()]
 		else:
-			crafting_inv[type_name] = null
-
-	var bench_item_data = null
-	if GameState.crafting_bench_item != null:
-		bench_item_data = GameState.crafting_bench_item.to_dict()
+			crafting_inv[type_name] = []
 
 	return {
 		"version": SAVE_VERSION,
@@ -99,7 +95,6 @@ func _build_save_data() -> Dictionary:
 		"hero_equipment": hero_equipment,
 		"currencies": GameState.currency_counts.duplicate(),
 		"crafting_inventory": crafting_inv,
-		"crafting_bench_item": bench_item_data,
 		"crafting_bench_type": GameState.crafting_bench_type,
 		"max_unlocked_level": GameState.max_unlocked_level,
 		"area_level": GameState.area_level,
@@ -126,22 +121,18 @@ func _restore_state(data: Dictionary) -> bool:
 	for currency_type in saved_currencies:
 		GameState.currency_counts[currency_type] = int(saved_currencies[currency_type])
 
-	# Restore crafting inventory
+	# Restore crafting inventory (v2: arrays in save, single items in GameState)
 	var saved_crafting: Dictionary = data.get("crafting_inventory", {})
-	for type_name in saved_crafting:
-		var item_data = saved_crafting[type_name]
-		if item_data != null and item_data is Dictionary:
-			var item := Item.create_from_dict(item_data)
-			GameState.crafting_inventory[type_name] = item
+	for slot_name in ["weapon", "helmet", "armor", "boots", "ring"]:
+		var slot_data = saved_crafting.get(slot_name, [])
+		if slot_data is Array and not slot_data.is_empty():
+			var first_item_data = slot_data[0]
+			if first_item_data is Dictionary:
+				GameState.crafting_inventory[slot_name] = Item.create_from_dict(first_item_data)
+			else:
+				GameState.crafting_inventory[slot_name] = null
 		else:
-			GameState.crafting_inventory[type_name] = null
-
-	# Restore crafting bench
-	var bench_data = data.get("crafting_bench_item")
-	if bench_data != null and bench_data is Dictionary:
-		GameState.crafting_bench_item = Item.create_from_dict(bench_data)
-	else:
-		GameState.crafting_bench_item = null
+			GameState.crafting_inventory[slot_name] = null
 
 	GameState.crafting_bench_type = str(data.get("crafting_bench_type", "weapon"))
 
