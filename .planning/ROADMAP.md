@@ -90,7 +90,7 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
 
 **Milestone Goal:** Replace single-item crafting slots with per-slot inventory arrays (10 items each), giving players a stash of bases to craft on and meaningful equip/melt decisions.
 
-- [ ] **Phase 27: Save Format Migration** - Bump save version to 2 and implement v1→v2 migration for per-slot arrays
+- [x] **Phase 27: Save Format Migration** - Bump save version to 2 and implement v1→v2 migration for per-slot arrays (completed 2026-02-18)
 - [ ] **Phase 28: GameState Data Model and Drop Flow** - Reshape crafting_inventory to arrays, enforce 10-item cap at drop
 - [ ] **Phase 29: ForgeView Logic** - Bench selection, melt, and equip against per-slot arrays
 - [ ] **Phase 30: Display and Counter** - x/10 slot counter and guarded slot buttons in crafting view
@@ -173,7 +173,7 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
 | 24. Stat Calculation and Hero Range Caching | v1.4 | 2/2 + 1 gap | ✓ Complete | 2026-02-18 |
 | 25. Per-Hit Combat Rolling | v1.4 | 1/1 | ✓ Complete | 2026-02-18 |
 | 26. UI Range Display | v1.4 | 2/2 | ✓ Complete | 2026-02-18 |
-| 27. Save Format Migration | v1.5 | 0/? | Not started | - |
+| 27. Save Format Migration | 1/1 | Complete   | 2026-02-18 | - |
 | 28. GameState Data Model and Drop Flow | v1.5 | 0/? | Not started | - |
 | 29. ForgeView Logic | v1.5 | 0/? | Not started | - |
 | 30. Display and Counter | v1.5 | 0/? | Not started | - |
