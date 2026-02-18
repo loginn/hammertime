@@ -118,7 +118,8 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
   2. Dropping an 11th item into a full slot (10 items) is silently discarded — the slot remains at 10
   3. Starting a new game grants the starter weapon into the weapon slot array (not a null slot)
   4. The `crafting_bench_item` field is removed from GameState and no call site references it
-**Plans**: TBD
+**Plans**: 1 plan
+- [ ] 28-01-PLAN.md — Reshape inventory to arrays, enforce 10-item cap, remove crafting_bench_item, complete SaveManager bridge
 
 ### Phase 29: ForgeView Logic
 **Goal**: The crafting bench shows the highest-tier item from the selected slot, and melt and equip both correctly remove the item from the slot array
