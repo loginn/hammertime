@@ -48,31 +48,31 @@ skipped: 1
 ## Gaps
 
 - truth: "Fresh hero with tier 1 crafted weapon survives at least 3 packs in Forest"
-  status: failed
+  status: resolved
   reason: "User reported: No monsters are still way too strong, divide base monster health by 2. Also hero life/es should reset between maps. Also the hero should only have access to 1 light sword and should clear maps to get the new items."
   severity: major
   test: 2
-  root_cause: ""
+  root_cause: "Monster base HP too high, hero health not resetting between maps, starting inventory gave 5 items instead of 1"
   artifacts: []
   missing: []
-  debug_session: ""
+  debug_session: ".planning/debug/uat-22-gap-fixes.md"
 
 - truth: "Hero stats panel shows all relevant stats including health and ES, health mods apply correctly"
-  status: failed
+  status: resolved
   reason: "User reported: Health mods don't seem to apply. Hero stats should include health and ES. Item type button hover shows equipped item text without rarity color — all areas describing item stats should use get_rarity_color()."
   severity: major
   test: 4
-  root_cause: ""
+  root_cause: "calculate_defense() didn't sum base_health from equipment or update max_health, hero stats panel didn't display Health"
   artifacts: []
   missing: []
-  debug_session: ""
+  debug_session: ".planning/debug/uat-22-gap-fixes.md"
 
 - truth: "All areas displaying item stats use rarity color via get_rarity_color()"
-  status: failed
+  status: resolved
   reason: "User reported: When hovering item type buttons, equipped items text doesn't have the right color. All areas that describe an item's stats should call get_rarity_color()."
   severity: cosmetic
   test: 4
-  root_cause: ""
+  root_cause: "Item type button hover displayed equipped item text without applying rarity color modulation"
   artifacts: []
   missing: []
-  debug_session: ""
+  debug_session: ".planning/debug/uat-22-gap-fixes.md"
