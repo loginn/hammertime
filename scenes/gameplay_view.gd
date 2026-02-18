@@ -250,7 +250,9 @@ func update_display() -> void:
 			pack_health_container.visible = true
 			pack_hp_bar.max_value = pack.max_hp
 			pack_hp_bar.value = pack.hp
-			pack_hp_label.text = "%.0f/%.0f" % [pack.hp, pack.max_hp]
+			pack_hp_label.text = "%s (%s) — %.0f/%.0f" % [
+				pack.pack_name, pack.element.capitalize(), pack.hp, pack.max_hp
+			]
 		else:
 			pack_health_container.visible = false
 	else:

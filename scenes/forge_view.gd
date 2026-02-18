@@ -635,17 +635,19 @@ func get_stat_comparison_text() -> String:
 	if current_item is Weapon:
 		var crafted: Weapon = current_item as Weapon
 		var eq_dps: float = 0.0
-		var eq_base_dmg: int = 0
 		var eq_crit_chance: float = 5.0
 		var eq_crit_damage: float = 150.0
 		if equipped != null and equipped is Weapon:
 			var eq_weapon: Weapon = equipped as Weapon
 			eq_dps = eq_weapon.dps
-			eq_base_dmg = eq_weapon.base_damage
 			eq_crit_chance = eq_weapon.crit_chance
 			eq_crit_damage = eq_weapon.crit_damage
 		text += format_stat_delta("DPS", eq_dps, crafted.dps) + "\n"
-		text += format_stat_delta_int("Base Damage", eq_base_dmg, crafted.base_damage) + "\n"
+		text += "Damage: %d-%d" % [crafted.base_damage_min, crafted.base_damage_max]
+		if equipped != null and equipped is Weapon:
+			var eq_w: Weapon = equipped as Weapon
+			text += " (was %d-%d)" % [eq_w.base_damage_min, eq_w.base_damage_max]
+		text += "\n"
 		text += format_stat_delta("Crit Chance", eq_crit_chance, crafted.crit_chance, "%.1f%%") + "\n"
 		text += format_stat_delta("Crit Damage", eq_crit_damage, crafted.crit_damage, "%.1f%%") + "\n"
 
@@ -785,6 +787,23 @@ func _sum_suffix_stat(item: Item, stat_type: int) -> int:
 	return total
 
 
+func _format_affix_line(affix: Affix) -> String:
+	if Tag.StatType.FLAT_DAMAGE in affix.stat_types and (affix.add_min > 0 or affix.add_max > 0):
+		var element_name := _get_affix_element_name(affix.tags)
+		return "Adds %d to %d %s Damage" % [affix.add_min, affix.add_max, element_name]
+	return affix.affix_name + ": " + str(affix.value)
+
+
+func _get_affix_element_name(tags: Array) -> String:
+	if Tag.FIRE in tags:
+		return "Fire"
+	if Tag.COLD in tags:
+		return "Cold"
+	if Tag.LIGHTNING in tags:
+		return "Lightning"
+	return "Physical"
+
+
 func get_item_stats_text(item: Item) -> String:
 	var rarity_name: String = "Normal"
 	match item.rarity:
@@ -797,7 +816,7 @@ func get_item_stats_text(item: Item) -> String:
 	if item is Weapon:
 		var weapon: Weapon = item as Weapon
 		stats_text += "DPS: %.1f\n" % weapon.dps
-		stats_text += "Base Damage: %d\n" % weapon.base_damage
+		stats_text += "Damage: %d to %d\n" % [weapon.base_damage_min, weapon.base_damage_max]
 		stats_text += "Base Speed: %.1f\n" % weapon.base_speed
 		stats_text += "Crit Chance: %.1f%%\n" % weapon.crit_chance
 		stats_text += "Crit Damage: %.1f%%\n" % weapon.crit_damage
@@ -809,12 +828,12 @@ func get_item_stats_text(item: Item) -> String:
 		if weapon.prefixes.size() > 0:
 			stats_text += "\nPrefixes:\n"
 			for prefix in weapon.prefixes:
-				stats_text += prefix.affix_name + ": " + str(prefix.value) + "\n"
+				stats_text += _format_affix_line(prefix) + "\n"
 
 		if weapon.suffixes.size() > 0:
 			stats_text += "\nSuffixes:\n"
 			for suffix in weapon.suffixes:
-				stats_text += suffix.affix_name + ": " + str(suffix.value) + "\n"
+				stats_text += _format_affix_line(suffix) + "\n"
 	elif item is Armor:
 		var armor_item: Armor = item as Armor
 		stats_text += "Armor: %d\n" % armor_item.base_armor
@@ -832,12 +851,12 @@ func get_item_stats_text(item: Item) -> String:
 		if armor_item.prefixes.size() > 0:
 			stats_text += "\nPrefixes:\n"
 			for prefix in armor_item.prefixes:
-				stats_text += prefix.affix_name + ": " + str(prefix.value) + "\n"
+				stats_text += _format_affix_line(prefix) + "\n"
 
 		if armor_item.suffixes.size() > 0:
 			stats_text += "\nSuffixes:\n"
 			for suffix in armor_item.suffixes:
-				stats_text += suffix.affix_name + ": " + str(suffix.value) + "\n"
+				stats_text += _format_affix_line(suffix) + "\n"
 	elif item is Boots:
 		var boots_item: Boots = item as Boots
 		stats_text += "Armor: %d\n" % boots_item.base_armor
@@ -856,12 +875,12 @@ func get_item_stats_text(item: Item) -> String:
 		if boots_item.prefixes.size() > 0:
 			stats_text += "\nPrefixes:\n"
 			for prefix in boots_item.prefixes:
-				stats_text += prefix.affix_name + ": " + str(prefix.value) + "\n"
+				stats_text += _format_affix_line(prefix) + "\n"
 
 		if boots_item.suffixes.size() > 0:
 			stats_text += "\nSuffixes:\n"
 			for suffix in boots_item.suffixes:
-				stats_text += suffix.affix_name + ": " + str(suffix.value) + "\n"
+				stats_text += _format_affix_line(suffix) + "\n"
 	elif item is Helmet:
 		var helmet_item: Helmet = item as Helmet
 		stats_text += "Armor: %d\n" % helmet_item.base_armor
@@ -881,12 +900,12 @@ func get_item_stats_text(item: Item) -> String:
 		if helmet_item.prefixes.size() > 0:
 			stats_text += "\nPrefixes:\n"
 			for prefix in helmet_item.prefixes:
-				stats_text += prefix.affix_name + ": " + str(prefix.value) + "\n"
+				stats_text += _format_affix_line(prefix) + "\n"
 
 		if helmet_item.suffixes.size() > 0:
 			stats_text += "\nSuffixes:\n"
 			for suffix in helmet_item.suffixes:
-				stats_text += suffix.affix_name + ": " + str(suffix.value) + "\n"
+				stats_text += _format_affix_line(suffix) + "\n"
 	elif item is Ring:
 		var ring_item: Ring = item as Ring
 		stats_text += "DPS: %.1f\n" % ring_item.dps
@@ -900,12 +919,12 @@ func get_item_stats_text(item: Item) -> String:
 		if ring_item.prefixes.size() > 0:
 			stats_text += "\nPrefixes:\n"
 			for prefix in ring_item.prefixes:
-				stats_text += prefix.affix_name + ": " + str(prefix.value) + "\n"
+				stats_text += _format_affix_line(prefix) + "\n"
 
 		if ring_item.suffixes.size() > 0:
 			stats_text += "\nSuffixes:\n"
 			for suffix in ring_item.suffixes:
-				stats_text += suffix.affix_name + ": " + str(suffix.value) + "\n"
+				stats_text += _format_affix_line(suffix) + "\n"
 	else:
 		stats_text += "(Unknown item type)"
 
