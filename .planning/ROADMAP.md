@@ -124,7 +124,8 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
   1. Dark Forest packs appear at level 25, Cursed Woods at level 50, Shadow Realm at level 75
   2. A level 75 pack is noticeably harder than a level 1 pack (difficulty multiplier reflects ~10% compounding per level)
   3. Biome transitions feel natural — monsters in each biome are clearly more threatening than the previous
-**Plans**: TBD
+**Plans**: 1 plan
+- [ ] 32-01-PLAN.md — Compress biome boundaries and redesign difficulty curve with boss wall / relief / ramp-back
 
 ### Phase 33: Loot Table Rebalance
 **Goal**: Currency gates, drop counts, and item rarity all reflect the compressed 25-level biome structure — items always drop Normal, and currency unlocks arrive at the right biome thresholds
