@@ -13,14 +13,18 @@ const RARITY_ANCHORS: Dictionary = {
 	300: {Item.Rarity.NORMAL: 20.0, Item.Rarity.MAGIC: 75.0, Item.Rarity.RARE: 5.0},
 }
 
-# Currency unlock thresholds by area level (biome boundaries from Phase 32)
+# Currency unlock thresholds by area level.
+# Gates shifted 10 levels before biome boundaries (Phase 34) so players
+# receive preview drops from the next biome. The 12-level sqrt ramp from
+# _calculate_currency_chance() means drops start very rare (~29% of base
+# at unlock+1) and reach full rate by the original biome boundary.
 const CURRENCY_AREA_GATES: Dictionary = {
 	"runic": 1,
 	"tack": 1,
-	"forge": 25,    # Dark Forest start
-	"grand": 50,    # Cursed Woods start
-	"claw": 75,     # Shadow Realm start
-	"tuning": 75,   # Shadow Realm start
+	"forge": 15,    # Preview from level 15, full rate by Dark Forest (25)
+	"grand": 40,    # Preview from level 40, full rate by Cursed Woods (50)
+	"claw": 65,     # Preview from level 65, full rate by Shadow Realm (75)
+	"tuning": 65,   # Preview from level 65, full rate by Shadow Realm (75)
 }
 
 ## Per-pack item drop chance. Constant across all areas.
