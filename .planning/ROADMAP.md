@@ -113,7 +113,8 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
   1. Running `git status` shows no .tmp files tracked or staged
   2. The .gitignore file contains `*.tmp` and newly created .tmp files are not picked up by `git status`
   3. The root directory contains no .tmp files (removed from disk and git history)
-**Plans**: TBD
+**Plans**: 1 plan
+- [ ] 31-01-PLAN.md — Remove .tmp files from git tracking/disk and update .gitignore
 
 ### Phase 32: Biome Compression and Difficulty Scaling
 **Goal**: The 4 biomes span levels 1-100+ compressed to ~25 levels each, with difficulty scaling at ~10% per level so endgame feels meaningfully harder than the start
@@ -152,7 +153,7 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 31. Repo Hygiene | 0/TBD | Not started | - |
+| 31. Repo Hygiene | 0/1 | Planned | - |
 | 32. Biome Compression and Difficulty Scaling | 0/TBD | Not started | - |
 | 33. Loot Table Rebalance | 0/TBD | Not started | - |
 | 34. Biome Preview Currency | 0/TBD | Not started | - |
