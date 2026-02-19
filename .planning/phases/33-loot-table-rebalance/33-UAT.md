@@ -1,9 +1,9 @@
 ---
-status: complete
+status: diagnosed
 phase: 33-loot-table-rebalance
 source: [33-01-SUMMARY.md]
 started: 2026-02-19T14:10:00Z
-updated: 2026-02-19T14:20:00Z
+updated: 2026-02-19T14:25:00Z
 ---
 
 ## Current Test
@@ -53,11 +53,31 @@ skipped: 1
 
 ## Gaps
 
-- truth: "Currency gates at biome boundaries verifiable by reaching area 25+"
+- truth: "Hero health reflects all equipped % health mods and syncs on stat update and revive"
   status: failed
-  reason: "User reported: Spotted a bug with health calculations, my hero went back to 100 health after dying (i think ?) and it looks like the % health mods are not taken into account ? This prevents me from clearing beyond zone 20. Also difficulty curve is too steep, let's lower the % of progress more."
+  reason: "User reported: hero went back to 100 health after dying, % health mods not taken into account, can't clear beyond zone 20"
   severity: blocker
   test: 1
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "calculate_defense() in hero.gd has no post-aggregation PERCENT_HEALTH multiplier — % health mods only scale individual item base_health, not the hero's total pool. Also update_stats() never syncs health = max_health after recalculation. Additionally FLAT_HEALTH from suffixes is double-counted (once in item update_value, once in suffix loop)."
+  artifacts:
+    - path: "models/hero.gd"
+      issue: "calculate_defense() missing global PERCENT_HEALTH pass; update_stats() doesn't sync health to max_health; suffix FLAT_HEALTH double-counted"
+  missing:
+    - "Add post-aggregation PERCENT_HEALTH multiplier to total_health in calculate_defense()"
+    - "Sync health = max_health in update_stats() after calculate_defense()"
+    - "Remove duplicate FLAT_HEALTH addition from suffix loop (already baked into item base_health)"
+  debug_session: ".planning/debug/phase33-uat-three-issues.md"
+
+- truth: "Difficulty curve allows progression through zone 25 with reasonable gear"
+  status: failed
+  reason: "User reported: difficulty curve too steep, can't clear beyond zone 20, wants lower % progression"
+  severity: blocker
+  test: 1
+  root_cause: "GROWTH_RATE=0.10 compounds to 6.12x by level 20, boss wall at levels 22-24 adds +15/+35/+60% spikes on top. Combined with health bugs suppressing hero power, the gap is too wide."
+  artifacts:
+    - path: "models/monsters/pack_generator.gd"
+      issue: "GROWTH_RATE=0.10 too steep with current boss wall bonuses (+15/+35/+60%)"
+  missing:
+    - "Reduce GROWTH_RATE to 0.07-0.08 range"
+    - "Reduce boss wall bonuses to +10/+20/+40% range"
+  debug_session: ".planning/debug/phase33-uat-three-issues.md"
