@@ -178,17 +178,8 @@ var suffixes: Array[Affix] = [
 		[Tag.SPEED, Tag.ATTACK, Tag.WEAPON],
 		[Tag.StatType.INCREASED_SPEED]
 	),
-	Affix.new("Cast Speed", Affix.AffixType.SUFFIX, 2, 10, [Tag.MAGIC], []),
-	Affix.new("Damage over time", Affix.AffixType.SUFFIX, 2, 10, [Tag.DOT, Tag.WEAPON], []),
-	Affix.new(
-		"Bleed Damage", Affix.AffixType.SUFFIX, 2, 10, [Tag.DOT, Tag.PHYSICAL, Tag.WEAPON], []
-	),
 	Affix.new("Life", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], [Tag.StatType.FLAT_HEALTH]),
-	Affix.new("Sigil", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.MAGIC], []),
-	Affix.new("Evade", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
 	Affix.new("Armor", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], [Tag.StatType.FLAT_ARMOR]),
-	Affix.new("Physical Reduction", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
-	Affix.new("Magical Reduction", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
 	Affix.new(
 		"Fire Resistance",
 		Affix.AffixType.SUFFIX,
@@ -225,8 +216,6 @@ var suffixes: Array[Affix] = [
 		[Tag.StatType.ALL_RESISTANCE],
 		Vector2i(1, 5)
 	),
-	Affix.new("Dodge Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
-	Affix.new("Dmg Suppression Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
 	Affix.new(
 		"Critical Strike Chance",
 		Affix.AffixType.SUFFIX,
@@ -243,6 +232,19 @@ var suffixes: Array[Affix] = [
 		[Tag.CRITICAL],
 		[Tag.StatType.CRIT_DAMAGE]
 	),
+	# DISABLED: These suffixes have no stat_type implementation yet.
+	# Re-enable when the corresponding mechanics (DoT, cast speed, dodge, suppression,
+	# evasion from suffix, physical/magical reduction, sigil) are added to Tag.StatType
+	# and hero.gd stat aggregation.
+	#Affix.new("Cast Speed", Affix.AffixType.SUFFIX, 2, 10, [Tag.MAGIC], []),
+	#Affix.new("Damage over time", Affix.AffixType.SUFFIX, 2, 10, [Tag.DOT, Tag.WEAPON], []),
+	#Affix.new("Bleed Damage", Affix.AffixType.SUFFIX, 2, 10, [Tag.DOT, Tag.PHYSICAL, Tag.WEAPON], []),
+	#Affix.new("Sigil", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.MAGIC], []),
+	#Affix.new("Evade", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
+	#Affix.new("Physical Reduction", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
+	#Affix.new("Magical Reduction", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
+	#Affix.new("Dodge Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
+	#Affix.new("Dmg Suppression Chance", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
 ]
 
 
