@@ -9,8 +9,8 @@ Requirements for Inventory Rework milestone. Each maps to roadmap phases.
 
 ### Inventory Storage
 
-- [ ] **INV-01**: Items drop into per-slot inventory arrays (weapon, helmet, armor, boots, ring)
-- [ ] **INV-02**: Each slot holds up to 10 items; drops to a full slot are silently discarded
+- [x] **INV-01**: Items drop into per-slot inventory arrays (weapon, helmet, armor, boots, ring)
+- [x] **INV-02**: Each slot holds up to 10 items; drops to a full slot are silently discarded
 - [ ] **INV-03**: Melt destroys the bench item and removes it from slot inventory
 
 ### Crafting Bench
@@ -69,8 +69,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INV-01 | Phase 28 | Pending |
-| INV-02 | Phase 28 | Pending |
+| INV-01 | Phase 28 | Complete |
+| INV-02 | Phase 28 | Complete |
 | INV-03 | Phase 29 | Pending |
 | BENCH-01 | Phase 29 | Pending |
 | BENCH-02 | Phase 29 | Pending |

@@ -1,6 +1,6 @@
 # Project State: Hammertime
 
-**Updated:** 2026-02-18
+**Updated:** 2026-02-19
 **Milestone:** v1.5 Inventory Rework
 
 ## Project Reference
@@ -16,11 +16,11 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 28 of 30 (GameState Data Model and Drop Flow)
-Plan: Not started
-Status: Ready to discuss
-Last activity: 2026-02-18 — Phase 27 complete (v2 save format, migration, bench item removal)
+Plan: 1/1 complete
+Status: Executing — pending verification
+Last activity: 2026-02-19 — Phase 28 plan 01 complete (array inventory, 10-item cap, ForgeView update)
 
-Progress: [██░░░░░░░░] 25% (milestone v1.5)
+Progress: [████░░░░░░] 50% (milestone v1.5)
 
 ## Performance Metrics
 
@@ -37,9 +37,10 @@ Progress: [██░░░░░░░░] 25% (milestone v1.5)
 All decisions logged in PROJECT.md Key Decisions table.
 
 Recent decisions affecting v1.5:
-- Phase 27: Save format v2 writes per-slot arrays; GameState still holds single items (bridge pattern until Phase 28)
-- Phase 27: `crafting_bench_item` stripped from save format; field remains in GameState until Phase 28
-- `is_item_better()` guard must be deleted from the drop path (Phase 28); keep in stat comparison display
+- Phase 28: GameState.crafting_inventory now holds arrays; starter weapon created by initialize_fresh_game()
+- Phase 28: is_item_better() function preserved for Phase 29 bench selection; drop-path call removed
+- Phase 28: crafting_bench_item fully removed from GameState (completed from Phase 27 migration)
+- Phase 28: add_item_to_inventory returns void; silent discard at 10-item cap
 - x/10 counter display uses existing `inventory_label` Label node (not ItemList) — minimal scope
 
 ### Pending Todos
@@ -53,10 +54,10 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-18
-Stopped at: Phase 28 context gathered
-Resume file: .planning/phases/28-gamestate-data-model-and-drop-flow/28-CONTEXT.md
+Last session: 2026-02-19
+Stopped at: Completed 28-01-PLAN.md
+Resume file: .planning/phases/28-gamestate-data-model-and-drop-flow/28-01-SUMMARY.md
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-18 — Phase 27 complete, transitioned to Phase 28*
+*Last updated: 2026-02-19 — Phase 28 plan 01 complete (array inventory, SaveManager bridge, ForgeView update)*
