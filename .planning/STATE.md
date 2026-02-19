@@ -8,16 +8,16 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Phase 31 — Repo Hygiene
+**Current focus:** Phase 32 — Biome Compression and Difficulty Scaling
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 31 of 34 (Repo Hygiene)
-Plan: 1 of 1 in current phase
-Status: Plan 31-01 executed, awaiting verification
-Last activity: 2026-02-19 — Phase 31 plan 01 executed (repo hygiene)
+Phase: 32 of 34 (Biome Compression and Difficulty Scaling)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-19 — Phase 31 complete, transitioning to Phase 32
 
 Progress: [██░░░░░░░░] 25% (milestone v1.6)
 
@@ -58,9 +58,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Phase 31 plan 01 executed — awaiting verification
+Stopped at: Phase 31 complete, ready to plan Phase 32
 Resume file: None
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 31 plan 01 executed (repo hygiene cleanup)*
+*Last updated: 2026-02-19 — Phase 31 complete, transitioned to Phase 32*

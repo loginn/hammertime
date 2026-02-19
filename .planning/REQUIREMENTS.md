@@ -9,8 +9,8 @@ Requirements for tech debt cleanup milestone. Each maps to roadmap phases.
 
 ### Repository Hygiene
 
-- [ ] **REPO-01**: Temporary Godot editor files (.tmp) removed from git tracking
-- [ ] **REPO-02**: .gitignore updated with `*.tmp` pattern to prevent future commits
+- [x] **REPO-01**: Temporary Godot editor files (.tmp) removed from git tracking -- Phase 31
+- [x] **REPO-02**: .gitignore updated with `*.tmp` pattern to prevent future commits -- Phase 31
 
 ### Progression Rebalance
 
@@ -45,8 +45,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REPO-01 | Phase 31 | Pending |
-| REPO-02 | Phase 31 | Pending |
+| REPO-01 | Phase 31 | Complete |
+| REPO-02 | Phase 31 | Complete |
 | PROG-01 | Phase 32 | Pending |
 | PROG-02 | Phase 32 | Pending |
 | PROG-03 | Phase 33 | Pending |
@@ -62,4 +62,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-19*
-*Last updated: 2026-02-19 — traceability updated after roadmap creation (phases 31-34)*
+*Last updated: 2026-02-19 — REPO-01, REPO-02 completed in Phase 31*
