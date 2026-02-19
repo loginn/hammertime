@@ -1,7 +1,7 @@
 # Project State: Hammertime
 
 **Updated:** 2026-02-19
-**Milestone:** v1.6 Tech Debt Cleanup
+**Milestone:** v1.6 Tech Debt Cleanup (in progress)
 
 ## Project Reference
 
@@ -15,13 +15,16 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 32 of 34 (Biome Compression and Difficulty Scaling)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-19 — Phase 31 complete, transitioning to Phase 32
+Plan: 1 of 1 in current phase (complete)
+Status: Phase 32 complete — ready for Phase 33
+Last activity: 2026-02-19 — Executed 32-01-PLAN.md (biome compression + difficulty scaling)
 
-Progress: [██░░░░░░░░] 25% (milestone v1.6)
+Progress: [███░░░░░░░] 30% (milestone v1.6)
 
 ## Performance Metrics
+
+**Phase 32 (in progress → complete 2026-02-19):**
+- Plans: 1 | Tasks: 2 | Files: 2 | Duration: 3 min
 
 **Milestone v1.5 (shipped 2026-02-19):**
 - Phases: 4 (27-30) | Plans: 4 | Requirements: 9/9 | Timeline: 1 day
@@ -37,6 +40,8 @@ Progress: [██░░░░░░░░] 25% (milestone v1.6)
 ### Decisions
 
 All decisions logged in PROJECT.md Key Decisions table.
+- [Phase 32-biome-compression-and-difficulty-scaling]: Biomes compressed 4x: Forest 1-24, Dark Forest 25-49, Cursed Woods 50-74, Shadow Realm 75+
+- [Phase 32-biome-compression-and-difficulty-scaling]: GROWTH_RATE raised from 0.06 to 0.10; boss walls +15/35/60% at last 3 levels of each biome; relief dip uses stat ratios; quadratic ramp-back over 8 levels
 
 ### Pending Todos
 
@@ -58,9 +63,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Phase 32 context gathered
-Resume file: .planning/phases/32-biome-compression-and-difficulty-scaling/32-CONTEXT.md
+Stopped at: Completed 32-01-PLAN.md
+Resume file: .planning/phases/32-biome-compression-and-difficulty-scaling/32-01-SUMMARY.md
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 32 context gathered*
+*Last updated: 2026-02-19 — Phase 32 plan 01 complete (biome compression + difficulty scaling)*
