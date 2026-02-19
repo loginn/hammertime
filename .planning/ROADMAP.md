@@ -157,7 +157,7 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
 |-------|----------------|--------|-----------|
 | 31. Repo Hygiene | 1/1 | Complete    | 2026-02-19 |
 | 32. Biome Compression and Difficulty Scaling | 1/1 | Complete    | 2026-02-19 |
-| 33. Loot Table Rebalance | 0/TBD | Not started | - |
+| 33. Loot Table Rebalance | 1/1 | Complete   | 2026-02-19 |
 | 34. Biome Preview Currency | 0/TBD | Not started | - |
 
 ---

@@ -16,11 +16,11 @@ Requirements for tech debt cleanup milestone. Each maps to roadmap phases.
 
 - [x] **PROG-01**: Biome boundaries compressed to ~25 levels each (Forest 1-24, Dark Forest 25-49, Cursed Woods 50-74, Shadow Realm 75+)
 - [x] **PROG-02**: Difficulty growth rate increased to moderate scaling (~10% per level) so endgame feels significantly harder than start
-- [ ] **PROG-03**: Currency area gates moved to match new biome boundaries (Forge at 25, Grand at 50, Claw/Tuning at 75)
-- [ ] **PROG-04**: Currency unlock ramp duration scaled proportionally to new biome size (~12 levels instead of 50)
-- [ ] **PROG-05**: Item drop count formula rescaled for compressed level range
+- [x] **PROG-03**: Currency area gates moved to match new biome boundaries (Forge at 25, Grand at 50, Claw/Tuning at 75)
+- [x] **PROG-04**: Currency unlock ramp duration scaled proportionally to new biome size (~12 levels instead of 50)
+- [x] **PROG-05**: Item drop count formula rescaled for compressed level range
 - [ ] **PROG-06**: User can receive rare preview currency drops from next biome (~1 per 50 packs average in current biome)
-- [ ] **PROG-07**: All items drop at Normal rarity (0 affixes) — crafting is the sole source of item mods
+- [x] **PROG-07**: All items drop at Normal rarity (0 affixes) — crafting is the sole source of item mods
 
 ## Future Requirements
 
@@ -49,10 +49,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REPO-02 | Phase 31 | Complete |
 | PROG-01 | Phase 32 | Complete |
 | PROG-02 | Phase 32 | Complete |
-| PROG-03 | Phase 33 | Pending |
-| PROG-04 | Phase 33 | Pending |
-| PROG-05 | Phase 33 | Pending |
-| PROG-07 | Phase 33 | Pending |
+| PROG-03 | Phase 33 | Complete |
+| PROG-04 | Phase 33 | Complete |
+| PROG-05 | Phase 33 | Complete |
+| PROG-07 | Phase 33 | Complete |
 | PROG-06 | Phase 34 | Pending |
 
 **Coverage:**
