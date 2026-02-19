@@ -134,3 +134,13 @@
 
 ---
 
+
+## v1.5 Inventory Rework (Shipped: 2026-02-19)
+
+**Phases completed:** 16 phases, 27 plans, 6 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+

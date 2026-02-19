@@ -74,23 +74,17 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ Weapon tooltip "Damage: X to Y" and affix "Adds X to Y [Element] Damage" display -- v1.4
 - ✓ Pack name and element type shown in gameplay view during combat -- v1.4
 - ✓ DPS-based item comparison for weapon/ring slots -- v1.4
+- ✓ Per-slot inventory arrays (10 items each) for all 5 equipment slots -- v1.5
+- ✓ Save format v2 with per-slot arrays and v1-to-v2 migration -- v1.5
+- ✓ Single add point (add_item_to_inventory) with 10-item cap enforcement -- v1.5
+- ✓ Best-item bench selection using tier comparison across all slot types -- v1.5
+- ✓ Melt removes from slot array, equip moves to hero (old item deleted) -- v1.5
+- ✓ x/10 slot counter with auto-updating on drop/melt/equip -- v1.5
+- ✓ Empty slot buttons disabled, crafting_bench_item removed from GameState -- v1.5
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
-
-## Current Milestone: v1.5 Inventory Rework
-
-**Goal:** Replace single-item crafting slots with per-slot inventory (10 items each), giving players a stash of bases to craft on and meaningful equip/melt decisions.
-
-**Target features:**
-- Multi-item inventory per equipment slot (weapon, helmet, armor, boots, ring) with 10-item cap
-- Drops go directly into slot inventory; overflow silently discarded
-- Crafting bench is a view into inventory — clicking slot button loads highest-tier item
-- Equip commits: bench item goes on hero, old equipped item deleted (not returned)
-- Melt destroys bench item from inventory (future: yields materials)
-- x/10 inventory counter per slot in crafting view UI
-- Save/load support for per-slot inventory arrays
 
 ### Out of Scope
 
@@ -108,7 +102,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 ## Context
 
 - Built with Godot 4.5 (GDScript), targeting mobile renderer
-- 5,464 LOC GDScript across ~50 files
+- 4,895 LOC GDScript across ~50 files
 - Feature-based folder structure: models/, scenes/, autoloads/, utils/, tools/
 - Autoloads: ItemAffixes, Tag, GameState (Hero singleton + currency inventory), GameEvents (event bus), SaveManager (JSON persistence)
 - Scene structure: main.tscn with main_view coordinating forge_view, gameplay_view via tab bar
@@ -122,7 +116,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - BiomeConfig defines biome element weight arrays and pack count ranges for 4 biomes
 - SaveManager handles JSON save/load, auto-save timer, event triggers, and Base64 export/import
 - 18 prefix types (9 offensive + 9 defensive) and 19 suffix types (15 original + 4 resistance)
-- Shipped 6 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges)
+- Shipped 7 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges), v1.5 (inventory rework)
 
 ## Constraints
 
@@ -179,7 +173,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | ELEMENT_VARIANCE in PackGenerator | Constants define min_mult/max_mult per element; Physical 1:1.5 through Lightning 1:4 | ✓ Good -- centralized, easy to tune |
 | Dual-accumulator per-element damage ranges | StatCalculator tracks min and max separately per element; percentage mods scale both independently | ✓ Good -- mathematically correct variance preservation |
 | Hero range-based DPS formula | DPS = sum of per-element (min+max)/2 * speed * crit instead of summing weapon.dps + ring.dps | ✓ Good -- uses hero-level crit, more accurate |
-| DPS comparison for weapon/ring drops | is_item_better() uses DPS for damage slots, tier for defense slots | ✓ Good -- evaluates actual damage output |
+| Tier comparison for all item drops | is_item_better() uses tier for all slot types (changed from DPS in UAT) | ✓ Good -- consistent, simple comparison |
 | update_stats() order: crit -> ranges -> dps -> defense | Ensures crit stats available for DPS calculation, ranges available for DPS average | ✓ Good -- correct dependency order |
 | Per-element hero rolling with crit on total | Roll each element independently, sum, then crit; matches ARPG expected-value math | ✓ Good -- natural per-hit variance |
 | Pack per-hit rolling from damage_min/max | randf_range(min, max) replaces flat average; lightning naturally wider than physical | ✓ Good -- element identity in combat |
@@ -191,6 +185,12 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Single add point enforcement | All inventory mutations go through add_item_to_inventory() with cap check | ✓ Good -- single enforcement point prevents overflow bugs |
 | Starter weapon in GameState | initialize_fresh_game() creates starter weapon; ForgeView no longer creates one | ✓ Good -- centralized initialization |
 | Drop all items (no is_item_better gate) | Removed DPS/tier gating from drop path; all items kept until slot full | ✓ Good -- players choose which item to craft on |
+| Save format v2 with migration chain | Version-gated _migrate_save() routes through per-version functions | ✓ Good -- extensible for future versions |
+| Bridge pattern for save format transition | Phase 27 save writes arrays while GameState still held singles; Phase 28 completed transition | ✓ Good -- incremental migration |
+| crafting_bench_item removed from GameState | Bench item is ForgeView-local concept, not persisted | ✓ Good -- simpler state model |
+| get_best_item() on ForgeView | Best-item selection lives near is_item_better() for locality | ✓ Good -- cohesive code organization |
+| Bench clears after equip | Equipping does not auto-select next item; bench goes empty | ✓ Good -- UAT feedback, clearer UX |
+| update_slot_button_labels() via update_inventory_display() | Central sync point for all counter updates | ✓ Good -- single call chain for all mutations |
 
 ---
-*Last updated: 2026-02-19 after Phase 28 complete*
+*Last updated: 2026-02-19 after v1.5 milestone*

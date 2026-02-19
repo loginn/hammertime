@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: v1.5-inventory-rework (phases 27-30)
 source: [27-01-SUMMARY.md, 28-01-SUMMARY.md, 29-01-SUMMARY.md, 30-01-SUMMARY.md]
 started: 2026-02-19T00:00:00Z
@@ -75,13 +75,21 @@ skipped: 0
   reason: "User reported: Items should be selected based on tier in all situations. Not based on calculations"
   severity: major
   test: 5
-  artifacts: []
-  missing: []
+  root_cause: "get_best_item() at forge_view.gd:501 delegates to is_item_better() which uses DPS for Weapon/Ring. Should use tier for all types."
+  artifacts:
+    - path: "scenes/forge_view.gd"
+      issue: "is_item_better() uses dps comparison for Weapon/Ring at line ~467-470; get_best_item() inherits this via delegation"
+  missing:
+    - "Change get_best_item() or is_item_better() to use new_item.tier > existing_item.tier for ALL item types"
 
 - truth: "Bench should be empty after equipping, not auto-select next item"
   status: failed
   reason: "User reported: pass, although we should not select an item in that case"
   severity: minor
   test: 7
-  artifacts: []
-  missing: []
+  root_cause: "_on_equip_pressed() at forge_view.gd:422 calls get_best_item(slot_name) after removal. Should set current_item = null instead."
+  artifacts:
+    - path: "scenes/forge_view.gd"
+      issue: "Line 422: current_item = get_best_item(slot_name) should be current_item = null"
+  missing:
+    - "Replace get_best_item() call with null assignment after equip, then call update_inventory_display()"
