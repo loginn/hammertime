@@ -15,16 +15,16 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 33 of 34 (Loot Table Rebalance)
-Plan: 1 of 1 in current phase (complete)
-Status: Phase 33 complete — ready for Phase 34
-Last activity: 2026-02-19 - Completed Phase 33 Plan 01: Loot Table Rebalance
+Plan: 2 of 2 in current phase (complete)
+Status: Phase 33 complete (both plans) — ready for Phase 34
+Last activity: 2026-02-19 - Completed Phase 33 Plan 02: Hero health fixes and difficulty reduction
 
 Progress: [████░░░░░░] 40% (milestone v1.6)
 
 ## Performance Metrics
 
 **Phase 33 (in progress → complete 2026-02-19):**
-- Plans: 1 | Tasks: 2 | Files: 4 | Duration: 2 min
+- Plans: 2 | Tasks: 4 | Files: 6 | Duration: 4 min
 
 **Phase 32 (in progress → complete 2026-02-19):**
 - Plans: 1 | Tasks: 2 | Files: 2 | Duration: 3 min
@@ -46,6 +46,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [Phase 33-loot-table-rebalance]: Currency gates at 25/50/75 (biome boundaries); sqrt ramp curve over 12 levels; area_multiplier removed; items drop per-pack at 18% as Normal-only
 - [Phase 32-biome-compression-and-difficulty-scaling]: Biomes compressed 4x: Forest 1-24, Dark Forest 25-49, Cursed Woods 50-74, Shadow Realm 75+
 - [Phase 32-biome-compression-and-difficulty-scaling]: GROWTH_RATE raised from 0.06 to 0.10; boss walls +15/35/60% at last 3 levels of each biome; relief dip uses stat ratios; quadratic ramp-back over 8 levels
+- [Phase 33-loot-table-rebalance]: FLAT_HEALTH/FLAT_ARMOR suffix split: weapon/ring only; armor slots bake via update_value()
+- [Phase 33-loot-table-rebalance]: GROWTH_RATE reduced 0.10->0.07; boss walls +15/35/60% -> +10/20/40% for zone 20-25 progressability
 
 ### Pending Todos
 
@@ -68,9 +70,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed Phase 33 Plan 01 (loot table rebalance)
-Resume file: .planning/phases/33-loot-table-rebalance/33-01-SUMMARY.md
+Stopped at: Completed Phase 33 Plan 02 (hero health fixes and difficulty reduction)
+Resume file: .planning/phases/33-loot-table-rebalance/33-02-SUMMARY.md
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 33 Plan 01 complete (loot table rebalance)*
+*Last updated: 2026-02-19 — Phase 33 Plan 02 complete (hero health fixes and difficulty reduction)*
