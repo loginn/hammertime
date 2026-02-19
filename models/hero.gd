@@ -185,26 +185,26 @@ func calculate_defense() -> int:
 	# Start with base health (100)
 	var total_health: int = 100
 
-	# Add defense from armor pieces (base stats only from armor slots)
+	# Add defense from armor pieces (computed stats from armor slots)
 	for slot in ["helmet", "armor", "boots"]:
 		if slot in equipped_items and equipped_items[slot] != null:
 			var armor_item = equipped_items[slot]
 
-			# Check for base_armor property
-			if "base_armor" in armor_item:
-				total_armor += armor_item.base_armor
+			# Check for computed_armor property
+			if "computed_armor" in armor_item:
+				total_armor += armor_item.computed_armor
 
-			# Check for base_evasion property
-			if "base_evasion" in armor_item:
-				total_evasion += armor_item.base_evasion
+			# Check for computed_evasion property
+			if "computed_evasion" in armor_item:
+				total_evasion += armor_item.computed_evasion
 
-			# Check for base_energy_shield property
-			if "base_energy_shield" in armor_item:
-				total_energy_shield += armor_item.base_energy_shield
+			# Check for computed_energy_shield property
+			if "computed_energy_shield" in armor_item:
+				total_energy_shield += armor_item.computed_energy_shield
 
-			# Check for base_health property
-			if "base_health" in armor_item:
-				total_health += armor_item.base_health
+			# Check for computed_health property
+			if "computed_health" in armor_item:
+				total_health += armor_item.computed_health
 
 	# Add resistance from suffixes on ALL equipment slots
 	# (resistances are never baked into item base stats)
@@ -225,7 +225,7 @@ func calculate_defense() -> int:
 						total_lightning_resistance += suffix.value
 
 	# Add FLAT_HEALTH and FLAT_ARMOR from weapon/ring suffixes ONLY.
-	# Armor slots (helmet, armor, boots) already bake these into base_health/base_armor
+	# Armor slots (helmet, armor, boots) already bake these into computed_health/computed_armor
 	# via their update_value() -> StatCalculator.calculate_flat_stat() calls.
 	for slot in ["weapon", "ring"]:
 		if slot in equipped_items and equipped_items[slot] != null:

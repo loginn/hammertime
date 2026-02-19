@@ -710,17 +710,17 @@ func get_stat_comparison_text() -> String:
 		var eq_health: int = 0
 		if equipped != null and equipped is Armor:
 			var eq_item: Armor = equipped as Armor
-			eq_armor = eq_item.base_armor
-			eq_evasion = eq_item.base_evasion
-			eq_es = eq_item.base_energy_shield
-			eq_health = eq_item.base_health
-		text += format_stat_delta_int("Armor", eq_armor, crafted.base_armor) + "\n"
-		if crafted.base_evasion > 0 or eq_evasion > 0:
-			text += format_stat_delta_int("Evasion", eq_evasion, crafted.base_evasion) + "\n"
-		if crafted.base_energy_shield > 0 or eq_es > 0:
-			text += format_stat_delta_int("Energy Shield", eq_es, crafted.base_energy_shield) + "\n"
-		if crafted.base_health > 0 or eq_health > 0:
-			text += format_stat_delta_int("Health", eq_health, crafted.base_health) + "\n"
+			eq_armor = eq_item.computed_armor
+			eq_evasion = eq_item.computed_evasion
+			eq_es = eq_item.computed_energy_shield
+			eq_health = eq_item.computed_health
+		text += format_stat_delta_int("Armor", eq_armor, crafted.computed_armor) + "\n"
+		if crafted.computed_evasion > 0 or eq_evasion > 0:
+			text += format_stat_delta_int("Evasion", eq_evasion, crafted.computed_evasion) + "\n"
+		if crafted.computed_energy_shield > 0 or eq_es > 0:
+			text += format_stat_delta_int("Energy Shield", eq_es, crafted.computed_energy_shield) + "\n"
+		if crafted.computed_health > 0 or eq_health > 0:
+			text += format_stat_delta_int("Health", eq_health, crafted.computed_health) + "\n"
 
 	# Helmet stats
 	elif current_item is Helmet:
@@ -732,20 +732,20 @@ func get_stat_comparison_text() -> String:
 		var eq_mana: int = 0
 		if equipped != null and equipped is Helmet:
 			var eq_item: Helmet = equipped as Helmet
-			eq_armor = eq_item.base_armor
-			eq_evasion = eq_item.base_evasion
-			eq_es = eq_item.base_energy_shield
-			eq_health = eq_item.base_health
-			eq_mana = eq_item.base_mana
-		text += format_stat_delta_int("Armor", eq_armor, crafted.base_armor) + "\n"
-		if crafted.base_evasion > 0 or eq_evasion > 0:
-			text += format_stat_delta_int("Evasion", eq_evasion, crafted.base_evasion) + "\n"
-		if crafted.base_energy_shield > 0 or eq_es > 0:
-			text += format_stat_delta_int("Energy Shield", eq_es, crafted.base_energy_shield) + "\n"
-		if crafted.base_health > 0 or eq_health > 0:
-			text += format_stat_delta_int("Health", eq_health, crafted.base_health) + "\n"
-		if crafted.base_mana > 0 or eq_mana > 0:
-			text += format_stat_delta_int("Mana", eq_mana, crafted.base_mana) + "\n"
+			eq_armor = eq_item.computed_armor
+			eq_evasion = eq_item.computed_evasion
+			eq_es = eq_item.computed_energy_shield
+			eq_health = eq_item.computed_health
+			eq_mana = eq_item.computed_mana
+		text += format_stat_delta_int("Armor", eq_armor, crafted.computed_armor) + "\n"
+		if crafted.computed_evasion > 0 or eq_evasion > 0:
+			text += format_stat_delta_int("Evasion", eq_evasion, crafted.computed_evasion) + "\n"
+		if crafted.computed_energy_shield > 0 or eq_es > 0:
+			text += format_stat_delta_int("Energy Shield", eq_es, crafted.computed_energy_shield) + "\n"
+		if crafted.computed_health > 0 or eq_health > 0:
+			text += format_stat_delta_int("Health", eq_health, crafted.computed_health) + "\n"
+		if crafted.computed_mana > 0 or eq_mana > 0:
+			text += format_stat_delta_int("Mana", eq_mana, crafted.computed_mana) + "\n"
 
 	# Boots stats
 	elif current_item is Boots:
@@ -757,20 +757,20 @@ func get_stat_comparison_text() -> String:
 		var eq_ms: int = 0
 		if equipped != null and equipped is Boots:
 			var eq_item: Boots = equipped as Boots
-			eq_armor = eq_item.base_armor
-			eq_evasion = eq_item.base_evasion
-			eq_es = eq_item.base_energy_shield
-			eq_health = eq_item.base_health
-			eq_ms = eq_item.base_movement_speed
-		text += format_stat_delta_int("Armor", eq_armor, crafted.base_armor) + "\n"
-		if crafted.base_evasion > 0 or eq_evasion > 0:
-			text += format_stat_delta_int("Evasion", eq_evasion, crafted.base_evasion) + "\n"
-		if crafted.base_energy_shield > 0 or eq_es > 0:
-			text += format_stat_delta_int("Energy Shield", eq_es, crafted.base_energy_shield) + "\n"
-		if crafted.base_movement_speed > 0 or eq_ms > 0:
-			text += format_stat_delta_int("Movement Speed", eq_ms, crafted.base_movement_speed) + "\n"
-		if crafted.base_health > 0 or eq_health > 0:
-			text += format_stat_delta_int("Health", eq_health, crafted.base_health) + "\n"
+			eq_armor = eq_item.computed_armor
+			eq_evasion = eq_item.computed_evasion
+			eq_es = eq_item.computed_energy_shield
+			eq_health = eq_item.computed_health
+			eq_ms = eq_item.computed_movement_speed
+		text += format_stat_delta_int("Armor", eq_armor, crafted.computed_armor) + "\n"
+		if crafted.computed_evasion > 0 or eq_evasion > 0:
+			text += format_stat_delta_int("Evasion", eq_evasion, crafted.computed_evasion) + "\n"
+		if crafted.computed_energy_shield > 0 or eq_es > 0:
+			text += format_stat_delta_int("Energy Shield", eq_es, crafted.computed_energy_shield) + "\n"
+		if crafted.computed_movement_speed > 0 or eq_ms > 0:
+			text += format_stat_delta_int("Movement Speed", eq_ms, crafted.computed_movement_speed) + "\n"
+		if crafted.computed_health > 0 or eq_health > 0:
+			text += format_stat_delta_int("Health", eq_health, crafted.computed_health) + "\n"
 
 	# Add resistance comparison for all item types (resistances come from suffixes)
 	text += _get_resistance_comparison_text(current_item, equipped)
@@ -871,13 +871,13 @@ func get_item_stats_text(item: Item) -> String:
 				stats_text += _format_affix_line(suffix) + "\n"
 	elif item is Armor:
 		var armor_item: Armor = item as Armor
-		stats_text += "Armor: %d\n" % armor_item.base_armor
-		if armor_item.base_evasion > 0:
-			stats_text += "Evasion: %d\n" % armor_item.base_evasion
-		if armor_item.base_energy_shield > 0:
-			stats_text += "Energy Shield: %d\n" % armor_item.base_energy_shield
-		if armor_item.base_health > 0:
-			stats_text += "Health: %d\n" % armor_item.base_health
+		stats_text += "Armor: %d\n" % armor_item.computed_armor
+		if armor_item.computed_evasion > 0:
+			stats_text += "Evasion: %d\n" % armor_item.computed_evasion
+		if armor_item.computed_energy_shield > 0:
+			stats_text += "Energy Shield: %d\n" % armor_item.computed_energy_shield
+		if armor_item.computed_health > 0:
+			stats_text += "Health: %d\n" % armor_item.computed_health
 
 		if armor_item.implicit:
 			stats_text += "\nImplicit:\n"
@@ -894,14 +894,14 @@ func get_item_stats_text(item: Item) -> String:
 				stats_text += _format_affix_line(suffix) + "\n"
 	elif item is Boots:
 		var boots_item: Boots = item as Boots
-		stats_text += "Armor: %d\n" % boots_item.base_armor
-		if boots_item.base_evasion > 0:
-			stats_text += "Evasion: %d\n" % boots_item.base_evasion
-		if boots_item.base_energy_shield > 0:
-			stats_text += "Energy Shield: %d\n" % boots_item.base_energy_shield
-		stats_text += "Movement Speed: %d\n" % boots_item.base_movement_speed
-		if boots_item.base_health > 0:
-			stats_text += "Health: %d\n" % boots_item.base_health
+		stats_text += "Armor: %d\n" % boots_item.computed_armor
+		if boots_item.computed_evasion > 0:
+			stats_text += "Evasion: %d\n" % boots_item.computed_evasion
+		if boots_item.computed_energy_shield > 0:
+			stats_text += "Energy Shield: %d\n" % boots_item.computed_energy_shield
+		stats_text += "Movement Speed: %d\n" % boots_item.computed_movement_speed
+		if boots_item.computed_health > 0:
+			stats_text += "Health: %d\n" % boots_item.computed_health
 
 		if boots_item.implicit:
 			stats_text += "\nImplicit:\n"
@@ -918,15 +918,15 @@ func get_item_stats_text(item: Item) -> String:
 				stats_text += _format_affix_line(suffix) + "\n"
 	elif item is Helmet:
 		var helmet_item: Helmet = item as Helmet
-		stats_text += "Armor: %d\n" % helmet_item.base_armor
-		if helmet_item.base_evasion > 0:
-			stats_text += "Evasion: %d\n" % helmet_item.base_evasion
-		if helmet_item.base_energy_shield > 0:
-			stats_text += "Energy Shield: %d\n" % helmet_item.base_energy_shield
-		if helmet_item.base_mana > 0:
-			stats_text += "Mana: %d\n" % helmet_item.base_mana
-		if helmet_item.base_health > 0:
-			stats_text += "Health: %d\n" % helmet_item.base_health
+		stats_text += "Armor: %d\n" % helmet_item.computed_armor
+		if helmet_item.computed_evasion > 0:
+			stats_text += "Evasion: %d\n" % helmet_item.computed_evasion
+		if helmet_item.computed_energy_shield > 0:
+			stats_text += "Energy Shield: %d\n" % helmet_item.computed_energy_shield
+		if helmet_item.computed_mana > 0:
+			stats_text += "Mana: %d\n" % helmet_item.computed_mana
+		if helmet_item.computed_health > 0:
+			stats_text += "Health: %d\n" % helmet_item.computed_health
 
 		if helmet_item.implicit:
 			stats_text += "\nImplicit:\n"

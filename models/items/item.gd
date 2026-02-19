@@ -143,12 +143,13 @@ func display() -> void:
 		if total_defense > 0:
 			print("defense: %d" % total_defense)
 
-	print(
-		(
-			"implicit:\n	%s ~ value: %d ~ tier %d"
-			% [self.implicit.affix_name, self.implicit.value, self.implicit.tier]
+	if self.implicit != null:
+		print(
+			(
+				"implicit:\n	%s ~ value: %d ~ tier %d"
+				% [self.implicit.affix_name, self.implicit.value, self.implicit.tier]
+			)
 		)
-	)
 	print("prefixes:")
 	for prefix in self.prefixes:
 		print("	%s ~ value: %d ~ tier %d" % [prefix.affix_name, prefix.value, prefix.tier])
@@ -173,10 +174,11 @@ func get_display_text() -> String:
 		if total_defense > 0:
 			output += "defense: %d\n" % total_defense
 
-	output += (
-		"implicit:\n	%s ~ value: %d ~ tier %d\n"
-		% [self.implicit.affix_name, self.implicit.value, self.implicit.tier]
-	)
+	if self.implicit != null:
+		output += (
+			"implicit:\n	%s ~ value: %d ~ tier %d\n"
+			% [self.implicit.affix_name, self.implicit.value, self.implicit.tier]
+		)
 	output += "prefixes:\n"
 	for prefix in self.prefixes:
 		output += (
