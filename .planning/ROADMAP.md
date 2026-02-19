@@ -136,7 +136,8 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
   2. A newly unlocked currency type ramps up over ~12 levels before reaching full drop rates
   3. Item drop counts feel meaningful across the compressed range (not front-loaded or flat)
   4. Every item that drops has 0 affixes (Normal rarity) — the player must use hammers to add mods
-**Plans**: TBD
+**Plans**: 1 plan
+- [ ] 33-01-PLAN.md — Retune currency gates (25/50/75), 12-level ramp-up, per-pack item drops, Normal-only enforcement
 
 ### Phase 34: Biome Preview Currency
 **Goal**: Players receive occasional rare currency drops from the next biome as a teaser for upcoming content, appearing at roughly 1 drop per 50 packs in the current biome
