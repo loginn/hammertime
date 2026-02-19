@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: resolved
 phase: 33-loot-table-rebalance
 source: [33-01-SUMMARY.md]
 started: 2026-02-19T14:10:00Z
-updated: 2026-02-19T14:25:00Z
+updated: 2026-02-19T14:35:00Z
 ---
 
 ## Current Test
@@ -54,7 +54,7 @@ skipped: 1
 ## Gaps
 
 - truth: "Hero health reflects all equipped % health mods and syncs on stat update and revive"
-  status: failed
+  status: resolved
   reason: "User reported: hero went back to 100 health after dying, % health mods not taken into account, can't clear beyond zone 20"
   severity: blocker
   test: 1
@@ -69,7 +69,7 @@ skipped: 1
   debug_session: ".planning/debug/phase33-uat-three-issues.md"
 
 - truth: "Difficulty curve allows progression through zone 25 with reasonable gear"
-  status: failed
+  status: resolved
   reason: "User reported: difficulty curve too steep, can't clear beyond zone 20, wants lower % progression"
   severity: blocker
   test: 1
