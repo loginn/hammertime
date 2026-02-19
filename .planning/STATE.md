@@ -5,22 +5,22 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-18)
+See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current focus:** Phase 28 — GameState Data Model and Drop Flow
+**Current focus:** Phase 29 — ForgeView Logic
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 28 of 30 (GameState Data Model and Drop Flow)
-Plan: 1/1 complete
-Status: Executing — pending verification
-Last activity: 2026-02-19 — Phase 28 plan 01 complete (array inventory, 10-item cap, ForgeView update)
+Phase: 29 of 30 (ForgeView Logic)
+Plan: Not started
+Status: Ready to discuss
+Last activity: 2026-02-19 — Phase 28 complete (array inventory, 10-item cap, ForgeView update)
 
-Progress: [████░░░░░░] 50% (milestone v1.5)
+Progress: [█████░░░░░] 50% (milestone v1.5)
 
 ## Performance Metrics
 
@@ -55,9 +55,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 28-01-PLAN.md
-Resume file: .planning/phases/28-gamestate-data-model-and-drop-flow/28-01-SUMMARY.md
+Stopped at: Phase 28 complete, ready to plan Phase 29
+Resume file: None
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 28 plan 01 complete (array inventory, SaveManager bridge, ForgeView update)*
+*Last updated: 2026-02-19 — Phase 28 complete, transitioned to Phase 29*

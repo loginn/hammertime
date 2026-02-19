@@ -187,6 +187,10 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | _format_affix_line() helper for flat damage | Flat damage affixes show "Adds X to Y [Element] Damage"; element from tags; others unchanged | ✓ Good -- clean display, single helper |
 | Pack HP label with name and element | "PackName (Element) -- HP/MaxHP" in gameplay view; no new UI nodes needed | ✓ Good -- combat context at a glance |
 | Stat comparison shows damage ranges | Weapons show "Damage: X-Y (was X-Y)" instead of single-value delta | ✓ Good -- meaningful comparison for ranged damage |
+| Per-slot inventory arrays | crafting_inventory changes from {slot: Item} to {slot: Array} with 10-item cap | ✓ Good -- enables multi-item stash per slot |
+| Single add point enforcement | All inventory mutations go through add_item_to_inventory() with cap check | ✓ Good -- single enforcement point prevents overflow bugs |
+| Starter weapon in GameState | initialize_fresh_game() creates starter weapon; ForgeView no longer creates one | ✓ Good -- centralized initialization |
+| Drop all items (no is_item_better gate) | Removed DPS/tier gating from drop path; all items kept until slot full | ✓ Good -- players choose which item to craft on |
 
 ---
-*Last updated: 2026-02-18 after milestone v1.5 started*
+*Last updated: 2026-02-19 after Phase 28 complete*
