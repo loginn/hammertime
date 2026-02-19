@@ -131,30 +131,27 @@ func _ready() -> void:
 	equip_timer.timeout.connect(_on_equip_timer_timeout)
 	add_child(equip_timer)
 
-	# Load crafting inventory from GameState
+	# Load crafting inventory from GameState (Phase 28: arrays)
 	var has_saved_items := false
 	for type_name in inventory_types:
-		if GameState.crafting_inventory.get(type_name) != null:
+		if not GameState.crafting_inventory[type_name].is_empty():
 			has_saved_items = true
 			break
 
-	# Only create starting items if inventory is empty (fresh game, no save)
-	# Player starts with only a weapon — must clear maps to get other items
-	if not has_saved_items:
-		var starting_weapon := LightSword.new()
-		add_item_to_inventory(starting_weapon)
+	# Starter weapon is created by GameState.initialize_fresh_game() in the weapon array.
+	# No need to create one here — it already exists if this is a fresh game.
 
-	# Set current item from saved bench type or default to weapon
+	# Set current item from saved bench type or default to weapon (Phase 28: arrays)
 	var selected_type: String = GameState.crafting_bench_type
-	if GameState.crafting_inventory.get(selected_type) != null:
-		current_item = GameState.crafting_inventory[selected_type]
+	if not GameState.crafting_inventory[selected_type].is_empty():
+		current_item = GameState.crafting_inventory[selected_type][0]
 	else:
 		# Fall back to first available item
 		current_item = null
 		for type_name in inventory_types:
-			if GameState.crafting_inventory.get(type_name) != null:
+			if not GameState.crafting_inventory[type_name].is_empty():
 				selected_type = type_name
-				current_item = GameState.crafting_inventory[type_name]
+				current_item = GameState.crafting_inventory[type_name][0]
 				break
 	GameState.crafting_bench_type = selected_type
 
@@ -267,8 +264,8 @@ func _on_item_type_selected(item_type: String) -> void:
 		equip_timer.stop()
 	equip_button.text = "Equip"
 
-	# Check if there's an item of this type in the inventory
-	if GameState.crafting_inventory.get(item_type) == null:
+	# Check if there's an item of this type in the inventory (Phase 28: arrays)
+	if GameState.crafting_inventory[item_type].is_empty():
 		print("No ", item_type, " in inventory - selection ignored")
 		return
 
@@ -300,8 +297,8 @@ func update_item_type_button_states() -> void:
 func update_current_item() -> void:
 	var selected_type: String = get_selected_item_type()
 
-	if selected_type != "" and GameState.crafting_inventory.get(selected_type) != null:
-		current_item = GameState.crafting_inventory[selected_type]
+	if selected_type != "" and not GameState.crafting_inventory[selected_type].is_empty():
+		current_item = GameState.crafting_inventory[selected_type][0]
 		print("Selected ", current_item.item_name, " for crafting")
 	else:
 		current_item = null
@@ -349,9 +346,12 @@ func _on_melt_pressed() -> void:
 	var slot_name: String = get_item_type(current_item)
 	print("Melted: ", current_item.item_name)
 
-	# Clear the crafting slot
+	# Remove from slot array (Phase 28: arrays)
 	if slot_name != "None":
-		GameState.crafting_inventory[slot_name] = null
+		var slot_array: Array = GameState.crafting_inventory[slot_name]
+		var idx: int = slot_array.find(current_item)
+		if idx >= 0:
+			slot_array.remove_at(idx)
 	current_item = null
 
 	# Reset equip confirm state if active
@@ -391,8 +391,11 @@ func _on_equip_pressed() -> void:
 	GameEvents.item_crafted.emit(current_item)
 	print("Equipped: ", current_item.item_name, " to ", slot_name)
 
-	# Clear the crafting slot
-	GameState.crafting_inventory[slot_name] = null
+	# Remove from slot array (Phase 28: arrays)
+	var slot_array: Array = GameState.crafting_inventory[slot_name]
+	var idx: int = slot_array.find(current_item)
+	if idx >= 0:
+		slot_array.remove_at(idx)
 	current_item = null
 
 	# Update all displays
@@ -424,14 +427,14 @@ func add_item_to_inventory(item: Item) -> void:
 		print("Unknown item type for: ", item.item_name)
 		return
 
-	# Check if we should replace the existing item
-	var existing_item: Item = GameState.crafting_inventory[item_type]
-	if existing_item == null or is_item_better(item, existing_item):
-		GameState.crafting_inventory[item_type] = item
-		print("Added ", item.item_name, " to ", item_type, " slot")
-		update_inventory_display()
-	else:
-		print("New ", item.item_name, " is not better than existing ", existing_item.item_name)
+	# Append to slot array with 10-item cap (Phase 28)
+	var slot_array: Array = GameState.crafting_inventory[item_type]
+	if slot_array.size() >= 10:
+		print("Slot ", item_type, " is full (10/10), discarding ", item.item_name)
+		return
+	slot_array.append(item)
+	print("Added ", item.item_name, " to ", item_type, " slot (", slot_array.size(), "/10)")
+	update_inventory_display()
 
 
 func set_new_item_base(item_base: Item) -> void:
@@ -482,10 +485,11 @@ func update_inventory_display() -> void:
 	var display_text: String = "Crafting Inventory:\n\n"
 
 	for item_type in inventory_types:
-		var item: Item = GameState.crafting_inventory.get(item_type)
+		var slot_array: Array = GameState.crafting_inventory.get(item_type, [])
 		var type_name: String = item_type.capitalize()
 
-		if item != null:
+		if not slot_array.is_empty():
+			var item: Item = slot_array[0]
 			display_text += type_name + ": " + item.item_name
 			var rarity_name: String = "Normal"
 			match item.rarity:
