@@ -3,11 +3,11 @@ class_name PackGenerator extends RefCounted
 ## Generates scaled monster packs for a given area level.
 ## Follows the same static utility pattern as LootTable and DefenseCalculator.
 ## Packs are consumed by the combat loop (Phase 15).
-## Level 1: 1.0x | Level 25: ~9.85x | Level 50: ~106x | Level 75: ~1,083x
+## Level 1: 1.0x | Level 25: ~5.07x | Level 50: ~27.5x | Level 75: ~148x
 
 const PACK_COUNT_MIN: int = 8
 const PACK_COUNT_MAX: int = 15
-const GROWTH_RATE: float = 0.10  # 10% exponential growth per level
+const GROWTH_RATE: float = 0.07  # 7% exponential growth per level
 const BIOME_BOUNDARIES: Array[int] = [25, 50, 75]  # Dark Forest, Cursed Woods, Shadow Realm start levels
 
 # Pre-computed avg base HP ratios: new_biome / old_biome
@@ -35,8 +35,8 @@ const ELEMENT_VARIANCE: Dictionary = {
 
 
 ## Returns the difficulty multiplier for an area level.
-## Base: 10% compounding per level. Modified by:
-## - Boss wall: +15/35/60% spike on the last 3 levels of each biome
+## Base: 7% compounding per level. Modified by:
+## - Boss wall: +10/20/40% spike on the last 3 levels of each biome
 ## - Relief dip: first level of new biome drops to ~70% of boss wall peak (accounting for base stat jump)
 ## - Ramp-back: smooth quadratic ease over 8 levels to rejoin base curve
 ## - Shadow Realm (75+): smooth 10% compounding after initial ramp-back, no repeating boss walls
@@ -50,7 +50,7 @@ static func get_level_multiplier(area_level: int) -> float:
 			var stat_ratio: float = BIOME_STAT_RATIOS[boundary]
 			# peak_base is the base multiplier at the last level of the previous biome (boundary - 1)
 			var peak_base: float = pow(1.0 + GROWTH_RATE, boundary - 2)
-			var relief_mult: float = peak_base * (1.0 + 0.60) * 0.70 / stat_ratio
+			var relief_mult: float = peak_base * (1.0 + 0.40) * 0.70 / stat_ratio
 			return relief_mult
 
 	# 2. Check if level is in boss wall zone (within 3 levels before a boundary)
@@ -61,9 +61,9 @@ static func get_level_multiplier(area_level: int) -> float:
 			var distance_from_boundary: int = boundary - level  # 3, 2, or 1
 			var boss_bonus: float
 			match distance_from_boundary:
-				3: boss_bonus = 0.15
-				2: boss_bonus = 0.35
-				1: boss_bonus = 0.60
+				3: boss_bonus = 0.10  # Was 0.15
+				2: boss_bonus = 0.20  # Was 0.35
+				1: boss_bonus = 0.40  # Was 0.60
 				_: boss_bonus = 0.0
 			return base * (1.0 + boss_bonus)
 
@@ -74,7 +74,7 @@ static func get_level_multiplier(area_level: int) -> float:
 			# Compute the relief value at this boundary
 			var stat_ratio: float = BIOME_STAT_RATIOS[boundary]
 			var peak_base: float = pow(1.0 + GROWTH_RATE, boundary - 2)
-			var relief_value: float = peak_base * (1.0 + 0.60) * 0.70 / stat_ratio
+			var relief_value: float = peak_base * (1.0 + 0.40) * 0.70 / stat_ratio
 			# Quadratic ease-in ramp from relief back to base curve
 			var t: float = float(levels_into_biome) / 8.0
 			var ease_t: float = t * t
