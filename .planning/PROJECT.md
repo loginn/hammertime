@@ -88,12 +88,14 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 
 ## Current Milestone: v1.6 Tech Debt Cleanup
 
-**Goal:** Clear high-impact tech debt — synchronous CombatEngine, repo hygiene, and early progression balance.
+**Goal:** Clean repo hygiene and rebalance progression — compress biomes to ~25 levels, retune all scaling, and make crafting the sole source of item mods.
 
 **Target features:**
-- Replace CombatEngine async transitions with synchronous Timer callbacks
 - Remove temporary scene files from repo and update .gitignore
-- Rebalance early progression difficulty curve for fresh heroes
+- Compress 4 biomes from 100 levels each to ~25 levels each
+- Retune all scaling systems (difficulty, currency gates, drops) for compressed range
+- All items drop at Normal rarity — crafting is the only way to add mods
+- Preview currency drops from next biome for progression teasers
 
 ### Out of Scope
 
