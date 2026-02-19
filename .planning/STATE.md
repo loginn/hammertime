@@ -17,7 +17,7 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 Phase: Between milestones
 Status: v1.5 shipped, ready for /gsd:new-milestone
-Last activity: 2026-02-19 — v1.5 Inventory Rework milestone completed and archived
+Last activity: 2026-02-19 - Completed quick task 7: Handle untracked / unstaged files
 
 ## Performance Metrics
 
@@ -44,6 +44,12 @@ All decisions logged in PROJECT.md Key Decisions table.
 ### Blockers/Concerns
 
 None.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 7 | Handle untracked / unstaged files | 2026-02-19 | 2648f05 | [7-handle-untracked-unstaged-files](./quick/7-handle-untracked-unstaged-files/) |
 
 ## Session Continuity
 
