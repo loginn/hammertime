@@ -40,6 +40,9 @@ All decisions logged in PROJECT.md Key Decisions table.
 ### Pending Todos
 
 - [ ] Add item drop filter for unwanted loot (FILT-01, FILT-02, FILT-03 — deferred to future)
+- [ ] Add prestige meta-progression system
+- [ ] Rebalance early progression difficulty curve
+- [ ] Fix the icons in the crafting view
 
 ### Blockers/Concerns
 
