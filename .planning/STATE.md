@@ -66,13 +66,14 @@ None.
 |---|-------------|------|--------|-----------|
 | 7 | Handle untracked / unstaged files | 2026-02-19 | 2648f05 | [7-handle-untracked-unstaged-files](./quick/7-handle-untracked-unstaged-files/) |
 | 8 | Audit and fix affix pipeline (disable 9 dead mods, fix FLAT_HEALTH/FLAT_ARMOR aggregation) | 2026-02-19 | 5b29755 | [8-audit-and-fix-affix-pipeline-to-ensure-a](./quick/8-audit-and-fix-affix-pipeline-to-ensure-a/) |
+| 9 | Rename original_base_xxx to base_xxx and base_xxx to computed_xxx; remove BasicArmor/BasicHelmet FLAT_ARMOR implicits | 2026-02-19 | ac58cda | [9-rename-original-base-xxx-to-base-xxx-and](./quick/9-rename-original-base-xxx-to-base-xxx-and/) |
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed Phase 33 Plan 02 (hero health fixes and difficulty reduction)
-Resume file: .planning/phases/33-loot-table-rebalance/33-02-SUMMARY.md
+Stopped at: Completed Quick Task 9 (rename item stat properties, remove armor implicits)
+Resume file: .planning/quick/9-rename-original-base-xxx-to-base-xxx-and/9-SUMMARY.md
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 33 Plan 02 complete (hero health fixes and difficulty reduction)*
+*Last updated: 2026-02-19 — Quick Task 9 complete (rename item stat properties)*
