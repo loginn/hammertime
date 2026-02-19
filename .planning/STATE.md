@@ -59,13 +59,14 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 7 | Handle untracked / unstaged files | 2026-02-19 | 2648f05 | [7-handle-untracked-unstaged-files](./quick/7-handle-untracked-unstaged-files/) |
+| 8 | Audit and fix affix pipeline (disable 9 dead mods, fix FLAT_HEALTH/FLAT_ARMOR aggregation) | 2026-02-19 | 5b29755 | [8-audit-and-fix-affix-pipeline-to-ensure-a](./quick/8-audit-and-fix-affix-pipeline-to-ensure-a/) |
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 32-01-PLAN.md
-Resume file: .planning/phases/32-biome-compression-and-difficulty-scaling/32-01-SUMMARY.md
+Stopped at: Completed quick task 8 (audit and fix affix pipeline)
+Resume file: .planning/quick/8-audit-and-fix-affix-pipeline-to-ensure-a/8-SUMMARY.md
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 32 plan 01 complete (biome compression + difficulty scaling)*
+*Last updated: 2026-02-19 — Quick task 8 complete (audit and fix affix pipeline)*
