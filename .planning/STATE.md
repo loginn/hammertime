@@ -9,16 +9,16 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current focus:** Phase 29 — ForgeView Logic
+**Current focus:** Phase 30 — Display and Counter
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 29 of 30 (ForgeView Logic)
-Plan: 1/1 complete
-Status: Execution complete, pending verification
-Last activity: 2026-02-19 — Phase 29 executed (best-item selection, melt/equip auto-select)
+Phase: 30 of 30 (Display and Counter)
+Plan: Not started
+Status: Ready to discuss
+Last activity: 2026-02-19 — Phase 29 complete (best-item selection, melt/equip auto-select)
 
 Progress: [███████░░░] 75% (milestone v1.5)
 
@@ -58,9 +58,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Phase 29 execution complete, pending verification
-Resume file: .planning/phases/29-forgeview-logic/29-01-SUMMARY.md
+Stopped at: Phase 30 ready to discuss
+Resume file: .planning/STATE.md
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 29 executed (best-item selection, melt/equip auto-select)*
+*Last updated: 2026-02-19 — Phase 29 complete, transitioning to Phase 30*

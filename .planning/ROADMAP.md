@@ -92,7 +92,7 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
 
 - [x] **Phase 27: Save Format Migration** - Bump save version to 2 and implement v1→v2 migration for per-slot arrays (completed 2026-02-18)
 - [x] **Phase 28: GameState Data Model and Drop Flow** - Reshape crafting_inventory to arrays, enforce 10-item cap at drop (completed 2026-02-19)
-- [ ] **Phase 29: ForgeView Logic** - Bench selection, melt, and equip against per-slot arrays
+- [x] **Phase 29: ForgeView Logic** - Bench selection, melt, and equip against per-slot arrays (completed 2026-02-19)
 - [ ] **Phase 30: Display and Counter** - x/10 slot counter and guarded slot buttons in crafting view
 
 ## Phase Details
@@ -176,7 +176,7 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
 | 26. UI Range Display | v1.4 | 2/2 | ✓ Complete | 2026-02-18 |
 | 27. Save Format Migration | 1/1 | Complete    | 2026-02-18 | - |
 | 28. GameState Data Model and Drop Flow | 1/1 | Complete    | 2026-02-19 | - |
-| 29. ForgeView Logic | v1.5 | 1/1 | Executed | - |
+| 29. ForgeView Logic | v1.5 | 1/1 | ✓ Complete | 2026-02-19 |
 | 30. Display and Counter | v1.5 | 0/? | Not started | - |
 
 ---
