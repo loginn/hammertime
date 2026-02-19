@@ -175,7 +175,7 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
 | 25. Per-Hit Combat Rolling | v1.4 | 1/1 | ✓ Complete | 2026-02-18 |
 | 26. UI Range Display | v1.4 | 2/2 | ✓ Complete | 2026-02-18 |
 | 27. Save Format Migration | 1/1 | Complete    | 2026-02-18 | - |
-| 28. GameState Data Model and Drop Flow | 1/1 | Complete   | 2026-02-19 | - |
+| 28. GameState Data Model and Drop Flow | 1/1 | Complete    | 2026-02-19 | - |
 | 29. ForgeView Logic | v1.5 | 0/? | Not started | - |
 | 30. Display and Counter | v1.5 | 0/? | Not started | - |
 
