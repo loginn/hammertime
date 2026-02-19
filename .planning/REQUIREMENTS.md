@@ -25,11 +25,11 @@ Requirements for Inventory Rework milestone. Each maps to roadmap phases.
 
 ### Save/Load
 
-- [ ] **SAVE-01**: Save/load supports per-slot inventory arrays in the save format
+- [x] **SAVE-01**: Save/load supports per-slot inventory arrays in the save format
 
 ### Display
 
-- [ ] **DISP-01**: Each slot shows an x/10 counter in the crafting view indicating fill level
+- [x] **DISP-01**: Each slot shows an x/10 counter in the crafting view indicating fill level
 
 ## Future Requirements
 
@@ -76,8 +76,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BENCH-02 | Phase 29 | Complete |
 | EQUIP-01 | Phase 29 | Complete |
 | EQUIP-02 | Phase 29 | Complete |
-| SAVE-01 | Phase 27 | Pending |
-| DISP-01 | Phase 30 | Pending |
+| SAVE-01 | Phase 27 | Complete |
+| DISP-01 | Phase 30 | Complete |
 
 **Coverage:**
 - v1.5 requirements: 9 total

@@ -16,11 +16,11 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 30 of 30 (Display and Counter)
-Plan: Not started
-Status: Ready to discuss
-Last activity: 2026-02-19 — Phase 29 complete (best-item selection, melt/equip auto-select)
+Plan: 1/1 complete
+Status: Phase complete, milestone v1.5 ready for audit
+Last activity: 2026-02-19 — Phase 30 complete (x/10 counter, disabled empty slots)
 
-Progress: [███████░░░] 75% (milestone v1.5)
+Progress: [██████████] 100% (milestone v1.5)
 
 ## Performance Metrics
 
@@ -37,6 +37,7 @@ Progress: [███████░░░] 75% (milestone v1.5)
 All decisions logged in PROJECT.md Key Decisions table.
 
 Recent decisions affecting v1.5:
+- Phase 30: update_slot_button_labels() called from update_inventory_display() for central sync
 - Phase 29: get_best_item() lives on ForgeView near is_item_better() for locality
 - Phase 29: Melt stays on same slot type after removal (does not auto-switch)
 - Phase 29: Bench item not re-evaluated after hammer application (only on slot switch, melt, equip)
@@ -58,9 +59,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Phase 30 ready to discuss
+Stopped at: v1.5 milestone complete, ready for audit
 Resume file: .planning/STATE.md
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 29 complete, transitioning to Phase 30*
+*Last updated: 2026-02-19 — Phase 30 complete, v1.5 milestone finished*
