@@ -294,6 +294,22 @@ func update_item_type_button_states() -> void:
 		button_map[item_type].button_pressed = (item_type == GameState.crafting_bench_type)
 
 
+func update_slot_button_labels() -> void:
+	## Updates slot button text to "SlotName (N/10)" and disables empty slots (Phase 30).
+	var button_map: Dictionary = {
+		"weapon": weapon_type_btn,
+		"helmet": helmet_type_btn,
+		"armor": armor_type_btn,
+		"boots": boots_type_btn,
+		"ring": ring_type_btn
+	}
+	for slot_name in button_map.keys():
+		var btn: Button = button_map[slot_name]
+		var count: int = GameState.crafting_inventory[slot_name].size()
+		btn.text = slot_name.capitalize() + " (" + str(count) + "/10)"
+		btn.disabled = (count == 0)
+
+
 func update_current_item() -> void:
 	var selected_type: String = get_selected_item_type()
 
@@ -523,6 +539,7 @@ func update_inventory_display() -> void:
 			display_text += type_name + ": None\n"
 
 	inventory_label.text = display_text
+	update_slot_button_labels()
 
 
 func update_item_stats_display() -> void:
