@@ -58,9 +58,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Phase 31 complete, ready to plan Phase 32
-Resume file: None
+Stopped at: Phase 32 context gathered
+Resume file: .planning/phases/32-biome-compression-and-difficulty-scaling/32-CONTEXT.md
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 31 complete, transitioned to Phase 32*
+*Last updated: 2026-02-19 — Phase 32 context gathered*
