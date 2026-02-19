@@ -141,17 +141,17 @@ func _ready() -> void:
 	# Starter weapon is created by GameState.initialize_fresh_game() in the weapon array.
 	# No need to create one here — it already exists if this is a fresh game.
 
-	# Set current item from saved bench type or default to weapon (Phase 28: arrays)
+	# Set current item from saved bench type or default to weapon (Phase 29: best item)
 	var selected_type: String = GameState.crafting_bench_type
 	if not GameState.crafting_inventory[selected_type].is_empty():
-		current_item = GameState.crafting_inventory[selected_type][0]
+		current_item = get_best_item(selected_type)
 	else:
 		# Fall back to first available item
 		current_item = null
 		for type_name in inventory_types:
 			if not GameState.crafting_inventory[type_name].is_empty():
 				selected_type = type_name
-				current_item = GameState.crafting_inventory[type_name][0]
+				current_item = get_best_item(type_name)
 				break
 	GameState.crafting_bench_type = selected_type
 
@@ -298,7 +298,7 @@ func update_current_item() -> void:
 	var selected_type: String = get_selected_item_type()
 
 	if selected_type != "" and not GameState.crafting_inventory[selected_type].is_empty():
-		current_item = GameState.crafting_inventory[selected_type][0]
+		current_item = get_best_item(selected_type)
 		print("Selected ", current_item.item_name, " for crafting")
 	else:
 		current_item = null
@@ -475,6 +475,19 @@ func is_item_better(new_item: Item, existing_item: Item) -> bool:
 	return new_item.tier > existing_item.tier
 
 
+func get_best_item(slot_name: String) -> Item:
+	## Returns the highest-tier item from a slot array (Phase 29).
+	## Weapon/ring: highest DPS. Armor/helmet/boots: highest tier.
+	var slot_array: Array = GameState.crafting_inventory[slot_name]
+	if slot_array.is_empty():
+		return null
+	var best: Item = slot_array[0]
+	for i in range(1, slot_array.size()):
+		if is_item_better(slot_array[i], best):
+			best = slot_array[i]
+	return best
+
+
 # --- Display updates ---
 
 
@@ -489,7 +502,7 @@ func update_inventory_display() -> void:
 		var type_name: String = item_type.capitalize()
 
 		if not slot_array.is_empty():
-			var item: Item = slot_array[0]
+			var item: Item = get_best_item(item_type)
 			display_text += type_name + ": " + item.item_name
 			var rarity_name: String = "Normal"
 			match item.rarity:
