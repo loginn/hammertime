@@ -74,7 +74,7 @@ Each task was committed atomically:
 1. **Task 1: Compress biome level boundaries** - `e3a982d` (feat)
 2. **Task 2: Redesign difficulty scaling with boss wall / relief / ramp-back curve** - `6fb79ce` (feat)
 
-**Plan metadata:** TBD (docs: complete plan)
+**Plan metadata:** `97f6f29` (docs: complete plan)
 
 ## Files Created/Modified
 - `/var/home/travelboi/Programming/hammertime/models/monsters/biome_config.gd` - Updated biome level boundaries from 100/200/300 spans to 25/50/75; updated doc comment and inline biome comments
