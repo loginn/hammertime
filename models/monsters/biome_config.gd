@@ -32,7 +32,7 @@ func _init(
 
 
 ## Returns the biome config for a given area level.
-## Matches existing biome boundaries: <100 Forest, <200 Dark Forest, <300 Cursed Woods, 300+ Shadow Realm.
+## Compressed biome boundaries: <25 Forest, <50 Dark Forest, <75 Cursed Woods, 75+ Shadow Realm.
 static func get_biome_for_level(area_level: int) -> BiomeConfig:
 	var biomes := get_biomes()
 	for biome in biomes:
@@ -56,9 +56,9 @@ static func get_biomes() -> Array[BiomeConfig]:
 static func _build_biomes() -> Array[BiomeConfig]:
 	var biomes: Array[BiomeConfig] = []
 
-	# Forest (levels 1-99): Natural beasts, mostly physical
+	# Forest (levels 1-24): Natural beasts, mostly physical
 	biomes.append(BiomeConfig.new(
-		"Forest", 1, 100, "physical",
+		"Forest", 1, 25, "physical",
 		{"physical": 0.40, "fire": 0.20, "cold": 0.20, "lightning": 0.20},
 		[
 			MonsterType.create("Forest Bear", 36.0, 7.0, 0.8),
@@ -70,9 +70,9 @@ static func _build_biomes() -> Array[BiomeConfig]:
 		]
 	))
 
-	# Dark Forest (levels 100-199): Corrupted/burning, mostly fire
+	# Dark Forest (levels 25-49): Corrupted/burning, mostly fire
 	biomes.append(BiomeConfig.new(
-		"Dark Forest", 100, 200, "fire",
+		"Dark Forest", 25, 50, "fire",
 		{"fire": 0.40, "physical": 0.25, "cold": 0.20, "lightning": 0.15},
 		[
 			MonsterType.create("Ember Hound", 42.5, 15.0, 1.5),
@@ -83,9 +83,9 @@ static func _build_biomes() -> Array[BiomeConfig]:
 		]
 	))
 
-	# Cursed Woods (levels 200-299): Frozen/cursed, mostly cold
+	# Cursed Woods (levels 50-74): Frozen/cursed, mostly cold
 	biomes.append(BiomeConfig.new(
-		"Cursed Woods", 200, 300, "cold",
+		"Cursed Woods", 50, 75, "cold",
 		{"cold": 0.40, "lightning": 0.25, "fire": 0.20, "physical": 0.15},
 		[
 			MonsterType.create("Frost Wraith", 22.5, 18.0, 1.6),
@@ -96,9 +96,9 @@ static func _build_biomes() -> Array[BiomeConfig]:
 		]
 	))
 
-	# Shadow Realm (levels 300+): Eldritch horrors, mostly lightning
+	# Shadow Realm (levels 75+): Eldritch horrors, mostly lightning
 	biomes.append(BiomeConfig.new(
-		"Shadow Realm", 300, -1, "lightning",
+		"Shadow Realm", 75, -1, "lightning",
 		{"lightning": 0.40, "fire": 0.25, "cold": 0.25, "physical": 0.10},
 		[
 			MonsterType.create("Void Stalker", 47.5, 20.0, 1.4),
