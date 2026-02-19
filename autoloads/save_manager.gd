@@ -83,11 +83,11 @@ func _build_save_data() -> Dictionary:
 
 	var crafting_inv := {}
 	for type_name in GameState.crafting_inventory:
-		var item = GameState.crafting_inventory[type_name]
-		if item != null:
-			crafting_inv[type_name] = [item.to_dict()]
-		else:
-			crafting_inv[type_name] = []
+		var slot_array: Array = GameState.crafting_inventory[type_name]
+		var items_data: Array = []
+		for item in slot_array:
+			items_data.append(item.to_dict())
+		crafting_inv[type_name] = items_data
 
 	return {
 		"version": SAVE_VERSION,
@@ -121,18 +121,18 @@ func _restore_state(data: Dictionary) -> bool:
 	for currency_type in saved_currencies:
 		GameState.currency_counts[currency_type] = int(saved_currencies[currency_type])
 
-	# Restore crafting inventory (v2: arrays in save, single items in GameState)
+	# Restore crafting inventory (v2: arrays in save, arrays in GameState)
 	var saved_crafting: Dictionary = data.get("crafting_inventory", {})
 	for slot_name in ["weapon", "helmet", "armor", "boots", "ring"]:
 		var slot_data = saved_crafting.get(slot_name, [])
-		if slot_data is Array and not slot_data.is_empty():
-			var first_item_data = slot_data[0]
-			if first_item_data is Dictionary:
-				GameState.crafting_inventory[slot_name] = Item.create_from_dict(first_item_data)
-			else:
-				GameState.crafting_inventory[slot_name] = null
-		else:
-			GameState.crafting_inventory[slot_name] = null
+		var items_array: Array = []
+		if slot_data is Array:
+			for item_data in slot_data:
+				if item_data is Dictionary:
+					var item = Item.create_from_dict(item_data)
+					if item != null:
+						items_array.append(item)
+		GameState.crafting_inventory[slot_name] = items_array
 
 	GameState.crafting_bench_type = str(data.get("crafting_bench_type", "weapon"))
 

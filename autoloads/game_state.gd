@@ -7,7 +7,6 @@ var currency_counts: Dictionary = {}
 
 # Crafting state (centralized for persistence)
 var crafting_inventory: Dictionary = {}
-var crafting_bench_item: Item = null
 var crafting_bench_type: String = "weapon"
 
 # Area progress (centralized for persistence)
@@ -58,15 +57,16 @@ func initialize_fresh_game() -> void:
 		"tuning": 0
 	}
 
-	# Initialize crafting state
+	# Initialize crafting state — per-slot arrays (Phase 28)
 	crafting_inventory = {
-		"weapon": null,
-		"helmet": null,
-		"armor": null,
-		"boots": null,
-		"ring": null,
+		"weapon": [],
+		"helmet": [],
+		"armor": [],
+		"boots": [],
+		"ring": [],
 	}
-	crafting_bench_item = null
+	# Starter weapon goes into weapon slot array
+	crafting_inventory["weapon"] = [LightSword.new()]
 	crafting_bench_type = "weapon"
 
 	# Initialize area progress
