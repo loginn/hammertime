@@ -43,6 +43,7 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [ ] Add prestige meta-progression system
 - [ ] Rebalance early progression difficulty curve
 - [ ] Fix the icons in the crafting view
+- [ ] Add large number formatting with suffix notation
 
 ### Blockers/Concerns
 
