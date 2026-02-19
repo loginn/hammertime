@@ -418,8 +418,8 @@ func _on_equip_pressed() -> void:
 	if idx >= 0:
 		slot_array.remove_at(idx)
 
-	# Auto-select next-best item from same slot (Phase 29)
-	current_item = get_best_item(slot_name)
+	# Clear bench after equip
+	current_item = null
 
 	# Update all displays
 	update_hero_stats_display()
@@ -489,12 +489,6 @@ func get_item_type(item: Item) -> String:
 
 
 func is_item_better(new_item: Item, existing_item: Item) -> bool:
-	# Weapons and rings: compare by DPS (higher damage output = better)
-	if new_item is Weapon and existing_item is Weapon:
-		return new_item.dps > existing_item.dps
-	if new_item is Ring and existing_item is Ring:
-		return new_item.dps > existing_item.dps
-	# All other item types: compare by tier (higher tier = better stats)
 	return new_item.tier > existing_item.tier
 
 
