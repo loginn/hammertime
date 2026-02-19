@@ -14,9 +14,9 @@ signal hero_died()
 signal map_completed(area_level: int)
 signal combat_stopped()
 
-# Drop system signals (Phase 16)
+# Drop system signals (Phase 16/33)
 signal currency_dropped(drops: Dictionary)  # Per-pack currency drops
-signal items_dropped(area_level: int, item_count: int)  # Map completion item drops
+signal items_dropped(area_level: int)  # Per-pack item drops (always 1 item, Normal rarity)
 
 # Save system signals (Phase 18)
 signal save_completed()

@@ -134,7 +134,7 @@ func _on_pack_attack() -> void:
 		_on_hero_died()
 
 
-## Current pack killed. Drop currency, recharge ES, advance to next pack or complete map.
+## Current pack killed. Drop currency and items, recharge ES, advance to next pack or complete map.
 func _on_pack_killed() -> void:
 	var killed_pack := get_current_pack()
 	_stop_timers()
@@ -145,6 +145,10 @@ func _on_pack_killed() -> void:
 		GameState.add_currencies(drops)
 		_accumulate_run_currency(drops)
 		GameEvents.currency_dropped.emit(drops)
+
+	# Item drops on pack kill (Phase 33)
+	if LootTable.roll_pack_item_drop():
+		GameEvents.items_dropped.emit(GameState.area_level)
 
 	current_pack_index += 1
 	GameEvents.pack_killed.emit(current_pack_index, current_packs.size())
@@ -163,16 +167,13 @@ func _on_pack_killed() -> void:
 	_start_pack_fight()
 
 
-## All packs cleared. Full ES recharge, drop items, advance area level, auto-start next map.
+## All packs cleared. Full HP/ES recharge, advance area level, auto-start next map.
+## Items now drop per-pack (Phase 33), not on map completion.
 func _on_map_completed() -> void:
 	state = State.MAP_COMPLETE
 	# Full HP and ES recharge between maps
 	GameState.hero.health = GameState.hero.max_health
 	GameState.hero.current_energy_shield = float(GameState.hero.total_energy_shield)
-
-	# Item drops on map completion (1-3 items scaled by area)
-	var item_count := LootTable.get_map_item_count(GameState.area_level)
-	GameEvents.items_dropped.emit(GameState.area_level, item_count)
 
 	# Deterministic progression: always current_level + 1
 	GameState.area_level += 1
@@ -185,7 +186,7 @@ func _on_map_completed() -> void:
 
 ## Hero died. Revive with full HP + ES. Retry or wait based on auto_retry.
 ## Currency already in inventory from per-pack drops — no clawback.
-## No item drops — death penalty (items only drop on map completion).
+## Items also drop per-pack — death means losing remaining packs' potential drops.
 func _on_hero_died() -> void:
 	state = State.HERO_DEAD
 	_stop_timers()

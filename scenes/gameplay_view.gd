@@ -182,12 +182,11 @@ func _on_combat_stopped() -> void:
 # --- Drop signal handlers (Phase 16) ---
 
 
-func _on_items_dropped(completed_level: int, item_count: int) -> void:
-	for i in range(item_count):
-		var item_base := get_random_item_base(completed_level)
-		if item_base != null:
-			item_bases_collected.append(item_base)
-			item_base_found.emit(item_base)
+func _on_items_dropped(completed_level: int) -> void:
+	var item_base := get_random_item_base()
+	if item_base != null:
+		item_bases_collected.append(item_base)
+		item_base_found.emit(item_base)
 
 
 func _on_currency_dropped(_drops: Dictionary) -> void:
@@ -272,12 +271,9 @@ func update_display() -> void:
 # --- Item generation ---
 
 
-func get_random_item_base(level: int = 1) -> Item:
+func get_random_item_base() -> Item:
 	var item_types = [LightSword, BasicHelmet, BasicArmor, BasicBoots, BasicRing]
 	var random_type = item_types[randi() % item_types.size()]
 	var item = random_type.new()
-
-	var rarity = LootTable.roll_rarity(level)
-	LootTable.spawn_item_with_mods(item, rarity)
-
+	# Items always drop as Normal (0 affixes) — crafting is the sole source of mods
 	return item
