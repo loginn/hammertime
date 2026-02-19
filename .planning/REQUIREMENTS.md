@@ -11,17 +11,17 @@ Requirements for Inventory Rework milestone. Each maps to roadmap phases.
 
 - [x] **INV-01**: Items drop into per-slot inventory arrays (weapon, helmet, armor, boots, ring)
 - [x] **INV-02**: Each slot holds up to 10 items; drops to a full slot are silently discarded
-- [ ] **INV-03**: Melt destroys the bench item and removes it from slot inventory
+- [x] **INV-03**: Melt destroys the bench item and removes it from slot inventory
 
 ### Crafting Bench
 
-- [ ] **BENCH-01**: Clicking a slot button loads the highest-tier item from that slot onto the crafting bench
-- [ ] **BENCH-02**: Crafting bench is a view into inventory — item remains in the array while being crafted
+- [x] **BENCH-01**: Clicking a slot button loads the highest-tier item from that slot onto the crafting bench
+- [x] **BENCH-02**: Crafting bench is a view into inventory — item remains in the array while being crafted
 
 ### Equip Flow
 
-- [ ] **EQUIP-01**: Equipping moves the bench item from inventory to the hero's equipment slot
-- [ ] **EQUIP-02**: Previously equipped item is deleted (not returned to inventory)
+- [x] **EQUIP-01**: Equipping moves the bench item from inventory to the hero's equipment slot
+- [x] **EQUIP-02**: Previously equipped item is deleted (not returned to inventory)
 
 ### Save/Load
 
@@ -71,11 +71,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | INV-01 | Phase 28 | Complete |
 | INV-02 | Phase 28 | Complete |
-| INV-03 | Phase 29 | Pending |
-| BENCH-01 | Phase 29 | Pending |
-| BENCH-02 | Phase 29 | Pending |
-| EQUIP-01 | Phase 29 | Pending |
-| EQUIP-02 | Phase 29 | Pending |
+| INV-03 | Phase 29 | Complete |
+| BENCH-01 | Phase 29 | Complete |
+| BENCH-02 | Phase 29 | Complete |
+| EQUIP-01 | Phase 29 | Complete |
+| EQUIP-02 | Phase 29 | Complete |
 | SAVE-01 | Phase 27 | Pending |
 | DISP-01 | Phase 30 | Pending |
 

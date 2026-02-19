@@ -16,11 +16,11 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 29 of 30 (ForgeView Logic)
-Plan: Not started
-Status: Ready to discuss
-Last activity: 2026-02-19 — Phase 28 complete (array inventory, 10-item cap, ForgeView update)
+Plan: 1/1 complete
+Status: Execution complete, pending verification
+Last activity: 2026-02-19 — Phase 29 executed (best-item selection, melt/equip auto-select)
 
-Progress: [█████░░░░░] 50% (milestone v1.5)
+Progress: [███████░░░] 75% (milestone v1.5)
 
 ## Performance Metrics
 
@@ -37,6 +37,9 @@ Progress: [█████░░░░░] 50% (milestone v1.5)
 All decisions logged in PROJECT.md Key Decisions table.
 
 Recent decisions affecting v1.5:
+- Phase 29: get_best_item() lives on ForgeView near is_item_better() for locality
+- Phase 29: Melt stays on same slot type after removal (does not auto-switch)
+- Phase 29: Bench item not re-evaluated after hammer application (only on slot switch, melt, equip)
 - Phase 28: GameState.crafting_inventory now holds arrays; starter weapon created by initialize_fresh_game()
 - Phase 28: is_item_better() function preserved for Phase 29 bench selection; drop-path call removed
 - Phase 28: crafting_bench_item fully removed from GameState (completed from Phase 27 migration)
@@ -55,9 +58,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Phase 29 context gathered
-Resume file: .planning/phases/29-forgeview-logic/29-CONTEXT.md
+Stopped at: Phase 29 execution complete, pending verification
+Resume file: .planning/phases/29-forgeview-logic/29-01-SUMMARY.md
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 29 context gathered*
+*Last updated: 2026-02-19 — Phase 29 executed (best-item selection, melt/equip auto-select)*
