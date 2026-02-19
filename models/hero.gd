@@ -204,12 +204,12 @@ func calculate_defense() -> int:
 			if "base_health" in armor_item:
 				total_health += armor_item.base_health
 
-	# Add resistance from suffixes on ALL equipment slots
+	# Add resistance, health, and armor from suffixes on ALL equipment slots
 	for slot in ["helmet", "armor", "boots", "weapon", "ring"]:
 		if slot in equipped_items and equipped_items[slot] != null:
 			var item = equipped_items[slot]
 
-			# Process suffixes for resistance stats
+			# Process suffixes for resistance, health, and armor stats
 			if "suffixes" in item:
 				for suffix in item.suffixes:
 					if Tag.StatType.FIRE_RESISTANCE in suffix.stat_types:
@@ -222,6 +222,10 @@ func calculate_defense() -> int:
 						total_fire_resistance += suffix.value
 						total_cold_resistance += suffix.value
 						total_lightning_resistance += suffix.value
+					if Tag.StatType.FLAT_HEALTH in suffix.stat_types:
+						total_health += suffix.value
+					if Tag.StatType.FLAT_ARMOR in suffix.stat_types:
+						total_armor += suffix.value
 
 	# Update max_health from equipment
 	max_health = float(total_health)
