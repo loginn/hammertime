@@ -3,10 +3,24 @@ class_name PackGenerator extends RefCounted
 ## Generates scaled monster packs for a given area level.
 ## Follows the same static utility pattern as LootTable and DefenseCalculator.
 ## Packs are consumed by the combat loop (Phase 15).
+## Level 1: 1.0x | Level 25: ~9.85x | Level 50: ~106x | Level 75: ~1,083x
 
 const PACK_COUNT_MIN: int = 8
 const PACK_COUNT_MAX: int = 15
-const GROWTH_RATE: float = 0.06  # 6% exponential growth per level
+const GROWTH_RATE: float = 0.10  # 10% exponential growth per level
+const BIOME_BOUNDARIES: Array[int] = [25, 50, 75]  # Dark Forest, Cursed Woods, Shadow Realm start levels
+
+# Pre-computed avg base HP ratios: new_biome / old_biome
+# Used to ensure relief dip accounts for base stat jumps
+# Forest avg HP: (36+24+30+15+12+45)/6 = 27.0
+# Dark Forest avg HP: (42.5+80+17.5+45+35)/5 = 44.0
+# Cursed Woods avg HP: (22.5+85+37.5+45+20)/5 = 42.0
+# Shadow Realm avg HP: (47.5+100+25+40+65+17.5)/6 = 49.17
+const BIOME_STAT_RATIOS: Dictionary = {
+	25: 1.63,   # Dark Forest (44.0) / Forest (27.0)
+	50: 0.955,  # Cursed Woods (42.0) / Dark Forest (44.0)
+	75: 1.17,   # Shadow Realm (49.17) / Cursed Woods (42.0)
+}
 
 ## Element variance: multipliers applied to scaled base damage to produce min/max range.
 ## Ratios from project decisions: Physical 1:1.5, Cold 1:2, Fire 1:2.5, Lightning 1:4.
@@ -20,11 +34,55 @@ const ELEMENT_VARIANCE: Dictionary = {
 }
 
 
-## Returns the exponential scaling multiplier for an area level.
-## Compound growth: base * (1 + rate)^(level - 1)
-## Level 1: 1.0x | Level 100: ~321x | Level 300: ~42,012x
+## Returns the difficulty multiplier for an area level.
+## Base: 10% compounding per level. Modified by:
+## - Boss wall: +15/35/60% spike on the last 3 levels of each biome
+## - Relief dip: first level of new biome drops to ~70% of boss wall peak (accounting for base stat jump)
+## - Ramp-back: smooth quadratic ease over 8 levels to rejoin base curve
+## - Shadow Realm (75+): smooth 10% compounding after initial ramp-back, no repeating boss walls
 static func get_level_multiplier(area_level: int) -> float:
-	return pow(1.0 + GROWTH_RATE, area_level - 1)
+	var level: int = area_level
+	var base: float = pow(1.0 + GROWTH_RATE, level - 1)
+
+	# 1. Check if level is a biome boundary (exact match) → return relief multiplier
+	for boundary in BIOME_BOUNDARIES:
+		if level == boundary:
+			var stat_ratio: float = BIOME_STAT_RATIOS[boundary]
+			# peak_base is the base multiplier at the last level of the previous biome (boundary - 1)
+			var peak_base: float = pow(1.0 + GROWTH_RATE, boundary - 2)
+			var relief_mult: float = peak_base * (1.0 + 0.60) * 0.70 / stat_ratio
+			return relief_mult
+
+	# 2. Check if level is in boss wall zone (within 3 levels before a boundary)
+	# Applies to Forest (22-24), Dark Forest (47-49), and Cursed Woods (72-74).
+	# Shadow Realm (75+) has no boss walls — there are no boundaries after 75 to trigger them.
+	for boundary in BIOME_BOUNDARIES:
+		if boundary - 3 <= level and level < boundary:
+			var distance_from_boundary: int = boundary - level  # 3, 2, or 1
+			var boss_bonus: float
+			match distance_from_boundary:
+				3: boss_bonus = 0.15
+				2: boss_bonus = 0.35
+				1: boss_bonus = 0.60
+				_: boss_bonus = 0.0
+			return base * (1.0 + boss_bonus)
+
+	# 3. Check if level is in ramp-back zone (within 8 levels after a boundary)
+	for boundary in BIOME_BOUNDARIES:
+		var levels_into_biome: int = level - boundary
+		if levels_into_biome >= 1 and levels_into_biome <= 7:
+			# Compute the relief value at this boundary
+			var stat_ratio: float = BIOME_STAT_RATIOS[boundary]
+			var peak_base: float = pow(1.0 + GROWTH_RATE, boundary - 2)
+			var relief_value: float = peak_base * (1.0 + 0.60) * 0.70 / stat_ratio
+			# Quadratic ease-in ramp from relief back to base curve
+			var t: float = float(levels_into_biome) / 8.0
+			var ease_t: float = t * t
+			var ramp_mult: float = relief_value + (base - relief_value) * ease_t
+			return ramp_mult
+
+	# 4. Default → return base multiplier (pure 10% compounding)
+	return base
 
 
 ## Selects a random element from biome weights using weighted random.
