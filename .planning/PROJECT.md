@@ -86,6 +86,15 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 
 <!-- Current scope. Building toward these. -->
 
+## Current Milestone: v1.6 Tech Debt Cleanup
+
+**Goal:** Clear high-impact tech debt — synchronous CombatEngine, repo hygiene, and early progression balance.
+
+**Target features:**
+- Replace CombatEngine async transitions with synchronous Timer callbacks
+- Remove temporary scene files from repo and update .gitignore
+- Rebalance early progression difficulty curve for fresh heroes
+
 ### Out of Scope
 
 - Unique items -- defer to future milestone
@@ -193,4 +202,4 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | update_slot_button_labels() via update_inventory_display() | Central sync point for all counter updates | ✓ Good -- single call chain for all mutations |
 
 ---
-*Last updated: 2026-02-19 after v1.5 milestone*
+*Last updated: 2026-02-19 after v1.6 milestone started*

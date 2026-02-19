@@ -1,7 +1,7 @@
 # Project State: Hammertime
 
 **Updated:** 2026-02-19
-**Milestone:** v1.5 shipped — planning next milestone
+**Milestone:** v1.6 Tech Debt Cleanup
 
 ## Project Reference
 
@@ -9,15 +9,16 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-**Current focus:** Planning next milestone
+**Current focus:** Defining requirements
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: Between milestones
-Status: v1.5 shipped, ready for /gsd:new-milestone
-Last activity: 2026-02-19 - Completed quick task 7: Handle untracked / unstaged files
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-19 — Milestone v1.6 started
 
 ## Performance Metrics
 
@@ -39,7 +40,6 @@ All decisions logged in PROJECT.md Key Decisions table.
 ### Pending Todos
 
 - [ ] Add item drop filter for unwanted loot (FILT-01, FILT-02, FILT-03 — deferred to future)
-- [ ] Rebalance early progression difficulty curve
 
 ### Blockers/Concerns
 
@@ -54,9 +54,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: v1.5 milestone archived, between milestones
+Stopped at: Milestone v1.6 started, defining requirements
 Resume file: .planning/STATE.md
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-19 — v1.5 Inventory Rework shipped and archived*
+*Last updated: 2026-02-19 — Milestone v1.6 Tech Debt Cleanup started*
