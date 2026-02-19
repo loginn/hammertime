@@ -148,7 +148,9 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
   1. While clearing packs in one biome, the player occasionally receives a currency type that is gated to the next biome
   2. Preview drops are rare enough to feel special — approximately 1 occurrence per 50 packs on average
   3. Receiving a preview currency creates anticipation for the next biome without disrupting current progression balance
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 34-01-PLAN.md — Shift currency gate thresholds down 10 levels for biome preview drops
 
 ## Progress
 
@@ -159,8 +161,8 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
 | 31. Repo Hygiene | 1/1 | Complete    | 2026-02-19 |
 | 32. Biome Compression and Difficulty Scaling | 1/1 | Complete    | 2026-02-19 |
 | 33. Loot Table Rebalance | 2/2 | Complete    | 2026-02-19 |
-| 34. Biome Preview Currency | 0/TBD | Not started | - |
+| 34. Biome Preview Currency | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-19 — Phase 33 gap closure plan added (hero health fix + difficulty reduction)*
+*Last updated: 2026-02-19 — Phase 34 plan created (biome preview currency gate shift)*
