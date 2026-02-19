@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 24-stat-calculation-and-hero-range-caching
 source: 24-01-SUMMARY.md, 24-02-SUMMARY.md
 started: 2026-02-18T12:00:00Z
@@ -49,7 +49,11 @@ skipped: 0
   reason: "User reported: can we do comparison per defensive stat ? Evasion, HP, Armor, ES, Resistances"
   severity: major
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "is_item_better() in forge_view.gd uses raw tier comparison for non-weapon/ring items. All per-stat data (base_armor, base_evasion, base_energy_shield, base_health, resistances) already exists on items but is ignored."
+  artifacts:
+    - path: "scenes/forge_view.gd"
+      issue: "is_item_better() falls back to tier comparison instead of per-stat scoring"
+  missing:
+    - "Add _defensive_score() helper that sums armor, evasion, ES, HP, and resistances"
+    - "Replace tier fallback in is_item_better() with _defensive_score() comparison"
+  debug_session: ".planning/debug/forge-view-is-item-better-tier-comparison.md"
