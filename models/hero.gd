@@ -95,6 +95,8 @@ func update_stats() -> void:
 	calculate_dps()
 	calculate_defense()
 	current_energy_shield = float(total_energy_shield)
+	# Sync health to new max_health after stat recalculation
+	health = max_health
 
 
 func calculate_damage_ranges() -> void:
@@ -204,12 +206,11 @@ func calculate_defense() -> int:
 			if "base_health" in armor_item:
 				total_health += armor_item.base_health
 
-	# Add resistance, health, and armor from suffixes on ALL equipment slots
+	# Add resistance from suffixes on ALL equipment slots
+	# (resistances are never baked into item base stats)
 	for slot in ["helmet", "armor", "boots", "weapon", "ring"]:
 		if slot in equipped_items and equipped_items[slot] != null:
 			var item = equipped_items[slot]
-
-			# Process suffixes for resistance, health, and armor stats
 			if "suffixes" in item:
 				for suffix in item.suffixes:
 					if Tag.StatType.FIRE_RESISTANCE in suffix.stat_types:
@@ -222,10 +223,32 @@ func calculate_defense() -> int:
 						total_fire_resistance += suffix.value
 						total_cold_resistance += suffix.value
 						total_lightning_resistance += suffix.value
+
+	# Add FLAT_HEALTH and FLAT_ARMOR from weapon/ring suffixes ONLY.
+	# Armor slots (helmet, armor, boots) already bake these into base_health/base_armor
+	# via their update_value() -> StatCalculator.calculate_flat_stat() calls.
+	for slot in ["weapon", "ring"]:
+		if slot in equipped_items and equipped_items[slot] != null:
+			var item = equipped_items[slot]
+			if "suffixes" in item:
+				for suffix in item.suffixes:
 					if Tag.StatType.FLAT_HEALTH in suffix.stat_types:
 						total_health += suffix.value
 					if Tag.StatType.FLAT_ARMOR in suffix.stat_types:
 						total_armor += suffix.value
+
+	# Apply global PERCENT_HEALTH from prefixes on all equipment
+	# Item-level update_value() applies PERCENT_HEALTH to individual item base_health,
+	# but a global pass ensures the modifier scales the entire health pool.
+	var all_percent_health_affixes: Array = []
+	for slot in ["helmet", "armor", "boots", "weapon", "ring"]:
+		if slot in equipped_items and equipped_items[slot] != null:
+			var item = equipped_items[slot]
+			if "prefixes" in item:
+				all_percent_health_affixes.append_array(item.prefixes)
+	total_health = int(StatCalculator.calculate_percentage_stat(
+		float(total_health), all_percent_health_affixes, Tag.StatType.PERCENT_HEALTH
+	))
 
 	# Update max_health from equipment
 	max_health = float(total_health)
