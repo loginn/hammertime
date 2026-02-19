@@ -99,7 +99,7 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.6 Tech Debt Cleanup (In Progress)
+### v1.6 Tech Debt Cleanup (In Progress)
 
 **Milestone Goal:** Clean repo hygiene and rebalance progression — compress biomes to ~25 levels each, retune all scaling, and make crafting the sole source of item mods.
 
@@ -136,8 +136,9 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
   2. A newly unlocked currency type ramps up over ~12 levels before reaching full drop rates
   3. Item drop counts feel meaningful across the compressed range (not front-loaded or flat)
   4. Every item that drops has 0 affixes (Normal rarity) — the player must use hammers to add mods
-**Plans**: 1 plan
-- [ ] 33-01-PLAN.md — Retune currency gates (25/50/75), 12-level ramp-up, per-pack item drops, Normal-only enforcement
+**Plans**: 2 plans
+- [x] 33-01-PLAN.md — Retune currency gates (25/50/75), 12-level ramp-up, per-pack item drops, Normal-only enforcement
+- [ ] 33-02-PLAN.md — Fix hero health double-counting and reduce difficulty curve (gap closure)
 
 ### Phase 34: Biome Preview Currency
 **Goal**: Players receive occasional rare currency drops from the next biome as a teaser for upcoming content, appearing at roughly 1 drop per 50 packs in the current biome
@@ -151,15 +152,15 @@ Full details: `.planning/milestones/v1.5-ROADMAP.md`
 
 ## Progress
 
-**Execution Order:** 31 → 32 → 33 → 34
+**Execution Order:** 31 -> 32 -> 33 -> 34
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 31. Repo Hygiene | 1/1 | Complete    | 2026-02-19 |
 | 32. Biome Compression and Difficulty Scaling | 1/1 | Complete    | 2026-02-19 |
-| 33. Loot Table Rebalance | 1/1 | Complete    | 2026-02-19 |
+| 33. Loot Table Rebalance | 1/2 | In progress | - |
 | 34. Biome Preview Currency | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-19 — v1.6 Tech Debt Cleanup roadmap added (phases 31-34)*
+*Last updated: 2026-02-19 — Phase 33 gap closure plan added (hero health fix + difficulty reduction)*
