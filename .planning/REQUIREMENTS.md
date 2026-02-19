@@ -45,21 +45,21 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REPO-01 | — | Pending |
-| REPO-02 | — | Pending |
-| PROG-01 | — | Pending |
-| PROG-02 | — | Pending |
-| PROG-03 | — | Pending |
-| PROG-04 | — | Pending |
-| PROG-05 | — | Pending |
-| PROG-06 | — | Pending |
-| PROG-07 | — | Pending |
+| REPO-01 | Phase 31 | Pending |
+| REPO-02 | Phase 31 | Pending |
+| PROG-01 | Phase 32 | Pending |
+| PROG-02 | Phase 32 | Pending |
+| PROG-03 | Phase 33 | Pending |
+| PROG-04 | Phase 33 | Pending |
+| PROG-05 | Phase 33 | Pending |
+| PROG-07 | Phase 33 | Pending |
+| PROG-06 | Phase 34 | Pending |
 
 **Coverage:**
 - v1.6 requirements: 9 total
-- Mapped to phases: 0
-- Unmapped: 9 ⚠️
+- Mapped to phases: 9
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-19*
-*Last updated: 2026-02-19 after initial definition*
+*Last updated: 2026-02-19 — traceability updated after roadmap creation (phases 31-34)*
