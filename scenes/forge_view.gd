@@ -346,13 +346,18 @@ func _on_melt_pressed() -> void:
 	var slot_name: String = get_item_type(current_item)
 	print("Melted: ", current_item.item_name)
 
-	# Remove from slot array (Phase 28: arrays)
+	# Remove from slot array
 	if slot_name != "None":
 		var slot_array: Array = GameState.crafting_inventory[slot_name]
 		var idx: int = slot_array.find(current_item)
 		if idx >= 0:
 			slot_array.remove_at(idx)
-	current_item = null
+
+	# Auto-select next-best item from same slot (Phase 29)
+	if slot_name != "None":
+		current_item = get_best_item(slot_name)
+	else:
+		current_item = null
 
 	# Reset equip confirm state if active
 	equip_confirm_pending = false
@@ -391,12 +396,14 @@ func _on_equip_pressed() -> void:
 	GameEvents.item_crafted.emit(current_item)
 	print("Equipped: ", current_item.item_name, " to ", slot_name)
 
-	# Remove from slot array (Phase 28: arrays)
+	# Remove from slot array
 	var slot_array: Array = GameState.crafting_inventory[slot_name]
 	var idx: int = slot_array.find(current_item)
 	if idx >= 0:
 		slot_array.remove_at(idx)
-	current_item = null
+
+	# Auto-select next-best item from same slot (Phase 29)
+	current_item = get_best_item(slot_name)
 
 	# Update all displays
 	update_hero_stats_display()
