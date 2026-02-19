@@ -19,7 +19,7 @@ Requirements for tech debt cleanup milestone. Each maps to roadmap phases.
 - [x] **PROG-03**: Currency area gates moved to match new biome boundaries (Forge at 25, Grand at 50, Claw/Tuning at 75)
 - [x] **PROG-04**: Currency unlock ramp duration scaled proportionally to new biome size (~12 levels instead of 50)
 - [x] **PROG-05**: Item drop count formula rescaled for compressed level range
-- [ ] **PROG-06**: User can receive rare preview currency drops from next biome (~1 per 50 packs average in current biome)
+- [x] **PROG-06**: User can receive rare preview currency drops from next biome (~1 per 50 packs average in current biome)
 - [x] **PROG-07**: All items drop at Normal rarity (0 affixes) — crafting is the sole source of item mods
 
 ## Future Requirements
@@ -53,7 +53,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROG-04 | Phase 33 | Complete |
 | PROG-05 | Phase 33 | Complete |
 | PROG-07 | Phase 33 | Complete |
-| PROG-06 | Phase 34 | Pending |
+| PROG-06 | Phase 34 | Complete |
 
 **Coverage:**
 - v1.6 requirements: 9 total
