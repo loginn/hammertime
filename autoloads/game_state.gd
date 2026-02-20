@@ -13,6 +13,14 @@ var crafting_bench_type: String = "weapon"
 var max_unlocked_level: int = 1
 var area_level: int = 1
 
+# Prestige state -- survives resets (NOT wiped by _wipe_run_state)
+var prestige_level: int = 0
+var max_item_tier_unlocked: int = 8  # P0 = tier 8 (lowest quality ceiling)
+
+# Tag currency inventory -- separate from standard currency_counts
+# Wiped on prestige (run currency), but kept separate for Phase 39 gating
+var tag_currency_counts: Dictionary = {}
+
 # Save corruption flag — checked by toast on scene ready
 var save_was_corrupted: bool = false
 
@@ -73,8 +81,56 @@ func initialize_fresh_game() -> void:
 	max_unlocked_level = 1
 	area_level = 1
 
+	# Reset prestige state (only for truly fresh games)
+	prestige_level = 0
+	max_item_tier_unlocked = 8
+	tag_currency_counts = {}
+
 	# Reset corruption flag
 	save_was_corrupted = false
+
+
+## Resets all run-scoped state. Called by PrestigeManager.execute_prestige().
+## Does NOT touch prestige_level or max_item_tier_unlocked.
+func _wipe_run_state() -> void:
+	# 1. Area progress
+	area_level = 1
+	max_unlocked_level = 1
+
+	# 2. Hero -- fresh hero with empty equipment slots
+	hero = Hero.new()
+	hero.equipped_items["weapon"] = null
+	hero.equipped_items["helmet"] = null
+	hero.equipped_items["armor"] = null
+	hero.equipped_items["boots"] = null
+	hero.equipped_items["ring"] = null
+
+	# 3. Crafting inventory -- fresh state with starter weapon
+	crafting_inventory = {
+		"weapon": [],
+		"helmet": [],
+		"armor": [],
+		"boots": [],
+		"ring": [],
+	}
+	crafting_inventory["weapon"] = [LightSword.new()]
+	crafting_bench_type = "weapon"
+
+	# 4. Standard currencies -- reset to fresh-game defaults
+	currency_counts = {
+		"runic": 1,
+		"forge": 0,
+		"tack": 0,
+		"grand": 0,
+		"claw": 0,
+		"tuning": 0,
+	}
+
+	# 5. Tag currencies -- wiped (they are run currency per user decision)
+	tag_currency_counts = {}
+
+	# Recalculate derived hero stats to ensure consistency
+	hero.update_stats()
 
 
 ## Adds currencies from a drops dictionary to the inventory

@@ -25,3 +25,7 @@ signal save_failed()
 # Import/Export signals (Phase 21)
 signal export_completed()
 signal import_failed()
+
+# Prestige system signals (Phase 35)
+signal prestige_completed(new_level: int)
+signal tag_currency_dropped(drops: Dictionary)
