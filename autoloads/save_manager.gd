@@ -1,7 +1,7 @@
 extends Node
 
 const SAVE_PATH = "user://hammertime_save.json"
-const SAVE_VERSION = 2
+const SAVE_VERSION = 3
 const AUTO_SAVE_INTERVAL = 300.0  # 5 minutes
 
 var auto_save_timer: Timer
@@ -21,6 +21,7 @@ func _ready() -> void:
 	GameEvents.item_crafted.connect(_on_save_trigger)
 	GameEvents.equipment_changed.connect(_on_equipment_save_trigger)
 	GameEvents.area_cleared.connect(_on_area_save_trigger)
+	GameEvents.prestige_completed.connect(_on_prestige_completed)
 
 
 ## Saves the full game state to a JSON file. Returns true on success.
@@ -55,7 +56,13 @@ func load_game() -> bool:
 		return false
 
 	var data: Dictionary = parsed
-	data = _migrate_save(data)
+
+	# v3 migration policy: delete outdated saves, start fresh (no migration)
+	var saved_version: int = int(data.get("version", 1))
+	if saved_version < SAVE_VERSION:
+		push_warning("SaveManager: Outdated save (v%d), deleting and starting fresh" % saved_version)
+		delete_save()
+		return false
 
 	return _restore_state(data)
 
@@ -98,6 +105,10 @@ func _build_save_data() -> Dictionary:
 		"crafting_bench_type": GameState.crafting_bench_type,
 		"max_unlocked_level": GameState.max_unlocked_level,
 		"area_level": GameState.area_level,
+		# v3 prestige fields
+		"prestige_level": GameState.prestige_level,
+		"max_item_tier_unlocked": GameState.max_item_tier_unlocked,
+		"tag_currency_counts": GameState.tag_currency_counts.duplicate(),
 	}
 
 
@@ -140,42 +151,20 @@ func _restore_state(data: Dictionary) -> bool:
 	GameState.max_unlocked_level = int(data.get("max_unlocked_level", 1))
 	GameState.area_level = int(data.get("area_level", 1))
 
+	# Restore prestige state (v3)
+	GameState.prestige_level = int(data.get("prestige_level", 0))
+	GameState.max_item_tier_unlocked = int(data.get("max_item_tier_unlocked", 8))
+
+	# Restore tag currencies (clear first to avoid stale keys from previous load)
+	GameState.tag_currency_counts = {}
+	var saved_tag_currencies: Dictionary = data.get("tag_currency_counts", {})
+	for tag_type in saved_tag_currencies:
+		GameState.tag_currency_counts[tag_type] = int(saved_tag_currencies[tag_type])
+
 	# Recalculate all derived hero stats from restored equipment
 	GameState.hero.update_stats()
 
 	return true
-
-
-## Migrates save data from older versions to current version.
-func _migrate_save(data: Dictionary) -> Dictionary:
-	var saved_version: int = int(data.get("version", 1))
-
-	if saved_version < SAVE_VERSION:
-		print("SaveManager: Migrating save from v%d to v%d" % [saved_version, SAVE_VERSION])
-
-	if saved_version < 2:
-		data = _migrate_v1_to_v2(data)
-
-	data["version"] = SAVE_VERSION
-	return data
-
-
-## Migrates v1 save data to v2 format (per-slot inventory arrays).
-func _migrate_v1_to_v2(data: Dictionary) -> Dictionary:
-	var old_inv: Dictionary = data.get("crafting_inventory", {})
-	var new_inv := {}
-	for slot in ["weapon", "helmet", "armor", "boots", "ring"]:
-		var item_data = old_inv.get(slot)
-		if item_data != null and item_data is Dictionary:
-			new_inv[slot] = [item_data]
-		else:
-			new_inv[slot] = []
-	data["crafting_inventory"] = new_inv
-
-	# Strip orphaned crafting_bench_item
-	data.erase("crafting_bench_item")
-
-	return data
 
 
 # --- Export/Import save strings ---
@@ -229,8 +218,8 @@ func import_save_string(save_string: String) -> Dictionary:
 	if int(data.get("version", 0)) > SAVE_VERSION:
 		return {"success": false, "error": "newer_version"}
 
-	# Migrate and restore
-	data = _migrate_save(data)
+	# Restore state — old-version import strings (v2) succeed with default prestige values
+	# from _restore_state()'s .get() defaults. The restored state is saved as v3 via save_game() below.
 	if not _restore_state(data):
 		return {"success": false, "error": "restore_failed"}
 
@@ -260,6 +249,10 @@ func _on_equipment_save_trigger(_slot: String, _item: Item) -> void:
 
 func _on_area_save_trigger(_level: int) -> void:
 	_trigger_save()
+
+
+func _on_prestige_completed(_new_level: int) -> void:
+	save_game()
 
 
 ## Debounced save trigger — prevents multiple saves in the same frame.
