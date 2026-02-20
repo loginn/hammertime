@@ -144,3 +144,28 @@
 
 ---
 
+
+## v1.6 — Tech Debt Cleanup (Shipped: 2026-02-20)
+
+**Goal:** Clean repo hygiene and rebalance progression — compress biomes to ~25 levels each, retune all scaling, and make crafting the sole source of item mods.
+
+**Phases:** 4 phases (31-34), 5 plans, 9 tasks | **Timeline:** 1 day (2026-02-19)
+**Stats:** 17 code files changed (+366/-409 lines), 4,849 LOC GDScript
+
+**Key accomplishments:**
+- Cleaned repo — removed 6 stale .tmp files and added *.tmp to .gitignore
+- Compressed 4 biomes from ~100-level spans to 25-level spans with boss wall/relief/ramp-back difficulty curve
+- Retuned currency gates to biome boundaries (25/50/75) with 12-level sqrt ramp-up for newly unlocked currencies
+- Enforced Normal-only item drops — crafting is now the sole source of item mods
+- Fixed hero health/armor double-counting and reduced difficulty curve (GROWTH_RATE 0.10→0.07) for zone 25+ progressability
+- Added biome preview currency drops by shifting gates 10 levels before boundaries
+
+**Tech debt:**
+- RARITY_ANCHORS dict retained as dead data in loot_table.gd
+- PROG-06 drop rate ~1/14 packs vs spec ~1/50 (user accepted)
+- Code comment inaccuracy: "full rate by biome boundary" but math shows 91.3% at boundary
+
+**Archives:** `.planning/milestones/v1.6-ROADMAP.md`, `.planning/milestones/v1.6-REQUIREMENTS.md`
+
+---
+

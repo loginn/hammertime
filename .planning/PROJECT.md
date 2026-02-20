@@ -81,21 +81,21 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ Melt removes from slot array, equip moves to hero (old item deleted) -- v1.5
 - ✓ x/10 slot counter with auto-updating on drop/melt/equip -- v1.5
 - ✓ Empty slot buttons disabled, crafting_bench_item removed from GameState -- v1.5
+- ✓ Temporary Godot editor files (.tmp) removed from git tracking -- v1.6
+- ✓ .gitignore updated with *.tmp pattern -- v1.6
+- ✓ Biome boundaries compressed to ~25 levels each (Forest 1-24, Dark Forest 25-49, Cursed Woods 50-74, Shadow Realm 75+) -- v1.6
+- ✓ Difficulty growth rate retuned to 7% compounding with boss wall/relief/ramp-back curve -- v1.6
+- ✓ Currency area gates moved to biome boundaries (forge 25, grand 50, claw/tuning 75) with 12-level sqrt ramp -- v1.6
+- ✓ All items drop at Normal rarity (0 affixes) — crafting is sole source of item mods -- v1.6
+- ✓ Per-pack item drops at 18% chance replacing map completion drops -- v1.6
+- ✓ Hero health/armor double-counting fixed (FLAT_HEALTH/FLAT_ARMOR suffix split) -- v1.6
+- ✓ Preview currency drops from next biome (gates shifted 10 levels before boundaries) -- v1.6
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-## Current Milestone: v1.6 Tech Debt Cleanup
-
-**Goal:** Clean repo hygiene and rebalance progression — compress biomes to ~25 levels, retune all scaling, and make crafting the sole source of item mods.
-
-**Target features:**
-- Remove temporary scene files from repo and update .gitignore
-- Compress 4 biomes from 100 levels each to ~25 levels each
-- Retune all scaling systems (difficulty, currency gates, drops) for compressed range
-- All items drop at Normal rarity — crafting is the only way to add mods
-- Preview currency drops from next biome for progression teasers
+(No active milestone — run `/gsd:new-milestone` to start next)
 
 ### Out of Scope
 
@@ -127,7 +127,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - BiomeConfig defines biome element weight arrays and pack count ranges for 4 biomes
 - SaveManager handles JSON save/load, auto-save timer, event triggers, and Base64 export/import
 - 18 prefix types (9 offensive + 9 defensive) and 19 suffix types (15 original + 4 resistance)
-- Shipped 7 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges), v1.5 (inventory rework)
+- Shipped 8 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges), v1.5 (inventory rework), v1.6 (tech debt cleanup)
 
 ## Constraints
 
@@ -202,6 +202,14 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | get_best_item() on ForgeView | Best-item selection lives near is_item_better() for locality | ✓ Good -- cohesive code organization |
 | Bench clears after equip | Equipping does not auto-select next item; bench goes empty | ✓ Good -- UAT feedback, clearer UX |
 | update_slot_button_labels() via update_inventory_display() | Central sync point for all counter updates | ✓ Good -- single call chain for all mutations |
+| Biomes compressed 4x (25-level spans) | Tighter biomes = faster progression feel, less grinding per biome | ✓ Good -- meaningful biome transitions |
+| GROWTH_RATE 0.07 with boss walls | 10% was too steep; 7% + softer boss walls (+10/20/40%) allows zone 25+ progression | ✓ Good -- playable difficulty curve |
+| Currency gates at biome boundaries (25/50/75) | Aligns currency unlocks with biome transitions for natural progression | ✓ Good -- currencies feel like biome rewards |
+| Sqrt ramp for currency unlock | Immediate-but-low drop rate at unlock, full rate after 12 levels | ✓ Good -- players see new currency quickly |
+| Normal-only item drops | Crafting is sole source of mods; items drop as blank bases | ✓ Good -- reinforces crafting loop |
+| Per-pack item drops (18% chance) | Items drop during combat, not just on map completion | ✓ Good -- more frequent reward moments |
+| FLAT_HEALTH/FLAT_ARMOR suffix split | Weapon/ring get suffix treatment; armor slots bake via update_value() | ✓ Good -- fixed double-counting |
+| Currency preview via 10-level gate shift | Forge at 15, Grand at 40, Claw/Tuning at 65; reuses existing sqrt ramp | ✓ Good -- minimal code change, thematic teasers |
 
 ---
-*Last updated: 2026-02-19 after v1.6 milestone started*
+*Last updated: 2026-02-20 after v1.6 milestone*
