@@ -128,10 +128,10 @@ Full details: `.planning/milestones/v1.6-ROADMAP.md`
   3. _wipe_run_state() resets area level, hero equipment, crafting inventory, and standard currencies without touching prestige_level or max_item_tier_unlocked
   4. GameEvents has prestige_completed(new_level: int) and tag_currency_dropped(drops: Dictionary) signals
   5. Calling execute_prestige() from P0 results in prestige_level == 1 and max_item_tier_unlocked reflecting P1 unlock
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 35-01: PrestigeManager autoload + GameState prestige fields
+- [ ] 35-01-PLAN.md — PrestigeManager autoload + GameState prestige fields + GameEvents signals + project.godot registration
 
 ### Phase 36: Save Format v3
 **Goal**: Game saves correctly store and restore prestige state so old saves load cleanly and prestige progress never disappears
