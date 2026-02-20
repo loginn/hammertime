@@ -26,8 +26,6 @@ Requirements for Meta-Progression milestone. Each maps to roadmap phases.
 
 - [ ] **AFFIX-01**: Affix tiers expand from 8 to 32 levels (4 affix tiers per item tier band)
 - [ ] **AFFIX-02**: Affix quality normalization helper enables correct cross-range tier comparison
-- [ ] **AFFIX-03**: Pre-prestige (tier 8 item) affix values match v1.6 baseline within 10%
-
 ### Tag-Targeted Currencies
 
 - [ ] **TAG-01**: Fire Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one fire-tagged affix
@@ -96,15 +94,40 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| (populated by roadmapper) | | |
+| Requirement | Phase | Status  |
+|-------------|-------|---------|
+| PRES-01     | 35    | Pending |
+| PRES-02     | 35    | Pending |
+| PRES-03     | 35    | Pending |
+| PRES-04     | 40    | Pending |
+| PRES-05     | 35    | Pending |
+| PRES-06     | 35    | Pending |
+| TIER-01     | 38    | Pending |
+| TIER-02     | 38    | Pending |
+| TIER-03     | 38    | Pending |
+| AFFIX-01    | 37    | Pending |
+| AFFIX-02    | 37    | Pending |
+| TAG-01      | 39    | Pending |
+| TAG-02      | 39    | Pending |
+| TAG-03      | 39    | Pending |
+| TAG-04      | 39    | Pending |
+| TAG-05      | 39    | Pending |
+| TAG-06      | 39    | Pending |
+| TAG-07      | 39    | Pending |
+| TAG-08      | 39    | Pending |
+| SAVE-01     | 36    | Pending |
+| SAVE-02     | 36    | Pending |
+| PUI-01      | 40    | Pending |
+| PUI-02      | 40    | Pending |
+| PUI-03      | 40    | Pending |
+| PUI-04      | 40    | Pending |
+| PUI-05      | 40    | Pending |
 
 **Coverage:**
-- v1.7 requirements: 24 total
-- Mapped to phases: 0
-- Unmapped: 24
+- v1.7 requirements: 23 total
+- Mapped to phases: 23
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-20*
-*Last updated: 2026-02-20 after initial definition*
+*Last updated: 2026-02-20 — traceability populated (phases 35-41)*
