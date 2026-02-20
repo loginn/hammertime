@@ -15,9 +15,9 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 35 of 41 (Prestige Foundation)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-20 — v1.7 roadmap created (phases 35-41)
+Plan: 1 of 1 in current phase (plan 01 complete)
+Status: Phase 35 complete — ready for Phase 36
+Last activity: 2026-02-20 — Phase 35 Plan 01 executed (PrestigeManager autoload, GameState/GameEvents extensions)
 
 Progress: [████████░░] 80% (8 milestones complete, v1.7 starting)
 
@@ -46,6 +46,9 @@ Key v1.7 constraints (from research):
 - tag_currency_counts lives as a separate dictionary on GameState (not merged into currency_counts)
 - Affix tier constraint applied at construction time in add_prefix/add_suffix, not stored on item
 - v2 save migration: breaking old saves is acceptable (user decision); v3 migration is additive-only
+- [Phase 35-prestige-foundation]: P1 prestige costs 100 Forge Hammers; P2-P7 get stub value 999999 unreachable until tuned
+- [Phase 35-prestige-foundation]: _wipe_run_state() wipes tag_currency_counts (tag currencies are run currency, not meta currency)
+- [Phase 35-prestige-foundation]: ITEM_TIERS_BY_PRESTIGE is 8-element 0-indexed array so ITEM_TIERS_BY_PRESTIGE[prestige_level] works for all levels 0-7
 
 ### Pending Todos
 
@@ -70,9 +73,9 @@ Key v1.7 constraints (from research):
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: v1.7 roadmap created — Phase 35 ready to plan
+Stopped at: Completed 35-01-PLAN.md (PrestigeManager autoload + GameState/GameEvents extensions)
 Resume file: None
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-20 — v1.7 Meta-Progression roadmap written (phases 35-41, 7 phases, 24 requirements)*
+*Last updated: 2026-02-20 — Phase 35 Plan 01 complete: PrestigeManager autoload, _wipe_run_state(), prestige signals*

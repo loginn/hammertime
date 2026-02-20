@@ -9,12 +9,12 @@ Requirements for Meta-Progression milestone. Each maps to roadmap phases.
 
 ### Prestige System
 
-- [ ] **PRES-01**: Player can prestige by spending required currency amounts (scaling per prestige level)
-- [ ] **PRES-02**: Prestige triggers full reset of area level, hero equipment, crafting inventory, and standard currencies
-- [ ] **PRES-03**: Prestige level and item tier unlocks persist across resets
+- [x] **PRES-01**: Player can prestige by spending required currency amounts (scaling per prestige level)
+- [x] **PRES-02**: Prestige triggers full reset of area level, hero equipment, crafting inventory, and standard currencies
+- [x] **PRES-03**: Prestige level and item tier unlocks persist across resets
 - [ ] **PRES-04**: Player sees confirmation dialog showing cost, reward, and what resets before committing
-- [ ] **PRES-05**: Game supports 7 total prestige levels (P1 through P7)
-- [ ] **PRES-06**: Each prestige level unlocks the next better item tier (P1→tier 7, P2→tier 6, ..., P7→tier 1)
+- [x] **PRES-05**: Game supports 7 total prestige levels (P1 through P7)
+- [x] **PRES-06**: Each prestige level unlocks the next better item tier (P1→tier 7, P2→tier 6, ..., P7→tier 1)
 
 ### Item Tier System
 
@@ -96,12 +96,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status  |
 |-------------|-------|---------|
-| PRES-01     | 35    | Pending |
-| PRES-02     | 35    | Pending |
-| PRES-03     | 35    | Pending |
+| PRES-01     | 35    | Complete |
+| PRES-02     | 35    | Complete |
+| PRES-03     | 35    | Complete |
 | PRES-04     | 40    | Pending |
-| PRES-05     | 35    | Pending |
-| PRES-06     | 35    | Pending |
+| PRES-05     | 35    | Complete |
+| PRES-06     | 35    | Complete |
 | TIER-01     | 38    | Pending |
 | TIER-02     | 38    | Pending |
 | TIER-03     | 38    | Pending |
