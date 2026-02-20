@@ -26,6 +26,7 @@ Tag="*res://autoloads/tag.gd"
 GameEvents="*res://autoloads/game_events.gd"
 SaveManager="*res://autoloads/save_manager.gd"
 GameState="*res://autoloads/game_state.gd"
+PrestigeManager="*res://autoloads/prestige_manager.gd"
 
 [display]
 
