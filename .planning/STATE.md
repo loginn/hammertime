@@ -1,25 +1,23 @@
 # Project State: Hammertime
 
 **Updated:** 2026-02-20
-**Milestone:** v1.6 Tech Debt Cleanup (shipped 2026-02-20)
+**Milestone:** v1.7 Meta-Progression
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Planning next milestone
+**Current focus:** v1.7 Meta-Progression — defining requirements
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 34 of 34 (Biome Preview Currency)
-Plan: 1 of 1 in current phase (complete)
-Status: Milestone v1.6 Tech Debt Cleanup shipped
-Last activity: 2026-02-20 - Milestone v1.6 archived and tagged
-
-Progress: [██████████] 100% (milestone v1.6 complete)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-20 — Milestone v1.7 started
 
 ## Performance Metrics
 
@@ -63,9 +61,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Milestone v1.6 archived
-Resume file: N/A — between milestones
+Stopped at: Starting milestone v1.7 Meta-Progression
+Resume file: N/A — defining requirements
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-20 — v1.6 Tech Debt Cleanup shipped and archived*
+*Last updated: 2026-02-20 — v1.7 Meta-Progression started*

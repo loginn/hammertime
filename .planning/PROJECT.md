@@ -95,7 +95,16 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 
 <!-- Current scope. Building toward these. -->
 
-(No active milestone — run `/gsd:new-milestone` to start next)
+## Current Milestone: v1.7 Meta-Progression
+
+**Goal:** Add prestige reset loop with currency-gated tier progression, expanded affix tiers, and tag-targeted crafting currencies.
+
+**Target features:**
+- Prestige system: currency-cost trigger, full reset (area + gear + inventory), 7 levels total
+- Item tier gating: item tiers 1-8 gate affix tier range, prestige unlocks better item tiers, area-level weighted drops within unlocked range
+- Affix tier expansion: 8 → 32 tiers (4 per item tier level), values scale with more granularity
+- Tag-targeted crafting currencies: new hammers guaranteeing affixes with specific tags (e.g., Fire Hammer), unlocked at Prestige 1
+- Prestige UI: status, cost, trigger, unlock display
 
 ### Out of Scope
 
@@ -106,6 +115,11 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - Hybrid defense prefixes (armor+evasion single-slot) -- future scope
 - Visual prefix/suffix separation in UI (color-coded or sectioned) -- future scope
 - Totem system (forge god shrine with slottable pieces, favor mechanic, map modifiers) -- future scope, builds on pack-based mapping
+- Hero archetypes (melee/ranged/spell with distinct mod affinities and attack patterns) -- future milestone, layer on prestige
+- Loot filtering system -- future milestone
+- Totem progression system -- future milestone
+- Stat-targeted hammers (add specific stat type affixes) -- future prestige unlock
+- Outcome locking hammers (protect existing mods while rerolling) -- future prestige unlock
 - Real-time combat with player timing -- fundamentally conflicts with idle genre
 - Per-monster loot drops -- item explosion in idle game = inventory nightmare
 - 100% damage immunity -- removes challenge; 75% resistance cap is ARPG standard
@@ -212,4 +226,4 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Currency preview via 10-level gate shift | Forge at 15, Grand at 40, Claw/Tuning at 65; reuses existing sqrt ramp | ✓ Good -- minimal code change, thematic teasers |
 
 ---
-*Last updated: 2026-02-20 after v1.6 milestone*
+*Last updated: 2026-02-20 after v1.7 milestone started*
