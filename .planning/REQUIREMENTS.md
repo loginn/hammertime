@@ -39,8 +39,8 @@ Requirements for Meta-Progression milestone. Each maps to roadmap phases.
 
 ### Save & Persistence
 
-- [ ] **SAVE-01**: Save format v3 stores prestige level, item tier unlocks, and tag currency counts
-- [ ] **SAVE-02**: Prestige completion triggers auto-save
+- [x] **SAVE-01**: Save format v3 stores prestige level, item tier unlocks, and tag currency counts
+- [x] **SAVE-02**: Prestige completion triggers auto-save
 
 ### Prestige UI
 
@@ -115,8 +115,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TAG-06      | 39    | Pending |
 | TAG-07      | 39    | Pending |
 | TAG-08      | 39    | Pending |
-| SAVE-01     | 36    | Pending |
-| SAVE-02     | 36    | Pending |
+| SAVE-01     | 36    | Complete |
+| SAVE-02     | 36    | Complete |
 | PUI-01      | 40    | Pending |
 | PUI-02      | 40    | Pending |
 | PUI-03      | 40    | Pending |

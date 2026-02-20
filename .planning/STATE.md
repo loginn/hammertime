@@ -8,16 +8,16 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Phase 35 — Prestige Foundation
+**Current focus:** Phase 36 — Save Format v3
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 35 of 41 (Prestige Foundation)
+Phase: 36 of 41 (Save Format v3)
 Plan: 1 of 1 in current phase (plan 01 complete)
-Status: Phase 35 complete — ready for Phase 36
-Last activity: 2026-02-20 — Phase 35 Plan 01 executed (PrestigeManager autoload, GameState/GameEvents extensions)
+Status: Phase 36 complete — ready for Phase 37
+Last activity: 2026-02-20 — Phase 36 Plan 01 executed (SaveManager v3 with prestige persistence and auto-save)
 
 Progress: [████████░░] 80% (8 milestones complete, v1.7 starting)
 
@@ -49,6 +49,7 @@ Key v1.7 constraints (from research):
 - [Phase 35-prestige-foundation]: P1 prestige costs 100 Forge Hammers; P2-P7 get stub value 999999 unreachable until tuned
 - [Phase 35-prestige-foundation]: _wipe_run_state() wipes tag_currency_counts (tag currencies are run currency, not meta currency)
 - [Phase 35-prestige-foundation]: ITEM_TIERS_BY_PRESTIGE is 8-element 0-indexed array so ITEM_TIERS_BY_PRESTIGE[prestige_level] works for all levels 0-7
+- [Phase 36-save-format-v3]: v2 saves deleted on load (delete_save() + return false in load_game()); dead migration code removed; v2 import strings accepted with default prestige values; prestige auto-save uses direct save_game() not debounced _trigger_save()
 
 ### Pending Todos
 
@@ -73,9 +74,9 @@ Key v1.7 constraints (from research):
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 35-01-PLAN.md (PrestigeManager autoload + GameState/GameEvents extensions)
+Stopped at: Completed 36-01-PLAN.md (SaveManager v3 save format with prestige persistence and auto-save)
 Resume file: None
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-02-20 — Phase 35 Plan 01 complete: PrestigeManager autoload, _wipe_run_state(), prestige signals*
+*Last updated: 2026-02-20 — Phase 36 Plan 01 complete: SaveManager v3, prestige field persistence, delete-on-old-version, prestige auto-save*
