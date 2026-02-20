@@ -141,10 +141,10 @@ Plans:
   1. SAVE_VERSION is 3; a v2 save file loads without error and prestige_level defaults to 0
   2. prestige_level, max_item_tier_unlocked, and tag currency counts round-trip correctly through save/load
   3. Completing a prestige triggers an auto-save before the reset clears run state
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 36-01: SaveManager v2→v3 migration + prestige field persistence
+- [ ] 36-01-PLAN.md — Save format v3: prestige field persistence + delete-on-old-version + prestige auto-save
 
 ### Phase 37: Affix Tier Expansion
 **Goal**: All affixes support 32 tiers with quality-normalized comparison so high-tier items from later prestiges are meaningfully better
