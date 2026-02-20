@@ -1,21 +1,23 @@
-# Stack Research: Per-Slot Multi-Item Inventory System
+# Stack Research: Meta-Progression, Item Tiers, Affix Tier Expansion, Tag-Targeted Currencies
 
-**Domain:** Godot 4.5 Idle ARPG — Adding per-slot inventory arrays (10 items per slot) to existing single-item crafting system
-**Researched:** 2026-02-18
-**Confidence:** HIGH (all patterns verified against existing codebase and official Godot documentation)
+**Domain:** Godot 4.5 Idle ARPG — Adding prestige reset loop, item tier system (1-8), affix tier expansion (8 → 32), and tag-targeted crafting currencies to existing v1.6 codebase
+**Researched:** 2026-02-20
+**Confidence:** HIGH (all patterns verified against existing codebase and Godot 4.5 API)
 
 ---
 
 ## Context
 
-This is a **subsequent milestone stack**. Godot 4.5, GDScript, mobile renderer, and the Resource-based data model are already validated. This document covers only what changes or is added for the per-slot inventory system.
+This is a **subsequent milestone stack** for v1.7. Godot 4.5, GDScript, mobile renderer, Resource-based data model, template-method Currency pattern, and the v2 save format (per-slot arrays) are already validated and in production.
 
-The existing architecture to understand before touching anything:
+The four feature areas map cleanly to existing architectural extension points:
 
-- `GameState.crafting_inventory` is a `Dictionary` keyed by slot string (`"weapon"`, `"helmet"`, etc.) with a single `Item` or `null` per slot
-- `SaveManager._build_save_data()` serializes that dict as `{slot: item.to_dict()}` — one item per slot
-- `ForgeView.add_item_to_inventory()` is the current drop entry point — it replaces the slot if `is_item_better()`, discards otherwise
-- `Item.to_dict()` / `Item.create_from_dict()` is the proven JSON serialization pattern — it is the pattern to extend
+| Feature | Primary Extension Point |
+|---------|------------------------|
+| Prestige system | `GameState` (new meta fields) + `SaveManager` (v3 migration) + new `prestige_triggered` signal |
+| Item tier gating (1-8) | `Item.tier` already exists, `LootTable` already has area scaling, need `item_tier` → affix tier filter |
+| Affix tier expansion (8 → 32) | `Affix.tier_range` Vector2i already configurable per affix, `ItemAffixes` templates just need wider ranges |
+| Tag-targeted currencies | New `Currency` subclasses using same template method, filter `ItemAffixes.prefixes` by tag before `pick_random()` |
 
 ---
 
@@ -26,205 +28,465 @@ The existing architecture to understand before touching anything:
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
 | Godot Engine | 4.5 | Game engine | Already in production. No version change needed. |
-| GDScript | 4.5 | Scripting language | All built-in array and container methods used below are 4.x globals or class methods already in use. |
-| Resource system | 4.5 | Data model (`Item`, `Hero`, `Affix`) | `Item.to_dict()` / `Item.create_from_dict()` is the proven round-trip pattern. Extend it, do not replace it. |
-| JSON via `JSON.stringify` / `JSON.parse_string` | 4.5 | Save file format | Already in `SaveManager`. Arrays of dictionaries serialize natively — no format change required. |
+| GDScript | 4.5 | Scripting language | All patterns below use existing built-in methods: `Array.any()`, `Array.filter()`, `pick_random()`, lambdas. |
+| Resource system | 4.5 | Data model (`Item`, `Affix`, `Hero`, `Currency`) | No changes to the resource class hierarchy. Extend fields, not classes. |
+| JSON via `JSON.stringify` / `JSON.parse_string` | 4.5 | Save file format | Already in `SaveManager`. Prestige meta-state adds new top-level keys. Version bumps from 2 → 3. |
 
-### GDScript Patterns for Per-Slot Arrays (NEW)
+---
 
-#### 1. Typed Array Declaration
+### GDScript Patterns for Prestige System
 
-Use `Array[Item]` typed arrays in `GameState` for slot inventories. Typed arrays give compile-time checks but serialize to plain `Array` when passed through JSON — this is fine because `SaveManager` already manually iterates and calls `to_dict()` / `create_from_dict()` per item. The type annotation is for code clarity and editor autocomplete, not for JSON round-trip.
+#### 1. Two-Layer State Model in GameState
+
+Prestige creates two distinct categories of state that must never mix during reset. The cleanest GDScript pattern is grouping them explicitly with comments, not separate classes.
 
 ```gdscript
-# In game_state.gd — replaces the single-Item Dictionary
-var slot_inventories: Dictionary = {
-    "weapon": [],   # Array[Item], max 10
-    "helmet": [],
-    "armor":  [],
-    "boots":  [],
-    "ring":   [],
-}
+# game_state.gd — ADD these fields alongside existing state
+
+# ─── META STATE ───────────────────────────────────────────────
+# Persists across ALL prestige resets. Never cleared by do_prestige().
+var prestige_level: int = 0         # 0 = not yet prestiged, max 7
+var prestige_unlocks: Dictionary = {}  # {prestige_level: bool} — gating flags
+
+# ─── RUN STATE ────────────────────────────────────────────────
+# Everything below is cleared by do_prestige() (same as initialize_fresh_game).
+# var hero: Hero                     ← existing
+# var currency_counts: Dictionary    ← existing
+# var crafting_inventory: Dictionary ← existing
+# var max_unlocked_level: int        ← existing
+# var area_level: int                ← existing
 ```
 
-**Why Dictionary of Arrays, not a nested typed array:** The existing `crafting_inventory` is a `Dictionary` keyed by slot string. Keeping the same key structure means all call sites that do `GameState.crafting_inventory.get(slot_name)` change minimally — just index into the array instead of referencing the single value. The switch from `Dictionary` to a new variable name (`slot_inventories`) also makes the breaking change explicit and searchable.
+**Why Dictionary for prestige_unlocks, not just checking `prestige_level >= N`:** Future unlock types (new hammer types, new biomes) can be added as keys without schema changes. `prestige_unlocks.get("tag_targeted_currencies", false)` is readable and explicit at each gate.
 
-#### 2. Array Bounds Check Pattern
+**Why NOT a separate PrestigeMeta Resource class:** A Resource would require a separate serialization path alongside the existing JSON `_build_save_data()`. The project deliberately chose JSON over ResourceSaver specifically to enable export strings (`HT1:base64:md5`). Adding a second save format creates two sources of truth. A few extra Dictionary keys in the existing save structure is the right call.
 
-The 10-item cap must be enforced at the single add point (the new `add_item_to_slot()` function). Never scatter the cap check across callers.
+#### 2. Prestige Reset Function
+
+The reset is a surgical variant of `initialize_fresh_game()`. It PRESERVES meta state, then calls `initialize_fresh_game()` to wipe run state.
 
 ```gdscript
-# game_state.gd or forge_view.gd — single authoritative add function
-const SLOT_CAPACITY: int = 10
+# game_state.gd — ADD
 
-func add_item_to_slot(item: Item) -> bool:
-    var slot: String = _get_slot_for_item(item)
-    var inv: Array = slot_inventories[slot]
-    if inv.size() >= SLOT_CAPACITY:
-        return false   # Drop silently — inventory full
-    inv.append(item)
+func do_prestige() -> void:
+    # 1. Snapshot meta state (will survive reset)
+    var new_level := prestige_level + 1
+    # 2. Wipe all run state (resets hero, currencies, inventory, area)
+    initialize_fresh_game()
+    # 3. Restore meta state with incremented level
+    prestige_level = new_level
+    prestige_unlocks = _compute_unlocks(prestige_level)
+    # 4. Emit for UI and SaveManager
+    GameEvents.prestige_triggered.emit(prestige_level)
+
+
+func _compute_unlocks(level: int) -> Dictionary:
+    return {
+        "tag_targeted_currencies": level >= 1,
+        "item_tier_2": level >= 1,
+        "item_tier_3": level >= 2,
+        # ... extend per design
+    }
+```
+
+**Why snapshot-before-wipe, not snapshot-after:** `initialize_fresh_game()` overwrites `hero`, `currency_counts`, etc. If meta fields lived in those same variables, snapshotting after would lose them. The explicit snapshot-increment-wipe-restore sequence is self-documenting and immune to ordering bugs.
+
+**Why `initialize_fresh_game()` as the reset primitive:** It already correctly resets ALL run state (hero, currencies, inventory, area level, starter weapon). Calling it from `do_prestige()` means there is exactly ONE place that knows what "fresh run state" means. If a new run-state field is added later, it only needs to be added to `initialize_fresh_game()` and prestige reset gets it for free.
+
+#### 3. Prestige Cost Validation
+
+Prestige is triggered by spending currencies (design: specific currency costs per prestige level). The cost check must happen before `do_prestige()` is called.
+
+```gdscript
+# game_state.gd — ADD
+
+const PRESTIGE_COSTS: Array[Dictionary] = [
+    # Level 0 → 1
+    {"runic": 50, "forge": 20, "grand": 5},
+    # Level 1 → 2
+    {"runic": 100, "forge": 50, "grand": 15, "claw": 5},
+    # ... up to 6 entries for 7 prestige levels
+]
+
+func can_prestige() -> bool:
+    if prestige_level >= 7:
+        return false
+    var cost: Dictionary = PRESTIGE_COSTS[prestige_level]
+    for currency_type in cost:
+        if currency_counts.get(currency_type, 0) < cost[currency_type]:
+            return false
+    return true
+
+
+func spend_prestige_cost() -> bool:
+    if not can_prestige():
+        return false
+    var cost: Dictionary = PRESTIGE_COSTS[prestige_level]
+    for currency_type in cost:
+        currency_counts[currency_type] -= cost[currency_type]
     return true
 ```
 
-**Why `const` not a magic number:** The constant is referenced by UI code (`"%d/%d" % [inv.size(), SLOT_CAPACITY]`). Keeping it in one place (either `GameState` or a shared autoload constant block) prevents the UI and logic from drifting.
-
-#### 3. Highest-Tier Auto-Selection for Crafting Bench
-
-The bench always shows the item with the highest comparison value in the slot. This is a pure sort + pick-first operation.
-
-```gdscript
-# Get the "best" item for the crafting bench view
-func get_best_item_for_slot(slot: String) -> Item:
-    var inv: Array = slot_inventories.get(slot, [])
-    if inv.is_empty():
-        return null
-    # Sort descending by the same metric used in the old is_item_better()
-    var sorted := inv.duplicate()
-    sorted.sort_custom(func(a, b): return _item_sort_value(a) > _item_sort_value(b))
-    return sorted[0]
-
-func _item_sort_value(item: Item) -> float:
-    if item is Weapon or item is Ring:
-        return item.dps
-    return float(item.tier)
-```
-
-**Why sort-and-pick vs linear max scan:** Both are O(n) for n=10. Sort is clearer to read and makes it trivial to display items in tier order later if the UI expands to show all 10.
-
-**Why duplicate() before sort:** `Array.sort_custom()` sorts in place. Sorting the live inventory array would mutate state. Sorting a shallow duplicate leaves the inventory order stable (FIFO drop order) while bench shows best-first.
-
-#### 4. Item Removal Pattern
-
-Melt removes by reference, not by index. Use `Array.erase(item)` — it removes the first matching reference. For n=10 this is safe and the correct semantic ("destroy this specific item object").
-
-```gdscript
-func remove_item_from_slot(slot: String, item: Item) -> void:
-    slot_inventories[slot].erase(item)
-    # No index needed — erase by object reference
-```
-
-**Why not `remove_at(index)`:** Indices are unstable if items can be added or removed asynchronously (though they cannot in this single-threaded GDScript game). More importantly, the UI selection state tracks the `Item` object reference, not its position in the array. Erasing by reference keeps the UI and data model in sync without translating between index systems.
+**Why `Array[Dictionary]` for costs indexed by prestige_level:** Indexing by `prestige_level` gives O(1) lookup. An array naturally enforces the 7-level cap (index out of bounds = bug, not silent wrong behavior). Costs are data, not logic — keep them as constants next to the functions that use them.
 
 ---
 
-### UI Pattern: `ItemList` Node (NEW)
+### GDScript Patterns for Save Format v3 Migration
 
-For the inventory UI showing x/10 counters and selectable items per slot tab.
+#### 4. Save Version Bump: 2 → 3
 
-| Node | Purpose | Why |
-|------|---------|-----|
-| `ItemList` | Built-in Godot control node displaying a vertical scrollable list of text + icon items | Has `add_item(text)`, `clear()`, `set_item_metadata(index, variant)`, `get_item_metadata(index)`, `item_selected(index)` signal. Stores the `Item` object reference as metadata, so selection resolves back to the data model without a parallel array. |
-| `Label` (x/10 counter) | Displays current slot count | Simple `"%d/%d" % [count, SLOT_CAPACITY]` text update on every inventory change. No separate node type needed. |
-| Tab or Button group | Slot type selector (weapon / helmet / armor / boots / ring) | Same pattern as existing `_on_item_type_selected()` in `ForgeView` — reuse or minimally extend. |
-
-#### ItemList Usage Pattern
+The existing `_migrate_save()` function already has the version-gated chain pattern. Add one more step.
 
 ```gdscript
-# Rebuild the list whenever inventory changes (called after add, melt, equip)
-func _refresh_slot_list(slot: String) -> void:
-    item_list.clear()
-    var inv: Array = GameState.slot_inventories.get(slot, [])
-    for item in inv:
-        var label: String = item.item_name + " (" + _rarity_name(item) + ")"
-        item_list.add_item(label)
-        item_list.set_item_metadata(item_list.get_item_count() - 1, item)
-    slot_counter_label.text = "%d/%d" % [inv.size(), GameState.SLOT_CAPACITY]
-```
+# save_manager.gd — MODIFY
 
-**Why `ItemList` over `VBoxContainer` + instantiated scenes:** `ItemList` is a single built-in node with selection, scrolling, and metadata storage. A `VBoxContainer` + preloaded scene approach would require managing child node lifecycle (add/remove children, connect signals on each child, track selected child). For a list of simple text entries with associated data, `ItemList` eliminates that overhead entirely. The customization limit (text + icon only, no arbitrary child UI) is fine for a list of item names.
+const SAVE_VERSION = 3   # was 2
 
-**Why full rebuild (`clear()` then re-add) vs incremental update:** For n=10, clear-and-rebuild is O(10) and eliminates all stale-state bugs from partial updates. Incremental updates (insert at index, remove at index) require tracking list position against array position and break easily when items are reordered. At this scale, clear-and-rebuild is the correct choice.
+func _migrate_save(data: Dictionary) -> Dictionary:
+    var saved_version: int = int(data.get("version", 1))
 
-**Key ItemList signals:**
-- `item_selected(index: int)` — use `get_item_metadata(index)` to recover the `Item` reference. This drives the crafting bench display.
-- `item_activated(index: int)` — double-click to equip (optional pattern, same metadata lookup).
+    if saved_version < SAVE_VERSION:
+        print("SaveManager: Migrating save from v%d to v%d" % [saved_version, SAVE_VERSION])
 
----
+    if saved_version < 2:
+        data = _migrate_v1_to_v2(data)
 
-### Serialization Pattern for Arrays of Items (EXTENDED from existing)
+    if saved_version < 3:
+        data = _migrate_v2_to_v3(data)   # ADD
 
-The existing `SaveManager._build_save_data()` iterates slots and calls `item.to_dict()`. Extend to iterate the array per slot.
+    data["version"] = SAVE_VERSION
+    return data
 
-#### Save (build_save_data)
 
-```gdscript
-# Replace the single-item crafting_inventory block
-var slot_inv_data: Dictionary = {}
-for slot in ["weapon", "helmet", "armor", "boots", "ring"]:
-    var item_array: Array = GameState.slot_inventories.get(slot, [])
-    var dict_array: Array = []
-    for item in item_array:
-        dict_array.append(item.to_dict())
-    slot_inv_data[slot] = dict_array   # Array of dicts, never null
-
-return {
-    "version": SAVE_VERSION,           # Bump to 2 to trigger migration
-    "slot_inventories": slot_inv_data, # NEW key
-    # ... other fields unchanged
-}
-```
-
-#### Load (restore_state)
-
-```gdscript
-var slot_inv_data: Dictionary = data.get("slot_inventories", {})
-for slot in ["weapon", "helmet", "armor", "boots", "ring"]:
-    GameState.slot_inventories[slot] = []
-    var dict_array: Array = slot_inv_data.get(slot, [])
-    for item_dict in dict_array:
-        if item_dict is Dictionary:
-            var item := Item.create_from_dict(item_dict)
-            if item != null:
-                GameState.slot_inventories[slot].append(item)
-```
-
-#### Save Version Migration
-
-The save format change from `crafting_inventory` (single item) to `slot_inventories` (array) is a breaking change. Bump `SAVE_VERSION` from 1 to 2 and add a migration function:
-
-```gdscript
-# _migrate_v1_to_v2(data: Dictionary) -> Dictionary
-func _migrate_v1_to_v2(data: Dictionary) -> Dictionary:
-    # Old key: "crafting_inventory" -> {"weapon": {item_dict}, ...}
-    # New key: "slot_inventories"   -> {"weapon": [{item_dict}], ...}
-    var old_crafting: Dictionary = data.get("crafting_inventory", {})
-    var new_inv: Dictionary = {}
-    for slot in ["weapon", "helmet", "armor", "boots", "ring"]:
-        var old_item = old_crafting.get(slot)
-        if old_item != null and old_item is Dictionary:
-            new_inv[slot] = [old_item]   # Wrap single item in array
-        else:
-            new_inv[slot] = []
-    data["slot_inventories"] = new_inv
-    data.erase("crafting_inventory")
-    # Migrate bench item: if crafting_bench_item exists, add it to the correct slot array
-    var bench_item_data = data.get("crafting_bench_item")
-    if bench_item_data != null and bench_item_data is Dictionary:
-        var slot := str(data.get("crafting_bench_type", "weapon"))
-        if slot in new_inv:
-            new_inv[slot].append(bench_item_data)
-        data.erase("crafting_bench_item")
+func _migrate_v2_to_v3(data: Dictionary) -> Dictionary:
+    # v3 adds prestige meta-state keys with safe defaults
+    # Items and currencies are unchanged — this is additive only
+    if not data.has("prestige_level"):
+        data["prestige_level"] = 0
+    if not data.has("prestige_unlocks"):
+        data["prestige_unlocks"] = {}
     return data
 ```
 
-**Why version bump, not silent field detection:** The existing `_migrate_save()` function has the version-gated migration pattern already (`if saved_version < 2`). Using it keeps migration logic in one place and makes save compat explicit. Silent detection (`data.has("crafting_inventory")`) works but is fragile if both keys ever coexist during development.
+**Why additive migration only for v2 → v3:** Prestige meta-state is entirely NEW keys. No existing keys change format. The migration just injects defaults for old saves — any v2 save loaded as v3 will correctly show prestige_level 0 (first-time player). This is the safest possible migration.
 
-**Confidence: HIGH** — `JSON.stringify` natively serializes `Array` of `Dictionary` as a JSON array. This is the same type that `JSON.parse_string` produces on load. The existing per-item `to_dict()` / `create_from_dict()` round-trip is already proven (verified in `save_manager.gd`). No new serialization infrastructure is needed.
+**Why not a separate meta-save file:** Two save files means two failure modes (one corrupted, one not), two export strings, and two import paths. The existing `HT1:base64:md5` export string already encodes the entire game state — keeping prestige meta in the same JSON envelope keeps export/import working with zero changes.
+
+#### 5. Save and Restore for Prestige Meta-State
+
+```gdscript
+# save_manager.gd — MODIFY _build_save_data() to add prestige fields:
+
+return {
+    "version": SAVE_VERSION,
+    "timestamp": Time.get_unix_time_from_system(),
+    "hero_equipment": hero_equipment,
+    "currencies": GameState.currency_counts.duplicate(),
+    "crafting_inventory": crafting_inv,
+    "crafting_bench_type": GameState.crafting_bench_type,
+    "max_unlocked_level": GameState.max_unlocked_level,
+    "area_level": GameState.area_level,
+    # NEW:
+    "prestige_level": GameState.prestige_level,
+    "prestige_unlocks": GameState.prestige_unlocks.duplicate(),
+}
+
+
+# save_manager.gd — MODIFY _restore_state() to add:
+
+GameState.prestige_level = int(data.get("prestige_level", 0))
+var saved_unlocks: Dictionary = data.get("prestige_unlocks", {})
+GameState.prestige_unlocks = {}
+for key in saved_unlocks:
+    GameState.prestige_unlocks[key] = bool(saved_unlocks[key])
+```
+
+**Why `duplicate()` on prestige_unlocks when saving:** `Dictionary.duplicate()` is already used for `currency_counts`. Without it, the JSON serializer gets a reference to the live dictionary. If any code mutates it between `_build_save_data()` and `JSON.stringify()`, the save is wrong. Shallow duplicate is sufficient because all values are primitives (bool).
 
 ---
 
-### Signal Additions (NEW)
+### GDScript Patterns for Item Tier Gating
 
-The existing `GameEvents` autoload should gain one new signal for inventory array changes. The existing `equipment_changed` signal is sufficient for the equip flow.
+#### 6. Item Tier as a First-Class Drop Parameter
+
+Items already have `var tier: int` in `item.gd`. The new requirement is that `tier` is set at **drop time** based on area level and unlocked prestige, not at item construction time.
+
+```gdscript
+# loot_table.gd or pack_generator.gd — ADD
+
+## Returns the item tier for a drop at the given area level, given the max unlocked item tier.
+## Weighted toward lower tiers (common) with higher tiers increasingly rare.
+## Uses a triangular distribution capped at max_unlocked_tier.
+static func roll_item_tier(area_level: int, max_unlocked_tier: int) -> int:
+    # Weight array: tier 1 has highest weight, each tier halves the probability
+    # This keeps lower-tier items common while making high-tier feel like finds
+    var weights: Array[float] = []
+    for t in range(1, max_unlocked_tier + 1):
+        # Scale weight by area: at higher areas, higher tiers become more likely
+        var area_scale := clampf(float(area_level) / (t * 12.0), 0.1, 1.0)
+        weights.append(area_scale)
+
+    # Weighted pick (same pattern as roll_element in PackGenerator)
+    var total := 0.0
+    for w in weights:
+        total += w
+    var roll := randf() * total
+    var accumulated := 0.0
+    for i in range(weights.size()):
+        accumulated += weights[i]
+        if roll < accumulated:
+            return i + 1   # tier is 1-indexed
+    return max_unlocked_tier
+```
+
+**Why triangular/scaled weights vs uniform:** Uniform would give equal probability to tier 1 and tier 8. That destroys the find-feel of high-tier items. The area-scaled weight gives players the right feeling: at low areas, almost all drops are tier 1-2; at high areas, tier 5-6 become common; tier 7-8 always feel rare.
+
+**Why NOT store item tier in BiomeConfig:** BiomeConfig knows about monster element distribution, not item economics. Mixing loot tier math into biome config violates separation of concerns. LootTable already owns all drop probability logic.
+
+#### 7. Item Tier → Affix Tier Range Mapping
+
+The item tier gates which affix tiers can roll on the item. The mapping is a pure lookup — no logic, just a table.
+
+```gdscript
+# item.gd or a new utility — ADD as const
+
+## Maps item tier (1-8) to the permitted affix tier range.
+## Affix tier 1 is the BEST (highest values), tier 32 is weakest.
+## Item tier 1 allows only low-value affixes (tiers 17-32).
+## Item tier 8 allows the full range (tiers 1-32).
+const ITEM_TIER_AFFIX_RANGE: Dictionary = {
+    1: Vector2i(17, 32),   # Only weak affixes
+    2: Vector2i(13, 28),
+    3: Vector2i(9, 24),
+    4: Vector2i(7, 20),
+    5: Vector2i(5, 16),
+    6: Vector2i(3, 12),
+    7: Vector2i(2, 8),
+    8: Vector2i(1, 4),     # Only strong affixes
+}
+
+## Returns the affix tier range permitted for an item of the given tier.
+static func get_affix_tier_range(item_tier: int) -> Vector2i:
+    return ITEM_TIER_AFFIX_RANGE.get(item_tier, Vector2i(1, 32))
+```
+
+**Why a Dictionary lookup rather than a formula:** The mapping is design data, not a mathematical relationship. A formula would hide the actual values from designers and make tuning opaque. The Dictionary is the single source of truth — change the table, the whole system updates.
+
+**Why item tier 8 gives range (1, 4) not (1, 1):** Even the best item tier should have some variance. Fixed tier = no excitement. A narrow range (1-4) means 75% of rolls land in tier 1-2, which feels high-quality, with occasional tier 3-4 as the "not perfect" result.
+
+**Why Vector2i:** This is the existing type for `Affix.tier_range`. Reusing the same type means the affix constructor receives `get_affix_tier_range(item.tier)` directly with no conversion.
+
+---
+
+### GDScript Patterns for Affix Tier Expansion (8 → 32)
+
+#### 8. Widening Affix tier_range in ItemAffixes Templates
+
+The expansion from 8 to 32 tiers does not require a new class or new affix instances. The `Affix` constructor already reads `tier_range` and scales `min_value`/`max_value` from it. Changing the template declarations in `item_affixes.gd` is sufficient.
+
+```gdscript
+# item_affixes.gd — MODIFY existing affix declarations
+
+# BEFORE (8 tiers):
+Affix.new("Physical Damage", Affix.AffixType.PREFIX, 2, 10,
+    [Tag.PHYSICAL, Tag.FLAT, Tag.WEAPON], [Tag.StatType.FLAT_DAMAGE],
+    Vector2i(1, 8), 3, 5, 7, 10)
+
+# AFTER (32 tiers, preserving same base_min/base_max so tier 1 value is unchanged):
+Affix.new("Physical Damage", Affix.AffixType.PREFIX, 2, 10,
+    [Tag.PHYSICAL, Tag.FLAT, Tag.WEAPON], [Tag.StatType.FLAT_DAMAGE],
+    Vector2i(1, 32), 3, 5, 7, 10)
+```
+
+**Why tier 1 value is unchanged after expansion:** The Affix constructor formula is `value = base_max * (tier_range.y + 1 - tier)`. At tier 1 with range (1, 32): `value = 10 * (32 + 1 - 1) = 10 * 32 = 320`. At tier 1 with range (1, 8): `value = 10 * (8 + 1 - 1) = 80`. This is a 4x INCREASE in top-tier values, which is intentional — prestige players earn access to items that are meaningfully stronger. The existing math does exactly what is needed with no formula changes.
+
+**What changes at the bottom of the range:** Tier 32 value = `10 * (32 + 1 - 32) = 10 * 1 = 10`. This is the same as the old tier 8 minimum. The range is extended upward (better tiers), not compressed downward. Tier 8 items drop tier 17-32 affixes which remain in the same value territory as the old system's low rolls.
+
+**Why no Affix subclass for "expanded" affixes:** GDScript inheritance for data classes adds serialization complexity. The `tier_range` parameter already parameterizes the tier window. Changing from 8 to 32 in the template is a one-field change per affix definition. No architecture change needed.
+
+#### 9. Backward Compatibility of Existing Saved Affixes
+
+Saved affixes already serialize `tier_range_x` and `tier_range_y` in `to_dict()` / `from_dict()`. Old saves have tier_range_y = 8. After the update, templates use 32. **This mismatch is intentional and safe:**
+
+- Affixes already on items (in save files) keep their old `tier_range = Vector2i(1, 8)` because `from_dict()` reads the saved values, not the template.
+- New affixes rolled after the update use the new `Vector2i(1, 32)`.
+- No migration is needed for affixes — each affix carries its own tier range.
+
+**Confidence: HIGH** — This is the same pattern that allowed the existing system to have some affixes with range (1, 8) and others with range (1, 30) simultaneously.
+
+---
+
+### GDScript Patterns for Tag-Targeted Crafting Currencies
+
+#### 10. Tag-Targeted Currency Pattern: Filtered add_prefix / add_suffix
+
+The existing `Item.add_prefix()` picks from `ItemAffixes.prefixes` where `has_valid_tag(prefix)` and `not is_affix_on_item(prefix)`. Tag-targeted currencies need to add an additional filter: the affix must contain a required tag.
+
+The correct place for this logic is a new method on `Item` that accepts a required tag, NOT a new method on the currency. The currency provides the filter; the item enforces the affix rules.
+
+```gdscript
+# item.gd — ADD
+
+## Adds a random prefix that both satisfies item tag requirements AND contains required_tag.
+## Returns true if a valid affix was found and added.
+func add_prefix_with_tag(required_tag: String) -> bool:
+    if len(self.prefixes) >= max_prefixes():
+        return false
+
+    var valid_prefixes: Array[Affix] = []
+    for prefix: Affix in ItemAffixes.prefixes:
+        if has_valid_tag(prefix) and not is_affix_on_item(prefix) and required_tag in prefix.tags:
+            valid_prefixes.append(prefix)
+
+    if valid_prefixes.is_empty():
+        return false
+
+    var new_prefix: Affix = valid_prefixes.pick_random()
+    self.prefixes.append(Affixes.from_affix(new_prefix))
+    return true
+
+
+## Adds a random suffix that satisfies item tag requirements AND contains required_tag.
+func add_suffix_with_tag(required_tag: String) -> bool:
+    if len(self.suffixes) >= max_suffixes():
+        return false
+
+    var valid_suffixes: Array[Affix] = []
+    for suffix: Affix in ItemAffixes.suffixes:
+        if has_valid_tag(suffix) and not is_affix_on_item(suffix) and required_tag in suffix.tags:
+            valid_suffixes.append(suffix)
+
+    if valid_suffixes.is_empty():
+        return false
+
+    var new_suffix: Affix = valid_suffixes.pick_random()
+    self.suffixes.append(Affixes.from_affix(new_suffix))
+    return true
+```
+
+**Why `required_tag in prefix.tags` not `prefix.tags.has(required_tag)`:** Both work identically for `Array[String]` in GDScript. The `in` operator is more idiomatic GDScript and matches the existing `tag in affix.tags` usage in `has_valid_tag()`. Consistency matters more than the distinction.
+
+**Why NOT Array.filter() with a lambda for this:** `Array.filter()` in Godot 4 returns an untyped `Array`, not `Array[Affix]`. The existing codebase uses typed arrays (`Array[Affix]`) and explicit for-loops for this reason (verified in `Item.add_prefix()` and `Item.add_suffix()`). Continue the same pattern.
+
+**Why NOT modify the existing `add_prefix()` / `add_suffix()`:** Adding an optional `required_tag: String = ""` parameter would add a conditional branch inside the hot path and mix two responsibilities (generic add vs. tag-targeted add). Two focused methods are cleaner.
+
+#### 11. Tag-Targeted Currency Subclass
+
+```gdscript
+# models/currencies/fire_hammer.gd — NEW FILE (example for fire-targeted hammer)
+class_name FireHammer extends Currency
+
+
+func _init() -> void:
+    currency_name = "Fire Hammer"
+
+
+## Can apply to Normal items only (same as RunicHammer — grants 1 guaranteed fire mod)
+func can_apply(item: Item) -> bool:
+    return item.rarity == Item.Rarity.NORMAL
+
+
+func get_error_message(item: Item) -> String:
+    if item.rarity != Item.Rarity.NORMAL:
+        return "Fire Hammer can only be used on Normal items"
+    return ""
+
+
+func _do_apply(item: Item) -> void:
+    item.rarity = Item.Rarity.MAGIC
+
+    # Try to add a FIRE-tagged prefix; fall back to suffix if no valid prefix exists
+    if not item.add_prefix_with_tag(Tag.FIRE):
+        item.add_suffix_with_tag(Tag.FIRE)
+
+    item.update_value()
+```
+
+**Why one file per tag-targeted hammer:** Matches the existing pattern — each Currency subclass lives in its own file (`runic_hammer.gd`, `forge_hammer.gd`, etc.). The file structure is the project's organizational unit.
+
+**Why require NORMAL rarity:** Tag-targeted hammers grant guaranteed mods, which is a strong effect. Restricting to Normal items keeps the power level consistent with RunicHammer (also requires Normal). This also prevents players from stacking guaranteed fire mods on an already-crafted item.
+
+**Why try prefix first, then suffix:** Fire affixes currently exist only as prefixes (Physical Damage, Fire Damage, etc. are all `Affix.AffixType.PREFIX`). The suffix fallback is defensive programming — it costs nothing and future-proofs the hammer if fire suffixes are added.
+
+#### 12. Prestige Gating for Tag-Targeted Currencies
+
+Tag-targeted currencies unlock at Prestige 1. The gate belongs in the LootTable drop logic and the UI, not in the Currency class itself.
+
+```gdscript
+# loot_table.gd — MODIFY roll_pack_currency_drop to add tag-targeted hammers:
+
+var pack_currency_rules: Dictionary = {
+    "runic": {"chance": 0.25, "max_qty": 2},
+    "tack": {"chance": 0.25, "max_qty": 2},
+    "forge": {"chance": 0.25, "max_qty": 1},
+    "grand": {"chance": 0.20, "max_qty": 1},
+    "claw": {"chance": 0.20, "max_qty": 1},
+    "tuning": {"chance": 0.20, "max_qty": 1},
+    # NEW — tag-targeted hammers, only added if prestige unlocked:
+    "fire": {"chance": 0.15, "max_qty": 1},
+    "cold": {"chance": 0.15, "max_qty": 1},
+    "lightning": {"chance": 0.15, "max_qty": 1},
+    "defense": {"chance": 0.15, "max_qty": 1},
+}
+
+# Gate in the drop loop:
+for currency_name in pack_currency_rules:
+    # Check prestige gating before unlock level check
+    if currency_name in ["fire", "cold", "lightning", "defense"]:
+        if not GameState.prestige_unlocks.get("tag_targeted_currencies", false):
+            continue
+    # ... rest of existing drop logic
+```
+
+**Why gate in LootTable, not in GameState.currency_counts:** The currency counts dictionary in GameState should only grow as currencies unlock — new keys should be added when prestige unlocks them. LootTable is the right gate because it controls what can drop. GameState.currency_counts should not reference currencies that haven't been unlocked yet.
+
+**How to add new currency keys to currency_counts when prestige unlocks them:**
+
+```gdscript
+# game_state.gd — MODIFY _compute_unlocks() or initialize_fresh_game()
+
+func _initialize_currency_counts_for_prestige_level() -> void:
+    # Base currencies always present
+    if not "runic" in currency_counts:
+        currency_counts = {"runic": 1, "forge": 0, "tack": 0,
+                           "grand": 0, "claw": 0, "tuning": 0}
+    # Prestige 1 unlocks tag-targeted currencies
+    if prestige_level >= 1:
+        for tag_hammer in ["fire", "cold", "lightning", "defense"]:
+            if not tag_hammer in currency_counts:
+                currency_counts[tag_hammer] = 0
+```
+
+---
+
+### Signal Additions
 
 ```gdscript
 # game_events.gd — ADD
-signal inventory_changed(slot: String)   # Emitted after any add/remove to a slot
+
+signal prestige_triggered(new_level: int)   # Emitted by GameState.do_prestige()
+signal prestige_available()                  # Emitted when can_prestige() becomes true (optional, for UI glow)
 ```
 
-**Why one signal, not separate `item_added` / `item_removed`:** The UI response to both events is identical: rebuild the `ItemList` for the affected slot and update the counter. One signal with a slot argument is sufficient and matches the granularity already used by `equipment_changed(slot, item)`.
+**Why `prestige_triggered` on GameEvents, not a direct call:** The existing event bus pattern decouples the prestige logic from the UI. `PrestigeView` connects to `GameEvents.prestige_triggered` to update its display; `SaveManager` connects to trigger a save after prestige. No caller needs to know which listeners exist.
 
-**Why not reuse `item_crafted`:** `item_crafted` is connected to `SaveManager._on_save_trigger`. Reusing it for inventory mutations would double-trigger saves on every drop. The new `inventory_changed` signal should connect to the save trigger separately (or SaveManager can connect to it as well — the debounce in `_trigger_save()` prevents duplicate saves in the same frame).
+**Why emit `prestige_available` separately:** The prestige button should visually indicate when prestige is ready (e.g., glow or enable state). This signal lets the UI react to currency accumulation without polling `can_prestige()` every frame. Emit it from `GameState.add_currencies()` after each currency gain when `can_prestige()` flips from false to true.
+
+---
+
+### UI Pattern: Prestige Panel
+
+No new UI architecture needed. The prestige panel follows the existing tab pattern.
+
+```
+PrestigeView (CanvasLayer or Control, managed by main_view.gd tab bar)
+├── Label: "Prestige Level: N / 7"
+├── VBoxContainer: Cost display (one Label per currency in PRESTIGE_COSTS[prestige_level])
+├── Button: "Prestige" — disabled unless can_prestige(), connected to GameState.do_prestige()
+└── VBoxContainer: Unlock display (one Label per unlock at new level)
+```
+
+**Why CanvasLayer managed by main_view:** This is the existing pattern for all views (ForgeView, GameplayView, SettingsView). Adding prestige as a new tab requires only a new CanvasLayer child and one new case in `main_view._on_tab_pressed()`.
 
 ---
 
@@ -232,44 +494,58 @@ signal inventory_changed(slot: String)   # Emitted after any add/remove to a slo
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| External inventory plugins (GodotDynamicInventorySystem, etc.) | The project has zero external dependencies by design. The feature is 50 lines of GDScript. | Native `Array`, `Dictionary`, `ItemList` — all built-in |
-| SQLite or file-per-item saves | Massive over-engineering for 50 items max total (5 slots × 10). JSON round-trip is <1ms. | Extend existing `SaveManager` JSON pattern |
-| `ResourceSaver.save()` / `.tres` files | Would require switching from the existing JSON save format. Breaks export/import string system (`HT1:base64:md5`). | Keep JSON, extend `to_dict()` / `create_from_dict()` |
-| `var_to_bytes()` / `store_var()` for typed arrays | Loading typed arrays via `get_var()` returns an untyped `Array` — a known Godot 4 issue. Requires a cast loop anyway. | Manual `for item in array: dict_array.append(item.to_dict())` already handles this cleanly |
-| `Node`-based item slots (one Node per inventory slot) | Godot nodes have lifecycle overhead (tree enter/exit, signal connection). Inventory slots are pure data. | `Dictionary` of `Array` in `GameState` autoload |
-| `VBoxContainer` + preloaded scene rows for the 10-item list | 10 child node instances, per-child signal management, layout recalculation on every add/remove. Correct for complex item rows (icons, multi-button). Overkill for a simple selectable name list. | `ItemList` with `set_item_metadata()` — single node, built-in selection, built-in scroll |
-| Stacked signal chains for drop → forge → inventory | Current flow: `gameplay_view` emits `item_base_found`, `main_view` routes it to `forge_view.set_new_item_base()`. This direct scene-to-scene wiring works fine for the current scope. | Keep existing signal routing. `set_new_item_base()` becomes the entry point for `add_item_to_slot()`. |
-| Auto-equip on drop | The milestone spec says items go to inventory, not auto-replace. `is_item_better()` logic is removed from the drop path. | Manual equip button from inventory selection |
+| Separate prestige save file (`user://prestige.json`) | Two save files = two failure modes + broken export strings | One JSON envelope with prestige fields at the top level |
+| `ResourceSaver` for prestige meta-state | Breaks the `HT1:base64:md5` export string system entirely | Extend existing `_build_save_data()` / `_restore_state()` |
+| `PrestigeMeta` Resource class with `@export` fields | Creates a second serialization path alongside SaveManager JSON | Plain Dictionary fields in `GameState` autoload |
+| `Array.filter()` with lambda for tag matching | Returns untyped `Array` (Godot 4 known issue), breaks `Array[Affix]` typed context | Explicit for-loop (matches existing `Item.add_prefix()` pattern) |
+| `Array.any()` with lambda for the tag check in hot-path affix filtering | Creates a Callable allocation per check; for n=10 affixes it's acceptable but the for-loop is already established | `required_tag in affix.tags` inline — single `in` operator, zero allocation |
+| Formula-based item tier → affix tier mapping | Hides design intent, makes tuning opaque | `ITEM_TIER_AFFIX_RANGE` Dictionary constant — explicit, tunable |
+| New Affix subclass for "post-prestige affixes" | Breaks `create_from_dict()` dispatch, adds serialization complexity | Change `tier_range` in the template definitions only |
+| Autoload for prestige state separate from GameState | GameState is already the single source of truth for all run + meta state | Two new vars in `game_state.gd` |
+| `get_tree().reload_current_scene()` for prestige reset | Unnecessary scene reload overhead; autoload state persists across scene reloads anyway | Call `GameState.do_prestige()` directly — it resets run state in-memory without a scene reload |
+| `@abstract` annotation on Currency base class (new in 4.5) | The project has no incorrectly-instantiated Currency base objects, and the `_do_apply()` virtual pattern already enforces the contract via comments | Keep the existing template method pattern with a `pass` in the base `_do_apply()` |
 
 ---
 
-## Integration Points (What Changes vs. What Stays)
+## Integration Points
 
 ### Changes
 
 | Location | Current | After |
 |----------|---------|-------|
-| `GameState.crafting_inventory` | `Dictionary` of `Item \| null` | Replaced by `GameState.slot_inventories`: `Dictionary` of `Array` |
-| `GameState.crafting_bench_item` | Single `Item \| null` | Removed — bench item is derived from `slot_inventories` at display time |
-| `SaveManager._build_save_data()` | Serializes single item per slot | Serializes `Array` of `to_dict()` per slot |
-| `SaveManager._restore_state()` | Restores single item per slot | Restores `Array`, appends `create_from_dict()` results |
-| `SaveManager.SAVE_VERSION` | 1 | 2 (triggers migration path) |
-| `ForgeView.add_item_to_inventory()` | Replaces slot if `is_item_better()`, discards if not | Appends to slot array if under capacity; returns bool for full-slot feedback |
-| `ForgeView._on_melt_pressed()` | Sets slot to null | Calls `Array.erase(current_item)` |
-| `ForgeView._on_equip_pressed()` | Equips and sets slot to null | Equips and calls `Array.erase(current_item)` — old item in hero slot is destroyed (not returned) |
-| `ForgeView.update_inventory_display()` | Label-based text summary | `ItemList` rebuild + counter label per slot |
+| `GameState` | No prestige fields | +`prestige_level: int`, +`prestige_unlocks: Dictionary`, +`do_prestige()`, +`can_prestige()`, +`PRESTIGE_COSTS` const |
+| `SaveManager.SAVE_VERSION` | 2 | 3 |
+| `SaveManager._build_save_data()` | No prestige fields | +`prestige_level`, +`prestige_unlocks` keys |
+| `SaveManager._restore_state()` | No prestige fields | +restore `prestige_level`, `prestige_unlocks` |
+| `SaveManager._migrate_save()` | Handles v1→v2 | +handles v2→v3 (additive defaults injection) |
+| `Item` | `add_prefix()`, `add_suffix()` only | +`add_prefix_with_tag(tag)`, +`add_suffix_with_tag(tag)` |
+| `Item` | `var tier: int` set at item construction | `tier` set at drop time via `LootTable.roll_item_tier()` |
+| `item.gd` | `ITEM_TIER_AFFIX_RANGE` does not exist | +`ITEM_TIER_AFFIX_RANGE: Dictionary` constant |
+| `ItemAffixes.prefixes/suffixes` | `Vector2i(1, 8)` or `Vector2i(1, 30)` tier ranges | Expand to `Vector2i(1, 32)` for all offensive affixes; defensive stay wide or expand to (1, 32) |
+| `LootTable` | 6 currency types in `pack_currency_rules` | +4 tag-targeted hammer types, prestige-gated |
+| `GameEvents` | No prestige signals | +`prestige_triggered(level)`, +`prestige_available()` |
+| `GameState.currency_counts` | 6 fixed keys | +4 conditional keys added when `prestige_level >= 1` |
+| New file: `models/currencies/fire_hammer.gd` | Does not exist | `FireHammer extends Currency` |
+| New file: `models/currencies/cold_hammer.gd` | Does not exist | `ColdHammer extends Currency` |
+| New file: `models/currencies/lightning_hammer.gd` | Does not exist | `LightningHammer extends Currency` |
+| New file: `models/currencies/defense_hammer.gd` | Does not exist | `DefenseHammer extends Currency` |
+| New scene/view: `prestige_view.gd` + `.tscn` | Does not exist | Prestige panel, managed by `main_view.gd` tab system |
 
 ### Stays the Same
 
 | What | Why Unchanged |
 |------|--------------|
-| `Item.to_dict()` / `Item.create_from_dict()` | The per-item serialization contract is not changing. |
-| `Hero.equip_item(item, slot)` | Equip logic is correct — slot gets the item, hero stats update. |
-| `GameEvents.equipment_changed` | Still emitted when hero's equipped item changes. |
-| `ForgeView` equip confirmation timer | The confirm-overwrite flow remains valid (old item is destroyed). |
-| `StatCalculator` / `DefenseCalculator` | Not touched by inventory changes. |
-| `SaveManager` export/import string format | `HT1:base64:md5` envelope is unchanged. Inner JSON gains a new key. |
-| `gameplay_view.item_base_found` signal | The signal interface is unchanged — drops still flow through it. |
+| `Item.to_dict()` / `Item.create_from_dict()` | Affix tier_range serialization already round-trips `tier_range_x` and `tier_range_y`. Saved affixes carry their own range. |
+| `Affix` class and constructor | No new fields needed. `tier_range` parameterizes everything. |
+| `Currency.apply()` / `_do_apply()` template method | New hammers are identical subclasses to existing ones. |
+| `StatCalculator` / `DefenseCalculator` | Affix values scale with tier, not stat type. No stat formula changes. |
+| `SaveManager` export/import string format (`HT1:base64:md5`) | The envelope is unchanged. Inner JSON gains new keys. |
+| `LootTable.roll_pack_item_drop()` | Item drop chance is unchanged. Item tier assignment is a new layer on top. |
+| `PackGenerator`, `CombatEngine`, `DefenseCalculator` | Prestige/tier changes do not touch combat resolution. |
+| `BiomeConfig` | Biome structure and area scaling are unchanged. |
+| `Hero.update_stats()` | Affix values change in magnitude (tier scaling), but stat aggregation logic is unchanged. |
+| `ForgeView` crafting bench flow | select-and-click interaction is unchanged. New hammers appear as new buttons. |
+| `GameEvents` existing signals | All 7 combat signals, `item_crafted`, `equipment_changed`, `area_cleared`, `save_completed`, `save_failed` are unchanged. |
 
 ---
 
@@ -277,19 +553,19 @@ signal inventory_changed(slot: String)   # Emitted after any add/remove to a slo
 
 | API | Godot Version | Notes |
 |-----|--------------|-------|
-| `Array.append(item)` | 4.0+ | Global Array method. Already used in `item.gd` for prefixes/suffixes arrays. |
-| `Array.erase(item)` | 4.0+ | Removes first matching reference. O(n) for n=10, correct semantic. |
-| `Array.size()` | 4.0+ | Already used throughout codebase. |
-| `Array.duplicate()` | 4.0+ | Shallow copy for sort. Already used in `hero.gd` for affix arrays. |
-| `Array.sort_custom(callable)` | 4.0+ | Lambda callable syntax (`func(a, b): ...`) is Godot 4.0+. Already used in `loot_table.gd`. |
-| `ItemList.add_item(text)` | 4.0+ | Built-in Control node. No import needed. |
-| `ItemList.set_item_metadata(idx, variant)` | 4.0+ | Stores any Variant (including Resource references). |
-| `ItemList.get_item_metadata(idx)` | 4.0+ | Retrieves the stored Variant. Cast to `Item` at call site. |
-| `ItemList.item_selected` signal | 4.0+ | Emits `index: int`. Use with `get_item_metadata(index)` for data. |
-| `JSON.stringify(array)` | 4.0+ | Natively serializes `Array[Dictionary]` to JSON array. Already used in `SaveManager`. |
-| `JSON.parse_string(text)` | 4.0+ | Returns `Array` when JSON root is an array, `Dictionary` otherwise. Already used. |
-| `Dictionary` of `Array` | 4.0+ | Standard GDScript. No version constraint. |
-| Typed arrays (`Array[Item]`) | 4.0+ | Type annotation only — does not affect runtime JSON serialization. |
+| `Array.any(Callable)` | 4.0+ | `[Tag.FIRE] in affix.tags` achieves the same result without Callable allocation. Use `in` operator for single-element checks. |
+| `Array.filter(Callable)` | 4.0+ | Returns untyped `Array`. Do not assign to `Array[Affix]` without cast. Use for-loop instead. |
+| `Dictionary.get(key, default)` | 4.0+ | Already used throughout for safe dictionary access. |
+| `Dictionary.duplicate()` | 4.0+ | Shallow copy. Already used in `_build_save_data()` for `currency_counts`. |
+| `pick_random()` on `Array` | 4.0+ | Already used in `Item.add_prefix()` and `PackGenerator`. |
+| `sort_custom(Callable)` | 4.0+ | Lambda callable syntax already used in codebase. |
+| `Vector2i(x, y)` | 4.0+ | Already the type for `Affix.tier_range`. |
+| `in` operator for Array membership | 4.0+ | `"FIRE" in affix.tags` — O(n) linear scan, acceptable for n < 10 tags. |
+| `clampf(value, min, max)` | 4.0+ | Float-typed clamp. Already used in LootTable sqrt ramp. |
+| `@abstract` annotation on class | **4.5 only** | New in Godot 4.5. NOT recommended for this milestone (see What NOT to Add). |
+| `duplicate_deep()` on Array/Dictionary | **4.5 only** | New in Godot 4.5. Not needed here — prestige_unlocks values are primitives. |
+| `JSON.stringify` / `JSON.parse_string` | 4.0+ | Already in `SaveManager`. Boolean values serialize as JSON true/false and round-trip correctly. |
+| `FileAccess.open` / `DirAccess.remove_absolute` | 4.0+ | Already in `SaveManager`. No changes needed. |
 
 ---
 
@@ -297,37 +573,42 @@ signal inventory_changed(slot: String)   # Emitted after any add/remove to a slo
 
 | Recommended | Alternative | Why Not |
 |-------------|-------------|---------|
-| `ItemList` with `set_item_metadata` | `VBoxContainer` + preloaded `item_row.tscn` scenes | `VBoxContainer` is correct when rows need complex layout (icon + multiple buttons). For a 10-item name list, `ItemList` eliminates all child node lifecycle management. |
-| `Array.erase(item)` by reference | `Array.remove_at(index)` | Index-based removal requires the UI to track list position. Reference-based removal works with any ordering and is stable if items are resorted. |
-| Clear-and-rebuild `ItemList` on every change | Incremental insert/remove on `ItemList` | Clear-rebuild is O(10) and eliminates stale-state bugs. For n=10, performance difference is immeasurable. |
-| `slot_inventories` as new `Dictionary` var | Repurpose `crafting_inventory` in place | Renaming makes the breaking change explicit and searchable. Easier to grep for migration completeness. |
-| Manual `to_dict()` / `create_from_dict()` loop for arrays | Plugin (godot-improved-json, godot-object-serializer) | The existing manual pattern already works and is proven. Adding a plugin for a 10-line serialization loop is not justified. |
-| Save version bump + migration function | Silent schema detection (`data.has("slot_inventories")`) | Version-gated migration is the existing pattern in `_migrate_save()`. Explicit is better — prevents ambiguous states during development. |
+| Two vars in `GameState` for prestige meta | Separate `PrestigeMeta` Resource class | Resource needs its own serialize path. The project uses JSON via `SaveManager`. Adding a Resource layer adds a second save format. |
+| `ITEM_TIER_AFFIX_RANGE` Dictionary constant | Formula: `Vector2i(33 - item_tier * 4, 32 - (item_tier - 1) * 4)` | Formula gives same results but hides the design intent and makes tier boundary tuning opaque. Dictionary is explicit and tunable. |
+| `add_prefix_with_tag(required_tag)` on Item | Pass a filter Callable into the existing `add_prefix()` | Callable parameter obscures the call site. Two explicit methods are more readable and match the existing `can_apply()` / `_do_apply()` pattern for Currency. |
+| Inline `required_tag in prefix.tags` check in for-loop | `prefix.tags.any(func(t): return t == required_tag)` | The lambda version creates a Callable object per iteration. The `in` operator is the idiomatic GDScript equivalent with zero allocation. |
+| `initialize_fresh_game()` called from `do_prestige()` | Duplicate the reset logic in `do_prestige()` | Single source of truth for "what is run state" prevents desync. `initialize_fresh_game()` is already the canonical reset — reuse it. |
+| Version bump to v3 with additive migration | Keep SAVE_VERSION at 2 and detect new fields with `has()` | The existing migration chain is the established pattern. Explicit versioning prevents ambiguous states during development and makes migration intent searchable. |
+| LootTable gates tag-targeted currency drops by prestige | Currency class checks `GameState.prestige_level` directly | LootTable already owns all drop gating logic (see `CURRENCY_AREA_GATES`). Centralizing gates in one place prevents scattered `if prestige >= 1` checks. |
 
 ---
 
 ## Sources
 
 **HIGH Confidence (Direct codebase analysis):**
-- `/var/home/travelboi/Programming/hammertime/autoloads/save_manager.gd` — `_build_save_data()` and `_restore_state()` patterns; debounced save trigger; `SAVE_VERSION` migration gate
-- `/var/home/travelboi/Programming/hammertime/autoloads/game_state.gd` — `crafting_inventory` Dictionary structure; `initialize_fresh_game()` slot initialization
-- `/var/home/travelboi/Programming/hammertime/scenes/forge_view.gd` — `add_item_to_inventory()`, `is_item_better()`, `_on_melt_pressed()`, `_on_equip_pressed()` — all primary change sites
-- `/var/home/travelboi/Programming/hammertime/models/items/item.gd` — `to_dict()` / `create_from_dict()` proven round-trip; `Array[Affix]` typed array already in production
-- `/var/home/travelboi/Programming/hammertime/scenes/main_view.gd` — `item_base_found` signal routing from gameplay to forge
-- `/var/home/travelboi/Programming/hammertime/autoloads/game_events.gd` — existing signal declarations; `equipment_changed`, `item_crafted` save triggers
+- `/var/home/travelboi/Programming/hammertime/autoloads/game_state.gd` — `initialize_fresh_game()`, `currency_counts`, `spend_currency()` — prestige reset extends these
+- `/var/home/travelboi/Programming/hammertime/autoloads/save_manager.gd` — `_migrate_save()` chain, `_build_save_data()`, `_restore_state()`, `SAVE_VERSION` — v3 migration follows same pattern
+- `/var/home/travelboi/Programming/hammertime/models/affixes/affix.gd` — `tier_range: Vector2i`, constructor scaling formula `base * (tier_range.y + 1 - tier)`, `to_dict()` / `from_dict()` with `tier_range_x/y`
+- `/var/home/travelboi/Programming/hammertime/autoloads/item_affixes.gd` — Template definitions with `Vector2i(1, 8)` and `Vector2i(1, 30)` — confirmed range is just a constructor param
+- `/var/home/travelboi/Programming/hammertime/models/items/item.gd` — `add_prefix()`, `add_suffix()`, `has_valid_tag()`, `is_affix_on_item()` — tag-targeted extension points
+- `/var/home/travelboi/Programming/hammertime/models/currencies/runic_hammer.gd` — Template method pattern confirmed: `can_apply()` → `_do_apply()` with rarity change + affix add
+- `/var/home/travelboi/Programming/hammertime/models/loot/loot_table.gd` — `roll_pack_currency_drop()`, `CURRENCY_AREA_GATES`, `_calculate_currency_chance()` — tag hammer gating extends this pattern
+- `/var/home/travelboi/Programming/hammertime/autoloads/tag.gd` — `Tag.FIRE`, `Tag.COLD`, `Tag.LIGHTNING`, `Tag.DEFENSE` string constants — used as required_tag values
 
-**MEDIUM Confidence (Official Godot docs, verified via web):**
-- [Godot Engine — ItemList class reference](https://docs.godotengine.org/en/stable/classes/class_itemlist.html) — `add_item`, `clear`, `set_item_metadata`, `get_item_metadata`, `item_selected` signal confirmed
-- [GameDev Academy — ItemList Complete Guide](https://gamedevacademy.org/itemlist-in-godot-complete-guide/) — `set_item_metadata` pattern for binding data objects to list entries
-- [Godot Forum — How to save an array of Resources with JSON](https://forum.godotengine.org/t/how-to-save-an-array-of-resources-with-json/3258) — Confirms: convert Resource to Dictionary manually, iterate array, no automatic serialization for custom Resource objects
-- [Godot 4.5.1 release notes](https://godotengine.org/article/maintenance-release-godot-4-5-1/) — No changes to JSON, Array, or Resource serialization in this version
-- [Godot Forum — Issues with saving an array of items](https://forum.godotengine.org/t/issues-with-saving-an-array-of-items/46056) — Confirms parameterless `_init()` requirement (already satisfied by project's `Item.new()` pattern)
+**MEDIUM Confidence (Official Godot docs and community sources):**
+- [Godot 4.5 release notes — godotengine.org](https://godotengine.org/releases/4.5/) — Confirmed: `@abstract` annotation added in 4.5, `duplicate_deep()` added. No save/serialization changes. GDScript lambdas and `Array.any()` existed since 4.0.
+- [Array filter() returns untyped Array — GitHub #82538](https://github.com/godotengine/godot/issues/82538) — Confirmed known issue: `filter()` does not return typed arrays. Use for-loops for `Array[Affix]` contexts.
+- [Godot Forum — Resetting autoload state](https://forum.godotengine.org/t/resetting-rerunning-autoloaded-script-to-generate-new-random-variables-how/12554) — Pattern: extract init logic into `_initialize_state()` function callable multiple times. Do NOT destroy/recreate autoloads.
+- [Godot Forum — Array intersection](https://forum.godotengine.org/t/how-to-check-for-array-intersection/27600) — For small arrays (< 10 tags), `element in array` is acceptable. Dictionary-based O(1) lookup only needed for large arrays.
+- [GDQuest save format comparison](https://www.gdquest.com/tutorial/godot/best-practices/save-game-formats/) — Confirmed: JSON recommended when export strings or external data exchange is needed. Already the right choice for this project.
+- [Array.any() / Array.all() in GDScript 4](https://www.syntaxcache.com/gdscript/arrays-loops) — Confirmed: `any(Callable)` and `all(Callable)` available in Godot 4.0+. Accept lambda functions.
 
-**LOW Confidence (Single source, not verified against official docs):**
-- `Array.sort_custom()` tween interaction issue [GitHub #114974](https://github.com/godotengine/godot/issues/114974) — VBoxContainer position recalculation on child add. Not applicable to `ItemList` (which manages layout internally).
+**LOW Confidence (Inferred from patterns, no direct official source):**
+- Weighted triangular drop table for item tier (`roll_item_tier` formula) — The specific area-scaling formula is original design. The weighted accumulation pattern is verified (matches `PackGenerator.roll_element()`). The specific weight values are a design choice, not a Godot API question.
+- `prestige_available` signal emit strategy from `add_currencies()` — Pattern is sound (check `can_prestige()` after currency gain, emit once on true). The specific emit placement is a design decision, not researched.
 
 ---
 
-*Stack research for: Hammertime — Per-Slot Multi-Item Inventory System*
-*Researched: 2026-02-18*
-*Confidence: HIGH — All array patterns, serialization patterns, and ItemList API verified against existing codebase and official documentation*
+*Stack research for: Hammertime v1.7 — Meta-Progression, Item Tiers, Affix Tier Expansion, Tag-Targeted Currencies*
+*Researched: 2026-02-20*
+*Confidence: HIGH — All GDScript patterns verified against existing codebase. Godot 4.5 API points confirmed via official release notes and community sources.*
