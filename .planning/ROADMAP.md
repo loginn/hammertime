@@ -229,7 +229,7 @@ Plans:
 | 27-30             | v1.5      | 4/4            | Complete    | 2026-02-19 |
 | 31-34             | v1.6      | 5/5            | Complete    | 2026-02-20 |
 | 35. Prestige Foundation    | 1/1 | Complete    | 2026-02-20 | -          |
-| 36. Save Format v3         | 1/1 | Complete   | 2026-02-20 | -          |
+| 36. Save Format v3         | 1/1 | Complete    | 2026-02-20 | -          |
 | 37. Affix Tier Expansion   | v1.7 | 0/1       | Not started | -          |
 | 38. Item Tier System       | v1.7 | 0/1       | Not started | -          |
 | 39. Tag-Targeted Currencies| v1.7 | 0/2       | Not started | -          |
