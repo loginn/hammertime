@@ -24,8 +24,8 @@ Requirements for Meta-Progression milestone. Each maps to roadmap phases.
 
 ### Affix Tier Expansion
 
-- [ ] **AFFIX-01**: Affix tiers expand from 8 to 32 levels (4 affix tiers per item tier band)
-- [ ] **AFFIX-02**: Affix quality normalization helper enables correct cross-range tier comparison
+- [x] **AFFIX-01**: Affix tiers expand from 8 to 32 levels (4 affix tiers per item tier band)
+- [x] **AFFIX-02**: Affix quality normalization helper enables correct cross-range tier comparison
 ### Tag-Targeted Currencies
 
 - [ ] **TAG-01**: Fire Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one fire-tagged affix
@@ -105,8 +105,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TIER-01     | 38    | Pending |
 | TIER-02     | 38    | Pending |
 | TIER-03     | 38    | Pending |
-| AFFIX-01    | 37    | Pending |
-| AFFIX-02    | 37    | Pending |
+| AFFIX-01    | 37    | Complete |
+| AFFIX-02    | 37    | Complete |
 | TAG-01      | 39    | Pending |
 | TAG-02      | 39    | Pending |
 | TAG-03      | 39    | Pending |
