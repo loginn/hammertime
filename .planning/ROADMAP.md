@@ -166,10 +166,10 @@ Plans:
   1. Every dropped item has an item_tier value between 1 and max_item_tier_unlocked
   2. Items dropped in higher areas within the same prestige skew toward higher item tiers (verified by seeing more tier 7-8 drops in Shadow Realm vs Forest at P0)
   3. Crafting a mod onto a tier-8 item rolls only affix tiers 29-32; crafting onto a tier-1 item rolls from all 32 tiers
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 38-01: Item.item_tier field + LootTable weighted tier rolling + affix constraint in add_prefix/suffix
+- [ ] 38-01-PLAN.md — Area-weighted tier rolling + affix tier floor constraint + tier display at P1+
 
 ### Phase 39: Tag-Targeted Currencies
 **Goal**: Five tag hammers (Fire, Cold, Lightning, Defense, Physical) are available after Prestige 1, transform Normal items to Rare with at least one guaranteed matching-tag affix, and drop from packs at appropriate rates
