@@ -28,12 +28,12 @@ Requirements for Meta-Progression milestone. Each maps to roadmap phases.
 - [x] **AFFIX-02**: Affix quality normalization helper enables correct cross-range tier comparison
 ### Tag-Targeted Currencies
 
-- [ ] **TAG-01**: Fire Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one fire-tagged affix
-- [ ] **TAG-02**: Cold Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one cold-tagged affix
-- [ ] **TAG-03**: Lightning Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one lightning-tagged affix
-- [ ] **TAG-04**: Defense Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one defense-tagged affix
-- [ ] **TAG-05**: Physical Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one physical-tagged affix
-- [ ] **TAG-06**: Tag hammers show "no valid mods" feedback when no matching affixes are available
+- [x] **TAG-01**: Fire Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one fire-tagged affix
+- [x] **TAG-02**: Cold Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one cold-tagged affix
+- [x] **TAG-03**: Lightning Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one lightning-tagged affix
+- [x] **TAG-04**: Defense Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one defense-tagged affix
+- [x] **TAG-05**: Physical Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one physical-tagged affix
+- [x] **TAG-06**: Tag hammers show "no valid mods" feedback when no matching affixes are available
 - [ ] **TAG-07**: Tag hammers are only available after Prestige 1
 - [ ] **TAG-08**: Tag hammer currencies drop from packs after reaching Prestige 1
 
@@ -107,12 +107,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TIER-03     | 38    | Complete |
 | AFFIX-01    | 37    | Complete |
 | AFFIX-02    | 37    | Complete |
-| TAG-01      | 39    | Pending |
-| TAG-02      | 39    | Pending |
-| TAG-03      | 39    | Pending |
-| TAG-04      | 39    | Pending |
-| TAG-05      | 39    | Pending |
-| TAG-06      | 39    | Pending |
+| TAG-01      | 39    | Complete |
+| TAG-02      | 39    | Complete |
+| TAG-03      | 39    | Complete |
+| TAG-04      | 39    | Complete |
+| TAG-05      | 39    | Complete |
+| TAG-06      | 39    | Complete |
 | TAG-07      | 39    | Pending |
 | TAG-08      | 39    | Pending |
 | SAVE-01     | 36    | Complete |

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Meta-Progression
 status: unknown
-last_updated: "2026-03-01T15:11:59.162Z"
+last_updated: "2026-03-01T21:46:48.600Z"
 progress:
-  total_phases: 16
+  total_phases: 17
   completed_phases: 16
-  total_plans: 26
-  completed_plans: 26
+  total_plans: 28
+  completed_plans: 27
 ---
 
 # Project State: Hammertime
@@ -21,20 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Phase 38 — Item Tier System
+**Current focus:** Phase 39 — Tag-Targeted Currencies
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 38 of 41 (Item Tier System)
-Plan: 1 of 1 in current phase (plan 01 complete)
-Status: Phase 38 complete — ready for Phase 39
-Last activity: 2026-03-01 — Phase 38 Plan 01 executed (area-weighted item tier rolling, affix tier floor constraint, tier persistence, forge tier display)
+Phase: 39 of 41 (Tag-Targeted Currencies)
+Plan: 1 of 2 in current phase (plan 01 complete)
+Status: Phase 39 in progress — Plan 01 complete, Plan 02 (forge UI + drop integration) ready
+Last activity: 2026-03-01 — Phase 39 Plan 01 executed (TagHammer parameterized class, GameState.spend_tag_currency)
 
 Progress: [████████░░] 80% (8 milestones complete, v1.7 in progress)
 
 ## Performance Metrics
+
+**Phase 39 Plan 01 (2026-03-01):**
+- Plans: 1 | Tasks: 2 | Files: 2 | Duration: ~1min
 
 **Phase 38 (2026-03-01):**
 - Plans: 1 | Tasks: 2 | Files: 5 | Duration: ~8min
@@ -72,6 +75,7 @@ Key v1.7 constraints (from research):
 - [Phase 37-affix-tier-expansion]: All 27 active affixes use Vector2i(1, 32); resistance bases retuned to 1,2 (tier-1 ceiling 32-64%); SAVE_VERSION = 4 with automatic v3 save deletion; no affix.quality() function; is_item_better() unchanged
 - [Phase 37-affix-tier-expansion]: Percentage damage affix bases kept at 2,10 (tier-1 ceiling 64-320% acceptable per locked decision); flat damage spread ratios preserved per element
 - [Phase 38-item-tier-system]: Affix tier floor applied at construction in from_affix(), not stored on item; reroll_affix() untouched; tier display gate is prestige_level >= 1; no SAVE_VERSION bump needed
+- [Phase 39-01]: TagHammer uppercase tag constants (Tag.FIRE='FIRE') — to_lower() for display only; _replace_random_affix_with_tagged skips is_affix_on_item dedup; prefix/suffix type matching enforced in replacement
 
 ### Pending Todos
 
@@ -95,9 +99,9 @@ Key v1.7 constraints (from research):
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 38-01-PLAN.md (item tier rolling, affix tier floor constraint, tier persistence, forge tier display)
+Stopped at: Completed 39-01-PLAN.md (TagHammer parameterized class + GameState.spend_tag_currency)
 Resume file: None
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-03-01 — Phase 38 Plan 01 complete: item tier rolling (Gaussian bell curve), affix tier floor constraint, tier save/load restoration, forge tier label at P1+*
+*Last updated: 2026-03-01 — Phase 39 Plan 01 complete: TagHammer parameterized class (all 5 tag types), guaranteed-tag affix replacement, GameState.spend_tag_currency()*

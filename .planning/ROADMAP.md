@@ -232,7 +232,7 @@ Plans:
 | 36. Save Format v3         | 1/1 | Complete    | 2026-02-20 | -          |
 | 37. Affix Tier Expansion   | 1/1 | Complete    | 2026-03-01 | -          |
 | 38. Item Tier System       | 1/1 | Complete    | 2026-03-01 | -          |
-| 39. Tag-Targeted Currencies| v1.7 | 0/2       | Not started | -          |
+| 39. Tag-Targeted Currencies| 1/2 | In Progress|  | -          |
 | 40. Prestige UI            | v1.7 | 0/2       | Not started | -          |
 | 41. Integration Verification | v1.7 | 0/1     | Not started | -          |
 
