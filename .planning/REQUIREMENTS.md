@@ -18,9 +18,9 @@ Requirements for Meta-Progression milestone. Each maps to roadmap phases.
 
 ### Item Tier System
 
-- [ ] **TIER-01**: Items have an item_tier field (1-8) that gates which affix tiers can roll
-- [ ] **TIER-02**: Item tier drops are weighted by area level (higher areas favor better tiers within prestige-unlocked range)
-- [ ] **TIER-03**: Item tier constrains affix tier range during crafting (tier 8 = affix tiers 29-32, tier 7 = 25-32, etc.)
+- [x] **TIER-01**: Items have an item_tier field (1-8) that gates which affix tiers can roll
+- [x] **TIER-02**: Item tier drops are weighted by area level (higher areas favor better tiers within prestige-unlocked range)
+- [x] **TIER-03**: Item tier constrains affix tier range during crafting (tier 8 = affix tiers 29-32, tier 7 = 25-32, etc.)
 
 ### Affix Tier Expansion
 
@@ -102,9 +102,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRES-04     | 40    | Pending |
 | PRES-05     | 35    | Complete |
 | PRES-06     | 35    | Complete |
-| TIER-01     | 38    | Pending |
-| TIER-02     | 38    | Pending |
-| TIER-03     | 38    | Pending |
+| TIER-01     | 38    | Complete |
+| TIER-02     | 38    | Complete |
+| TIER-03     | 38    | Complete |
 | AFFIX-01    | 37    | Complete |
 | AFFIX-02    | 37    | Complete |
 | TAG-01      | 39    | Pending |
