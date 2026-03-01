@@ -847,7 +847,10 @@ func get_item_stats_text(item: Item) -> String:
 			rarity_name = "Magic"
 		Item.Rarity.RARE:
 			rarity_name = "Rare"
-	var stats_text: String = item.item_name + " (" + rarity_name + ")" + "\n\n"
+	var tier_label: String = ""
+	if GameState.prestige_level >= 1:
+		tier_label = " — T%d" % item.tier
+	var stats_text: String = item.item_name + " (" + rarity_name + ")" + tier_label + "\n\n"
 
 	if item is Weapon:
 		var weapon: Weapon = item as Weapon
