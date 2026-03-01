@@ -151,3 +151,14 @@ func spend_currency(currency_type: String) -> bool:
 
 	currency_counts[currency_type] -= 1
 	return true
+
+
+## Attempts to spend one tag currency of the given type.
+## Returns true if successful, false if not enough currency.
+func spend_tag_currency(currency_type: String) -> bool:
+	if currency_type not in tag_currency_counts:
+		return false
+	if tag_currency_counts[currency_type] <= 0:
+		return false
+	tag_currency_counts[currency_type] -= 1
+	return true
