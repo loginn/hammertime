@@ -34,8 +34,8 @@ Requirements for Meta-Progression milestone. Each maps to roadmap phases.
 - [x] **TAG-04**: Defense Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one defense-tagged affix
 - [x] **TAG-05**: Physical Hammer transforms Normal item to Rare (like Forge Hammer), guaranteeing at least one physical-tagged affix
 - [x] **TAG-06**: Tag hammers show "no valid mods" feedback when no matching affixes are available
-- [ ] **TAG-07**: Tag hammers are only available after Prestige 1
-- [ ] **TAG-08**: Tag hammer currencies drop from packs after reaching Prestige 1
+- [x] **TAG-07**: Tag hammers are only available after Prestige 1
+- [x] **TAG-08**: Tag hammer currencies drop from packs after reaching Prestige 1
 
 ### Save & Persistence
 
@@ -113,8 +113,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TAG-04      | 39    | Complete |
 | TAG-05      | 39    | Complete |
 | TAG-06      | 39    | Complete |
-| TAG-07      | 39    | Pending |
-| TAG-08      | 39    | Pending |
+| TAG-07      | 39    | Complete |
+| TAG-08      | 39    | Complete |
 | SAVE-01     | 36    | Complete |
 | SAVE-02     | 36    | Complete |
 | PUI-01      | 40    | Pending |

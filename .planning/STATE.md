@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Meta-Progression
 status: unknown
-last_updated: "2026-03-01T21:46:48.600Z"
+last_updated: "2026-03-01T21:52:39.210Z"
 progress:
   total_phases: 17
-  completed_phases: 16
+  completed_phases: 17
   total_plans: 28
-  completed_plans: 27
+  completed_plans: 28
 ---
 
 # Project State: Hammertime
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 39 of 41 (Tag-Targeted Currencies)
-Plan: 1 of 2 in current phase (plan 01 complete)
-Status: Phase 39 in progress — Plan 01 complete, Plan 02 (forge UI + drop integration) ready
-Last activity: 2026-03-01 — Phase 39 Plan 01 executed (TagHammer parameterized class, GameState.spend_tag_currency)
+Plan: 2 of 2 in current phase (both plans complete — phase 39 done)
+Status: Phase 39 complete — all tag hammer features shipped
+Last activity: 2026-03-01 — Phase 39 Plan 02 executed (tag drop pipeline, forge UI, prestige gate, error toast)
 
 Progress: [████████░░] 80% (8 milestones complete, v1.7 in progress)
 
@@ -76,6 +76,8 @@ Key v1.7 constraints (from research):
 - [Phase 37-affix-tier-expansion]: Percentage damage affix bases kept at 2,10 (tier-1 ceiling 64-320% acceptable per locked decision); flat damage spread ratios preserved per element
 - [Phase 38-item-tier-system]: Affix tier floor applied at construction in from_affix(), not stored on item; reroll_affix() untouched; tier display gate is prestige_level >= 1; no SAVE_VERSION bump needed
 - [Phase 39-01]: TagHammer uppercase tag constants (Tag.FIRE='FIRE') — to_lower() for display only; _replace_random_affix_with_tagged skips is_affix_on_item dedup; prefix/suffix type matching enforced in replacement
+- [Phase 39-02]: InventoryLabel moved outside HammerSidebar to root ForgeView to avoid layout overlap with 5 tag buttons
+- [Phase 39-02]: TagHammerSeparator placed as first child of TagHammerSection so separator hides/shows with container visibility
 
 ### Pending Todos
 
@@ -96,12 +98,17 @@ Key v1.7 constraints (from research):
 | 8 | Audit and fix affix pipeline (disable 9 dead mods, fix FLAT_HEALTH/FLAT_ARMOR aggregation) | 2026-02-19 | 5b29755 | [8-audit-and-fix-affix-pipeline-to-ensure-a](./quick/8-audit-and-fix-affix-pipeline-to-ensure-a/) |
 | 9 | Rename original_base_xxx to base_xxx and base_xxx to computed_xxx; remove BasicArmor/BasicHelmet FLAT_ARMOR implicits | 2026-02-19 | ac58cda | [9-rename-original-base-xxx-to-base-xxx-and](./quick/9-rename-original-base-xxx-to-base-xxx-and/) |
 
+## Performance Metrics (continued)
+
+**Phase 39 Plan 02 (2026-03-01):**
+- Plans: 1 | Tasks: 2 | Files: 4 | Duration: ~7min
+
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 39-01-PLAN.md (TagHammer parameterized class + GameState.spend_tag_currency)
+Stopped at: Completed 39-02-PLAN.md (tag drop pipeline + forge UI tag hammer buttons, prestige gate, error toast)
 Resume file: None
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-03-01 — Phase 39 Plan 01 complete: TagHammer parameterized class (all 5 tag types), guaranteed-tag affix replacement, GameState.spend_tag_currency()*
+*Last updated: 2026-03-01 — Phase 39 Plan 02 complete: tag currency drop pipeline (LootTable + combat_engine) + forge view 5 tag hammer buttons (prestige-gated) + error toast*
