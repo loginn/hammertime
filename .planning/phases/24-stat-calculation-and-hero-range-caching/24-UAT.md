@@ -1,9 +1,10 @@
 ---
-status: diagnosed
+status: complete
 phase: 24-stat-calculation-and-hero-range-caching
 source: 24-01-SUMMARY.md, 24-02-SUMMARY.md
 started: 2026-02-18T12:00:00Z
-updated: 2026-02-18T12:10:00Z
+updated: 2026-03-01T00:00:00Z
+closed_reason: "Phase 24-03 plan removed as not needed. Defensive comparison gap deferred to future phase."
 ---
 
 ## Current Test

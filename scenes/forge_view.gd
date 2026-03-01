@@ -823,10 +823,11 @@ func _sum_suffix_stat(item: Item, stat_type: int) -> int:
 
 
 func _format_affix_line(affix: Affix) -> String:
+	var tier_suffix := " (T%d)" % affix.tier
 	if Tag.StatType.FLAT_DAMAGE in affix.stat_types and (affix.add_min > 0 or affix.add_max > 0):
 		var element_name := _get_affix_element_name(affix.tags)
-		return "Adds %d to %d %s Damage" % [affix.add_min, affix.add_max, element_name]
-	return affix.affix_name + ": " + str(affix.value)
+		return "Adds %d to %d %s Damage%s" % [affix.add_min, affix.add_max, element_name, tier_suffix]
+	return affix.affix_name + ": " + str(affix.value) + tier_suffix
 
 
 func _get_affix_element_name(tags: Array) -> String:
