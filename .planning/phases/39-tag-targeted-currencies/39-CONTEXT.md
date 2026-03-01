@@ -19,6 +19,17 @@ Five tag hammers (Fire, Cold, Lightning, Defense, Physical) that transform Norma
 - Tag hammers respect item tier's affix floor (e.g., tier 8 item + Fire Hammer = fire affix from T29-32 only)
 - If no matching affix exists for the item+tag combo, block application entirely via `can_apply()` returning false — no currency consumed
 
+### Affix Tag Corrections (pre-phase prep)
+Affix tags were updated to ensure proper tag hammer matching:
+- %Fire Damage, %Cold Damage, %Lightning Damage: added their specific element tags (were only ELEMENTAL)
+- %Elemental Damage: stays ELEMENTAL only (generic, no specific element hammer matches it)
+- Fire/Cold/Lightning Resistance: added matching element tags
+- All Resistances: stays `[DEFENSE, WEAPON]` only — no element tags (generic defensive)
+- Flat Armor, %Armor (prefix), Armor (suffix): added `Tag.PHYSICAL`
+- Attack Speed: added `Tag.PHYSICAL` (physical attacks use speed)
+- Evasion: stays `[DEFENSE, EVASION]` only — no PHYSICAL (evasion is generic defense)
+- Crit Chance, Crit Damage: no PHYSICAL added (spells can crit too)
+
 ### Drop Rates & Area Gating
 - All 5 tag hammer types unlock simultaneously at Prestige 1 (no progressive area unlock)
 - Rare drop rate: 5-10% per pack (roughly 1 per 10-20 packs)

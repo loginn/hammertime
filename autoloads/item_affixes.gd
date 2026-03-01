@@ -35,7 +35,7 @@ var prefixes: Array[Affix] = [
 		Affix.AffixType.PREFIX,
 		2,
 		10,
-		[Tag.ELEMENTAL, Tag.WEAPON],
+		[Tag.ELEMENTAL, Tag.COLD, Tag.WEAPON],
 		[Tag.StatType.INCREASED_DAMAGE],
 		Vector2i(1, 32)
 	),
@@ -44,7 +44,7 @@ var prefixes: Array[Affix] = [
 		Affix.AffixType.PREFIX,
 		2,
 		10,
-		[Tag.ELEMENTAL, Tag.WEAPON],
+		[Tag.ELEMENTAL, Tag.FIRE, Tag.WEAPON],
 		[Tag.StatType.INCREASED_DAMAGE],
 		Vector2i(1, 32)
 	),
@@ -53,7 +53,7 @@ var prefixes: Array[Affix] = [
 		Affix.AffixType.PREFIX,
 		2,
 		10,
-		[Tag.ELEMENTAL, Tag.WEAPON],
+		[Tag.ELEMENTAL, Tag.LIGHTNING, Tag.WEAPON],
 		[Tag.StatType.INCREASED_DAMAGE],
 		Vector2i(1, 32)
 	),
@@ -96,7 +96,7 @@ var prefixes: Array[Affix] = [
 		Affix.AffixType.PREFIX,
 		2,
 		5,
-		[Tag.DEFENSE, Tag.ARMOR],
+		[Tag.DEFENSE, Tag.PHYSICAL, Tag.ARMOR],
 		[Tag.StatType.FLAT_ARMOR],
 		Vector2i(1, 32)
 	),
@@ -105,7 +105,7 @@ var prefixes: Array[Affix] = [
 		Affix.AffixType.PREFIX,
 		1,
 		3,
-		[Tag.DEFENSE, Tag.ARMOR],
+		[Tag.DEFENSE, Tag.PHYSICAL, Tag.ARMOR],
 		[Tag.StatType.PERCENT_ARMOR],
 		Vector2i(1, 32)
 	),
@@ -180,18 +180,18 @@ var suffixes: Array[Affix] = [
 		Affix.AffixType.SUFFIX,
 		2,
 		10,
-		[Tag.SPEED, Tag.ATTACK, Tag.WEAPON],
+		[Tag.SPEED, Tag.ATTACK, Tag.PHYSICAL, Tag.WEAPON],
 		[Tag.StatType.INCREASED_SPEED],
 		Vector2i(1, 32)
 	),
 	Affix.new("Life", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], [Tag.StatType.FLAT_HEALTH], Vector2i(1, 32)),
-	Affix.new("Armor", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], [Tag.StatType.FLAT_ARMOR], Vector2i(1, 32)),
+	Affix.new("Armor", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.PHYSICAL, Tag.WEAPON], [Tag.StatType.FLAT_ARMOR], Vector2i(1, 32)),
 	Affix.new(
 		"Fire Resistance",
 		Affix.AffixType.SUFFIX,
 		1,
 		3,
-		[Tag.DEFENSE, Tag.WEAPON],
+		[Tag.DEFENSE, Tag.FIRE, Tag.WEAPON],
 		[Tag.StatType.FIRE_RESISTANCE],
 		Vector2i(1, 32)
 	),
@@ -200,7 +200,7 @@ var suffixes: Array[Affix] = [
 		Affix.AffixType.SUFFIX,
 		1,
 		3,
-		[Tag.DEFENSE, Tag.WEAPON],
+		[Tag.DEFENSE, Tag.COLD, Tag.WEAPON],
 		[Tag.StatType.COLD_RESISTANCE],
 		Vector2i(1, 32)
 	),
@@ -209,7 +209,7 @@ var suffixes: Array[Affix] = [
 		Affix.AffixType.SUFFIX,
 		1,
 		3,
-		[Tag.DEFENSE, Tag.WEAPON],
+		[Tag.DEFENSE, Tag.LIGHTNING, Tag.WEAPON],
 		[Tag.StatType.LIGHTNING_RESISTANCE],
 		Vector2i(1, 32)
 	),
