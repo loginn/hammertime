@@ -12,6 +12,14 @@ enum ItemSlot { NONE = -1, WEAPON, HELMET, ARMOR, BOOTS, RING }
 @onready var claw_btn: Button = $HammerSidebar/ClawHammerBtn
 @onready var tuning_btn: Button = $HammerSidebar/TuningHammerBtn
 
+# Tag hammer button references
+@onready var fire_hammer_btn: Button = $HammerSidebar/TagHammerSection/FireHammerBtn
+@onready var cold_hammer_btn: Button = $HammerSidebar/TagHammerSection/ColdHammerBtn
+@onready var lightning_hammer_btn: Button = $HammerSidebar/TagHammerSection/LightningHammerBtn
+@onready var defense_hammer_btn: Button = $HammerSidebar/TagHammerSection/DefenseHammerBtn
+@onready var physical_hammer_btn: Button = $HammerSidebar/TagHammerSection/PhysicalHammerBtn
+@onready var tag_hammer_section: Control = $HammerSidebar/TagHammerSection
+
 # Item type button references
 @onready var weapon_type_btn: Button = $ItemTypeButtons/WeaponButton
 @onready var helmet_type_btn: Button = $ItemTypeButtons/HelmetButton
@@ -23,9 +31,10 @@ enum ItemSlot { NONE = -1, WEAPON, HELMET, ARMOR, BOOTS, RING }
 @onready var item_image: TextureRect = $ItemGraphicsPanel/ItemImage
 @onready var item_stats_label: Label = $ItemStatsPanel/ItemStatsLabel
 @onready var hero_stats_label: RichTextLabel = $HeroStatsPanel/HeroStatsLabel
-@onready var inventory_label: Label = $HammerSidebar/InventoryLabel
+@onready var inventory_label: Label = $InventoryLabel
 @onready var melt_button: Button = $ItemStatsPanel/MeltButton
 @onready var equip_button: Button = $ItemStatsPanel/EquipButton
+@onready var forge_error_toast: Label = $ForgeErrorToast
 
 # Currency instances
 var currencies: Dictionary = {
@@ -34,7 +43,12 @@ var currencies: Dictionary = {
 	"tack": TackHammer.new(),
 	"grand": GrandHammer.new(),
 	"claw": ClawHammer.new(),
-	"tuning": TuningHammer.new()
+	"tuning": TuningHammer.new(),
+	"fire": TagHammer.new(Tag.FIRE, "Fire Hammer"),
+	"cold": TagHammer.new(Tag.COLD, "Cold Hammer"),
+	"lightning": TagHammer.new(Tag.LIGHTNING, "Lightning Hammer"),
+	"defense": TagHammer.new(Tag.DEFENSE, "Defense Hammer"),
+	"physical": TagHammer.new(Tag.PHYSICAL, "Physical Hammer"),
 }
 var selected_currency: Currency = null
 var selected_currency_type: String = ""
@@ -75,6 +89,11 @@ func _ready() -> void:
 		"claw": claw_btn,
 		"tuning": tuning_btn
 	}
+	currency_buttons["fire"] = fire_hammer_btn
+	currency_buttons["cold"] = cold_hammer_btn
+	currency_buttons["lightning"] = lightning_hammer_btn
+	currency_buttons["defense"] = defense_hammer_btn
+	currency_buttons["physical"] = physical_hammer_btn
 
 	# Connect currency button signals
 	runic_btn.pressed.connect(_on_currency_selected.bind("runic"))
@@ -84,6 +103,13 @@ func _ready() -> void:
 	claw_btn.pressed.connect(_on_currency_selected.bind("claw"))
 	tuning_btn.pressed.connect(_on_currency_selected.bind("tuning"))
 
+	# Connect tag hammer button signals
+	fire_hammer_btn.pressed.connect(_on_currency_selected.bind("fire"))
+	cold_hammer_btn.pressed.connect(_on_currency_selected.bind("cold"))
+	lightning_hammer_btn.pressed.connect(_on_currency_selected.bind("lightning"))
+	defense_hammer_btn.pressed.connect(_on_currency_selected.bind("defense"))
+	physical_hammer_btn.pressed.connect(_on_currency_selected.bind("physical"))
+
 	# Set hammer tooltips
 	runic_btn.tooltip_text = "Runic Hammer\nTurns a normal item into a magic item\nwith 1-2 random mods.\nRequires: Normal rarity"
 	forge_btn.tooltip_text = "Forge Hammer\nTurns a normal item into a rare item\nwith 4-6 random mods.\nRequires: Normal rarity"
@@ -91,6 +117,18 @@ func _ready() -> void:
 	grand_btn.tooltip_text = "Grand Hammer\nAdds one random mod to a rare item.\nRequires: Rare rarity with room for mods"
 	claw_btn.tooltip_text = "Claw Hammer\nRemoves one random mod from an item.\nRequires: At least one mod"
 	tuning_btn.tooltip_text = "Tuning Hammer\nRerolls all mod values within their\ntier ranges.\nRequires: At least one mod"
+
+	# Set tag hammer tooltips
+	fire_hammer_btn.tooltip_text = "Fire Hammer\nTurns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one fire mod.\nRequires: Normal rarity, fire mods available"
+	cold_hammer_btn.tooltip_text = "Cold Hammer\nTurns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one cold mod.\nRequires: Normal rarity, cold mods available"
+	lightning_hammer_btn.tooltip_text = "Lightning Hammer\nTurns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one lightning mod.\nRequires: Normal rarity, lightning mods available"
+	defense_hammer_btn.tooltip_text = "Defense Hammer\nTurns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one defense mod.\nRequires: Normal rarity, defense mods available"
+	physical_hammer_btn.tooltip_text = "Physical Hammer\nTurns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one physical mod.\nRequires: Normal rarity, physical mods available"
+
+	# Gate tag section on prestige and connect signals
+	_update_tag_section_visibility()
+	GameEvents.tag_currency_dropped.connect(_on_tag_currency_dropped)
+	GameEvents.prestige_completed.connect(_on_prestige_completed)
 
 	# Connect item image click for applying currency
 	item_image.gui_input.connect(update_item)
@@ -212,11 +250,18 @@ func update_item(event: InputEvent) -> void:
 
 	# Check if currency can be applied to the item
 	if not selected_currency.can_apply(current_item):
-		print(selected_currency.get_error_message(current_item))
+		var msg := selected_currency.get_error_message(current_item)
+		if msg != "":
+			_show_forge_error(msg)
 		return
 
-	# Try to spend the currency
-	if not GameState.spend_currency(selected_currency_type):
+	# Try to spend the currency (tag currencies use separate spend path)
+	var spent: bool = false
+	if selected_currency_type in ["fire", "cold", "lightning", "defense", "physical"]:
+		spent = GameState.spend_tag_currency(selected_currency_type)
+	else:
+		spent = GameState.spend_currency(selected_currency_type)
+	if not spent:
 		print("No " + selected_currency.currency_name + " remaining!")
 		return
 
@@ -230,9 +275,33 @@ func update_item(event: InputEvent) -> void:
 	current_item.display()
 
 
+func _update_tag_section_visibility() -> void:
+	tag_hammer_section.visible = (GameState.prestige_level >= 1)
+
+
+func _on_tag_currency_dropped(_drops: Dictionary) -> void:
+	update_currency_button_states()
+
+
+func _on_prestige_completed(_new_level: int) -> void:
+	_update_tag_section_visibility()
+	update_currency_button_states()
+
+
+func _show_forge_error(message: String) -> void:
+	forge_error_toast.text = message
+	forge_error_toast.modulate = Color(1.0, 0.4, 0.4, 1.0)
+	forge_error_toast.visible = true
+	var tween := create_tween()
+	tween.tween_interval(2.0)
+	tween.tween_property(forge_error_toast, "modulate:a", 0.0, 0.5)
+	tween.tween_callback(func(): forge_error_toast.visible = false)
+
+
 func update_currency_button_states() -> void:
-	# Update each currency button based on counts from GameState
-	for currency_type in currency_buttons:
+	# Update standard currency buttons based on counts from GameState
+	var standard_types: Array = ["runic", "forge", "tack", "grand", "claw", "tuning"]
+	for currency_type in standard_types:
 		var count: int = GameState.currency_counts.get(currency_type, 0)
 		var button: Button = currency_buttons[currency_type]
 
@@ -243,15 +312,31 @@ func update_currency_button_states() -> void:
 		button.text = currencies[currency_type].currency_name + " (" + str(count) + ")"
 		button.icon = hammer_icons.get(currency_type)
 
-	# If selected currency count is 0, deselect it
-	if selected_currency != null:
+	# If selected standard currency count is 0, deselect it
+	if selected_currency != null and selected_currency_type in standard_types:
 		var selected_count: int = GameState.currency_counts.get(selected_currency_type, 0)
 		if selected_count <= 0:
 			selected_currency = null
 			selected_currency_type = ""
-			# Untoggle the button
-			for currency_type in currency_buttons:
-				currency_buttons[currency_type].button_pressed = false
+			# Untoggle all buttons
+			for btn_type in currency_buttons:
+				currency_buttons[btn_type].button_pressed = false
+
+	# Tag currency buttons (only relevant when prestige >= 1)
+	for tag_type in ["fire", "cold", "lightning", "defense", "physical"]:
+		var count: int = GameState.tag_currency_counts.get(tag_type, 0)
+		var button: Button = currency_buttons[tag_type]
+		button.disabled = (count <= 0)
+		button.text = currencies[tag_type].currency_name + " (" + str(count) + ")"
+		button.icon = hammer_icons.get(tag_type, null)
+
+	# Deselect if selected tag currency is now 0
+	if selected_currency_type in ["fire", "cold", "lightning", "defense", "physical"]:
+		if GameState.tag_currency_counts.get(selected_currency_type, 0) <= 0:
+			selected_currency = null
+			selected_currency_type = ""
+			for btn_type in currency_buttons:
+				currency_buttons[btn_type].button_pressed = false
 
 
 # --- Item type selection ---

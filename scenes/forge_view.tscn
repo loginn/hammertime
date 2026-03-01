@@ -15,7 +15,7 @@ script = ExtResource("1_forge")
 
 [node name="Background" type="ColorRect" parent="."]
 offset_right = 1280.0
-offset_bottom = 670.0
+offset_bottom = 720.0
 color = Color(0.1, 0.1, 0.1, 1)
 mouse_filter = 2
 
@@ -23,7 +23,7 @@ mouse_filter = 2
 offset_left = 40.0
 offset_top = 10.0
 offset_right = 300.0
-offset_bottom = 660.0
+offset_bottom = 720.0
 color = Color(0.2, 0.2, 0.2, 1)
 
 [node name="RunicHammerBtn" type="Button" parent="HammerSidebar"]
@@ -104,12 +104,60 @@ icon = ExtResource("9_tuning")
 icon_alignment = 0
 expand_icon = true
 
-[node name="InventoryLabel" type="Label" parent="HammerSidebar"]
+[node name="TagHammerSection" type="VBoxContainer" parent="HammerSidebar"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 260.0
-offset_right = 250.0
-offset_bottom = 550.0
+offset_left = 15.0
+offset_top = 240.0
+offset_right = 245.0
+offset_bottom = 600.0
+visible = false
+
+[node name="TagHammerSeparator" type="ColorRect" parent="HammerSidebar/TagHammerSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 2)
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="FireHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 55.0)
+toggle_mode = true
+theme_override_font_sizes/font_size = 11
+text = "Fire Hammer (0)"
+
+[node name="ColdHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 55.0)
+toggle_mode = true
+theme_override_font_sizes/font_size = 11
+text = "Cold Hammer (0)"
+
+[node name="LightningHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 55.0)
+toggle_mode = true
+theme_override_font_sizes/font_size = 11
+text = "Lightning Hammer (0)"
+
+[node name="DefenseHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 55.0)
+toggle_mode = true
+theme_override_font_sizes/font_size = 11
+text = "Defense Hammer (0)"
+
+[node name="PhysicalHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 55.0)
+toggle_mode = true
+theme_override_font_sizes/font_size = 11
+text = "Physical Hammer (0)"
+
+[node name="InventoryLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 620.0
+offset_right = 310.0
+offset_bottom = 715.0
 theme_override_font_sizes/font_size = 11
 text = "Crafting Inventory:
 Weapon: None
@@ -256,3 +304,15 @@ bbcode_enabled = true
 scroll_active = false
 theme_override_font_sizes/normal_font_size = 11
 text = "Hero Stats:"
+
+[node name="ForgeErrorToast" type="Label" parent="."]
+layout_mode = 0
+offset_left = 340.0
+offset_top = 195.0
+offset_right = 770.0
+offset_bottom = 230.0
+visible = false
+modulate = Color(1, 0.4, 0.4, 0)
+theme_override_font_sizes/font_size = 13
+horizontal_alignment = 1
+text = ""
