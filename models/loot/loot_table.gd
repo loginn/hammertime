@@ -103,6 +103,26 @@ static func roll_pack_item_drop() -> bool:
 	return randf() < PACK_ITEM_DROP_CHANCE
 
 
+## Rolls tag currency drops for a single pack kill.
+## Only active after Prestige 1. ~7.5% chance per pack.
+## Returns dict mapping tag type to quantity (e.g. {"fire": 1}).
+static func roll_pack_tag_currency_drop(area_level: int) -> Dictionary:
+	if GameState.prestige_level < 1:
+		return {}
+
+	var drops: Dictionary = {}
+	# 7.5% per pack — middle of 5-10% range per user decision
+	if randf() < 0.075:
+		var tag_types: Array[String] = PrestigeManager.TAG_TYPES
+		var chosen: String = tag_types[randi() % tag_types.size()]
+		# Small qty-2 chance at higher areas (area >= 50, 15% of drops)
+		var qty: int = 1
+		if area_level >= 50 and randf() < 0.15:
+			qty = 2
+		drops[chosen] = qty
+	return drops
+
+
 ## Tier home area centers aligned to biome boundaries.
 ## T8=12 (mid-Forest), T7=37 (mid-Dark Forest), T6=62, T5=87, T4=112, T3=137, T2=162, T1=187.
 const TIER_WEIGHT_SIGMA: float = 25.0

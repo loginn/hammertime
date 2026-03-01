@@ -150,6 +150,13 @@ func _on_pack_killed() -> void:
 	if LootTable.roll_pack_item_drop():
 		GameEvents.items_dropped.emit(GameState.area_level)
 
+	# Tag currency drops (P1+)
+	var tag_drops := LootTable.roll_pack_tag_currency_drop(GameState.area_level)
+	if not tag_drops.is_empty():
+		for tag_type in tag_drops:
+			GameState.tag_currency_counts[tag_type] = GameState.tag_currency_counts.get(tag_type, 0) + tag_drops[tag_type]
+		GameEvents.tag_currency_dropped.emit(tag_drops)
+
 	current_pack_index += 1
 	GameEvents.pack_killed.emit(current_pack_index, current_packs.size())
 
