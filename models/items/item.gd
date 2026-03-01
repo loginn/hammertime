@@ -98,6 +98,8 @@ static func create_from_dict(data: Dictionary) -> Item:
 
 	# Restore rarity
 	item.rarity = int(data.get("rarity", 0)) as Rarity
+	# Restore tier (default 8 is backward-compatible for pre-tier saves)
+	item.tier = int(data.get("tier", 8))
 
 	# Restore implicit
 	var implicit_data: Dictionary = data.get("implicit", {})
@@ -218,6 +220,12 @@ func has_valid_tag(affix: Affix) -> bool:
 	return false
 
 
+## Returns the affix tier floor based on this item's tier.
+## Tier 8 -> floor 29 (affix tiers 29-32), Tier 1 -> floor 1 (all 32 tiers).
+func _get_affix_tier_floor() -> int:
+	return (self.tier - 1) * 4 + 1
+
+
 func add_prefix() -> bool:
 	print("adding a prefix")
 	if len(self.prefixes) >= max_prefixes():
@@ -237,7 +245,8 @@ func add_prefix() -> bool:
 
 	var new_prefix: Affix = valid_prefixes.pick_random()
 	if new_prefix != null:
-		self.prefixes.append(Affixes.from_affix(new_prefix))
+		var floor_val: int = _get_affix_tier_floor()
+		self.prefixes.append(Affixes.from_affix(new_prefix, floor_val))
 		print("Added prefix: ", new_prefix.affix_name)
 		return true
 
@@ -264,7 +273,8 @@ func add_suffix() -> bool:
 	var new_suffix = valid_suffixes.pick_random()
 	if new_suffix != null:
 		print("Added suffix: ", new_suffix.affix_name)
-		self.suffixes.append(Affixes.from_affix(new_suffix))
+		var floor_val: int = _get_affix_tier_floor()
+		self.suffixes.append(Affixes.from_affix(new_suffix, floor_val))
 		return true
 
 	return false

@@ -101,3 +101,41 @@ static func roll_pack_currency_drop(
 ## Drop rate is constant across all biomes (no area scaling).
 static func roll_pack_item_drop() -> bool:
 	return randf() < PACK_ITEM_DROP_CHANCE
+
+
+## Tier home area centers aligned to biome boundaries.
+## T8=12 (mid-Forest), T7=37 (mid-Dark Forest), T6=62, T5=87, T4=112, T3=137, T2=162, T1=187.
+const TIER_WEIGHT_SIGMA: float = 25.0
+
+static func _tier_home_center(t: int) -> float:
+	return 12.0 + float(8 - t) * 25.0
+
+## Rolls an item tier (1-8) from area-weighted bell-curve distribution.
+## At P0 (max_tier_unlocked == 8, only tier 8), always returns 8.
+## At P1+ tiers compete with Gaussian-like weights centered on their home areas.
+## Lower tier number = better item. max_tier_unlocked is the numerically smallest tier allowed.
+static func roll_item_tier(area_level: int, max_tier_unlocked: int) -> int:
+	if max_tier_unlocked == 8:
+		return 8
+
+	var weights: Array[float] = []
+	var tiers: Array[int] = []
+	# Iterate from worst (8) to best (max_tier_unlocked)
+	for t in range(8, max_tier_unlocked - 1, -1):
+		var center: float = _tier_home_center(t)
+		var dist: float = abs(float(area_level) - center)
+		var w: float = exp(-0.5 * (dist / TIER_WEIGHT_SIGMA) * (dist / TIER_WEIGHT_SIGMA))
+		weights.append(maxf(w, 0.01))  # Floor prevents any tier from having 0 weight
+		tiers.append(t)
+
+	# Weighted random pick
+	var total: float = 0.0
+	for w in weights:
+		total += w
+	var roll: float = randf() * total
+	var cumulative: float = 0.0
+	for i in range(tiers.size()):
+		cumulative += weights[i]
+		if roll <= cumulative:
+			return tiers[i]
+	return tiers[-1]

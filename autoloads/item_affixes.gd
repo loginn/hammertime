@@ -256,7 +256,11 @@ var suffixes: Array[Affix] = [
 ]
 
 
-static func from_affix(template: Affix) -> Affix:
+static func from_affix(template: Affix, affix_tier_floor: int = 1) -> Affix:
+	var effective_range := Vector2i(
+		maxi(template.tier_range.x, affix_tier_floor),
+		template.tier_range.y
+	)
 	var affix_copy = Affix.new(
 		template.affix_name,
 		template.type,
@@ -264,7 +268,7 @@ static func from_affix(template: Affix) -> Affix:
 		template.base_max,
 		template.tags,
 		template.stat_types,
-		template.tier_range,
+		effective_range,
 		template.base_dmg_min_lo,
 		template.base_dmg_min_hi,
 		template.base_dmg_max_lo,

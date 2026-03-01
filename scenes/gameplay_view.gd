@@ -275,5 +275,7 @@ func get_random_item_base() -> Item:
 	var item_types = [LightSword, BasicHelmet, BasicArmor, BasicBoots, BasicRing]
 	var random_type = item_types[randi() % item_types.size()]
 	var item = random_type.new()
+	# Roll item tier from area-weighted distribution
+	item.tier = LootTable.roll_item_tier(GameState.area_level, GameState.max_item_tier_unlocked)
 	# Items always drop as Normal (0 affixes) — crafting is the sole source of mods
 	return item
