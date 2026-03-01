@@ -181,11 +181,11 @@ Plans:
   3. Tag hammer buttons do not appear in the crafting view before Prestige 1
   4. After reaching Prestige 1, tag hammer currency drops from monster packs
   5. All five tag hammers (Fire, Cold, Lightning, Defense, Physical) work correctly on each applicable item slot
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 39-01: TagHammer base class + five subclasses
-- [ ] 39-02: Tag currency drops in LootTable + prestige-gating
+- [ ] 39-01-PLAN.md — TagHammer parameterized class + GameState spend/add helpers
+- [ ] 39-02-PLAN.md — P1-gated tag drops in LootTable + forge UI tag section with prestige gate and error toasts
 
 ### Phase 40: Prestige UI
 **Goal**: Player can see their prestige status at all times, understand exactly what a prestige costs and rewards, view the full 7-level unlock table, and trigger prestige through a confirmation flow that lists everything that resets
@@ -238,4 +238,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-02-20 — v1.7 Meta-Progression roadmap added (phases 35-41)*
+*Last updated: 2026-03-01 — Phase 39 planned (2 plans: TagHammer class + forge UI/drop integration)*
