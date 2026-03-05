@@ -12,7 +12,7 @@ Requirements for Meta-Progression milestone. Each maps to roadmap phases.
 - [x] **PRES-01**: Player can prestige by spending required currency amounts (scaling per prestige level)
 - [x] **PRES-02**: Prestige triggers full reset of area level, hero equipment, crafting inventory, and standard currencies
 - [x] **PRES-03**: Prestige level and item tier unlocks persist across resets
-- [ ] **PRES-04**: Player sees confirmation dialog showing cost, reward, and what resets before committing
+- [x] **PRES-04**: Player sees confirmation dialog showing cost, reward, and what resets before committing
 - [x] **PRES-05**: Game supports 7 total prestige levels (P1 through P7)
 - [x] **PRES-06**: Each prestige level unlocks the next better item tier (P1→tier 7, P2→tier 6, ..., P7→tier 1)
 
@@ -44,11 +44,11 @@ Requirements for Meta-Progression milestone. Each maps to roadmap phases.
 
 ### Prestige UI
 
-- [ ] **PUI-01**: Player can see their current prestige level at all times
-- [ ] **PUI-02**: Player can see prestige cost and what the next prestige unlocks
-- [ ] **PUI-03**: Player can see an unlock table showing all 7 prestige levels and their rewards
-- [ ] **PUI-04**: Tag hammer buttons appear in crafting view after Prestige 1
-- [ ] **PUI-05**: Prestige confirmation shows cost, reward, and complete reset list
+- [x] **PUI-01**: Player can see their current prestige level at all times
+- [x] **PUI-02**: Player can see prestige cost and what the next prestige unlocks
+- [x] **PUI-03**: Player can see an unlock table showing all 7 prestige levels and their rewards
+- [x] **PUI-04**: Tag hammer buttons appear in crafting view after Prestige 1
+- [x] **PUI-05**: Prestige confirmation shows cost, reward, and complete reset list
 
 ## Future Requirements
 
@@ -99,7 +99,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRES-01     | 35    | Complete |
 | PRES-02     | 35    | Complete |
 | PRES-03     | 35    | Complete |
-| PRES-04     | 40    | Pending |
+| PRES-04     | 40    | Complete |
 | PRES-05     | 35    | Complete |
 | PRES-06     | 35    | Complete |
 | TIER-01     | 38    | Complete |
@@ -117,11 +117,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TAG-08      | 39    | Complete |
 | SAVE-01     | 36    | Complete |
 | SAVE-02     | 36    | Complete |
-| PUI-01      | 40    | Pending |
-| PUI-02      | 40    | Pending |
-| PUI-03      | 40    | Pending |
-| PUI-04      | 40    | Pending |
-| PUI-05      | 40    | Pending |
+| PUI-01      | 40    | Complete |
+| PUI-02      | 40    | Complete |
+| PUI-03      | 40    | Complete |
+| PUI-04      | 40    | Complete |
+| PUI-05      | 40    | Complete |
 
 **Coverage:**
 - v1.7 requirements: 23 total
