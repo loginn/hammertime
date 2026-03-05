@@ -1,0 +1,105 @@
+[gd_scene format=3 uid="uid://dprestige1view"]
+
+[ext_resource type="Script" path="res://scenes/prestige_view.gd" id="1_prestige"]
+
+[node name="PrestigeView" type="Node2D"]
+script = ExtResource("1_prestige")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 1280.0
+offset_bottom = 670.0
+color = Color(0.1, 0.1, 0.1, 1)
+mouse_filter = 2
+
+[node name="TitleLabel" type="Label" parent="."]
+offset_left = 490.0
+offset_top = 20.0
+offset_right = 790.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 28
+text = "Prestige"
+horizontal_alignment = 1
+
+[node name="CurrentLevelLabel" type="Label" parent="."]
+offset_left = 440.0
+offset_top = 75.0
+offset_right = 840.0
+offset_bottom = 105.0
+text = "Current Prestige: P0"
+horizontal_alignment = 1
+
+[node name="NextInfoLabel" type="Label" parent="."]
+offset_left = 440.0
+offset_top = 105.0
+offset_right = 840.0
+offset_bottom = 135.0
+text = ""
+horizontal_alignment = 1
+
+[node name="NextRewardLabel" type="Label" parent="."]
+offset_left = 440.0
+offset_top = 135.0
+offset_right = 840.0
+offset_bottom = 165.0
+text = ""
+horizontal_alignment = 1
+
+[node name="TableHeader" type="HBoxContainer" parent="."]
+offset_left = 240.0
+offset_top = 185.0
+offset_right = 1040.0
+offset_bottom = 210.0
+
+[node name="StatusHeader" type="Label" parent="TableHeader"]
+custom_minimum_size = Vector2(60, 25)
+modulate = Color(0.6, 0.6, 0.6, 1)
+text = ""
+horizontal_alignment = 1
+
+[node name="LevelHeader" type="Label" parent="TableHeader"]
+custom_minimum_size = Vector2(80, 25)
+modulate = Color(0.6, 0.6, 0.6, 1)
+text = "Level"
+horizontal_alignment = 1
+
+[node name="TierHeader" type="Label" parent="TableHeader"]
+custom_minimum_size = Vector2(160, 25)
+modulate = Color(0.6, 0.6, 0.6, 1)
+text = "Max Item Tier"
+horizontal_alignment = 1
+
+[node name="RewardHeader" type="Label" parent="TableHeader"]
+custom_minimum_size = Vector2(200, 25)
+modulate = Color(0.6, 0.6, 0.6, 1)
+text = "Reward"
+horizontal_alignment = 1
+
+[node name="CostHeader" type="Label" parent="TableHeader"]
+custom_minimum_size = Vector2(200, 25)
+modulate = Color(0.6, 0.6, 0.6, 1)
+text = "Cost"
+horizontal_alignment = 1
+
+[node name="UnlockTable" type="VBoxContainer" parent="."]
+offset_left = 240.0
+offset_top = 215.0
+offset_right = 1040.0
+offset_bottom = 460.0
+
+[node name="ResetListLabel" type="Label" parent="."]
+offset_left = 340.0
+offset_top = 480.0
+offset_right = 940.0
+offset_bottom = 560.0
+modulate = Color(0.7, 0.5, 0.5, 1)
+text = "Prestige resets:
+Area progress, Equipment, Inventory,
+Currencies, Tag Currencies"
+horizontal_alignment = 1
+
+[node name="PrestigeButton" type="Button" parent="."]
+offset_left = 490.0
+offset_top = 580.0
+offset_right = 790.0
+offset_bottom = 630.0
+text = "Upgrade your forge"
