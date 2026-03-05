@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://b8x7k2nan4p5q" path="res://scenes/gameplay_view.tscn" id="3_gameplay"]
 [ext_resource type="PackedScene" uid="uid://dsettings1view" path="res://scenes/settings_view.tscn" id="4_settings"]
 [ext_resource type="PackedScene" path="res://scenes/save_toast.tscn" id="5_toast"]
+[ext_resource type="PackedScene" uid="uid://dprestige1view" path="res://scenes/prestige_view.tscn" id="6_prestige"]
 
 [node name="MainView" type="Node2D"]
 script = ExtResource("1_jyhfs")
@@ -28,6 +29,14 @@ offset_right = 260.0
 offset_bottom = 35.0
 text = "Adventure"
 
+[node name="PrestigeTab" type="Button" parent="TabBar"]
+offset_left = 270.0
+offset_top = 5.0
+offset_right = 340.0
+offset_bottom = 35.0
+text = "P0"
+visible = false
+
 [node name="SettingsTab" type="Button" parent="TabBar"]
 offset_left = 1150.0
 offset_top = 5.0
@@ -44,7 +53,16 @@ position = Vector2(0, 50)
 
 [node name="SettingsView" parent="ContentArea" instance=ExtResource("4_settings")]
 
+[node name="PrestigeView" parent="ContentArea" instance=ExtResource("6_prestige")]
+
 [node name="OverlayLayer" type="CanvasLayer" parent="."]
 layer = 10
 
 [node name="SaveToast" parent="OverlayLayer" instance=ExtResource("5_toast")]
+
+[node name="FadeRect" type="ColorRect" parent="OverlayLayer"]
+offset_right = 1280.0
+offset_bottom = 720.0
+color = Color(0, 0, 0, 0)
+visible = false
+mouse_filter = 2
