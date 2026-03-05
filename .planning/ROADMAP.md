@@ -200,7 +200,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 40-01: Prestige panel in ForgeView (status, cost, unlock table, confirm flow)
+- [x] 40-01: Prestige panel in ForgeView (status, cost, unlock table, confirm flow)
 - [ ] 40-02: Tag hammer button row + prestige level display in main UI
 
 ### Phase 41: Integration Verification
@@ -233,9 +233,9 @@ Plans:
 | 37. Affix Tier Expansion   | 1/1 | Complete    | 2026-03-01 | -          |
 | 38. Item Tier System       | 1/1 | Complete    | 2026-03-01 | -          |
 | 39. Tag-Targeted Currencies| 2/2 | Complete    | 2026-03-01 | -          |
-| 40. Prestige UI            | v1.7 | 0/2       | Not started | -          |
+| 40. Prestige UI            | v1.7 | 1/2       | In progress | -          |
 | 41. Integration Verification | v1.7 | 0/1     | Not started | -          |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-01 — Phase 39 planned (2 plans: TagHammer class + forge UI/drop integration)*
+*Last updated: 2026-03-06 — Phase 40 Plan 01 complete (prestige view scene + confirmation flow)*
