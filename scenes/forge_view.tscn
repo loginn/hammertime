@@ -38,6 +38,7 @@ text = "Runic (0)"
 icon = ExtResource("4_runic")
 icon_alignment = 0
 expand_icon = true
+theme_override_constants/icon_max_width = 32
 
 [node name="ForgeHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
@@ -51,6 +52,7 @@ text = "Forge (0)"
 icon = ExtResource("5_forge")
 icon_alignment = 0
 expand_icon = true
+theme_override_constants/icon_max_width = 32
 
 [node name="TackHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
@@ -64,6 +66,7 @@ text = "Tack (0)"
 icon = ExtResource("6_tack")
 icon_alignment = 0
 expand_icon = true
+theme_override_constants/icon_max_width = 32
 
 [node name="GrandHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
@@ -77,6 +80,7 @@ text = "Grand (0)"
 icon = ExtResource("7_grand")
 icon_alignment = 0
 expand_icon = true
+theme_override_constants/icon_max_width = 32
 
 [node name="ClawHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
@@ -90,6 +94,7 @@ text = "Claw (0)"
 icon = ExtResource("8_claw")
 icon_alignment = 0
 expand_icon = true
+theme_override_constants/icon_max_width = 32
 
 [node name="TuningHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
@@ -103,6 +108,7 @@ text = "Tuning (0)"
 icon = ExtResource("9_tuning")
 icon_alignment = 0
 expand_icon = true
+theme_override_constants/icon_max_width = 32
 
 [node name="TagHammerSection" type="VBoxContainer" parent="HammerSidebar"]
 layout_mode = 0
