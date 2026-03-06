@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 ## Current Position
 
 Status: Between milestones — v1.7 Meta-Progression shipped 2026-03-06
-Last activity: 2026-03-06 — v1.7 milestone completed and archived
+Last activity: 2026-03-06 - Completed quick task 10: Fix the icons in the crafting view
 
 Progress: [██████████] 100% (9 milestones shipped: v0.1 through v1.7)
 
@@ -61,7 +61,7 @@ All decisions logged in PROJECT.md Key Decisions table.
 ### Pending Todos
 
 - [ ] Add item drop filter for unwanted loot (FILT-01 — deferred to future)
-- [ ] Fix the icons in the crafting view
+- [x] Fix the icons in the crafting view (quick-10)
 - [ ] Add large number formatting with suffix notation
 
 ### Blockers/Concerns
@@ -75,6 +75,7 @@ None — between milestones.
 | 7 | Handle untracked / unstaged files | 2026-02-19 | 2648f05 | [7-handle-untracked-unstaged-files](./quick/7-handle-untracked-unstaged-files/) |
 | 8 | Audit and fix affix pipeline (disable 9 dead mods, fix FLAT_HEALTH/FLAT_ARMOR aggregation) | 2026-02-19 | 5b29755 | [8-audit-and-fix-affix-pipeline-to-ensure-a](./quick/8-audit-and-fix-affix-pipeline-to-ensure-a/) |
 | 9 | Rename original_base_xxx to base_xxx and base_xxx to computed_xxx; remove BasicArmor/BasicHelmet FLAT_ARMOR implicits | 2026-02-19 | ac58cda | [9-rename-original-base-xxx-to-base-xxx-and](./quick/9-rename-original-base-xxx-to-base-xxx-and/) |
+| 10 | Fix the icons in the crafting view | 2026-03-06 | 7d8bb03 | [10-fix-the-icons](./quick/10-fix-the-icons/) |
 
 ## Session Continuity
 
