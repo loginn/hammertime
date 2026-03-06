@@ -1,140 +1,350 @@
 # Feature Research
 
-**Domain:** ARPG Idle Prestige/Reset Meta-Progression — Hammertime v1.7
-**Researched:** 2026-02-20
-**Confidence:** MEDIUM (genre conventions from WebSearch verified across multiple idle game sources; ARPG-specific affix/tier patterns from Last Epoch wiki and official forums HIGH confidence; prestige reset/persist split from community analysis and Kongregate math series MEDIUM confidence)
+**Domain:** ARPG Item Archetypes (STR/DEX/INT bases), Spell Damage Systems, Affix Pool Differentiation -- Hammertime v1.8
+**Researched:** 2026-03-06
+**Confidence:** HIGH (patterns verified across PoE 1/2, Last Epoch, Diablo 4 -- core ARPG conventions with 20+ years of design iteration)
 
 ---
 
-## Feature Landscape
+## 1. Table Stakes -- What Players Expect from Item Archetypes
 
-### Table Stakes (Users Expect These)
+ARPG players have deeply internalized the STR/DEX/INT archetype triangle. These expectations are non-negotiable for any game claiming ARPG item identity.
 
-Features users of idle ARPG prestige systems consider non-negotiable. Missing these makes the prestige loop feel broken or punishing rather than rewarding.
+| Feature | Why Expected | Complexity | Hammertime Notes |
+|---------|--------------|------------|------------------|
+| 3 defense types tied to archetypes | Armor=STR, Evasion=DEX, Energy Shield=INT is the universal ARPG convention (PoE, Last Epoch, D4 all use it). Players instantly understand gear identity from its primary defense stat | LOW | Already have Armor, Evasion, ES as stats. Current bases are all armor-primary. Need DEX bases (evasion-primary) and INT bases (ES-primary) |
+| Base stat determines archetype identity | The base item's inherent stats (not affixes) signal which archetype it serves. A "Silk Robe" with base ES tells the player "this is for casters" before any mods are applied | LOW | Current BasicArmor has `base_armor = 5`. New int body armor needs `base_energy_shield = X, base_armor = 0`. Dex body armor needs `base_evasion = X, base_armor = 0` |
+| Implicit mods differ by archetype | Implicits are the primary way items announce "who should use this." A STR sword has flat phys implicit; an INT sceptre has spell damage implicit; a DEX bow has crit implicit | LOW | LightSword already has Attack Speed implicit. New weapon bases need different implicits (spell damage, crit chance, etc.) |
+| Affix pool partially shared, partially exclusive | Some mods roll on all bases (life, resistances); some are archetype-exclusive (spell damage only on INT gear, attack speed only on STR/DEX gear). This creates meaningful gearing decisions | MEDIUM | Current tag system supports this. Weapon valid_tags control which affixes can roll. Need to add SPELL/CASTER tags and spell-specific affixes |
+| Hybrid bases exist | Every major ARPG offers STR/DEX, STR/INT, or DEX/INT hybrid bases that split their defense between two types. These serve multi-archetype builds | LOW | Add after pure bases work. Hybrid = split base stats (e.g., armor/evasion boots) |
+| Visual/naming convention signals archetype | STR items use heavy/plate/iron names. DEX items use leather/hide/scale names. INT items use silk/arcane/mystic names. This is genre vocabulary | LOW | Naming only; no code impact beyond item_name strings |
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Prestige currency grant on reset | All idle prestige systems award a persistent currency for resetting. Without it, there's no incentive to reset — the loop breaks | LOW | New `prestige_points: int` field on GameState; awarded on prestige trigger; survives all future resets |
-| Full reset of area level and gear on prestige | Players understand prestige as "start over but stronger" — keeping gear breaks the identity of the system and removes the early-game surge feeling | MEDIUM | On prestige: `area_level = 1`, `hero.equipment = {}`, `crafting_inventory = {type: []}`, `currencies = {}`. Prestige points and unlock tier survive |
-| Visible prestige cost before commit | Every idle game with a prestige cost shows the cost, current progress toward it, and what you'll get before the player commits — hidden costs cause rage quits | LOW | PrestigeView (new tab or overlay): shows `prestige_level`, `prestige_points`, cost for next prestige, unlocks from next prestige |
-| Permanent unlock that persists across resets | The prestige reward must feel meaningful. Unlocking new content (item tiers, hammer types) is a standard ARPG idle prestige reward pattern | MEDIUM | Item tier cap increases per prestige level (Prestige 0 = tier 1-2, Prestige 1 = tier 1-4, ..., Prestige 6 = tier 1-8). Tag-targeted hammers unlock at Prestige 1 |
-| Faster early re-progression after prestige | Post-prestige early content should clear faster than the first run — the "power rush" feeling. Without it, players feel punished rather than rewarded | HIGH | Prestige points spent on a multiplier that boosts area XP/drop rates, OR item tier unlocks naturally accelerate the power curve (better items drop earlier) |
-| Confirmation dialog before prestige | Every prestige-gated system has a "are you sure?" confirm. ARPG players are especially sensitive to accidental resets of crafted gear | LOW | Two-step prestige confirm: "Prestige? This resets area, gear, and inventory. Prestige points and tier unlocks persist." followed by confirm button |
-| Prestige level display on main UI | Players should always know what prestige level they're on — it's an identity marker. Hidden prestige level = invisible progression | LOW | Small prestige level indicator in hero view or persistent HUD element; "Prestige 2" or star/level icon |
+## 2. Item Base Differentiation Patterns
 
-### Differentiators (Competitive Advantage)
+### How PoE Handles It
 
-Features that give Hammertime's prestige loop a distinct identity. Not required by genre convention, but meaningful for the specific crafting-first design.
+**Weapons:**
+- STR: Maces, Axes (high base phys damage, slow). Implicit: +% elemental damage (maces) or accuracy (axes)
+- DEX: Daggers, Claws, Bows (lower base damage, fast). Implicit: crit chance, life/mana on hit
+- INT: Wands, Sceptres (low base damage, enable spells). Implicit: +spell damage, +elemental damage
+- Hybrid: Swords (STR/DEX), Staves (STR/INT)
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Item tier gating as prestige reward (unlock tier range, not just multiplier) | Most idle prestige systems reward number multipliers. Hammertime's reward is access to qualitatively different items — this ties prestige directly to the crafting identity rather than adding a separate number layer | HIGH | 8 item tiers; prestige level unlocks tier ceiling (P0=T2, P1=T4, P2=T5, P3=T6, P4=T7, P5=T7+, P6=T8). Area-level-weighted drop distribution within unlocked range |
-| 32-tier affix system (4 tiers per item tier) | 8 tiers is too coarse for 7 prestige levels — incremental gear power feels flat. 32 tiers (4 per item-tier band) creates granular, visible upgrade paths that feel meaningful across a 30-hour prestige loop | HIGH | Expand `AffixDB` tier ranges from max 8 → max 32; values scale linearly within each item-tier band of 4 affix tiers. Existing `Vector2i tier_range` architecture supports this with a constant bump |
-| Tag-targeted crafting hammers as Prestige 1 unlock | Standard crafting is random within prefix/suffix slot. Tag-targeted hammers (FireHammer guarantees a fire affix) introduce deliberate crafting as a prestige reward — this is the same design leap PoE2 made with Omens and essences, but simplified for an idle context | HIGH | New hammer subclasses with tag filter: `_do_apply()` checks `affix.tags.has(required_tag)` before rolling; rejects and re-rolls within valid pool. These are rarer than standard hammers, unlocked only after P1 |
-| Currency-gated prestige trigger (not level-gated) | Level-gating prestige (e.g., "reach level 100") is common but passive. Currency-gating ("spend 500 prestige shards") requires players to actively run content, creating a concrete farming goal instead of waiting for a number to tick up | MEDIUM | New `prestige_shard` currency type; drops from Shadow Realm (area 75+) at low rate; cost scales per prestige level (P0→P1: 100, P1→P2: 250, ..., P6→P7: impossible by design — 7 total) |
-| Area-level-weighted drop within unlocked tier range | Items shouldn't always drop at max unlocked tier — that removes the late-game loot surge. Higher area levels weight toward higher item tiers, creating visible gear progression within a single prestige run | MEDIUM | `LootTable` uses `area_level` to bias tier selection within `[1, max_unlocked_tier]`; low levels favor tier 1-2, high levels favor tier ceiling. Sqrt ramp pattern (already in codebase) applied to tier weight |
-| Prestige unlock display (what each level gives) | Showing players the future unlocks ("Prestige 3: Unlock item tiers 5-6, Cold Hammer available") creates goal orientation across multiple resets. Players tolerate 3 resets to get there if they can see the destination | LOW | Static unlock table in PrestigeView listing all 7 prestige levels with their unlocks; current level highlighted; future levels shown as "locked" |
+**Body Armor:**
+- STR: Base Armor only (e.g., Glorious Plate: 776 armor)
+- DEX: Base Evasion only (e.g., Assassin's Garb: 705 evasion)
+- INT: Base ES only (e.g., Vaal Regalia: 242 ES)
+- Hybrid: Two defense types split (e.g., STR/DEX: Triumphant Lamellar: armor + evasion)
 
-### Anti-Features (Commonly Requested, Often Problematic)
+**Key principle:** The base item determines defense type identity. Affixes can add other defense types on top, but the base stat is always the primary.
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Gear persists through prestige | Reduces punishment anxiety; players don't want to lose crafted items | Defeats the prestige loop entirely — the power rush after reset comes from being forced through weaker content with better meta-knowledge. If gear persists, the early-game becomes trivially easy and players skip it, removing the feeling of progression | Full gear reset. The unlock of higher item tiers makes each subsequent run's gear ceiling higher, which is the correct reward |
-| Per-prestige infinite scaling (no level cap) | "More prestige = always stronger" seems straightforward | Without a level cap, balancing the endgame becomes impossible. Hammertime's 7-prestige design (unlocking 8 item tier levels and all tag hammers) gives a designed end state. Beyond that, balance collapses and content runs out | Hard cap at 7 prestige levels. Prestige 7 is the "complete" state with all item tiers and all tag hammers unlocked |
-| Prestige currency from all areas (not just endgame) | Players want prestige shards everywhere so they can prestige faster | Removes the design logic of prestige as an endgame reward. If shards drop in Forest, players prestige repeatedly through early areas with no incentive to reach Shadow Realm | Prestige shards drop only from Shadow Realm (area 75+); this gate means players must complete a full run before prestiging |
-| Chaos/full reroll of affix tiers on prestige items | Higher item tiers should feel craftable with "perfect" affixes | Full rerolls allow bricking runs by making items too random — Hammertime explicitly excluded chaos-style rerolls as a design decision. This remains anti-feature even at higher tiers | Existing hammer set applies to all tiers; the TackHammer prefix removal and Grand Hammer reroll are the controlled intervention points |
-| Visual tier indicators on items in inventory list | Players want to immediately know item tier from the slot view | Adds significant UI complexity to a mobile-first 1280x720 viewport with 10 items per slot. The bench shows tier via the item details on selection | Show item tier in the bench detail view (already shows affix quality); slot list shows count not per-item details |
-| Separate prestige-only item pool (exclusive drops) | "Prestige items" as separate category feels rewarding | Creates a parallel loot track that must be balanced alongside the existing track, doubling content scope. Item tier is the correct prestige reward, not a separate item category | Higher prestige = higher item tier ceiling = qualitatively better items from the existing pool |
-| Partial prestige (reset some things, keep others) | Less punishing, seems fair | Undermines the "power rush" effect that makes prestige psychologically rewarding. Research consistently shows partial resets feel less impactful than full resets — players feel they didn't really commit. The full reset + permanent gain is the complete emotional arc | Full reset with generous permanent unlocks (item tiers + hammers) compensates for the loss |
+### How Last Epoch Handles It
+
+**Weapons per archetype:**
+- Sentinel (STR): Swords, Axes, Maces -- high base damage
+- Rogue (DEX): Daggers, Bows -- crit-oriented, faster
+- Mage (INT): Wands, Sceptres, Staves -- enable spell casting, +spell damage implicit
+- Acolyte (INT-adjacent): Catalysts -- specifically for DoT/necro builds
+
+**Armor per archetype:**
+- Each class has its own armor type with weighted defenses
+- Last Epoch also gates affixes by item class (some mods only appear on mage helmets)
+
+**Key principle:** Last Epoch takes archetype differentiation further by class-gating some affixes to specific item types, not just by tag filtering.
+
+### How Diablo 4 Handles It
+
+**Simpler model:**
+- STR: Barbarian items (high armor, weapon damage)
+- DEX: Rogue items (dodge chance, crit)
+- INT: Sorcerer items (skill ranks, cooldown reduction)
+- All classes share generic slots with class-specific affixes
+
+**Key principle:** D4 simplifies by tying archetypes to classes rather than items. Less relevant for Hammertime since there's no class system -- items must carry the archetype identity themselves.
+
+### Pattern Summary for Hammertime
+
+The consistent cross-game pattern is:
+
+| Slot | STR Base | DEX Base | INT Base |
+|------|----------|----------|----------|
+| Weapon | High phys damage, slow. Implicit: phys % or accuracy | Medium damage, fast. Implicit: crit chance | Low phys damage, spell-enabling. Implicit: spell damage |
+| Body Armor | Base Armor | Base Evasion | Base ES |
+| Helmet | Base Armor | Base Evasion | Base ES |
+| Boots | Base Armor + move speed | Base Evasion + move speed | Base ES + move speed |
+| Ring | Flat phys damage | Crit chance or accuracy | Spell damage or cast speed |
+
+**Hammertime mapping (using existing class hierarchy):**
+
+| Slot | STR (exists) | DEX (new) | INT (new) |
+|------|-------------|-----------|-----------|
+| Weapon | LightSword (phys, attack speed implicit) | ShortBow (phys, crit chance implicit) | Wand (low phys, +spell damage implicit) |
+| Body Armor | BasicArmor (base_armor=5) | LeatherArmor (base_evasion=5) | SilkRobe (base_energy_shield=5) |
+| Helmet | BasicHelmet (base_armor=3) | LeatherHelm (base_evasion=3) | CircletHelm (base_energy_shield=3) |
+| Boots | BasicBoots (base_armor=0, move speed implicit) | LeatherBoots (base_evasion=0, move speed implicit) | SilkSlippers (base_energy_shield=0, move speed implicit) |
+| Ring | BasicRing (flat phys, crit chance implicit) | JadeRing (accuracy or crit multi implicit) | SapphireRing (cast speed or spell damage implicit) |
+
+## 3. Spell vs Attack Damage -- How Games Split These Systems
+
+### The Core Split
+
+Every ARPG with spell damage uses the same fundamental split:
+
+| Dimension | Attack Damage | Spell Damage |
+|-----------|---------------|--------------|
+| Damage source | Weapon base damage + flat added damage | Spell base damage (fixed per skill) + flat added spell damage |
+| Scaling stats | %increased attack damage, flat phys, attack speed | %increased spell damage, flat spell damage, cast speed |
+| Speed stat | Attack speed | Cast speed |
+| Crit route | Weapon crit chance (base on weapon) | Spell crit chance (base on spell or global) |
+| Defense bypass | Evasion dodges attacks | Evasion does NOT dodge spells (already in DefenseCalculator) |
+| Weapon dependency | DPS scales directly with weapon base | Weapon provides +spell damage as a stat, not as base DPS |
+
+### How This Maps to an Idle Game
+
+In an idle game without active skill selection, "spell damage" is a parallel damage channel:
+
+**Option A: Dual-channel simultaneous (recommended for idle)**
+- Hero deals attack damage AND spell damage every tick
+- Attack damage comes from weapon base + attack affixes
+- Spell damage comes from a separate formula: base spell + spell affixes
+- Total DPS = attack DPS + spell DPS
+- Player optimizes one or both channels through gear choices
+
+**Option B: Skill-based toggle (too complex for idle)**
+- Player picks "use attacks" or "use spells" -- requires active choice and skill UI
+- Not appropriate for an idle game
+
+**Option C: Weapon type determines channel (good middle ground)**
+- STR/DEX weapons calculate attack DPS (current system)
+- INT weapons calculate spell DPS instead of attack DPS
+- Only one channel active at a time, determined by equipped weapon
+- Simpler than dual-channel, still creates meaningful weapon choice
+
+### Recommendation for Hammertime: Option C (weapon determines channel)
+
+Option C is the cleanest fit because:
+1. No new combat tick system needed -- weapon DPS is already the single damage source
+2. The Wand simply calculates DPS differently: `spell_base * (1 + spell_damage%) * cast_speed * crit`
+3. Attack speed affixes are dead weight on a Wand; cast speed affixes are dead weight on a Sword. This creates natural affix differentiation without complex tag exclusion rules
+4. The hero already has a single `total_dps` that feeds combat. Spell DPS just replaces attack DPS when a wand is equipped
+
+### Spell Damage Implementation Sketch
+
+New stats needed:
+- `SPELL_DAMAGE` (flat added spell damage) -- prefix, analogous to FLAT_DAMAGE
+- `INCREASED_SPELL_DAMAGE` (% spell damage) -- prefix, analogous to INCREASED_DAMAGE
+- `CAST_SPEED` (% increased cast speed) -- suffix, analogous to INCREASED_SPEED (already stubbed!)
+- `SPELL_CRIT_CHANCE` -- suffix (or share existing CRIT_CHANCE with SPELL tag)
+
+Wand base stats:
+```
+base_spell_damage_min: int = 5
+base_spell_damage_max: int = 10
+base_cast_speed: float = 1.0  # casts per second
+# base_damage_min/max still exist but are very low (1-2) for when attack affixes land on it
+```
+
+DPS formula for wand:
+```
+spell_dps = avg(spell_min, spell_max) * (1 + sum(increased_spell_damage%)) * cast_speed * crit_multiplier
+```
+
+## 4. Affix Pool Per Archetype
+
+### Which Mods Matter for Each Playstyle
+
+| Affix | STR (Attack/Armor) | DEX (Attack/Evasion) | INT (Spell/ES) | Tag Filter |
+|-------|-------------------|---------------------|----------------|------------|
+| **Offensive Prefixes** | | | | |
+| Flat Physical Damage | Core | Core | Dead | Tag.ATTACK, Tag.WEAPON |
+| %Physical Damage | Core | Good | Dead | Tag.ATTACK, Tag.WEAPON |
+| %Elemental Damage | Good | Good | Good | Tag.WEAPON (attacks and spells) |
+| Flat Fire/Cold/Lightning | Good | Good | Good | Tag.WEAPON |
+| %Fire/%Cold/%Lightning | Good | Good | Good | Tag.WEAPON |
+| Flat Spell Damage (NEW) | Dead | Dead | Core | Tag.SPELL, Tag.WEAPON |
+| %Spell Damage (NEW) | Dead | Dead | Core | Tag.SPELL, Tag.WEAPON |
+| **Defensive Prefixes** | | | | |
+| Flat Armor | Core | Weak | Dead | Tag.DEFENSE, Tag.ARMOR |
+| %Armor | Core | Weak | Dead | Tag.DEFENSE, Tag.ARMOR |
+| Flat Evasion | Weak | Core | Dead | Tag.DEFENSE, Tag.EVASION |
+| %Evasion | Weak | Core | Dead | Tag.DEFENSE, Tag.EVASION |
+| Flat Energy Shield | Dead | Dead | Core | Tag.DEFENSE, Tag.ENERGY_SHIELD |
+| %Energy Shield | Dead | Dead | Core | Tag.DEFENSE, Tag.ENERGY_SHIELD |
+| Health | Core | Core | Good | Tag.DEFENSE, Tag.UTILITY |
+| %Health | Core | Core | Good | Tag.DEFENSE, Tag.UTILITY |
+| Mana | Weak | Weak | Core | Tag.DEFENSE, Tag.MANA |
+| **Suffixes** | | | | |
+| Attack Speed | Core | Core | Dead | Tag.ATTACK, Tag.WEAPON |
+| Cast Speed (ENABLE) | Dead | Dead | Core | Tag.SPELL, Tag.WEAPON |
+| Crit Chance | Good | Core | Good | Tag.CRITICAL |
+| Crit Damage | Good | Core | Good | Tag.CRITICAL |
+| Fire/Cold/Lightning Res | Core | Core | Core | Tag.DEFENSE |
+| All Resistances | Core | Core | Core | Tag.DEFENSE |
+| Life (suffix) | Core | Core | Core | Tag.DEFENSE |
+| Armor (suffix) | Core | Weak | Dead | Tag.DEFENSE, Tag.ARMOR |
+| Dodge Chance (ENABLE) | Dead | Core | Dead | Tag.DEFENSE, Tag.EVASION |
+| Dmg Suppression (ENABLE) | Dead | Good | Good | Tag.DEFENSE |
+
+### How valid_tags Creates Archetype Identity
+
+The existing `valid_tags` array on each item base is the mechanism. Affixes check `has_valid_tag()` before rolling.
+
+**STR Weapon (LightSword):**
+```gdscript
+valid_tags = [Tag.PHYSICAL, Tag.ATTACK, Tag.CRITICAL, Tag.WEAPON]
+```
+- Gets: flat phys, %phys, attack speed, crit, elemental flat/%, resistances
+- Excluded: spell damage, cast speed (no Tag.SPELL)
+
+**INT Weapon (Wand) -- proposed:**
+```gdscript
+valid_tags = [Tag.SPELL, Tag.ELEMENTAL, Tag.CRITICAL, Tag.WEAPON]
+```
+- Gets: spell damage, %spell damage, cast speed, crit, elemental flat/%, resistances
+- Excluded: flat phys, %phys, attack speed (no Tag.PHYSICAL, no Tag.ATTACK)
+
+**DEX Weapon (ShortBow) -- proposed:**
+```gdscript
+valid_tags = [Tag.PHYSICAL, Tag.ATTACK, Tag.CRITICAL, Tag.WEAPON]
+```
+- Same offensive pool as STR weapon but different base stats (faster, lower base damage, higher crit implicit)
+
+**STR Body Armor (BasicArmor):**
+```gdscript
+valid_tags = [Tag.DEFENSE, Tag.ARMOR, Tag.ENERGY_SHIELD]  # current
+```
+- Gets: flat armor, %armor, ES, health, resistances
+
+**DEX Body Armor (LeatherArmor) -- proposed:**
+```gdscript
+valid_tags = [Tag.DEFENSE, Tag.EVASION, Tag.ENERGY_SHIELD]
+```
+- Gets: flat evasion, %evasion, ES, health, resistances
+- Excluded: flat armor, %armor (no Tag.ARMOR)
+
+**INT Body Armor (SilkRobe) -- proposed:**
+```gdscript
+valid_tags = [Tag.DEFENSE, Tag.ENERGY_SHIELD, Tag.MANA]
+```
+- Gets: flat ES, %ES, mana, health, resistances
+- Excluded: flat armor, %armor, flat evasion, %evasion (no Tag.ARMOR, no Tag.EVASION)
+
+### New Affixes Needed
+
+| Affix Name | Type | Tags | StatType (new) | Notes |
+|------------|------|------|----------------|-------|
+| Flat Spell Damage | PREFIX | [Tag.SPELL, Tag.FLAT, Tag.WEAPON] | FLAT_SPELL_DAMAGE | Analogous to Physical Damage prefix |
+| %Spell Damage | PREFIX | [Tag.SPELL, Tag.PERCENTAGE, Tag.WEAPON] | INCREASED_SPELL_DAMAGE | Analogous to %Physical Damage prefix |
+| Cast Speed | SUFFIX | [Tag.SPEED, Tag.SPELL, Tag.WEAPON] | CAST_SPEED | Already stubbed in item_affixes.gd |
+| Dodge Chance | SUFFIX | [Tag.DEFENSE, Tag.EVASION] | DODGE_CHANCE | Already stubbed; DEX defensive identity |
+| Dmg Suppression | SUFFIX | [Tag.DEFENSE] | DAMAGE_SUPPRESSION | Already stubbed; reduces spell damage taken |
+
+New StatType enum entries needed:
+```gdscript
+FLAT_SPELL_DAMAGE,
+INCREASED_SPELL_DAMAGE,
+CAST_SPEED,      # already stubbed as disabled suffix
+DODGE_CHANCE,    # already stubbed
+DAMAGE_SUPPRESSION,  # already stubbed
+```
+
+## 5. Differentiators vs Anti-Features
+
+### Differentiators (Include -- Competitive Advantage for Idle ARPG)
+
+| Feature | Value for Hammertime | Why It Works in Idle Context |
+|---------|---------------------|------------------------------|
+| **Weapon type determines damage channel** (attack vs spell) | Single cleanest archetype differentiator. Equipping a wand vs a sword changes your entire build identity without needing a class system | No active skill selection needed. Weapon swap changes the math; player sees DPS update immediately. Idle-friendly |
+| **Defense type on base item (not affixes)** creates gear identity | Players know at a glance if an item is "for them." A Silk Robe with base ES screams "caster gear" before any crafting | Zero UI complexity added. The item name + base stat communicates archetype. Works in small mobile viewports |
+| **Shared suffix pool, split prefix pool** | Resistances and life on all gear (everyone needs survivability). Damage prefixes split by archetype (spell vs attack). Creates meaningful crafting decisions: "Do I craft this Wand for spell damage or sell and find a Sword?" | Reduces total affix count needed. Suffixes are universal; only offensive prefixes and a few defensive prefixes need archetype filtering |
+| **3 pure bases per slot, no hybrids initially** | 15 total item bases (5 slots x 3 archetypes) is manageable scope. Hybrids add later as content expansion | Keeps loot pool readable. Player sees 3 weapons, 3 armors, etc. Not overwhelmed by choice in an idle context |
+| **Implicit mod as archetype signature** | The implicit is the one stat players can't change via crafting. It permanently marks the item's identity. LightSword = attack speed. Wand = spell damage. ShortBow = crit chance | Existing implicit system supports this with zero changes. Just set different implicits per base |
+| **Enable disabled suffix stubs (cast speed, dodge)** | These stubs were designed for this exact milestone. Enabling them completes the suffix pool for DEX and INT archetypes | Near-zero new code. The affixes exist in item_affixes.gd as comments. Enable and assign appropriate StatType implementations |
+
+### Anti-Features (Avoid -- Commonly Requested, Problematic in Idle Context)
+
+| Feature | Why Requested | Why Problematic for Hammertime | Alternative |
+|---------|---------------|-------------------------------|-------------|
+| **Attribute requirements (need 50 STR to equip plate)** | "Realism" and build constraint in PoE/D4 | Hammertime has no attribute system. Adding STR/DEX/INT as hero stats just to gate equipment adds complexity with no gameplay payoff in idle. The item's base stats already self-select -- a caster won't equip plate because plate has no ES | Item base stats create natural selection pressure. No attribute gate needed |
+| **Class system to restrict gear** | "Only mages should wear robes" | No classes in Hammertime. The entire point is that crafting IS the build system. Any weapon can be equipped. The optimization comes from matching gear archetype to your damage channel preference | Weapon determines damage channel; armor archetype is player's defensive choice. Full freedom |
+| **Dual-wielding or off-hand items** | Adds depth, more gear slots | Doubles weapon slot complexity. Current 5-slot system is tuned for idle. A second weapon slot means balancing DPS for 2 weapons, dual-wield bonuses, etc. | Single weapon slot. Ring already serves as secondary damage source |
+| **Separate spell skill system** | "Spells should have cooldowns and mana costs" | Turns idle game into action RPG. Mana exists as a stat but has no mechanical effect yet. Adding skill cooldowns requires active play, which contradicts idle design | Spell damage is passive -- wand auto-casts on the same timer as attacks. Cast speed replaces attack speed. Mana remains a defensive stat (mana shield potential) |
+| **Per-element spell specialization** | "Fire mage should only do fire damage" | Over-constrains builds in a game with 3 elements already. Elemental flat damage affixes already exist and can roll on any weapon. Forcing element-locking reduces crafting option space | Elemental affixes remain shared across all archetypes. A wand can have fire, cold, or lightning spell damage. Player specializes via tag-targeted hammers from v1.7, not via base item restriction |
+| **Armor-type-exclusive affixes** (mods that ONLY appear on plate, never on leather) | "Plate should have plate-only mods" | With only 3 bases per slot and the existing tag filter system, exclusive mods shrink the affix pool too aggressively. A DEX helmet with only 4 possible prefixes feels boring to craft | Use valid_tags to weight toward archetype-appropriate mods while keeping the pool large enough for interesting crafting. A leather helmet CAN roll flat ES (via Tag.ENERGY_SHIELD in valid_tags if desired) but primarily rolls evasion |
+| **Weapon range / melee vs ranged split** | Standard ARPG distinction | No spatial combat in idle game. Melee vs ranged has no mechanical meaning when combat is auto-resolved via timers. The distinction would be purely cosmetic | All weapons are equivalent in combat delivery. Differentiate via damage formula (attack vs spell) and implicit, not range |
+| **Gem/socket system on items** | PoE's core identity; Last Epoch has it too | Massive scope expansion. Sockets require a new resource type (gems), a linking system, and per-socket UI. This is a separate milestone-scale feature, not part of item base differentiation | Affixes ARE the customization layer. Tag-targeted hammers from v1.7 serve the "choose your build" role that gems serve in PoE |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Prestige Points System]
-    └──required-by──> [Prestige Trigger UI]
-    └──required-by──> [Prestige Cost Scaling]
-    └──persists-through──> [Prestige Reset]
+[New Item Bases (10 new bases)]
+    |-- requires --> [Existing Item class hierarchy] (Weapon, Armor, Helmet, Boots, Ring)
+    |-- requires --> [New SPELL tag + CASTER tag] in tag.gd
+    |-- requires --> [New StatTypes] (FLAT_SPELL_DAMAGE, INCREASED_SPELL_DAMAGE, CAST_SPEED, DODGE_CHANCE)
+    |-- required-by --> [Loot Table update] (new bases added to drop pool)
+    |-- required-by --> [Save/Load update] (new type strings in Item.create_from_dict)
+    |-- required-by --> [GameState slots] (gameplay_view must handle new item types)
 
-[Prestige Reset]
-    └──resets──> [Area Level]
-    └──resets──> [Hero Equipment]
-    └──resets──> [Crafting Inventory]
-    └──resets──> [All Currencies (incl. regular hammers)]
-    └──does-NOT-reset──> [Prestige Points]
-    └──does-NOT-reset──> [Prestige Level / Tier Unlocks]
-    └──does-NOT-reset──> [Tag-Targeted Hammer Unlocks]
+[Spell Damage Channel]
+    |-- requires --> [Wand item base] (INT weapon that uses spell DPS formula)
+    |-- requires --> [New StatTypes] (FLAT_SPELL_DAMAGE, INCREASED_SPELL_DAMAGE, CAST_SPEED)
+    |-- requires --> [StatCalculator update] (spell DPS formula parallel to attack DPS)
+    |-- requires --> [Hero.calculate_damage_ranges update] (spell damage path)
+    |-- impacts --> [CombatEngine._on_hero_attack] (damage source may be spell, not attack)
 
-[Item Tier Gating]
-    └──requires──> [Prestige Level] (tier ceiling = f(prestige_level))
-    └──required-by──> [32-Tier Affix Expansion] (tiers map to item tier bands)
-    └──required-by──> [Area-Level-Weighted Tier Drops] (weight needs a ceiling)
-    └──required-by──> [Item Display: show item tier]
+[New Affixes (spell damage, cast speed, dodge)]
+    |-- requires --> [New StatTypes] in tag.gd
+    |-- requires --> [Enable disabled suffixes] in item_affixes.gd
+    |-- requires --> [StatCalculator] spell damage aggregation
+    |-- requires --> [Hero.update_stats] to aggregate new stat types
+    |-- required-by --> [DefenseCalculator] (dodge chance, damage suppression)
 
-[32-Tier Affix Expansion]
-    └──requires──> [Item Tier Gating] (affix tiers 1-4 = item tier 1, etc.)
-    └──requires──> [AffixDB refactor] (tier_range max bumped from 8 → 32)
-    └──impacts──> [StatCalculator] (value ranges change; scaling math needed)
-    └──impacts──> [SaveManager] (affix tier values in save; migration required)
-
-[Tag-Targeted Hammers]
-    └──requires──> [Prestige Level >= 1] (unlock gate)
-    └──requires──> [Existing Tag system] (Tag.FIRE, Tag.COLD, etc. already exist)
-    └──requires──> [Currency template method] (new subclasses of base Currency)
-    └──requires──> [LootTable] (new hammer types added to drop pool post-P1)
-    └──enhances──> [Crafting Loop] (deterministic targeting as prestige reward)
-
-[Prestige Shard Currency]
-    └──required-by──> [Prestige Trigger] (cost paid in shards)
-    └──requires──> [LootTable] (shard added to Shadow Realm drop pool)
-    └──resets-on──> [Prestige Reset] (shards consumed to trigger; leftover shards reset)
-
-[Prestige UI]
-    └──requires──> [Prestige Points System]
-    └──requires──> [Item Tier Gating] (shows unlock table)
-    └──requires──> [Prestige Shard Currency] (shows cost and current count)
+[valid_tags Per Base]
+    |-- requires --> [New bases exist] (each base sets its own valid_tags)
+    |-- uses --> [Existing has_valid_tag() in Item] (no code change needed)
+    |-- impacts --> [Crafting experience] (different bases roll different mod pools)
 ```
 
 ### Dependency Notes
 
-- **Item tier gating is the root unlock, not a bonus:** If item tier unlocks are wrong (wrong ceiling, wrong drop weights), the entire prestige loop feels broken. Build and validate this before tag-targeted hammers.
-- **32-tier affix expansion requires item tier gating first:** Affix tiers 1-32 are organized as 4 tiers per item tier band. The item tier concept must exist before expanding affix tiers.
-- **Tag-targeted hammers require existing tag infrastructure:** Hammertime already has `Tag.FIRE`, `Tag.COLD`, `Tag.LIGHTNING`, `Tag.DEFENSE` tags on affixes. New hammer subclasses filter by tag, not by implementing new tag logic. This is LOW-risk if built after the Currency template method is confirmed stable.
-- **SaveManager migration required for affix tier expansion:** Existing saves have affix tier values in [1, 8]. After expanding to 32 tiers, old saves must migrate: multiply existing tier by 4 to map old tier 1 → new tier 4 (worst), old tier 8 → new tier 32 (best). This is the ARPG convention (tier 1 = best in Hammertime, so direction matters).
-- **Prestige shard resets on prestige:** Shards are the trigger cost and do not persist. A player who fails to prestige before a run ends loses leftover shards. This creates a natural "commit when ready" tension.
+- **New bases are the leaf change:** Each new base is a small GDScript file (~20 lines) extending the existing Weapon/Armor/Helmet/Boots/Ring classes. The class hierarchy already supports all needed base stats.
+- **Spell damage is the deepest change:** Adding a parallel damage channel requires StatCalculator, Hero, and CombatEngine updates. This should be built and tested before adding all 10 bases.
+- **Enabling disabled suffixes is near-zero risk:** The stubs in item_affixes.gd just need StatType values and hero aggregation. Cast Speed and Dodge Chance are the most impactful enables.
+- **Save migration is required:** Item.create_from_dict needs new match cases for each new type string. SAVE_VERSION bump needed.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v1.7 milestone)
+### Launch With (v1.8 Phase 1 -- Item Bases)
 
-Minimum viable prestige loop. Must validate the full reset + permanent unlock pattern.
+Minimum viable archetype system. Must create 3 visually and mechanically distinct gear paths.
 
-- [ ] **Prestige points awarded on prestige** — GameState adds `prestige_points: int` and `prestige_level: int` (0–7); both persist through resets
-- [ ] **Prestige shard currency** — New `PrestigeShard` drops from area 75+ via LootTable; does not ramp-unlock (Shadow Realm gate is sufficient)
-- [ ] **Prestige trigger with cost** — PrestigeView shows current shards, cost for next level, and confirm dialog; validates `prestige_shards >= cost` before executing
-- [ ] **Full reset on prestige** — `area_level = 1`, hero equipment cleared, crafting inventory cleared, all standard currencies zeroed; `prestige_level`, `prestige_points`, tag-hammer unlocks survive
-- [ ] **Item tier gating by prestige level** — `MAX_ITEM_TIER[prestige_level]` lookup table (e.g., [2, 4, 5, 6, 6, 7, 7, 8]); LootTable references this ceiling when selecting dropped item tier
-- [ ] **Area-level-weighted item tier drops** — LootTable selects item tier using sqrt-weighted distribution within [1, MAX_ITEM_TIER]; low areas weight toward tier 1-2, high areas weight toward ceiling
-- [ ] **32 affix tiers (4 per item tier band)** — AffixDB expands tier ranges; value scale recalculated so tier 1 (best) is proportionally stronger than current tier 1; SaveManager migration maps old tier * 4 → new tier scale
-- [ ] **Tag-targeted hammers at Prestige 1** — FireHammer, ColdHammer, LightningHammer subclasses; drop from LootTable only when `prestige_level >= 1`; `_do_apply()` filters affix pool by required tag
-- [ ] **Prestige UI panel** — Shows: prestige level, cost to next prestige (in shards), current shards, prestige unlock table (all 7 levels with what each unlocks), confirm button
-- [ ] **Save format v3** — Adds `prestige_level`, `prestige_points` to save; migrates affix tiers in all saved items; SAVE_VERSION bumped; v2→v3 migration defined
+- [ ] **10 new item base files** -- 2 new per slot (DEX + INT variants): ShortBow, Wand, LeatherArmor, SilkRobe, LeatherHelm, CircletHelm, LeatherBoots, SilkSlippers, JadeRing, SapphireRing
+- [ ] **New tags** -- Tag.SPELL, Tag.CASTER added to tag.gd
+- [ ] **New StatTypes** -- FLAT_SPELL_DAMAGE, INCREASED_SPELL_DAMAGE, CAST_SPEED (at minimum)
+- [ ] **2 new prefixes** -- Flat Spell Damage, %Spell Damage
+- [ ] **Enable Cast Speed suffix** -- Uncomment and wire to CAST_SPEED StatType
+- [ ] **Spell DPS formula** in StatCalculator -- parallel to attack DPS but using spell base + spell affixes
+- [ ] **Wand DPS calculation** -- Wand.update_value() uses spell DPS formula instead of attack DPS
+- [ ] **Hero spell damage path** -- Hero.calculate_damage_ranges() handles wand spell damage
+- [ ] **Loot table update** -- All 15 bases in drop pool; area level weights apply to all bases equally
+- [ ] **Save format update** -- New type strings registered; migration handles existing saves
 
-### Add After Validation (v1.x)
+### Launch With (v1.8 Phase 2 -- Affix Pool Polish)
 
-- [ ] **Post-prestige drop rate bonus** — Small multiplier on shard and currency drop rates per prestige level; only if playtesting reveals re-progression feels too slow
-- [ ] **"Prestige N" badge in hero view** — Visual identity marker; only if players report not knowing their prestige level without opening the UI
-- [ ] **Per-prestige unlock tooltips** — Hover over locked prestige in the table to see "Requires X shards" and "Unlocks: Y"; only if the static table is confusing
+- [ ] **Enable Dodge Chance suffix** -- DEX defensive identity
+- [ ] **Enable Damage Suppression suffix** -- Shared DEX/INT defensive identity
+- [ ] **valid_tags tuned per base** -- Each of 15 bases has archetype-appropriate tag set
+- [ ] **Defense calculator updates** -- Dodge Chance and Damage Suppression wired to combat
 
-### Future Consideration (v2+)
+### Add After Validation (v1.9+)
 
-- [ ] **Stat-targeted hammers** — Explicitly out of scope per PROJECT.md; listed here as natural next extension of tag-targeted hammers
-- [ ] **Outcome-locking hammers** — Protect specific mods while rerolling; out of scope for v1.7 per PROJECT.md
-- [ ] **Hero archetypes** — PROJECT.md explicitly defers to post-prestige milestone; archetypes layered on top of the established prestige loop
-- [ ] **Prestige-exclusive biome** — A 5th biome (Void, etc.) that only unlocks at Prestige 3+; future milestone if the 4-biome structure feels complete to players after prestige
+- [ ] **Hybrid bases** (STR/DEX, STR/INT, DEX/INT) -- 1 per slot = 5 more bases; only if 3-archetype system feels complete
+- [ ] **Mana as spell resource** -- Mana cost per cast, mana regen stat; only if spell builds feel too "free"
+- [ ] **Spell-specific crit** -- Separate SPELL_CRIT_CHANCE stat; only if shared crit feels wrong
+- [ ] **Sigil suffix** -- INT-specific defensive suffix; only if ES identity needs more depth
 
 ---
 
@@ -142,119 +352,105 @@ Minimum viable prestige loop. Must validate the full reset + permanent unlock pa
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Prestige shard currency + drop | HIGH | LOW | P1 |
-| Prestige trigger + reset + confirm | HIGH | MEDIUM | P1 |
-| Item tier gating by prestige level | HIGH | MEDIUM | P1 |
-| Area-level-weighted tier drops | HIGH | MEDIUM | P1 |
-| 32-tier affix expansion + value rescale | HIGH | HIGH | P1 |
-| Tag-targeted hammers (Fire/Cold/Lightning) | HIGH | MEDIUM | P1 |
-| Prestige UI panel | HIGH | MEDIUM | P1 |
-| Save format v3 + migration | HIGH | MEDIUM | P1 |
-| Post-prestige drop rate bonus | MEDIUM | LOW | P2 |
-| Prestige badge in hero view | LOW | LOW | P2 |
-| Unlock tooltip on locked prestige row | LOW | LOW | P2 |
-| Stat-targeted hammers | MEDIUM | HIGH | P3 |
-| Outcome-locking hammers | MEDIUM | HIGH | P3 |
-| Hero archetypes | HIGH | HIGH | P3 |
+| 10 new item base files (DEX + INT per slot) | HIGH | LOW | P1 |
+| Spell damage as parallel damage channel | HIGH | MEDIUM | P1 |
+| 2 new spell prefixes (flat + %) | HIGH | LOW | P1 |
+| Enable Cast Speed suffix | HIGH | LOW | P1 |
+| Wand spell DPS formula | HIGH | MEDIUM | P1 |
+| valid_tags per base (affix pool differentiation) | HIGH | LOW | P1 |
+| Loot table + save format update | HIGH | MEDIUM | P1 |
+| Enable Dodge Chance suffix | MEDIUM | LOW | P2 |
+| Enable Damage Suppression suffix | MEDIUM | LOW | P2 |
+| Hybrid bases (STR/DEX, etc.) | LOW | MEDIUM | P3 |
+| Mana as spell resource | LOW | HIGH | P3 |
+| Spell-specific crit chance | LOW | MEDIUM | P3 |
+| Sigil suffix (INT defense) | LOW | LOW | P3 |
 
 **Priority key:**
-- P1: Required for v1.7 milestone — the feature is the milestone
-- P2: Polish after core prestige works; add if playtesting reveals friction
-- P3: Deferred; separate milestone with design justification
+- P1: Required for v1.8 -- the 3-archetype system is the milestone
+- P2: Complete the affix pool; ship in same milestone if time allows
+- P3: Future milestone; requires design validation of core archetype system first
 
 ---
 
-## Prestige System Design Principles
+## Design Principles
 
-Derived from Kongregate's idle math series, community feedback on Endless World Idle RPG, Revolution Idle guides, and Last Epoch's affix tier progression research. Organized for Hammertime's specific decisions.
+### (1) Item Base Stats ARE Archetype Identity
 
-### (1) Reset Scope: Full Reset is Correct
+The base item's inherent stats (armor, evasion, ES, base damage, implicit) communicate archetype before any crafting. Players should never need to read affix tags to know "this is a caster helmet." The name + base stat does it.
 
-Community research consistently shows partial resets feel less impactful than full resets. The "power rush" emotional arc — the feeling of being overpowered through early content you struggled with before — requires a full reset. Keeping gear removes this arc entirely.
+**Hammertime application:** Each new base has a single primary defense type (not split). BasicArmor: pure armor. LeatherArmor: pure evasion. SilkRobe: pure ES. Simple, readable, immediate.
 
-**Hammertime application:** Reset area level, all equipment, all inventory, and all standard currencies. Keep prestige level, prestige points, and unlock state. This is the standard prestige contract.
+### (2) Weapon Type Determines Damage Channel
 
-### (2) Prestige Currency: Lifetime-Based, Not Since-Last-Reset
+In an idle game, the equipped weapon decides whether the hero deals attack damage or spell damage. This is the single biggest build decision and should feel consequential. Swapping from Sword to Wand should visibly change the DPS number and which affixes matter.
 
-Kongregate's idle math series documents two prestige currency models: lifetime-based (total ever earned) and since-reset (earned this run). For ARPG content with crafting, since-reset is the correct model — it rewards players for completing more of the current run before prestiging, creating a natural "go as far as possible" incentive.
+**Hammertime application:** LightSword/ShortBow use attack DPS formula (existing). Wand uses spell DPS formula (new). The hero's `total_dps` reflects whichever channel the weapon provides. No dual-channel complexity.
 
-**Hammertime application:** Prestige shards drop from the endgame area (Shadow Realm) throughout the run. Players accumulate shards over multiple runs if they don't meet the threshold. The cost scales with prestige level to prevent immediate back-to-back resets.
+### (3) Affix Pools Overlap Generously, Diverge on Offense
 
-### (3) Item Tier Gating: Quality, Not Quantity
+Defensive suffixes (life, resistances) should be universal -- every build needs survivability. Offensive prefixes diverge: attack builds want flat phys and %phys; spell builds want flat spell and %spell. This creates the crafting decision: "I found a great wand base, but should I craft spell damage or elemental damage on it?"
 
-The prestige reward should change what players can craft and equip, not just how fast they do it. Multiplier-only prestige (double drop rates) produces diminishing returns and fails to create new crafting decisions. Item tier unlocks create qualitatively new affixes and power ceiling changes that players can see and plan toward.
+**Hammertime application:** Suffixes like resistances, life, crit use Tag.DEFENSE or Tag.CRITICAL (no archetype restriction). Offensive prefixes use Tag.ATTACK or Tag.SPELL to gate by weapon type. Defense body/helm/boot bases use Tag.ARMOR, Tag.EVASION, or Tag.ENERGY_SHIELD to gate defensive prefixes.
 
-**Hammertime application:** Each prestige level unlocks a higher item tier ceiling. At Prestige 0, players can only find tier 1-2 bases. At Prestige 6 (max), players access all 8 item tiers. Affix values are meaningfully higher on tier 7-8 items than on tier 1-2 items — this must be noticeable, not marginal.
+### (4) Three Archetypes, Not Two or Four
 
-### (4) Tag-Targeted Hammers: Prestige Reward for Deliberate Crafting
+Two archetypes (melee/caster) feels too binary. Four or more (adding summoner, hybrid, etc.) explodes scope without proportional gameplay payoff. Three provides the minimum triangle where each archetype has a natural counter-stat and creates meaningful itemization variety (3 weapons x 3 armors x 3 helmets = 27 possible gear combinations per those 3 slots alone).
 
-PoE2's Patch 0.3 deterministic crafting via Omens (same-tag-family guaranteed mods) and Last Epoch's shard-based targeted crafting both show that ARPG players strongly value being able to target specific affix types. For Hammertime, introducing this at Prestige 1 serves as the single most impactful prestige reward beyond item tier access — players can now guarantee a fire or cold affix, enabling build-oriented crafting for the first time.
+**Hammertime application:** STR/DEX/INT. DEX and STR share the attack damage channel but differ in defense type and implicit emphasis (STR = high base damage + armor, DEX = crit + evasion). INT uses spell damage channel + ES. Three is enough.
 
-**Hammertime application:** FireHammer, ColdHammer, LightningHammer each apply affixes exclusively from their element's tag pool. They are rarer than standard hammers, require Prestige 1 unlock, and otherwise use the existing Currency template method pattern.
+### (5) Enable Existing Stubs Before Creating New Systems
 
-### (5) 32 Affix Tiers: Avoid Tier Compression at Top End
+The codebase already has disabled suffix stubs for Cast Speed, Dodge Chance, Damage Suppression, and Sigil. These were designed for this exact milestone. Enabling them is lower risk and faster than designing new affix systems from scratch.
 
-With 8 item tiers, having only 8 affix tiers means each item tier maps to a single affix tier — no granularity within a tier band. Last Epoch's forum post on introducing T6 and T7 affixes documents player frustration when gear upgrades feel like cliffs (suddenly much better) rather than ramps. 4 affix tiers per item tier band creates a visible upgrade path within each prestige level's item tier range.
-
-**Hammertime application:** Affix tiers 1-4 map to item tier 1, tiers 5-8 to item tier 2, ..., tiers 29-32 to item tier 8. Tier 1 remains "best" per existing convention. Values should be balanced so the gap between adjacent affix tiers is noticeable but not cliff-like.
-
-### (6) Prestige Cost: Steep Enough to Feel Earned
-
-Community data from Revolution Idle and Endless World forums shows two failure modes: prestige costs too low (players prestige before meaningful progression; resets feel trivial) and too high (players grind for multi-day sessions with nothing to do; engagement collapses). The sweet spot is a cost that requires completing 60-80% of the current run's content to accumulate.
-
-**Hammertime application:** Shadow Realm (area 75+) is the prestige shard source. Players must survive into the final biome before accumulating enough shards. The first prestige should be achievable in 2-4 hours of play on a first run; later prestiges take longer due to cost scaling but are faster due to better meta-unlocks.
+**Hammertime application:** Uncomment and wire Cast Speed, Dodge Chance, Damage Suppression before creating any new suffix types. Sigil can wait for future INT-defense expansion.
 
 ---
 
 ## Integration Points with Existing Hammertime System
 
-| Existing Component | Current State | Required Change for v1.7 | Complexity |
+| Existing Component | Current State | Required Change for v1.8 | Complexity |
 |-------------------|---------------|--------------------------|------------|
-| `GameState` | `prestige_level` absent | Add `prestige_level: int = 0`, `prestige_points: int = 0`; both persist through reset | LOW |
-| `GameState.initialize_fresh_game()` | Creates fresh hero, currencies, inventory | Called on prestige; must preserve `prestige_level` and `prestige_points` before and restore after | MEDIUM |
-| `LootTable` | Currency + item drops per pack | Add `PrestigeShard` to Shadow Realm drop pool; add tag-targeted hammer types to post-P1 pool | MEDIUM |
-| `ItemAffixes` (AffixDB) | 8 affix tiers max (`tier_range` Vector2i) | Expand tier_range upper bounds to 32; recalculate value scale per tier; all existing affixes affected | HIGH |
-| `Item` | `tier: int` field (1-8 item tier) | No change to model; LootTable now determines tier from prestige-gated ceiling and area level weight | LOW |
-| `LootTable` item tier selection | Currently unweighted or simple | Add `_weighted_item_tier(area_level, max_tier)` using sqrt ramp pattern (already in codebase for currency) | MEDIUM |
-| `Currency` base class | Template method with `_do_apply()` | New subclasses: `FireHammer`, `ColdHammer`, `LightningHammer` override `_do_apply()` to filter by tag | MEDIUM |
-| `SaveManager` | `SAVE_VERSION = 2` | Bump to `3`; add `prestige_level`, `prestige_points` to schema; affix tier migration (old * 4 = new scale equivalent) | HIGH |
-| `ForgeView` | 6 currency buttons | Add tag-hammer buttons (Fire/Cold/Lightning) hidden until P1; shown/enabled when unlocked | MEDIUM |
-| New: `PrestigeView` | Does not exist | New scene: prestige level, shard count, cost, unlock table, confirm button; tab in main_view or overlay | MEDIUM |
+| `tag.gd` | 22 tags, 19 StatTypes | Add Tag.SPELL, Tag.CASTER; add FLAT_SPELL_DAMAGE, INCREASED_SPELL_DAMAGE, CAST_SPEED StatTypes | LOW |
+| `item.gd` | 5 type strings in registry | Add 10 new type strings; update `create_from_dict()` match block | LOW |
+| `item_affixes.gd` | 18 prefixes, 10 suffixes (7 enabled) | Add 2 spell prefixes; enable Cast Speed, Dodge Chance, Damage Suppression suffixes | LOW |
+| `stat_calculator.gd` | Attack DPS formula only | Add `calculate_spell_dps()` parallel to `calculate_dps()` | MEDIUM |
+| `hero.gd` | `calculate_damage_ranges()` assumes attack damage | Add spell damage range path when weapon is Wand | MEDIUM |
+| `combat_engine.gd` | `_on_hero_attack()` rolls from damage_ranges | No change needed if Hero provides unified damage_ranges (spell or attack) | LOW |
+| `defense_calculator.gd` | Dodge from evasion; no dodge chance stat | Add dodge_chance from gear to evasion-based dodge calculation | LOW |
+| `game_state.gd` | 5 item slots, 1 base per slot | No slot change needed; loot table generates from expanded base pool | LOW |
+| `loot_table.gd` | Drops from 5 base types | Expand to 15 base types; equal weight within slot, slot selection unchanged | LOW |
+| `save_manager.gd` | SAVE_VERSION handles 5 item types | Add 10 new match cases; bump version; migration preserves existing items | MEDIUM |
+| `forge_view.gd` / `item_view.gd` | Displays current 5 item types | Must handle new item types in display; UI auto-adapts if using polymorphic `get_display_text()` | LOW |
 
 ---
 
 ## Sources
 
-**Idle game prestige system design (MEDIUM confidence — WebSearch, multiple sources agree):**
-- [The Math of Idle Games, Part III — Kongregate Blog](https://blog.kongregate.com/the-math-of-idle-games-part-iii/) — Lifetime vs. since-reset prestige currency models; bumpy progression design; prestige currency doubling math
-- [Revolution Idle Prestige Guide — Tap Guides](https://tap-guides.com/2025/10/24/revolution-idle-prestige-guide/) — When to prestige, cost balance, persistent upgrade patterns
-- [Endless World Idle RPG Community Thread — Steam](https://steamcommunity.com/app/840260/discussions/0/1637543304828072083/) — Player frustration with high prestige costs; multi-day grind causes disengagement; community solutions
-- [Reset Milestones — TV Tropes](https://tvtropes.org/pmwiki/pmwiki.php/Main/ResetMilestones) — Genre conventions for what resets vs. persists documented across many games
-- [Top 7 Idle Game Mechanics — Mobile Free to Play](https://mobilefreetoplay.com/top-7-idle-game-mechanics/) — Prestige as one of 7 core idle mechanics; design intent
+**Cross-game archetype analysis (HIGH confidence -- primary game documentation):**
+- Path of Exile item system: STR/DEX/INT base types, attribute requirements, defense type mapping (armor/evasion/ES), affix pools filtered by item class and tags
+- Path of Exile 2 weapon archetypes: weapon type determines skill access; spell vs attack damage channels; mace/sceptre/wand differentiation
+- Last Epoch class-gated affixes: Sentinel/Rogue/Mage/Acolyte armor types with class-specific mod pools; implicit system per base type
+- Diablo 4 class-gated items: simplified attribute model; class-specific affixes on shared base types
 
-**ARPG affix tier gating (HIGH confidence — Last Epoch official sources):**
-- [Introducing Tier 6 and 7 Item Affixes — Last Epoch Dev Blog](https://forum.lastepoch.com/t/introducing-tier-6-and-7-item-affixes/22279) — Official developer post on adding higher tiers; player frustration with tier cliffs; rationale for granular tiers
-- [Level Requirements and Affix Levels Breakpoints — Last Epoch Forums](https://forum.lastepoch.com/t/level-requirements-and-affix-levels-breakpoints/35382) — How affix tiers map to item level requirements; area-level gating patterns
-- [Affixes — Last Epoch Game Guide (lastepochtools.com)](https://www.lastepochtools.com/guide/section/affixes) — Affix tier structure, tier 5 crafting cap, T6/T7 as drop-only
-- [Crafting Basics Guide — Last Epoch Maxroll.gg](https://maxroll.gg/last-epoch/resources/beginner-crafting-guide) — Shard-based targeted crafting; forging potential as crafting limiter
+**Spell vs attack damage design (HIGH confidence -- core ARPG convention):**
+- PoE damage calculation: attack damage from weapon base; spell damage from gem level + flat additions; completely separate scaling paths
+- Last Epoch spell system: spell damage scales from base skill, not weapon; +spell damage on weapon acts as %more multiplier
+- D4 spell system: skill ranks on items; no weapon-base dependency for spells
 
-**Deterministic and tag-targeted crafting (MEDIUM confidence — PoE2 sources):**
-- [PoE 2 0.3 Deterministic Crafting Guide — AOEAH](https://www.aoeah.com/news/4116--poe-2-03-guaranteed-mods-crafting-guide--how-to-craft-bis-gear-jewels-rings-weapon-armor) — Tag-family targeted mod addition via Omens; same-tag guarantee mechanic
-- [PoE 2 Abyssal League Deterministic Crafting — MMOJUGG](https://www.mmojugg.com/news/poe-2-abyssal-league-deterministic-crafting-path.html) — Tag system for filtering mods; deterministic paths documented
-- [Crafting Basics: Metacrafting — POE Maxroll.gg](https://maxroll.gg/poe/crafting/metacrafting) — Prefix/suffix locking patterns; tag-based crafting bench mods
+**Idle ARPG adaptation (MEDIUM confidence -- design reasoning from existing Hammertime patterns):**
+- Option C (weapon determines channel) derived from analysis of combat_engine.gd single-timer architecture
+- Defense type mapping from existing defense_calculator.gd evasion/armor/ES pipeline
+- Affix pool filtering from existing valid_tags + has_valid_tag() pattern in item.gd
 
-**Loot table design (MEDIUM confidence — game dev article):**
-- [Defining Loot Tables in ARPG Game Design — Game Developer](https://www.gamedeveloper.com/design/defining-loot-tables-in-arpg-game-design) — Affix rarity grouping by item tier; area-level weighted selection
-
-**Codebase analysis (HIGH confidence — direct code review of Hammertime v1.6):**
-- `game_state.gd` — `prestige_level` absent; `initialize_fresh_game()` structure confirms reset scope
-- `currency.gd` — Template method pattern; `_do_apply()` override structure confirmed for new tag-hammer subclasses
-- `loot_table.gd` — Current drop pool structure; sqrt ramp pattern already implemented for currency gating
-- `item_affixes.gd` — `Vector2i tier_range` per affix; current max tier confirmed as 8
-- `save_manager.gd` — `SAVE_VERSION = 2`; schema structure for migration planning
+**Codebase analysis (HIGH confidence -- direct code review of Hammertime v1.7):**
+- `item_affixes.gd` -- Disabled suffix stubs confirmed: Cast Speed, Dodge Chance, Damage Suppression, Sigil
+- `tag.gd` -- Tag.MAGIC exists but unused; can repurpose or add Tag.SPELL alongside
+- `weapon.gd` -- `update_value()` delegates to StatCalculator; wand can override with spell formula
+- `defense_calculator.gd` -- `is_spell: bool` parameter already exists in `calculate_damage_taken()`; spell/attack distinction is already part of the defense pipeline
 
 ---
 
-*Feature research for: Hammertime v1.7 Prestige Meta-Progression System*
-*Researched: 2026-02-20*
-*Confidence: MEDIUM overall (ARPG affix patterns HIGH; idle prestige conventions MEDIUM; tag-targeted crafting design MEDIUM)*
+*Feature research for: Hammertime v1.8 Content Pass -- Item Archetypes, Spell Damage, Affix Pool Differentiation*
+*Researched: 2026-03-06*
+*Confidence: HIGH overall (ARPG archetype conventions are the most standardized design patterns in the genre)*

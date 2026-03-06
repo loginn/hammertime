@@ -1,614 +1,431 @@
-# Stack Research: Meta-Progression, Item Tiers, Affix Tier Expansion, Tag-Targeted Currencies
+# Stack Research: Item Archetypes (Str/Dex/Int), Spell Damage Channel, Cast Speed Timer, Affix Pool Expansion
 
-**Domain:** Godot 4.5 Idle ARPG — Adding prestige reset loop, item tier system (1-8), affix tier expansion (8 → 32), and tag-targeted crafting currencies to existing v1.6 codebase
-**Researched:** 2026-02-20
-**Confidence:** HIGH (all patterns verified against existing codebase and Godot 4.5 API)
+**Domain:** Godot 4.5 Idle ARPG -- Adding 3 item bases per slot (str/dex/int), spell damage channel with cast timer, new affixes (spell damage, cast speed), and enabling disabled suffixes to existing v1.7 codebase
+**Researched:** 2026-03-06
+**Confidence:** HIGH (all patterns verified against existing codebase architecture and ARPG design conventions)
 
 ---
 
 ## Context
 
-This is a **subsequent milestone stack** for v1.7. Godot 4.5, GDScript, mobile renderer, Resource-based data model, template-method Currency pattern, and the v2 save format (per-slot arrays) are already validated and in production.
+This is a **subsequent milestone stack** for v1.8. Godot 4.5, GDScript, Resource-based data model, StatCalculator with flat + percentage stacking, DefenseCalculator 4-stage pipeline, CombatEngine with dual attack timers, 18 prefix / 10 suffix affix pool with tag-based filtering, and item tier system (1-8) with 32 affix tiers are all in production.
 
-The four feature areas map cleanly to existing architectural extension points:
+The v1.8 content pass targets three axes of expansion:
 
 | Feature | Primary Extension Point |
 |---------|------------------------|
-| Prestige system | `GameState` (new meta fields) + `SaveManager` (v3 migration) + new `prestige_triggered` signal |
-| Item tier gating (1-8) | `Item.tier` already exists, `LootTable` already has area scaling, need `item_tier` → affix tier filter |
-| Affix tier expansion (8 → 32) | `Affix.tier_range` Vector2i already configurable per affix, `ItemAffixes` templates just need wider ranges |
-| Tag-targeted currencies | New `Currency` subclasses using same template method, filter `ItemAffixes.prefixes` by tag before `pick_random()` |
+| 3 item bases per slot (str/dex/int) | New concrete `Item` subclasses alongside existing `BasicArmor`, `LightSword`, etc. `get_random_item_base()` expanded. `Item.create_from_dict()` registry expanded. |
+| Spell damage channel with cast timer | New `StatType` entries, new timer in `CombatEngine`, new spell damage range tracking in `Hero`. |
+| New affixes + enabling disabled suffixes | New entries in `ItemAffixes.prefixes`/`suffixes`, new `StatType` entries, `Tag` constants. |
 
 ---
 
-## Recommended Stack
+## 1. New StatTypes Needed
 
-### Core Technologies (Unchanged)
+### Current StatType Enum (19 entries)
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Godot Engine | 4.5 | Game engine | Already in production. No version change needed. |
-| GDScript | 4.5 | Scripting language | All patterns below use existing built-in methods: `Array.any()`, `Array.filter()`, `pick_random()`, lambdas. |
-| Resource system | 4.5 | Data model (`Item`, `Affix`, `Hero`, `Currency`) | No changes to the resource class hierarchy. Extend fields, not classes. |
-| JSON via `JSON.stringify` / `JSON.parse_string` | 4.5 | Save file format | Already in `SaveManager`. Prestige meta-state adds new top-level keys. Version bumps from 2 → 3. |
+The existing `Tag.StatType` enum covers attack damage, defense, and resistances. It has no spell-related entries.
 
----
+### Required Additions
 
-### GDScript Patterns for Prestige System
+| New StatType | Purpose | Follows Pattern Of |
+|---|---|---|
+| `FLAT_SPELL_DAMAGE` | Flat added spell damage (min/max range, like `FLAT_DAMAGE`) | `FLAT_DAMAGE` |
+| `INCREASED_SPELL_DAMAGE` | Percentage increased spell damage | `INCREASED_DAMAGE` |
+| `INCREASED_CAST_SPEED` | Percentage increased cast speed (additive stacking) | `INCREASED_SPEED` |
 
-#### 1. Two-Layer State Model in GameState
+These three are the minimum viable set. They mirror the attack damage trio (`FLAT_DAMAGE` / `INCREASED_DAMAGE` / `INCREASED_SPEED`) exactly, creating a clean symmetry.
 
-Prestige creates two distinct categories of state that must never mix during reset. The cleanest GDScript pattern is grouping them explicitly with comments, not separate classes.
+### StatTypes for Enabled Disabled Suffixes
 
-```gdscript
-# game_state.gd — ADD these fields alongside existing state
+The disabled suffixes in `item_affixes.gd` (lines 247-255) have empty `stat_types` arrays. Enabling them requires:
 
-# ─── META STATE ───────────────────────────────────────────────
-# Persists across ALL prestige resets. Never cleared by do_prestige().
-var prestige_level: int = 0         # 0 = not yet prestiged, max 7
-var prestige_unlocks: Dictionary = {}  # {prestige_level: bool} — gating flags
+| Disabled Suffix | Required StatType | Notes |
+|---|---|---|
+| Cast Speed | `INCREASED_CAST_SPEED` | New (see above). Tag: `[Tag.MAGIC]` |
+| Damage over Time | `DOT_DAMAGE` (new) | Needs DoT tick system in CombatEngine. **Defer to future milestone** unless scope allows. |
+| Bleed Damage | `BLEED_DAMAGE` (new) | Physical DoT subset. Same deferral concern. |
+| Sigil | `FLAT_SIGIL` (new) | Undefined mechanic. **Defer.** |
+| Evade | `FLAT_EVASION` | **Already exists.** Just needs correct `stat_types` array. |
+| Physical Reduction | `PERCENT_PHYSICAL_REDUCTION` (new) | Overlaps with armor. Needs design decision. |
+| Magical Reduction | `PERCENT_MAGICAL_REDUCTION` (new) | New defensive layer. Needs DefenseCalculator integration. |
+| Dodge Chance | `DODGE_CHANCE` (new) | Separate from evasion-derived dodge? Or additive to evasion formula? |
+| Dmg Suppression Chance | `SUPPRESSION_CHANCE` (new) | PoE-style 50% damage reduction on proc. Needs CombatEngine integration. |
 
-# ─── RUN STATE ────────────────────────────────────────────────
-# Everything below is cleared by do_prestige() (same as initialize_fresh_game).
-# var hero: Hero                     ← existing
-# var currency_counts: Dictionary    ← existing
-# var crafting_inventory: Dictionary ← existing
-# var max_unlocked_level: int        ← existing
-# var area_level: int                ← existing
+**Recommendation for v1.8 scope:** Enable Cast Speed (uses new `INCREASED_CAST_SPEED`) and Evade (uses existing `FLAT_EVASION`). The others require new combat subsystems (DoT ticks, suppression rolls) that expand scope significantly.
+
+### Summary: Minimum New StatType Entries
+
 ```
-
-**Why Dictionary for prestige_unlocks, not just checking `prestige_level >= N`:** Future unlock types (new hammer types, new biomes) can be added as keys without schema changes. `prestige_unlocks.get("tag_targeted_currencies", false)` is readable and explicit at each gate.
-
-**Why NOT a separate PrestigeMeta Resource class:** A Resource would require a separate serialization path alongside the existing JSON `_build_save_data()`. The project deliberately chose JSON over ResourceSaver specifically to enable export strings (`HT1:base64:md5`). Adding a second save format creates two sources of truth. A few extra Dictionary keys in the existing save structure is the right call.
-
-#### 2. Prestige Reset Function
-
-The reset is a surgical variant of `initialize_fresh_game()`. It PRESERVES meta state, then calls `initialize_fresh_game()` to wipe run state.
-
-```gdscript
-# game_state.gd — ADD
-
-func do_prestige() -> void:
-    # 1. Snapshot meta state (will survive reset)
-    var new_level := prestige_level + 1
-    # 2. Wipe all run state (resets hero, currencies, inventory, area)
-    initialize_fresh_game()
-    # 3. Restore meta state with incremented level
-    prestige_level = new_level
-    prestige_unlocks = _compute_unlocks(prestige_level)
-    # 4. Emit for UI and SaveManager
-    GameEvents.prestige_triggered.emit(prestige_level)
-
-
-func _compute_unlocks(level: int) -> Dictionary:
-    return {
-        "tag_targeted_currencies": level >= 1,
-        "item_tier_2": level >= 1,
-        "item_tier_3": level >= 2,
-        # ... extend per design
-    }
-```
-
-**Why snapshot-before-wipe, not snapshot-after:** `initialize_fresh_game()` overwrites `hero`, `currency_counts`, etc. If meta fields lived in those same variables, snapshotting after would lose them. The explicit snapshot-increment-wipe-restore sequence is self-documenting and immune to ordering bugs.
-
-**Why `initialize_fresh_game()` as the reset primitive:** It already correctly resets ALL run state (hero, currencies, inventory, area level, starter weapon). Calling it from `do_prestige()` means there is exactly ONE place that knows what "fresh run state" means. If a new run-state field is added later, it only needs to be added to `initialize_fresh_game()` and prestige reset gets it for free.
-
-#### 3. Prestige Cost Validation
-
-Prestige is triggered by spending currencies (design: specific currency costs per prestige level). The cost check must happen before `do_prestige()` is called.
-
-```gdscript
-# game_state.gd — ADD
-
-const PRESTIGE_COSTS: Array[Dictionary] = [
-    # Level 0 → 1
-    {"runic": 50, "forge": 20, "grand": 5},
-    # Level 1 → 2
-    {"runic": 100, "forge": 50, "grand": 15, "claw": 5},
-    # ... up to 6 entries for 7 prestige levels
-]
-
-func can_prestige() -> bool:
-    if prestige_level >= 7:
-        return false
-    var cost: Dictionary = PRESTIGE_COSTS[prestige_level]
-    for currency_type in cost:
-        if currency_counts.get(currency_type, 0) < cost[currency_type]:
-            return false
-    return true
-
-
-func spend_prestige_cost() -> bool:
-    if not can_prestige():
-        return false
-    var cost: Dictionary = PRESTIGE_COSTS[prestige_level]
-    for currency_type in cost:
-        currency_counts[currency_type] -= cost[currency_type]
-    return true
-```
-
-**Why `Array[Dictionary]` for costs indexed by prestige_level:** Indexing by `prestige_level` gives O(1) lookup. An array naturally enforces the 7-level cap (index out of bounds = bug, not silent wrong behavior). Costs are data, not logic — keep them as constants next to the functions that use them.
-
----
-
-### GDScript Patterns for Save Format v3 Migration
-
-#### 4. Save Version Bump: 2 → 3
-
-The existing `_migrate_save()` function already has the version-gated chain pattern. Add one more step.
-
-```gdscript
-# save_manager.gd — MODIFY
-
-const SAVE_VERSION = 3   # was 2
-
-func _migrate_save(data: Dictionary) -> Dictionary:
-    var saved_version: int = int(data.get("version", 1))
-
-    if saved_version < SAVE_VERSION:
-        print("SaveManager: Migrating save from v%d to v%d" % [saved_version, SAVE_VERSION])
-
-    if saved_version < 2:
-        data = _migrate_v1_to_v2(data)
-
-    if saved_version < 3:
-        data = _migrate_v2_to_v3(data)   # ADD
-
-    data["version"] = SAVE_VERSION
-    return data
-
-
-func _migrate_v2_to_v3(data: Dictionary) -> Dictionary:
-    # v3 adds prestige meta-state keys with safe defaults
-    # Items and currencies are unchanged — this is additive only
-    if not data.has("prestige_level"):
-        data["prestige_level"] = 0
-    if not data.has("prestige_unlocks"):
-        data["prestige_unlocks"] = {}
-    return data
-```
-
-**Why additive migration only for v2 → v3:** Prestige meta-state is entirely NEW keys. No existing keys change format. The migration just injects defaults for old saves — any v2 save loaded as v3 will correctly show prestige_level 0 (first-time player). This is the safest possible migration.
-
-**Why not a separate meta-save file:** Two save files means two failure modes (one corrupted, one not), two export strings, and two import paths. The existing `HT1:base64:md5` export string already encodes the entire game state — keeping prestige meta in the same JSON envelope keeps export/import working with zero changes.
-
-#### 5. Save and Restore for Prestige Meta-State
-
-```gdscript
-# save_manager.gd — MODIFY _build_save_data() to add prestige fields:
-
-return {
-    "version": SAVE_VERSION,
-    "timestamp": Time.get_unix_time_from_system(),
-    "hero_equipment": hero_equipment,
-    "currencies": GameState.currency_counts.duplicate(),
-    "crafting_inventory": crafting_inv,
-    "crafting_bench_type": GameState.crafting_bench_type,
-    "max_unlocked_level": GameState.max_unlocked_level,
-    "area_level": GameState.area_level,
-    # NEW:
-    "prestige_level": GameState.prestige_level,
-    "prestige_unlocks": GameState.prestige_unlocks.duplicate(),
+enum StatType {
+    # ... existing 19 entries ...
+    FLAT_SPELL_DAMAGE,        # 19
+    INCREASED_SPELL_DAMAGE,   # 20
+    INCREASED_CAST_SPEED,     # 21
 }
-
-
-# save_manager.gd — MODIFY _restore_state() to add:
-
-GameState.prestige_level = int(data.get("prestige_level", 0))
-var saved_unlocks: Dictionary = data.get("prestige_unlocks", {})
-GameState.prestige_unlocks = {}
-for key in saved_unlocks:
-    GameState.prestige_unlocks[key] = bool(saved_unlocks[key])
 ```
 
-**Why `duplicate()` on prestige_unlocks when saving:** `Dictionary.duplicate()` is already used for `currency_counts`. Without it, the JSON serializer gets a reference to the live dictionary. If any code mutates it between `_build_save_data()` and `JSON.stringify()`, the save is wrong. Shallow duplicate is sufficient because all values are primitives (bool).
+This keeps the enum at 22 entries. Adding more for DoT/suppression later is backward-compatible since GDScript enums are integer-based and save format stores stat_types as arrays of ints.
 
 ---
 
-### GDScript Patterns for Item Tier Gating
+## 2. New Tags Needed
 
-#### 6. Item Tier as a First-Class Drop Parameter
+### Current Tag Constants (19 entries)
 
-Items already have `var tier: int` in `item.gd`. The new requirement is that `tier` is set at **drop time** based on area level and unlocked prestige, not at item construction time.
+The existing tag system uses string constants for affix filtering (`Tag.PHYSICAL`, `Tag.WEAPON`, `Tag.DEFENSE`, etc.) and an enum for stat routing (`Tag.StatType`).
+
+### Required Tag Additions
+
+| New Tag Constant | Purpose | Used By |
+|---|---|---|
+| `SPELL` | Marks spell-related affixes (spell damage, cast speed). Analogous to `ATTACK` for attack affixes. | Spell damage prefix/suffix tag filtering, item `valid_tags` on int-archetype items |
+| `STR` | Strength archetype marker for items. Used in item `valid_tags` and potentially for tag-targeted hammers. | Str-archetype item bases |
+| `DEX` | Dexterity archetype marker for items. | Dex-archetype item bases |
+| `INT` | Intelligence archetype marker for items. | Int-archetype item bases |
+
+### Tags NOT Needed
+
+- No new element tags (fire/cold/lightning already exist and spell damage uses the same elements).
+- No `CAST_SPEED` tag -- cast speed affixes use `Tag.SPELL` + `Tag.SPEED`, following the pattern of attack speed using `Tag.ATTACK` + `Tag.SPEED`.
+- No archetype-specific damage tags -- spell damage uses element tags (fire/cold/lightning) same as attack damage.
+
+### How Archetype Tags Interact with Valid Tags
+
+Current items use `valid_tags` to control which affixes can roll. The archetype tags (`STR`/`DEX`/`INT`) serve two purposes:
+
+1. **Item identity** -- which archetype pool the item belongs to for drop weighting and UI labeling.
+2. **Affix filtering** -- archetype-specific affixes could use these tags to only appear on matching items. However, the simpler approach is to use existing tags (`Tag.ATTACK`, `Tag.SPELL`, `Tag.DEFENSE`) on the item's `valid_tags` to control affix pools. Archetype tags then serve primarily as metadata for the loot system.
+
+**Recommendation:** Add `STR`, `DEX`, `INT` as item metadata tags. Use existing functional tags (`ATTACK`, `SPELL`, `DEFENSE`, `CRITICAL`, `SPEED`) in `valid_tags` arrays to control affix eligibility. This avoids duplicating affix filtering logic.
 
 ```gdscript
-# loot_table.gd or pack_generator.gd — ADD
-
-## Returns the item tier for a drop at the given area level, given the max unlocked item tier.
-## Weighted toward lower tiers (common) with higher tiers increasingly rare.
-## Uses a triangular distribution capped at max_unlocked_tier.
-static func roll_item_tier(area_level: int, max_unlocked_tier: int) -> int:
-    # Weight array: tier 1 has highest weight, each tier halves the probability
-    # This keeps lower-tier items common while making high-tier feel like finds
-    var weights: Array[float] = []
-    for t in range(1, max_unlocked_tier + 1):
-        # Scale weight by area: at higher areas, higher tiers become more likely
-        var area_scale := clampf(float(area_level) / (t * 12.0), 0.1, 1.0)
-        weights.append(area_scale)
-
-    # Weighted pick (same pattern as roll_element in PackGenerator)
-    var total := 0.0
-    for w in weights:
-        total += w
-    var roll := randf() * total
-    var accumulated := 0.0
-    for i in range(weights.size()):
-        accumulated += weights[i]
-        if roll < accumulated:
-            return i + 1   # tier is 1-indexed
-    return max_unlocked_tier
+# tag.gd additions
+const SPELL = "SPELL"
+const STR = "STR"
+const DEX = "DEX"
+const INT = "INT"
 ```
 
-**Why triangular/scaled weights vs uniform:** Uniform would give equal probability to tier 1 and tier 8. That destroys the find-feel of high-tier items. The area-scaled weight gives players the right feeling: at low areas, almost all drops are tier 1-2; at high areas, tier 5-6 become common; tier 7-8 always feel rare.
+---
 
-**Why NOT store item tier in BiomeConfig:** BiomeConfig knows about monster element distribution, not item economics. Mixing loot tier math into biome config violates separation of concerns. LootTable already owns all drop probability logic.
+## 3. Spell Damage Channel Implementation Patterns
 
-#### 7. Item Tier → Affix Tier Range Mapping
+### How ARPGs Implement Spell vs Attack Damage
 
-The item tier gates which affix tiers can roll on the item. The mapping is a pure lookup — no logic, just a table.
+In games like Path of Exile, Diablo, Last Epoch, and Grim Dawn, the fundamental pattern is:
+
+**Two parallel damage pipelines that share some modifiers but have independent base values and scaling.**
+
+| Aspect | Attack Channel | Spell Channel |
+|---|---|---|
+| Base damage source | Weapon base damage (min-max) | Skill gem / spell base damage (fixed or level-scaled) |
+| Flat added damage | "Adds X to Y Physical Damage" (applies to attacks) | "Adds X to Y Fire Spell Damage" (applies to spells) |
+| Percentage scaling | "Increased Attack Damage" | "Increased Spell Damage" |
+| Speed modifier | Attack Speed (affects hits/sec) | Cast Speed (affects casts/sec) |
+| Crit | Shared crit chance/damage pool (some games split this) | Same |
+| Elemental damage | Shared % elemental damage applies to both | Same |
+
+**Key design decision for idle games:** In a full ARPG, players choose skills. In an idle game, the hero auto-uses both channels simultaneously. This means:
+
+1. **Both channels fire independently** on their own timers (attack timer and cast timer).
+2. **Total DPS = Attack DPS + Spell DPS**, displayed separately or combined.
+3. **Items specialize** -- str items boost attack, int items boost spell, but some affixes (elemental %, crit) are shared.
+
+### Mapping to Existing Architecture
+
+The current `CombatEngine` already has the dual-timer pattern with `hero_attack_timer` and `pack_attack_timer`. Adding a spell channel means:
+
+**Option A: Third timer (spell_cast_timer)**
+- CombatEngine gets a `spell_cast_timer` alongside `hero_attack_timer`.
+- `_on_hero_spell_cast()` rolls spell damage ranges, applies crit, deals damage.
+- Hero has `spell_damage_ranges` dict parallel to `damage_ranges`.
+- Clean separation, easy to balance independently.
+
+**Option B: Alternating timer (toggle between attack and spell)**
+- Single hero timer alternates between attack and spell actions.
+- Simpler but less flexible. Forces equal weighting.
+
+**Option C: Combined timer with both damage types**
+- Each hero "hit" includes both attack and spell components.
+- Simplest but least interesting -- no cast speed vs attack speed tradeoff.
+
+**Recommendation: Option A (third timer).** It mirrors the existing dual-timer pattern, gives spell-focused builds a distinct feel (faster casts = more spell hits), and allows interesting gearing decisions (stack attack speed OR cast speed, not both).
+
+### Spell Damage Source
+
+In the current system, attack damage comes from weapon base damage. Spell damage needs a base value source. Options:
+
+1. **Weapon implicit/property** -- Int weapons could have `base_spell_damage_min`/`max` alongside `base_damage_min`/`max`. A "Wand" has high spell damage, low attack damage.
+2. **Ring as spell damage source** -- Ring currently contributes attack damage. Could also contribute spell damage.
+3. **Fixed base from hero level** -- Spell damage scales with progression, not gear. Less interesting for crafting.
+
+**Recommendation:** Weapon is the spell damage source. Int-archetype weapons (e.g., "Wand") have `base_spell_damage_min`/`max` as their primary damage, with low/zero `base_damage_min`/`max`. Str weapons have the reverse. Dex weapons are attack-focused with higher crit/speed. This creates the classic ARPG archetype triangle.
+
+### Hero Spell Damage Tracking
+
+Parallel to existing `damage_ranges`:
 
 ```gdscript
-# item.gd or a new utility — ADD as const
-
-## Maps item tier (1-8) to the permitted affix tier range.
-## Affix tier 1 is the BEST (highest values), tier 32 is weakest.
-## Item tier 1 allows only low-value affixes (tiers 17-32).
-## Item tier 8 allows the full range (tiers 1-32).
-const ITEM_TIER_AFFIX_RANGE: Dictionary = {
-    1: Vector2i(17, 32),   # Only weak affixes
-    2: Vector2i(13, 28),
-    3: Vector2i(9, 24),
-    4: Vector2i(7, 20),
-    5: Vector2i(5, 16),
-    6: Vector2i(3, 12),
-    7: Vector2i(2, 8),
-    8: Vector2i(1, 4),     # Only strong affixes
+# hero.gd additions
+var spell_damage_ranges: Dictionary = {
+    "physical": {"min": 0.0, "max": 0.0},
+    "fire": {"min": 0.0, "max": 0.0},
+    "cold": {"min": 0.0, "max": 0.0},
+    "lightning": {"min": 0.0, "max": 0.0},
 }
-
-## Returns the affix tier range permitted for an item of the given tier.
-static func get_affix_tier_range(item_tier: int) -> Vector2i:
-    return ITEM_TIER_AFFIX_RANGE.get(item_tier, Vector2i(1, 32))
+var total_spell_dps: float = 0.0
+var base_cast_speed: float = 0.0  # From weapon, 0 = no spells
 ```
 
-**Why a Dictionary lookup rather than a formula:** The mapping is design data, not a mathematical relationship. A formula would hide the actual values from designers and make tuning opaque. The Dictionary is the single source of truth — change the table, the whole system updates.
+### StatCalculator Extensions
 
-**Why item tier 8 gives range (1, 4) not (1, 1):** Even the best item tier should have some variance. Fixed tier = no excitement. A narrow range (1-4) means 75% of rolls land in tier 1-2, which feels high-quality, with occasional tier 3-4 as the "not perfect" result.
+A new `calculate_spell_damage_range()` static function paralleling `calculate_damage_range()`, reading `FLAT_SPELL_DAMAGE` and `INCREASED_SPELL_DAMAGE` instead of `FLAT_DAMAGE` and `INCREASED_DAMAGE`. Percentage elemental modifiers (`%Elemental Damage`) should apply to **both** attack and spell elemental damage -- this is standard ARPG behavior and creates interesting shared scaling.
 
-**Why Vector2i:** This is the existing type for `Affix.tier_range`. Reusing the same type means the affix constructor receives `get_affix_tier_range(item.tier)` directly with no conversion.
+### Shared vs Separate Modifiers
+
+| Modifier | Applies To | Rationale |
+|---|---|---|
+| `%Physical Damage` | Attack only | Physical spells are rare in ARPGs; keeps str identity clear |
+| `%Elemental Damage` | Both attack and spell | Standard ARPG. Makes elemental % universally valuable. |
+| `%Fire/Cold/Lightning Damage` | Both attack and spell | Same element, same scaling. |
+| `%Spell Damage` (new) | Spell only | Int-archetype scaling. |
+| `%Attack Damage` (could add) | Attack only | Would need new `INCREASED_ATTACK_DAMAGE` StatType. **Defer** -- current `INCREASED_DAMAGE` serves this role via tag filtering. |
+| Crit Chance / Crit Damage | Both | Shared crit pool is simpler and still creates interesting choices. |
+| Attack Speed | Attack only | Timer cadence for attacks. |
+| Cast Speed (new) | Spell only | Timer cadence for spells. |
+
+**Implementation note:** The current `INCREASED_DAMAGE` applies to attack damage via `calculate_dps()`. With spell damage added, `INCREASED_DAMAGE` should remain attack-only, and `INCREASED_SPELL_DAMAGE` handles spells. Shared elemental scaling works through the existing tag system -- `%Elemental Damage` affixes with `Tag.ELEMENTAL` tag apply when calculating both attack and spell ranges, since `calculate_damage_range()` and the new `calculate_spell_damage_range()` both check for `INCREASED_DAMAGE` / `INCREASED_SPELL_DAMAGE` respectively, plus a shared elemental multiplier bucket.
 
 ---
 
-### GDScript Patterns for Affix Tier Expansion (8 → 32)
+## 4. Cast Speed Timer Considerations
 
-#### 8. Widening Affix tier_range in ItemAffixes Templates
+### Current Attack Timer Architecture
 
-The expansion from 8 to 32 tiers does not require a new class or new affix instances. The `Affix` constructor already reads `tier_range` and scales `min_value`/`max_value` from it. Changing the template declarations in `item_affixes.gd` is sufficient.
+```
+CombatEngine._start_pack_fight():
+    hero_attack_timer.wait_time = 1.0 / hero_attack_speed
+    hero_attack_speed comes from Weapon.base_attack_speed (e.g., 1.8 for LightSword)
+```
+
+Attack speed affixes (`INCREASED_SPEED`) modify DPS calculation in `StatCalculator.calculate_dps()` but do NOT currently change the combat timer cadence. The `base_attack_speed` is a separate field from the DPS `base_speed` multiplier. This is documented as a deliberate design decision: "base_attack_speed separate from base_speed -- Combat timer cadence (hits/sec) vs DPS multiplier are distinct concepts."
+
+### Cast Speed Timer Design
+
+Two approaches:
+
+**Approach A: Cast speed modifies timer cadence (like base_attack_speed)**
+- `base_cast_speed` on weapon (e.g., Wand has 1.2 casts/sec).
+- `INCREASED_CAST_SPEED` affixes modify the actual timer: `spell_cast_timer.wait_time = 1.0 / (base_cast_speed * (1.0 + cast_speed_bonus))`.
+- Cast speed affixes directly change how often spells fire in combat.
+- More impactful, more interesting gearing choice.
+
+**Approach B: Cast speed is DPS multiplier only (like current base_speed)**
+- Cast speed scales spell DPS in calculation but timer stays fixed.
+- Simpler but less satisfying -- player doesn't "see" the speed change.
+
+**Recommendation: Approach A.** Cast speed should modify the actual combat timer, making it a visible and feelable stat. This departs from how attack speed currently works (DPS multiplier only), but it is the more engaging design for the player. Consider later retrofitting attack speed affixes to also modify the attack timer for consistency.
+
+### Implementation Pattern
 
 ```gdscript
-# item_affixes.gd — MODIFY existing affix declarations
+# In CombatEngine
+var spell_cast_timer: Timer
 
-# BEFORE (8 tiers):
-Affix.new("Physical Damage", Affix.AffixType.PREFIX, 2, 10,
-    [Tag.PHYSICAL, Tag.FLAT, Tag.WEAPON], [Tag.StatType.FLAT_DAMAGE],
-    Vector2i(1, 8), 3, 5, 7, 10)
+func _ready() -> void:
+    # ... existing timers ...
+    spell_cast_timer = Timer.new()
+    spell_cast_timer.one_shot = false
+    add_child(spell_cast_timer)
+    spell_cast_timer.timeout.connect(_on_hero_spell_cast)
 
-# AFTER (32 tiers, preserving same base_min/base_max so tier 1 value is unchanged):
-Affix.new("Physical Damage", Affix.AffixType.PREFIX, 2, 10,
-    [Tag.PHYSICAL, Tag.FLAT, Tag.WEAPON], [Tag.StatType.FLAT_DAMAGE],
-    Vector2i(1, 32), 3, 5, 7, 10)
+func _start_pack_fight() -> void:
+    # Existing attack timer
+    hero_attack_speed = _get_hero_attack_speed()
+    hero_attack_timer.wait_time = 1.0 / hero_attack_speed
+
+    # New spell timer (only if hero has spell capability)
+    var cast_speed := _get_hero_cast_speed()
+    if cast_speed > 0.0:
+        spell_cast_timer.wait_time = 1.0 / cast_speed
+        spell_cast_timer.start()
+
+func _on_hero_spell_cast() -> void:
+    # Mirror of _on_hero_attack() but reading spell_damage_ranges
+    # Same crit roll pattern, same pack.take_damage() call
+    pass
+
+func _get_hero_cast_speed() -> float:
+    var weapon = GameState.hero.equipped_items.get("weapon")
+    if weapon != null and weapon is Weapon and weapon.base_cast_speed > 0.0:
+        # Apply cast speed modifiers from affixes
+        var all_affixes: Array = weapon.prefixes.duplicate()
+        all_affixes.append_array(weapon.suffixes)
+        if weapon.implicit:
+            all_affixes.append(weapon.implicit)
+        var additive_cast_speed_mult := 0.0
+        for affix: Affix in all_affixes:
+            if Tag.StatType.INCREASED_CAST_SPEED in affix.stat_types:
+                additive_cast_speed_mult += affix.value / 100.0
+        return weapon.base_cast_speed * (1.0 + additive_cast_speed_mult)
+    return 0.0
 ```
 
-**Why tier 1 value is unchanged after expansion:** The Affix constructor formula is `value = base_max * (tier_range.y + 1 - tier)`. At tier 1 with range (1, 32): `value = 10 * (32 + 1 - 1) = 10 * 32 = 320`. At tier 1 with range (1, 8): `value = 10 * (8 + 1 - 1) = 80`. This is a 4x INCREASE in top-tier values, which is intentional — prestige players earn access to items that are meaningfully stronger. The existing math does exactly what is needed with no formula changes.
+### Timer Interaction with Pack Death
 
-**What changes at the bottom of the range:** Tier 32 value = `10 * (32 + 1 - 32) = 10 * 1 = 10`. This is the same as the old tier 8 minimum. The range is extended upward (better tiers), not compressed downward. Tier 8 items drop tier 17-32 affixes which remain in the same value territory as the old system's low rolls.
+When the pack dies, both timers stop (existing `_stop_timers()` expands to include `spell_cast_timer.stop()`). No interaction issues -- timers are independent.
 
-**Why no Affix subclass for "expanded" affixes:** GDScript inheritance for data classes adds serialization complexity. The `tier_range` parameter already parameterizes the tier window. Changing from 8 to 32 in the template is a one-field change per affix definition. No architecture change needed.
+### Edge Case: Zero Spell Damage
 
-#### 9. Backward Compatibility of Existing Saved Affixes
+If `base_cast_speed == 0.0` (str/dex weapons), the spell timer never starts. The hero is attack-only. This is clean -- no special-case branching needed in combat logic beyond the initial `cast_speed > 0.0` check.
 
-Saved affixes already serialize `tier_range_x` and `tier_range_y` in `to_dict()` / `from_dict()`. Old saves have tier_range_y = 8. After the update, templates use 32. **This mismatch is intentional and safe:**
+### Edge Case: Zero Attack Damage
 
-- Affixes already on items (in save files) keep their old `tier_range = Vector2i(1, 8)` because `from_dict()` reads the saved values, not the template.
-- New affixes rolled after the update use the new `Vector2i(1, 32)`.
-- No migration is needed for affixes — each affix carries its own tier range.
-
-**Confidence: HIGH** — This is the same pattern that allowed the existing system to have some affixes with range (1, 8) and others with range (1, 30) simultaneously.
+If a Wand has `base_damage_min == 0` / `base_damage_max == 0`, the attack timer still fires but deals 0 damage (affixes might add flat attack damage). Alternatively, the attack timer could skip when base attack damage is zero. Recommendation: still fire it -- flat damage affixes on an int weapon should work, just be suboptimal.
 
 ---
 
-### GDScript Patterns for Tag-Targeted Crafting Currencies
+## 5. Recommendations for This Project
 
-#### 10. Tag-Targeted Currency Pattern: Filtered add_prefix / add_suffix
+### 5.1 Item Archetype Design (3 per slot)
 
-The existing `Item.add_prefix()` picks from `ItemAffixes.prefixes` where `has_valid_tag(prefix)` and `not is_affix_on_item(prefix)`. Tag-targeted currencies need to add an additional filter: the affix must contain a required tag.
+Each equipment slot gets 3 concrete subclasses. All share the same abstract parent (Weapon, Armor, Helmet, Boots, Ring) and the same `update_value()` pipeline. They differ in:
 
-The correct place for this logic is a new method on `Item` that accepts a required tag, NOT a new method on the currency. The currency provides the filter; the item enforces the affix rules.
+- `item_name` and `get_item_type_string()`
+- Base stat values (base_armor, base_evasion, base_energy_shield, etc.)
+- `valid_tags` array (controls which affixes can roll)
+- Implicits (archetype-defining built-in stats)
+- For weapons: `base_damage_min/max`, `base_spell_damage_min/max`, `base_attack_speed`, `base_cast_speed`
 
-```gdscript
-# item.gd — ADD
+**Weapon Slot:**
 
-## Adds a random prefix that both satisfies item tag requirements AND contains required_tag.
-## Returns true if a valid affix was found and added.
-func add_prefix_with_tag(required_tag: String) -> bool:
-    if len(self.prefixes) >= max_prefixes():
-        return false
+| Archetype | Class Name | Identity | Key Base Stats | Key Valid Tags |
+|---|---|---|---|---|
+| Str | `GreatSword` | Slow, high phys damage | high base_damage, low base_attack_speed (0.8), no spell | `[PHYSICAL, ATTACK, CRITICAL, WEAPON, STR]` |
+| Dex | `LightSword` (existing) | Fast, moderate damage | moderate base_damage, high base_attack_speed (1.8) | `[PHYSICAL, ATTACK, CRITICAL, WEAPON, DEX]` (add DEX) |
+| Int | `Wand` | Spell-focused | low/zero base_damage, base_spell_damage, base_cast_speed (1.4) | `[SPELL, ELEMENTAL, CRITICAL, WEAPON, INT]` |
 
-    var valid_prefixes: Array[Affix] = []
-    for prefix: Affix in ItemAffixes.prefixes:
-        if has_valid_tag(prefix) and not is_affix_on_item(prefix) and required_tag in prefix.tags:
-            valid_prefixes.append(prefix)
+**Armor Slot:**
 
-    if valid_prefixes.is_empty():
-        return false
+| Archetype | Class Name | Identity | Key Base Stats | Key Valid Tags |
+|---|---|---|---|---|
+| Str | `PlateArmor` | High armor | high base_armor | `[DEFENSE, ARMOR, STR]` |
+| Dex | `LeatherArmor` | Evasion | base_evasion, some armor | `[DEFENSE, EVASION, DEX]` |
+| Int | `RobeArmor` | Energy shield | base_energy_shield | `[DEFENSE, ENERGY_SHIELD, INT]` |
 
-    var new_prefix: Affix = valid_prefixes.pick_random()
-    self.prefixes.append(Affixes.from_affix(new_prefix))
-    return true
+**Helmet Slot:**
 
+| Archetype | Class Name | Identity | Key Base Stats |
+|---|---|---|---|
+| Str | `GreatHelm` | High armor, health | base_armor, base_health |
+| Dex | `LeatherHood` | Evasion | base_evasion |
+| Int | `CircletHelmet` | ES, mana | base_energy_shield, base_mana |
 
-## Adds a random suffix that satisfies item tag requirements AND contains required_tag.
-func add_suffix_with_tag(required_tag: String) -> bool:
-    if len(self.suffixes) >= max_suffixes():
-        return false
+**Boots Slot:**
 
-    var valid_suffixes: Array[Affix] = []
-    for suffix: Affix in ItemAffixes.suffixes:
-        if has_valid_tag(suffix) and not is_affix_on_item(suffix) and required_tag in suffix.tags:
-            valid_suffixes.append(suffix)
+| Archetype | Class Name | Identity | Key Base Stats |
+|---|---|---|---|
+| Str | `PlateBoots` | Armor | base_armor |
+| Dex | `LeatherBoots` | Evasion, movement speed | base_evasion, higher movement speed implicit |
+| Int | `SilkSlippers` | ES | base_energy_shield |
 
-    if valid_suffixes.is_empty():
-        return false
+**Ring Slot:**
 
-    var new_suffix: Affix = valid_suffixes.pick_random()
-    self.suffixes.append(Affixes.from_affix(new_suffix))
-    return true
-```
+| Archetype | Class Name | Identity | Key Valid Tags |
+|---|---|---|---|
+| Str | `IronRing` | Attack damage | `[ATTACK, CRITICAL, WEAPON, STR]` |
+| Dex | `BasicRing` (existing) | Crit, speed | `[ATTACK, CRITICAL, SPEED, WEAPON, DEX]` (add DEX) |
+| Int | `SapphireRing` | Spell damage, can contribute spell DPS | `[SPELL, CRITICAL, WEAPON, INT]` |
 
-**Why `required_tag in prefix.tags` not `prefix.tags.has(required_tag)`:** Both work identically for `Array[String]` in GDScript. The `in` operator is more idiomatic GDScript and matches the existing `tag in affix.tags` usage in `has_valid_tag()`. Consistency matters more than the distinction.
+### 5.2 Affix Pool Expansion
 
-**Why NOT Array.filter() with a lambda for this:** `Array.filter()` in Godot 4 returns an untyped `Array`, not `Array[Affix]`. The existing codebase uses typed arrays (`Array[Affix]`) and explicit for-loops for this reason (verified in `Item.add_prefix()` and `Item.add_suffix()`). Continue the same pattern.
+**New Prefixes:**
 
-**Why NOT modify the existing `add_prefix()` / `add_suffix()`:** Adding an optional `required_tag: String = ""` parameter would add a conditional branch inside the hot path and mix two responsibilities (generic add vs. tag-targeted add). Two focused methods are cleaner.
+| Affix Name | Type | Tags | StatTypes | Notes |
+|---|---|---|---|---|
+| Flat Spell Damage | PREFIX | `[SPELL, FLAT, WEAPON]` | `[FLAT_SPELL_DAMAGE]` | Mirror of "Physical Damage". Needs dmg range params. |
+| %Spell Damage | PREFIX | `[SPELL, PERCENTAGE, WEAPON]` | `[INCREASED_SPELL_DAMAGE]` | Mirror of "%Physical Damage". |
 
-#### 11. Tag-Targeted Currency Subclass
+**New/Enabled Suffixes:**
 
-```gdscript
-# models/currencies/fire_hammer.gd — NEW FILE (example for fire-targeted hammer)
-class_name FireHammer extends Currency
+| Affix Name | Type | Tags | StatTypes | Status |
+|---|---|---|---|---|
+| Cast Speed | SUFFIX | `[SPEED, SPELL]` | `[INCREASED_CAST_SPEED]` | Currently disabled. Enable with correct stat_types. |
+| Evade | SUFFIX | `[DEFENSE, EVASION]` | `[FLAT_EVASION]` | Currently disabled. Enable with existing StatType. Fix tags (remove WEAPON). |
 
+**Suffixes to Remain Disabled (v1.8):**
+- Damage over Time, Bleed Damage -- need DoT tick system
+- Sigil -- undefined mechanic
+- Physical Reduction, Magical Reduction -- need DefenseCalculator integration design
+- Dodge Chance -- needs design decision (additive to evasion or separate roll?)
+- Dmg Suppression Chance -- needs CombatEngine suppression roll
 
-func _init() -> void:
-    currency_name = "Fire Hammer"
+### 5.3 Serialization / Save Format Impact
 
+- New `StatType` enum entries are backward-compatible (integer IDs append to end).
+- New item type strings (`GreatSword`, `Wand`, `PlateArmor`, etc.) require expanding `Item.create_from_dict()` match statement and `ITEM_TYPE_STRINGS` array.
+- `Weapon` class gains `base_spell_damage_min`, `base_spell_damage_max`, `base_cast_speed` fields. Default values of 0 make old saves compatible (no spell damage = attack-only).
+- Save format version bump (v4 -> v5) is warranted for the new item types. Old items in save files will fail `create_from_dict()` match -- recommend wiping inventories on version mismatch (precedent: v2/v3 wipe decision).
 
-## Can apply to Normal items only (same as RunicHammer — grants 1 guaranteed fire mod)
-func can_apply(item: Item) -> bool:
-    return item.rarity == Item.Rarity.NORMAL
+### 5.4 Loot Table Changes
 
+`get_random_item_base()` currently picks uniformly from 5 types. With 15 types (3 per slot), options:
 
-func get_error_message(item: Item) -> String:
-    if item.rarity != Item.Rarity.NORMAL:
-        return "Fire Hammer can only be used on Normal items"
-    return ""
+1. **Uniform across all 15** -- equal chance of any base. Simple, may flood with one archetype.
+2. **Pick slot first, then archetype** -- uniform slot selection (1/5), then uniform archetype within slot (1/3). Guarantees even slot distribution.
+3. **Weighted by area/biome** -- str items more common in Forest, int items in Shadow Realm. Thematic but complex.
 
+**Recommendation:** Option 2 (pick slot, then archetype). Maintains current slot distribution behavior and is trivial to implement.
 
-func _do_apply(item: Item) -> void:
-    item.rarity = Item.Rarity.MAGIC
+### 5.5 Hero DPS Display
 
-    # Try to add a FIRE-tagged prefix; fall back to suffix if no valid prefix exists
-    if not item.add_prefix_with_tag(Tag.FIRE):
-        item.add_suffix_with_tag(Tag.FIRE)
+Currently Hero View shows a single `total_dps`. With spell DPS added:
 
-    item.update_value()
-```
+- Show `Attack DPS` and `Spell DPS` separately in offense section.
+- Show `Total DPS` as sum.
+- This mirrors the existing offense/defense split pattern in Hero View.
 
-**Why one file per tag-targeted hammer:** Matches the existing pattern — each Currency subclass lives in its own file (`runic_hammer.gd`, `forge_hammer.gd`, etc.). The file structure is the project's organizational unit.
+### 5.6 Implementation Order
 
-**Why require NORMAL rarity:** Tag-targeted hammers grant guaranteed mods, which is a strong effect. Restricting to Normal items keeps the power level consistent with RunicHammer (also requires Normal). This also prevents players from stacking guaranteed fire mods on an already-crafted item.
+Recommended phasing to minimize risk:
 
-**Why try prefix first, then suffix:** Fire affixes currently exist only as prefixes (Physical Damage, Fire Damage, etc. are all `Affix.AffixType.PREFIX`). The suffix fallback is defensive programming — it costs nothing and future-proofs the hammer if fire suffixes are added.
+1. **Tag + StatType additions** -- add new constants/enum values. Zero behavior change. All tests pass.
+2. **New item base classes** -- add 10 new concrete subclasses (2 new per slot, existing ones become the "dex" or "str" variant). Update `get_random_item_base()`, `create_from_dict()`, `ITEM_TYPE_STRINGS`.
+3. **Spell damage affixes** -- add flat/% spell damage prefixes, enable cast speed suffix.
+4. **Weapon spell damage fields** -- add `base_spell_damage_min/max` and `base_cast_speed` to `Weapon`. Wand class uses them.
+5. **StatCalculator spell range function** -- `calculate_spell_damage_range()` parallel to `calculate_damage_range()`.
+6. **Hero spell stat tracking** -- `spell_damage_ranges`, `total_spell_dps`, `calculate_spell_dps()`.
+7. **CombatEngine spell timer** -- third timer, `_on_hero_spell_cast()`, `_get_hero_cast_speed()`.
+8. **UI updates** -- Hero View offense section shows attack/spell DPS. Weapon tooltip shows spell damage range.
+9. **Enable remaining safe suffixes** -- Evade suffix.
+10. **Save format migration** -- v5 format, inventory wipe path for old item types.
 
-#### 12. Prestige Gating for Tag-Targeted Currencies
+### 5.7 What NOT to Do
 
-Tag-targeted currencies unlock at Prestige 1. The gate belongs in the LootTable drop logic and the UI, not in the Currency class itself.
-
-```gdscript
-# loot_table.gd — MODIFY roll_pack_currency_drop to add tag-targeted hammers:
-
-var pack_currency_rules: Dictionary = {
-    "runic": {"chance": 0.25, "max_qty": 2},
-    "tack": {"chance": 0.25, "max_qty": 2},
-    "forge": {"chance": 0.25, "max_qty": 1},
-    "grand": {"chance": 0.20, "max_qty": 1},
-    "claw": {"chance": 0.20, "max_qty": 1},
-    "tuning": {"chance": 0.20, "max_qty": 1},
-    # NEW — tag-targeted hammers, only added if prestige unlocked:
-    "fire": {"chance": 0.15, "max_qty": 1},
-    "cold": {"chance": 0.15, "max_qty": 1},
-    "lightning": {"chance": 0.15, "max_qty": 1},
-    "defense": {"chance": 0.15, "max_qty": 1},
-}
-
-# Gate in the drop loop:
-for currency_name in pack_currency_rules:
-    # Check prestige gating before unlock level check
-    if currency_name in ["fire", "cold", "lightning", "defense"]:
-        if not GameState.prestige_unlocks.get("tag_targeted_currencies", false):
-            continue
-    # ... rest of existing drop logic
-```
-
-**Why gate in LootTable, not in GameState.currency_counts:** The currency counts dictionary in GameState should only grow as currencies unlock — new keys should be added when prestige unlocks them. LootTable is the right gate because it controls what can drop. GameState.currency_counts should not reference currencies that haven't been unlocked yet.
-
-**How to add new currency keys to currency_counts when prestige unlocks them:**
-
-```gdscript
-# game_state.gd — MODIFY _compute_unlocks() or initialize_fresh_game()
-
-func _initialize_currency_counts_for_prestige_level() -> void:
-    # Base currencies always present
-    if not "runic" in currency_counts:
-        currency_counts = {"runic": 1, "forge": 0, "tack": 0,
-                           "grand": 0, "claw": 0, "tuning": 0}
-    # Prestige 1 unlocks tag-targeted currencies
-    if prestige_level >= 1:
-        for tag_hammer in ["fire", "cold", "lightning", "defense"]:
-            if not tag_hammer in currency_counts:
-                currency_counts[tag_hammer] = 0
-```
+- **Do not create a separate SpellWeapon class.** Keep spell fields on `Weapon` base class with 0 defaults. Wand is a Weapon subclass like LightSword. This avoids branching everywhere that checks `item is Weapon`.
+- **Do not split crit into attack crit / spell crit.** Shared crit pool is simpler, still creates interesting choices, and reduces StatType proliferation.
+- **Do not make %Elemental Damage attack-only.** In every major ARPG, elemental scaling applies to all damage sources of that element. Spell fire damage and attack fire damage both scale from %Fire Damage.
+- **Do not add a mana cost system.** The game has `FLAT_MANA` stat but no mana consumption mechanic. Spells auto-cast on timer with no resource cost -- this is consistent with the idle genre (attacks also have no cost).
+- **Do not change existing LightSword/BasicRing to dex archetype yet in the same PR that adds spell.** Changing existing item class names/identities breaks saves. Instead, add the dex tag to existing classes and create new str/int variants alongside them.
 
 ---
 
-### Signal Additions
+## File Touch Points Summary
 
-```gdscript
-# game_events.gd — ADD
-
-signal prestige_triggered(new_level: int)   # Emitted by GameState.do_prestige()
-signal prestige_available()                  # Emitted when can_prestige() becomes true (optional, for UI glow)
-```
-
-**Why `prestige_triggered` on GameEvents, not a direct call:** The existing event bus pattern decouples the prestige logic from the UI. `PrestigeView` connects to `GameEvents.prestige_triggered` to update its display; `SaveManager` connects to trigger a save after prestige. No caller needs to know which listeners exist.
-
-**Why emit `prestige_available` separately:** The prestige button should visually indicate when prestige is ready (e.g., glow or enable state). This signal lets the UI react to currency accumulation without polling `can_prestige()` every frame. Emit it from `GameState.add_currencies()` after each currency gain when `can_prestige()` flips from false to true.
-
----
-
-### UI Pattern: Prestige Panel
-
-No new UI architecture needed. The prestige panel follows the existing tab pattern.
-
-```
-PrestigeView (CanvasLayer or Control, managed by main_view.gd tab bar)
-├── Label: "Prestige Level: N / 7"
-├── VBoxContainer: Cost display (one Label per currency in PRESTIGE_COSTS[prestige_level])
-├── Button: "Prestige" — disabled unless can_prestige(), connected to GameState.do_prestige()
-└── VBoxContainer: Unlock display (one Label per unlock at new level)
-```
-
-**Why CanvasLayer managed by main_view:** This is the existing pattern for all views (ForgeView, GameplayView, SettingsView). Adding prestige as a new tab requires only a new CanvasLayer child and one new case in `main_view._on_tab_pressed()`.
+| File | Change Type | Scope |
+|---|---|---|
+| `autoloads/tag.gd` | Add `SPELL`, `STR`, `DEX`, `INT` constants + 3 StatType enum values | Small |
+| `autoloads/item_affixes.gd` | Add 2 spell damage prefixes, enable Cast Speed + Evade suffixes | Small |
+| `models/items/weapon.gd` | Add `base_spell_damage_min`, `base_spell_damage_max`, `base_cast_speed` fields | Small |
+| `models/items/` | Add 10 new concrete item subclasses | Medium (repetitive) |
+| `models/items/item.gd` | Expand `create_from_dict()` match + `ITEM_TYPE_STRINGS` | Small |
+| `models/stats/stat_calculator.gd` | Add `calculate_spell_damage_range()` | Small |
+| `models/hero.gd` | Add `spell_damage_ranges`, `total_spell_dps`, `calculate_spell_dps()`, `calculate_spell_damage_ranges()` | Medium |
+| `models/combat/combat_engine.gd` | Add `spell_cast_timer`, `_on_hero_spell_cast()`, `_get_hero_cast_speed()` | Medium |
+| `scenes/gameplay_view.gd` | Expand `get_random_item_base()` to 15 item types | Small |
+| `scenes/forge_view.gd` | UI for spell DPS display, weapon spell damage tooltip | Medium |
+| `autoloads/save_manager.gd` | Save format v5, migration path | Small |
 
 ---
-
-## What NOT to Add
-
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| Separate prestige save file (`user://prestige.json`) | Two save files = two failure modes + broken export strings | One JSON envelope with prestige fields at the top level |
-| `ResourceSaver` for prestige meta-state | Breaks the `HT1:base64:md5` export string system entirely | Extend existing `_build_save_data()` / `_restore_state()` |
-| `PrestigeMeta` Resource class with `@export` fields | Creates a second serialization path alongside SaveManager JSON | Plain Dictionary fields in `GameState` autoload |
-| `Array.filter()` with lambda for tag matching | Returns untyped `Array` (Godot 4 known issue), breaks `Array[Affix]` typed context | Explicit for-loop (matches existing `Item.add_prefix()` pattern) |
-| `Array.any()` with lambda for the tag check in hot-path affix filtering | Creates a Callable allocation per check; for n=10 affixes it's acceptable but the for-loop is already established | `required_tag in affix.tags` inline — single `in` operator, zero allocation |
-| Formula-based item tier → affix tier mapping | Hides design intent, makes tuning opaque | `ITEM_TIER_AFFIX_RANGE` Dictionary constant — explicit, tunable |
-| New Affix subclass for "post-prestige affixes" | Breaks `create_from_dict()` dispatch, adds serialization complexity | Change `tier_range` in the template definitions only |
-| Autoload for prestige state separate from GameState | GameState is already the single source of truth for all run + meta state | Two new vars in `game_state.gd` |
-| `get_tree().reload_current_scene()` for prestige reset | Unnecessary scene reload overhead; autoload state persists across scene reloads anyway | Call `GameState.do_prestige()` directly — it resets run state in-memory without a scene reload |
-| `@abstract` annotation on Currency base class (new in 4.5) | The project has no incorrectly-instantiated Currency base objects, and the `_do_apply()` virtual pattern already enforces the contract via comments | Keep the existing template method pattern with a `pass` in the base `_do_apply()` |
-
----
-
-## Integration Points
-
-### Changes
-
-| Location | Current | After |
-|----------|---------|-------|
-| `GameState` | No prestige fields | +`prestige_level: int`, +`prestige_unlocks: Dictionary`, +`do_prestige()`, +`can_prestige()`, +`PRESTIGE_COSTS` const |
-| `SaveManager.SAVE_VERSION` | 2 | 3 |
-| `SaveManager._build_save_data()` | No prestige fields | +`prestige_level`, +`prestige_unlocks` keys |
-| `SaveManager._restore_state()` | No prestige fields | +restore `prestige_level`, `prestige_unlocks` |
-| `SaveManager._migrate_save()` | Handles v1→v2 | +handles v2→v3 (additive defaults injection) |
-| `Item` | `add_prefix()`, `add_suffix()` only | +`add_prefix_with_tag(tag)`, +`add_suffix_with_tag(tag)` |
-| `Item` | `var tier: int` set at item construction | `tier` set at drop time via `LootTable.roll_item_tier()` |
-| `item.gd` | `ITEM_TIER_AFFIX_RANGE` does not exist | +`ITEM_TIER_AFFIX_RANGE: Dictionary` constant |
-| `ItemAffixes.prefixes/suffixes` | `Vector2i(1, 8)` or `Vector2i(1, 30)` tier ranges | Expand to `Vector2i(1, 32)` for all offensive affixes; defensive stay wide or expand to (1, 32) |
-| `LootTable` | 6 currency types in `pack_currency_rules` | +4 tag-targeted hammer types, prestige-gated |
-| `GameEvents` | No prestige signals | +`prestige_triggered(level)`, +`prestige_available()` |
-| `GameState.currency_counts` | 6 fixed keys | +4 conditional keys added when `prestige_level >= 1` |
-| New file: `models/currencies/fire_hammer.gd` | Does not exist | `FireHammer extends Currency` |
-| New file: `models/currencies/cold_hammer.gd` | Does not exist | `ColdHammer extends Currency` |
-| New file: `models/currencies/lightning_hammer.gd` | Does not exist | `LightningHammer extends Currency` |
-| New file: `models/currencies/defense_hammer.gd` | Does not exist | `DefenseHammer extends Currency` |
-| New scene/view: `prestige_view.gd` + `.tscn` | Does not exist | Prestige panel, managed by `main_view.gd` tab system |
-
-### Stays the Same
-
-| What | Why Unchanged |
-|------|--------------|
-| `Item.to_dict()` / `Item.create_from_dict()` | Affix tier_range serialization already round-trips `tier_range_x` and `tier_range_y`. Saved affixes carry their own range. |
-| `Affix` class and constructor | No new fields needed. `tier_range` parameterizes everything. |
-| `Currency.apply()` / `_do_apply()` template method | New hammers are identical subclasses to existing ones. |
-| `StatCalculator` / `DefenseCalculator` | Affix values scale with tier, not stat type. No stat formula changes. |
-| `SaveManager` export/import string format (`HT1:base64:md5`) | The envelope is unchanged. Inner JSON gains new keys. |
-| `LootTable.roll_pack_item_drop()` | Item drop chance is unchanged. Item tier assignment is a new layer on top. |
-| `PackGenerator`, `CombatEngine`, `DefenseCalculator` | Prestige/tier changes do not touch combat resolution. |
-| `BiomeConfig` | Biome structure and area scaling are unchanged. |
-| `Hero.update_stats()` | Affix values change in magnitude (tier scaling), but stat aggregation logic is unchanged. |
-| `ForgeView` crafting bench flow | select-and-click interaction is unchanged. New hammers appear as new buttons. |
-| `GameEvents` existing signals | All 7 combat signals, `item_crafted`, `equipment_changed`, `area_cleared`, `save_completed`, `save_failed` are unchanged. |
-
----
-
-## Version Compatibility
-
-| API | Godot Version | Notes |
-|-----|--------------|-------|
-| `Array.any(Callable)` | 4.0+ | `[Tag.FIRE] in affix.tags` achieves the same result without Callable allocation. Use `in` operator for single-element checks. |
-| `Array.filter(Callable)` | 4.0+ | Returns untyped `Array`. Do not assign to `Array[Affix]` without cast. Use for-loop instead. |
-| `Dictionary.get(key, default)` | 4.0+ | Already used throughout for safe dictionary access. |
-| `Dictionary.duplicate()` | 4.0+ | Shallow copy. Already used in `_build_save_data()` for `currency_counts`. |
-| `pick_random()` on `Array` | 4.0+ | Already used in `Item.add_prefix()` and `PackGenerator`. |
-| `sort_custom(Callable)` | 4.0+ | Lambda callable syntax already used in codebase. |
-| `Vector2i(x, y)` | 4.0+ | Already the type for `Affix.tier_range`. |
-| `in` operator for Array membership | 4.0+ | `"FIRE" in affix.tags` — O(n) linear scan, acceptable for n < 10 tags. |
-| `clampf(value, min, max)` | 4.0+ | Float-typed clamp. Already used in LootTable sqrt ramp. |
-| `@abstract` annotation on class | **4.5 only** | New in Godot 4.5. NOT recommended for this milestone (see What NOT to Add). |
-| `duplicate_deep()` on Array/Dictionary | **4.5 only** | New in Godot 4.5. Not needed here — prestige_unlocks values are primitives. |
-| `JSON.stringify` / `JSON.parse_string` | 4.0+ | Already in `SaveManager`. Boolean values serialize as JSON true/false and round-trip correctly. |
-| `FileAccess.open` / `DirAccess.remove_absolute` | 4.0+ | Already in `SaveManager`. No changes needed. |
-
----
-
-## Alternatives Considered
-
-| Recommended | Alternative | Why Not |
-|-------------|-------------|---------|
-| Two vars in `GameState` for prestige meta | Separate `PrestigeMeta` Resource class | Resource needs its own serialize path. The project uses JSON via `SaveManager`. Adding a Resource layer adds a second save format. |
-| `ITEM_TIER_AFFIX_RANGE` Dictionary constant | Formula: `Vector2i(33 - item_tier * 4, 32 - (item_tier - 1) * 4)` | Formula gives same results but hides the design intent and makes tier boundary tuning opaque. Dictionary is explicit and tunable. |
-| `add_prefix_with_tag(required_tag)` on Item | Pass a filter Callable into the existing `add_prefix()` | Callable parameter obscures the call site. Two explicit methods are more readable and match the existing `can_apply()` / `_do_apply()` pattern for Currency. |
-| Inline `required_tag in prefix.tags` check in for-loop | `prefix.tags.any(func(t): return t == required_tag)` | The lambda version creates a Callable object per iteration. The `in` operator is the idiomatic GDScript equivalent with zero allocation. |
-| `initialize_fresh_game()` called from `do_prestige()` | Duplicate the reset logic in `do_prestige()` | Single source of truth for "what is run state" prevents desync. `initialize_fresh_game()` is already the canonical reset — reuse it. |
-| Version bump to v3 with additive migration | Keep SAVE_VERSION at 2 and detect new fields with `has()` | The existing migration chain is the established pattern. Explicit versioning prevents ambiguous states during development and makes migration intent searchable. |
-| LootTable gates tag-targeted currency drops by prestige | Currency class checks `GameState.prestige_level` directly | LootTable already owns all drop gating logic (see `CURRENCY_AREA_GATES`). Centralizing gates in one place prevents scattered `if prestige >= 1` checks. |
-
----
-
-## Sources
-
-**HIGH Confidence (Direct codebase analysis):**
-- `/var/home/travelboi/Programming/hammertime/autoloads/game_state.gd` — `initialize_fresh_game()`, `currency_counts`, `spend_currency()` — prestige reset extends these
-- `/var/home/travelboi/Programming/hammertime/autoloads/save_manager.gd` — `_migrate_save()` chain, `_build_save_data()`, `_restore_state()`, `SAVE_VERSION` — v3 migration follows same pattern
-- `/var/home/travelboi/Programming/hammertime/models/affixes/affix.gd` — `tier_range: Vector2i`, constructor scaling formula `base * (tier_range.y + 1 - tier)`, `to_dict()` / `from_dict()` with `tier_range_x/y`
-- `/var/home/travelboi/Programming/hammertime/autoloads/item_affixes.gd` — Template definitions with `Vector2i(1, 8)` and `Vector2i(1, 30)` — confirmed range is just a constructor param
-- `/var/home/travelboi/Programming/hammertime/models/items/item.gd` — `add_prefix()`, `add_suffix()`, `has_valid_tag()`, `is_affix_on_item()` — tag-targeted extension points
-- `/var/home/travelboi/Programming/hammertime/models/currencies/runic_hammer.gd` — Template method pattern confirmed: `can_apply()` → `_do_apply()` with rarity change + affix add
-- `/var/home/travelboi/Programming/hammertime/models/loot/loot_table.gd` — `roll_pack_currency_drop()`, `CURRENCY_AREA_GATES`, `_calculate_currency_chance()` — tag hammer gating extends this pattern
-- `/var/home/travelboi/Programming/hammertime/autoloads/tag.gd` — `Tag.FIRE`, `Tag.COLD`, `Tag.LIGHTNING`, `Tag.DEFENSE` string constants — used as required_tag values
-
-**MEDIUM Confidence (Official Godot docs and community sources):**
-- [Godot 4.5 release notes — godotengine.org](https://godotengine.org/releases/4.5/) — Confirmed: `@abstract` annotation added in 4.5, `duplicate_deep()` added. No save/serialization changes. GDScript lambdas and `Array.any()` existed since 4.0.
-- [Array filter() returns untyped Array — GitHub #82538](https://github.com/godotengine/godot/issues/82538) — Confirmed known issue: `filter()` does not return typed arrays. Use for-loops for `Array[Affix]` contexts.
-- [Godot Forum — Resetting autoload state](https://forum.godotengine.org/t/resetting-rerunning-autoloaded-script-to-generate-new-random-variables-how/12554) — Pattern: extract init logic into `_initialize_state()` function callable multiple times. Do NOT destroy/recreate autoloads.
-- [Godot Forum — Array intersection](https://forum.godotengine.org/t/how-to-check-for-array-intersection/27600) — For small arrays (< 10 tags), `element in array` is acceptable. Dictionary-based O(1) lookup only needed for large arrays.
-- [GDQuest save format comparison](https://www.gdquest.com/tutorial/godot/best-practices/save-game-formats/) — Confirmed: JSON recommended when export strings or external data exchange is needed. Already the right choice for this project.
-- [Array.any() / Array.all() in GDScript 4](https://www.syntaxcache.com/gdscript/arrays-loops) — Confirmed: `any(Callable)` and `all(Callable)` available in Godot 4.0+. Accept lambda functions.
-
-**LOW Confidence (Inferred from patterns, no direct official source):**
-- Weighted triangular drop table for item tier (`roll_item_tier` formula) — The specific area-scaling formula is original design. The weighted accumulation pattern is verified (matches `PackGenerator.roll_element()`). The specific weight values are a design choice, not a Godot API question.
-- `prestige_available` signal emit strategy from `add_currencies()` — Pattern is sound (check `can_prestige()` after currency gain, emit once on true). The specific emit placement is a design decision, not researched.
-
----
-
-*Stack research for: Hammertime v1.7 — Meta-Progression, Item Tiers, Affix Tier Expansion, Tag-Targeted Currencies*
-*Researched: 2026-02-20*
-*Confidence: HIGH — All GDScript patterns verified against existing codebase. Godot 4.5 API points confirmed via official release notes and community sources.*
+*Last updated: 2026-03-06*
