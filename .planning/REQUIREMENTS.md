@@ -80,4 +80,46 @@
 
 ## Traceability
 
-<!-- Filled by roadmapper -->
+| REQ-ID | Phase | Phase Name |
+|--------|-------|------------|
+| AFF-06 | 42 | Tag & Stat Foundation |
+| SPELL-01 | 42 | Tag & Stat Foundation |
+| SPELL-02 | 42 | Tag & Stat Foundation |
+| INV-01 | 43 | Inventory Rework |
+| INV-02 | 43 | Inventory Rework |
+| INV-03 | 43 | Inventory Rework |
+| INV-04 | 43 | Inventory Rework |
+| INV-05 | 43 | Inventory Rework |
+| BASE-01 | 44 | Item Bases (STR & DEX) |
+| BASE-02 | 44 | Item Bases (STR & DEX) |
+| BASE-03 | 44 | Item Bases (STR & DEX) |
+| BASE-05 | 44 | Item Bases (STR & DEX) |
+| BASE-06 | 44 | Item Bases (STR & DEX) |
+| BASE-07 | 44 | Item Bases (STR & DEX) |
+| BASE-08 | 44 | Item Bases (STR & DEX) |
+| BASE-09 | 44 | Item Bases (STR & DEX) |
+| BASE-10 | 44 | Item Bases (STR & DEX) |
+| AFF-01 | 45 | Affix Pool Expansion |
+| AFF-02 | 45 | Affix Pool Expansion |
+| AFF-03 | 45 | Affix Pool Expansion |
+| AFF-04 | 45 | Affix Pool Expansion |
+| AFF-05 | 45 | Affix Pool Expansion |
+| SPELL-03 | 46 | Spell Damage Channel |
+| SPELL-04 | 46 | Spell Damage Channel |
+| SPELL-05 | 46 | Spell Damage Channel |
+| SPELL-07 | 46 | Spell Damage Channel |
+| BASE-04 | 47 | INT Weapons & Spell Combat |
+| SPELL-06 | 47 | INT Weapons & Spell Combat |
+| DOT-01 | 48 | Damage Over Time |
+| DOT-02 | 48 | Damage Over Time |
+| DOT-03 | 48 | Damage Over Time |
+| DOT-04 | 48 | Damage Over Time |
+| DOT-05 | 48 | Damage Over Time |
+| DOT-06 | 48 | Damage Over Time |
+| DOT-07 | 48 | Damage Over Time |
+| LOOT-01 | 49 | Loot & Integration |
+| LOOT-02 | 49 | Loot & Integration |
+| LOOT-03 | 49 | Loot & Integration |
+| LOOT-04 | 49 | Loot & Integration |
+
+**Coverage: 39/39 requirements mapped (100%)**

@@ -11,6 +11,7 @@
 - ✅ **v1.5 Inventory Rework** — Phases 27-30 (shipped 2026-02-19)
 - ✅ **v1.6 Tech Debt Cleanup** — Phases 31-34 (shipped 2026-02-20)
 - ✅ **v1.7 Meta-Progression** — Phases 35-41 (shipped 2026-03-06)
+- **v1.8 Content Pass — Items & Mods** — Phases 42-49 (in progress)
 
 ## Phases
 
@@ -127,6 +128,226 @@ Full details: `.planning/milestones/v1.7-ROADMAP.md`
 
 </details>
 
+## v1.8 Content Pass — Items & Mods (Phases 42-49)
+
+**Requirements:** 39/39 mapped across 8 phases
+**Build order:** Foundation (tags/stats) -> Inventory rework -> STR/DEX item bases -> Affix expansion -> Spell channel -> INT bases + spell timer -> DoT -> Loot integration
+
+### Phase 42 — Tag & Stat Foundation
+
+**Goal:** Add all new Tag and StatType constants needed by later phases, with zero functional changes.
+
+**Requirements:** AFF-06, SPELL-01, SPELL-02 (3)
+
+**What ships:**
+- STR, DEX, INT metadata tag constants in tag.gd for archetype identity
+- FLAT_SPELL_DAMAGE, INCREASED_SPELL_DAMAGE, INCREASED_CAST_SPEED stat types in tag.gd
+- SPELL tag constant in tag.gd alongside existing ATTACK tag
+
+**Success criteria:**
+1. tag.gd contains STR, DEX, INT, SPELL constants that can be referenced from item base valid_tags
+2. tag.gd contains FLAT_SPELL_DAMAGE, INCREASED_SPELL_DAMAGE, INCREASED_CAST_SPEED in StatType enum
+3. Existing game launches and plays identically (no regressions from new constants)
+
+---
+
+### Phase 43 — Inventory Rework
+
+**Goal:** Replace 10-item-per-slot inventory arrays with single-bench-per-slot model, simplifying the item management path before base proliferation.
+
+**Requirements:** INV-01, INV-02, INV-03, INV-04, INV-05 (5)
+
+**What ships:**
+- 5 crafting benches (one per equipment slot), each holding max 1 item
+- Bench selection via existing slot tab UI pattern
+- Drops discarded when bench is occupied (player must craft/equip/discard first)
+- ForgeView shows 5 bench slots instead of 10-item arrays
+- Save format simplified to 1 item per slot (no inventory arrays)
+
+**Success criteria:**
+1. Player sees 5 bench slots in ForgeView, each showing either an item or "Empty"
+2. Dropping an item when the bench for that slot is occupied results in the drop being discarded
+3. Player can select a bench slot, craft on it, equip the result, and the bench clears
+4. Save/load round-trip preserves bench contents correctly with new simplified format
+5. Old save files are handled gracefully (deleted per project policy)
+
+---
+
+### Phase 44 — Item Bases (STR & DEX)
+
+**Goal:** Add all 21 item base types across 5 equipment slots, with archetype-appropriate implicits and valid_tags. Existing items become STR archetype; DEX and non-weapon INT bases are new.
+
+**Requirements:** BASE-01, BASE-02, BASE-03, BASE-05, BASE-06, BASE-07, BASE-08, BASE-09, BASE-10 (9)
+
+**What ships:**
+- Existing items renamed to thematic STR names (or kept as-is per research recommendation)
+- 3 STR weapons with varied implicits (Broadsword/attack speed, Battleaxe/physical damage, Warhammer/bleed chance)
+- 3 DEX weapons with varied implicits (Dagger/crit chance, Venom Blade/poison damage, Shortbow/attack speed)
+- 3 armor bases, 3 helmet bases, 3 boots bases, 3 ring bases with archetype-appropriate defense implicits
+- valid_tags on each base constraining affix pool to archetype
+- Serialization registry updated with create_from_dict match arms for all 21 item types
+
+**Success criteria:**
+1. Player can find and equip items from all 3 archetypes in each equipment slot
+2. STR armor/helmet/boots bases show armor as primary defense implicit
+3. DEX armor/helmet/boots bases show evasion as primary defense implicit
+4. INT armor/helmet/boots bases show energy shield as primary defense implicit
+5. Save/load round-trip correctly serializes and deserializes all 21 item types
+
+---
+
+### Phase 45 — Affix Pool Expansion
+
+**Goal:** Add spell damage affixes, enable disabled affix stubs, and add DoT affixes to the rollable pool.
+
+**Requirements:** AFF-01, AFF-02, AFF-03, AFF-04, AFF-05 (5)
+
+**What ships:**
+- Flat Spell Damage prefix (tags: SPELL, FLAT, WEAPON; stat: FLAT_SPELL_DAMAGE)
+- %Spell Damage prefix (tags: SPELL, PERCENTAGE, WEAPON; stat: INCREASED_SPELL_DAMAGE)
+- Cast Speed suffix enabled (INCREASED_CAST_SPEED stat type)
+- Evade suffix enabled (FLAT_EVASION stat type)
+- Bleed, Poison, and Burn damage suffixes added/enabled with DoT stat types
+
+**Success criteria:**
+1. Crafting a weapon with SPELL valid_tag can roll Flat Spell Damage and %Spell Damage prefixes
+2. Cast Speed suffix appears on items with SPELL tag when rolling suffixes
+3. Evade suffix appears on items with EVASION or DEFENSE tag when rolling suffixes
+4. Bleed/Poison/Burn suffixes appear in the rollable pool for items with appropriate tags
+5. Existing affixes continue to roll normally on STR/DEX items (no pool dilution regression)
+
+---
+
+### Phase 46 — Spell Damage Channel
+
+**Goal:** Wire spell damage through StatCalculator, Hero, and UI so that spell stats are tracked and displayed -- without touching CombatEngine yet.
+
+**Requirements:** SPELL-03, SPELL-04, SPELL-05, SPELL-07 (4)
+
+**What ships:**
+- Weapon base class gains optional spell damage fields (base_spell_damage_min/max, base_cast_speed) defaulting to 0
+- StatCalculator gets calculate_spell_damage_range() and calculate_spell_dps() static methods
+- Hero tracks spell_damage_ranges dict and total_spell_dps parallel to attack damage stats
+- Hero View shows Attack DPS and Spell DPS separately, hiding whichever channel is 0
+
+**Success criteria:**
+1. Equipping a weapon with spell damage fields shows Spell DPS in Hero View
+2. Equipping a weapon with only attack damage shows Attack DPS only (Spell DPS hidden)
+3. Spell damage affixes correctly modify spell DPS calculation
+4. Cast speed affixes correctly modify spell DPS calculation
+
+---
+
+### Phase 47 — INT Weapons & Spell Combat
+
+**Goal:** Add INT weapon bases and wire the CombatEngine spell timer -- the highest-risk change in this milestone, isolated with minimal other work.
+
+**Requirements:** BASE-04, SPELL-06 (2)
+
+**What ships:**
+- 3 INT weapons with varied implicits (Wand/spell damage, Lightning Rod/lightning damage, Sceptre/burn damage)
+- CombatEngine hero_spell_timer as third independent timer
+- Spell timer only starts when equipped weapon has cast_speed > 0
+- Spell hits deal damage from spell damage channel
+
+**Success criteria:**
+1. Equipping an INT weapon (e.g., Wand) causes spell damage ticks in combat alongside attack damage
+2. Spell timer fires independently from attack timer at the rate determined by cast speed
+3. Equipping a non-spell weapon (STR/DEX) produces zero spell timer activity
+4. Combat remains stable with no crashes or stuck states when switching between spell and non-spell weapons
+
+---
+
+### Phase 48 — Damage Over Time
+
+**Goal:** Add DoT system (bleed, poison, burn) with CombatEngine tick processing and UI feedback.
+
+**Requirements:** DOT-01, DOT-02, DOT-03, DOT-04, DOT-05, DOT-06, DOT-07 (7)
+
+**What ships:**
+- BLEED_DAMAGE, POISON_DAMAGE, BURN_DAMAGE stat types in tag.gd
+- DoT tick system in CombatEngine (debuffs applied on hit, damage over configurable duration)
+- Bleed affix (physical DoT, STR signature, Tag.PHYSICAL)
+- Poison affix (DEX signature)
+- Burn affix (fire DoT, INT signature, Tag.FIRE)
+- DoT damage shown in combat UI (ticking numbers or debuff indicator)
+- DoT defense interaction design (e.g., burn bypasses armor, bleed bypasses ES, or simpler flat application)
+
+**Success criteria:**
+1. Landing a hit with a bleed-stat weapon applies a visible bleed DoT that ticks damage over time
+2. Poison and burn DoTs apply and tick independently from bleed
+3. DoT damage is visually distinguishable from direct hit damage in the combat UI
+4. DoT interacts with defense pipeline according to designed rules (documented and implemented)
+5. Multiple DoTs can stack and tick simultaneously on the same monster pack
+
+---
+
+### Phase 49 — Loot & Integration
+
+**Goal:** Wire all 21 bases into the drop pool, bump save version, update item comparison for multi-channel DPS, and add archetype labels to UI.
+
+**Requirements:** LOOT-01, LOOT-02, LOOT-03, LOOT-04 (4)
+
+**What ships:**
+- All 21 item bases in drop pool with slot-first-then-archetype random distribution
+- Save version bumped, incompatible old saves deleted on load (no migration)
+- Combined DPS (attack + spell + DoT) used for item comparison
+- Archetype label (STR/DEX/INT) visible on items in inventory and crafting views
+
+**Success criteria:**
+1. Item drops include all 3 archetypes per slot with roughly equal distribution
+2. Loading an old-version save file results in a clean wipe and fresh game start
+3. Item comparison correctly accounts for attack DPS, spell DPS, and DoT DPS when suggesting upgrades
+4. Each item in the crafting bench shows its archetype label (STR, DEX, or INT)
+
+---
+
+### Coverage Verification
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| AFF-06 | 42 | Mapped |
+| SPELL-01 | 42 | Mapped |
+| SPELL-02 | 42 | Mapped |
+| INV-01 | 43 | Mapped |
+| INV-02 | 43 | Mapped |
+| INV-03 | 43 | Mapped |
+| INV-04 | 43 | Mapped |
+| INV-05 | 43 | Mapped |
+| BASE-01 | 44 | Mapped |
+| BASE-02 | 44 | Mapped |
+| BASE-03 | 44 | Mapped |
+| BASE-05 | 44 | Mapped |
+| BASE-06 | 44 | Mapped |
+| BASE-07 | 44 | Mapped |
+| BASE-08 | 44 | Mapped |
+| BASE-09 | 44 | Mapped |
+| BASE-10 | 44 | Mapped |
+| AFF-01 | 45 | Mapped |
+| AFF-02 | 45 | Mapped |
+| AFF-03 | 45 | Mapped |
+| AFF-04 | 45 | Mapped |
+| AFF-05 | 45 | Mapped |
+| SPELL-03 | 46 | Mapped |
+| SPELL-04 | 46 | Mapped |
+| SPELL-05 | 46 | Mapped |
+| SPELL-07 | 46 | Mapped |
+| BASE-04 | 47 | Mapped |
+| SPELL-06 | 47 | Mapped |
+| DOT-01 | 48 | Mapped |
+| DOT-02 | 48 | Mapped |
+| DOT-03 | 48 | Mapped |
+| DOT-04 | 48 | Mapped |
+| DOT-05 | 48 | Mapped |
+| DOT-06 | 48 | Mapped |
+| DOT-07 | 48 | Mapped |
+| LOOT-01 | 49 | Mapped |
+| LOOT-02 | 49 | Mapped |
+| LOOT-03 | 49 | Mapped |
+| LOOT-04 | 49 | Mapped |
+
+**Total: 39/39 requirements mapped. 0 unmapped.**
+
 ## Progress
 
 | Phase             | Milestone | Plans Complete | Status      | Completed  |
@@ -140,7 +361,8 @@ Full details: `.planning/milestones/v1.7-ROADMAP.md`
 | 27-30             | v1.5      | 4/4            | Complete    | 2026-02-19 |
 | 31-34             | v1.6      | 5/5            | Complete    | 2026-02-20 |
 | 35-41             | v1.7      | 9/9            | Complete    | 2026-03-06 |
+| 42-49             | v1.8      | 0/?            | Not started | —          |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-06 — v1.7 Meta-Progression shipped*
+*Last updated: 2026-03-06 — v1.8 roadmap added*
