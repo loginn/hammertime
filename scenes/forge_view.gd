@@ -68,6 +68,21 @@ var equip_timer: Timer
 var currently_hovered_type: String = ""
 var equip_hover_active: bool = false
 
+# Hammer tooltip descriptions (shown on hover)
+var hammer_descriptions: Dictionary = {
+	"runic": "Turns a normal item into a magic item\nwith 1-2 random mods.\nRequires: Normal rarity",
+	"forge": "Turns a normal item into a rare item\nwith 4-6 random mods.\nRequires: Normal rarity",
+	"tack": "Adds one random mod to a magic item.\nRequires: Magic rarity with room for mods",
+	"grand": "Adds one random mod to a rare item.\nRequires: Rare rarity with room for mods",
+	"claw": "Removes one random mod from an item.\nRequires: At least one mod",
+	"tuning": "Rerolls all mod values within their\ntier ranges.\nRequires: At least one mod",
+	"fire": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one fire mod.\nRequires: Normal rarity, fire mods available",
+	"cold": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one cold mod.\nRequires: Normal rarity, cold mods available",
+	"lightning": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one lightning mod.\nRequires: Normal rarity, lightning mods available",
+	"defense": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one defense mod.\nRequires: Normal rarity, defense mods available",
+	"physical": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one physical mod.\nRequires: Normal rarity, physical mods available",
+}
+
 # Hammer icon textures
 var hammer_icons: Dictionary = {
 	"runic": preload("res://assets/runic_hammer.png"),
@@ -109,21 +124,6 @@ func _ready() -> void:
 	lightning_hammer_btn.pressed.connect(_on_currency_selected.bind("lightning"))
 	defense_hammer_btn.pressed.connect(_on_currency_selected.bind("defense"))
 	physical_hammer_btn.pressed.connect(_on_currency_selected.bind("physical"))
-
-	# Set hammer tooltips
-	runic_btn.tooltip_text = "Runic Hammer\nTurns a normal item into a magic item\nwith 1-2 random mods.\nRequires: Normal rarity"
-	forge_btn.tooltip_text = "Forge Hammer\nTurns a normal item into a rare item\nwith 4-6 random mods.\nRequires: Normal rarity"
-	tack_btn.tooltip_text = "Tack Hammer\nAdds one random mod to a magic item.\nRequires: Magic rarity with room for mods"
-	grand_btn.tooltip_text = "Grand Hammer\nAdds one random mod to a rare item.\nRequires: Rare rarity with room for mods"
-	claw_btn.tooltip_text = "Claw Hammer\nRemoves one random mod from an item.\nRequires: At least one mod"
-	tuning_btn.tooltip_text = "Tuning Hammer\nRerolls all mod values within their\ntier ranges.\nRequires: At least one mod"
-
-	# Set tag hammer tooltips
-	fire_hammer_btn.tooltip_text = "Fire Hammer\nTurns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one fire mod.\nRequires: Normal rarity, fire mods available"
-	cold_hammer_btn.tooltip_text = "Cold Hammer\nTurns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one cold mod.\nRequires: Normal rarity, cold mods available"
-	lightning_hammer_btn.tooltip_text = "Lightning Hammer\nTurns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one lightning mod.\nRequires: Normal rarity, lightning mods available"
-	defense_hammer_btn.tooltip_text = "Defense Hammer\nTurns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one defense mod.\nRequires: Normal rarity, defense mods available"
-	physical_hammer_btn.tooltip_text = "Physical Hammer\nTurns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one physical mod.\nRequires: Normal rarity, physical mods available"
 
 	# Gate tag section on prestige and connect signals
 	_update_tag_section_visibility()
@@ -308,10 +308,10 @@ func update_currency_button_states() -> void:
 		# Disable button if no currency available
 		button.disabled = (count <= 0)
 
-		# Update button text with short name and count (drop " Hammer" — redundant in sidebar)
-		var short_name: String = currencies[currency_type].currency_name.replace(" Hammer", "")
-		button.text = short_name + " (" + str(count) + ")"
-		button.icon = hammer_icons.get(currency_type)
+		# Icon-only buttons: update count overlay label, full info on hover
+		var count_label: Label = button.get_node("CountLabel")
+		count_label.text = str(count)
+		button.tooltip_text = currencies[currency_type].currency_name + " (" + str(count) + ")\n" + hammer_descriptions[currency_type]
 
 	# If selected standard currency count is 0, deselect it
 	if selected_currency != null and selected_currency_type in standard_types:
@@ -328,9 +328,8 @@ func update_currency_button_states() -> void:
 		var count: int = GameState.tag_currency_counts.get(tag_type, 0)
 		var button: Button = currency_buttons[tag_type]
 		button.disabled = (count <= 0)
-		var short_name: String = currencies[tag_type].currency_name.replace(" Hammer", "")
-		button.text = short_name + " (" + str(count) + ")"
-		button.icon = hammer_icons.get(tag_type, null)
+		button.text = currencies[tag_type].currency_name.replace(" Hammer", "") + " (" + str(count) + ")"
+		button.tooltip_text = currencies[tag_type].currency_name + " (" + str(count) + ")\n" + hammer_descriptions[tag_type]
 
 	# Deselect if selected tag currency is now 0
 	if selected_currency_type in ["fire", "cold", "lightning", "defense", "physical"]:

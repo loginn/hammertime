@@ -30,133 +30,211 @@ color = Color(0.2, 0.2, 0.2, 1)
 layout_mode = 0
 offset_left = 15.0
 offset_top = 15.0
-offset_right = 125.0
-offset_bottom = 80.0
+offset_right = 105.0
+offset_bottom = 105.0
 toggle_mode = true
-theme_override_font_sizes/font_size = 11
-text = "Runic (0)"
 icon = ExtResource("4_runic")
-icon_alignment = 0
 expand_icon = true
-theme_override_constants/icon_max_width = 32
+
+[node name="CountLabel" type="Label" parent="HammerSidebar/RunicHammerBtn"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 62.0
+offset_right = 88.0
+offset_bottom = 82.0
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 3
+horizontal_alignment = 2
+text = "0"
+mouse_filter = 2
 
 [node name="ForgeHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
-offset_left = 135.0
+offset_left = 115.0
 offset_top = 15.0
-offset_right = 245.0
-offset_bottom = 80.0
+offset_right = 205.0
+offset_bottom = 105.0
 toggle_mode = true
-theme_override_font_sizes/font_size = 11
-text = "Forge (0)"
 icon = ExtResource("5_forge")
-icon_alignment = 0
 expand_icon = true
-theme_override_constants/icon_max_width = 32
+
+[node name="CountLabel" type="Label" parent="HammerSidebar/ForgeHammerBtn"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 62.0
+offset_right = 88.0
+offset_bottom = 82.0
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 3
+horizontal_alignment = 2
+text = "0"
+mouse_filter = 2
 
 [node name="TackHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
 offset_left = 15.0
-offset_top = 90.0
-offset_right = 125.0
-offset_bottom = 155.0
+offset_top = 115.0
+offset_right = 105.0
+offset_bottom = 205.0
 toggle_mode = true
-theme_override_font_sizes/font_size = 11
-text = "Tack (0)"
 icon = ExtResource("6_tack")
-icon_alignment = 0
 expand_icon = true
-theme_override_constants/icon_max_width = 32
+
+[node name="CountLabel" type="Label" parent="HammerSidebar/TackHammerBtn"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 62.0
+offset_right = 88.0
+offset_bottom = 82.0
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 3
+horizontal_alignment = 2
+text = "0"
+mouse_filter = 2
 
 [node name="GrandHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
-offset_left = 135.0
-offset_top = 90.0
-offset_right = 245.0
-offset_bottom = 155.0
+offset_left = 115.0
+offset_top = 115.0
+offset_right = 205.0
+offset_bottom = 205.0
 toggle_mode = true
-theme_override_font_sizes/font_size = 11
-text = "Grand (0)"
 icon = ExtResource("7_grand")
-icon_alignment = 0
 expand_icon = true
-theme_override_constants/icon_max_width = 32
+
+[node name="CountLabel" type="Label" parent="HammerSidebar/GrandHammerBtn"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 62.0
+offset_right = 88.0
+offset_bottom = 82.0
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 3
+horizontal_alignment = 2
+text = "0"
+mouse_filter = 2
 
 [node name="ClawHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
 offset_left = 15.0
-offset_top = 165.0
-offset_right = 125.0
-offset_bottom = 230.0
+offset_top = 215.0
+offset_right = 105.0
+offset_bottom = 305.0
 toggle_mode = true
-theme_override_font_sizes/font_size = 11
-text = "Claw (0)"
 icon = ExtResource("8_claw")
-icon_alignment = 0
 expand_icon = true
-theme_override_constants/icon_max_width = 32
+
+[node name="CountLabel" type="Label" parent="HammerSidebar/ClawHammerBtn"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 62.0
+offset_right = 88.0
+offset_bottom = 82.0
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 3
+horizontal_alignment = 2
+text = "0"
+mouse_filter = 2
 
 [node name="TuningHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
-offset_left = 135.0
-offset_top = 165.0
-offset_right = 245.0
-offset_bottom = 230.0
+offset_left = 115.0
+offset_top = 215.0
+offset_right = 205.0
+offset_bottom = 305.0
 toggle_mode = true
-theme_override_font_sizes/font_size = 11
-text = "Tuning (0)"
 icon = ExtResource("9_tuning")
-icon_alignment = 0
 expand_icon = true
-theme_override_constants/icon_max_width = 32
 
-[node name="TagHammerSection" type="VBoxContainer" parent="HammerSidebar"]
+[node name="CountLabel" type="Label" parent="HammerSidebar/TuningHammerBtn"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 62.0
+offset_right = 88.0
+offset_bottom = 82.0
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 3
+horizontal_alignment = 2
+text = "0"
+mouse_filter = 2
+
+[node name="TagHammerSection" type="Control" parent="HammerSidebar"]
 layout_mode = 0
 offset_left = 15.0
-offset_top = 240.0
-offset_right = 245.0
+offset_top = 315.0
+offset_right = 205.0
 offset_bottom = 600.0
 visible = false
 
 [node name="TagHammerSeparator" type="ColorRect" parent="HammerSidebar/TagHammerSection"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 2)
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 190.0
+offset_bottom = 2.0
 color = Color(0.5, 0.5, 0.5, 1)
 
 [node name="FireHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 55.0)
+layout_mode = 0
+offset_left = 0.0
+offset_top = 12.0
+offset_right = 90.0
+offset_bottom = 102.0
 toggle_mode = true
-theme_override_font_sizes/font_size = 11
 text = "Fire (0)"
+theme_override_font_sizes/font_size = 11
 
 [node name="ColdHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 55.0)
+layout_mode = 0
+offset_left = 100.0
+offset_top = 12.0
+offset_right = 190.0
+offset_bottom = 102.0
 toggle_mode = true
-theme_override_font_sizes/font_size = 11
 text = "Cold (0)"
+theme_override_font_sizes/font_size = 11
 
 [node name="LightningHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 55.0)
+layout_mode = 0
+offset_left = 0.0
+offset_top = 112.0
+offset_right = 90.0
+offset_bottom = 202.0
 toggle_mode = true
+text = "Lghtng (0)"
 theme_override_font_sizes/font_size = 11
-text = "Lightning (0)"
 
 [node name="DefenseHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 55.0)
+layout_mode = 0
+offset_left = 100.0
+offset_top = 112.0
+offset_right = 190.0
+offset_bottom = 202.0
 toggle_mode = true
-theme_override_font_sizes/font_size = 11
 text = "Defense (0)"
+theme_override_font_sizes/font_size = 11
 
 [node name="PhysicalHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 55.0)
+layout_mode = 0
+offset_left = 0.0
+offset_top = 212.0
+offset_right = 90.0
+offset_bottom = 302.0
 toggle_mode = true
-theme_override_font_sizes/font_size = 11
 text = "Physical (0)"
+theme_override_font_sizes/font_size = 11
 
 [node name="InventoryLabel" type="Label" parent="."]
 layout_mode = 0
