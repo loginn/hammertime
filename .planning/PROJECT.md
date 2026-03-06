@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An ARPG-style crafting idle game built in Godot 4.5. Players send a hero to fight monster packs across 4 biomes (Forest → Shadow Realm), collect item bases and crafting hammers, then use those hammers to craft and equip gear. Better gear lets the hero survive harder packs, which drop better and more plentiful loot. Items come in Normal, Magic, and Rare tiers with defensive and offensive affixes, each craftable with 6 themed hammers that add, remove, or reroll mods. Combat is pack-based idle auto-combat with death mechanics, defensive stat integration, and floating damage feedback. Game state persists via JSON save/load with auto-save and export/import strings.
+An ARPG-style crafting idle game built in Godot 4.5. Players send a hero to fight monster packs across 4 biomes (Forest → Shadow Realm), collect item bases and crafting hammers, then use those hammers to craft and equip gear. Better gear lets the hero survive harder packs, which drop better and more plentiful loot. Items come in Normal, Magic, and Rare tiers with defensive and offensive affixes across 32 affix tiers, craftable with 11 themed hammers (6 base + 5 tag-targeted). A prestige system lets players reset progress to unlock better item tiers (1-8) and tag-targeted crafting currencies. Combat is pack-based idle auto-combat with death mechanics, defensive stat integration, and floating damage feedback. Game state persists via JSON save/load with auto-save and export/import strings.
 
 ## Core Value
 
@@ -91,20 +91,19 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ Hero health/armor double-counting fixed (FLAT_HEALTH/FLAT_ARMOR suffix split) -- v1.6
 - ✓ Preview currency drops from next biome (gates shifted 10 levels before boundaries) -- v1.6
 
+- ✓ Prestige system with 7 levels, currency-cost gating, full run-state reset preserving meta-progression — v1.7
+- ✓ Save format v4 with prestige field persistence and auto-save on prestige — v1.7
+- ✓ Affix tier expansion from 8 to 32 tiers with retuned base values — v1.7
+- ✓ Item tier system (1-8) with area-weighted drops and affix tier floor constraints — v1.7
+- ✓ 5 tag-targeted hammers (Fire, Cold, Lightning, Defense, Physical) with prestige-gated visibility — v1.7
+- ✓ Prestige UI with 7-level unlock table, two-click confirmation, fade transition, dynamic tab reveal — v1.7
+- ✓ 50-test integration verification suite for prestige loop, save round-trips, and regression checks — v1.7
+
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-## Current Milestone: v1.7 Meta-Progression
-
-**Goal:** Add prestige reset loop with currency-gated tier progression, expanded affix tiers, and tag-targeted crafting currencies.
-
-**Target features:**
-- Prestige system: currency-cost trigger, full reset (area + gear + inventory), 7 levels total
-- Item tier gating: item tiers 1-8 gate affix tier range, prestige unlocks better item tiers, area-level weighted drops within unlocked range
-- Affix tier expansion: 8 → 32 tiers (4 per item tier level), values scale with more granularity
-- Tag-targeted crafting currencies: new hammers guaranteeing affixes with specific tags (e.g., Fire Hammer), unlocked at Prestige 1
-- Prestige UI: status, cost, trigger, unlock display
+(No active milestone — run `/gsd:new-milestone` to plan next)
 
 ### Out of Scope
 
@@ -127,21 +126,21 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 ## Context
 
 - Built with Godot 4.5 (GDScript), targeting mobile renderer
-- 4,895 LOC GDScript across ~50 files
+- 11,171 LOC GDScript across ~60 files
 - Feature-based folder structure: models/, scenes/, autoloads/, utils/, tools/
-- Autoloads: ItemAffixes, Tag, GameState (Hero singleton + currency inventory), GameEvents (event bus), SaveManager (JSON persistence)
-- Scene structure: main.tscn with main_view coordinating forge_view, gameplay_view via tab bar
-- ForgeView combines hero equipment (left) and crafting inventory (right) in side-by-side layout
+- Autoloads: ItemAffixes, Tag, GameState, GameEvents, SaveManager, PrestigeManager
+- Scene structure: main.tscn with main_view coordinating forge_view, gameplay_view, prestige_view, settings_view via 4-tab bar
+- ForgeView combines hero equipment (left) and crafting inventory (right) with tag hammer section (P1+)
 - StatCalculator handles all DPS/defense calculations with flat + percentage stacking
 - DefenseCalculator handles all incoming damage with 4-stage pipeline
-- All data classes extend Resource (Item, Affix, Implicit, Hero, Currency, MonsterType, MonsterPack, BiomeConfig)
-- Currency system uses template method pattern (base Currency.apply() with _do_apply() overrides)
-- LootTable provides per-pack currency drops and map completion item drops with area scaling
+- All data classes extend Resource (Item, Affix, Implicit, Hero, Currency, TagHammer, MonsterType, MonsterPack, BiomeConfig)
+- Currency system uses template method pattern (base Currency.apply() with _do_apply() overrides); TagHammer extends Currency
+- LootTable provides per-pack currency drops, item drops, and tag currency drops (P1+) with area scaling
 - CombatEngine manages pack-by-pack combat with state machine lifecycle and dual attack timers
-- BiomeConfig defines biome element weight arrays and pack count ranges for 4 biomes
-- SaveManager handles JSON save/load, auto-save timer, event triggers, and Base64 export/import
-- 18 prefix types (9 offensive + 9 defensive) and 19 suffix types (15 original + 4 resistance)
-- Shipped 8 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges), v1.5 (inventory rework), v1.6 (tech debt cleanup)
+- PrestigeManager handles 7 prestige levels with currency-cost gating and full run-state wipe
+- SaveManager handles JSON save/load (format v4), auto-save timer, event triggers, prestige auto-save, and Base64 export/import
+- 27 active affixes with Vector2i(1, 32) tier ranges; item tiers 1-8 constrain affix tier floor at crafting time
+- Shipped 9 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges), v1.5 (inventory rework), v1.6 (tech debt cleanup), v1.7 (meta-progression)
 
 ## Constraints
 
@@ -225,5 +224,15 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | FLAT_HEALTH/FLAT_ARMOR suffix split | Weapon/ring get suffix treatment; armor slots bake via update_value() | ✓ Good -- fixed double-counting |
 | Currency preview via 10-level gate shift | Forge at 15, Grand at 40, Claw/Tuning at 65; reuses existing sqrt ramp | ✓ Good -- minimal code change, thematic teasers |
 
+| Prestige full-reset design | Wipe all run state (area, gear, inventory, currencies) but preserve prestige_level and max_item_tier_unlocked | ✓ Good -- clean emotional arc, meaningful progression |
+| Delete-on-old-version saves | v2/v3 saves deleted on load instead of migrating; breaking old saves acceptable | ✓ Good -- eliminated migration code complexity |
+| 32 affix tiers (4 per item tier) | Uniform Vector2i(1,32) range enables consistent cross-tier comparison | ✓ Good -- granular progression visible to player |
+| Affix tier floor at construction | from_affix() constrains range, not stored on item; reroll untouched | ✓ Good -- clean implementation, tuning hammer works correctly |
+| TagHammer parameterized class | Single class handles all 5 tag types via required_tag parameter | ✓ Good -- no code duplication |
+| Gaussian bell-curve tier drops | Area-weighted distribution centered on biome-aligned home areas | ✓ Good -- natural feeling drop distribution |
+| Manual prestige simulation in tests | _simulate_prestige() avoids execute_prestige() signal triggering auto-save | ✓ Good -- test isolation without touching real saves |
+| Two-click prestige confirmation | First click shows "Reset progress?", 3-second timer reset, second click executes | ✓ Good -- non-intrusive safety, matches forge equip pattern |
+| Dynamic prestige tab reveal | Tab appears when can_prestige() first returns true, stays permanently | ✓ Good -- discovery moment without cluttering P0 UI |
+
 ---
-*Last updated: 2026-02-20 after v1.7 milestone started*
+*Last updated: 2026-03-06 after v1.7 milestone shipped*

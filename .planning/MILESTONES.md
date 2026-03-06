@@ -1,5 +1,34 @@
 # Milestones: Hammertime
 
+## v1.7 — Meta-Progression (Shipped: 2026-03-06)
+
+**Goal:** Add prestige reset loop with currency-gated tier progression, expanded affix tiers, and tag-targeted crafting currencies.
+
+**Phases:** 7 phases (35-41), 9 plans | **Timeline:** 15 days (2026-02-20 → 2026-03-06)
+**Stats:** 66 files changed, 11,171 LOC GDScript (up from ~4,895)
+
+**Key accomplishments:**
+- PrestigeManager autoload with 7 prestige levels, currency-cost gating, full run-state wipe preserving meta-progression
+- Save format v4 with prestige field persistence, auto-save on prestige, and delete-on-old-version migration policy
+- Affix tier expansion from 8 to 32 tiers with retuned base values for all 27 active affixes
+- Item tier system (1-8) with area-weighted Gaussian drops and affix tier floor constraints at crafting time
+- 5 tag-targeted hammers (Fire, Cold, Lightning, Defense, Physical) with prestige-gated visibility, "no valid mods" feedback, and 7.5% pack drop rate at P1+
+- Prestige UI with 7-level unlock table, two-click confirmation, fade-to-black transition, and dynamic tab reveal
+- 50-test integration verification suite covering full prestige loop, save round-trips, crafting regression, and tier gating
+
+**Git range:** `feat(35-01)` → `feat(41-01)`
+
+**Tech debt:**
+- P2-P7 prestige costs are stub values (999999)
+- Double save on prestige (prestige_view + signal handler)
+- Pre-existing debug prints in affix.gd and item.gd
+
+**What's next:** Planning next milestone
+
+**Archives:** `.planning/milestones/v1.7-ROADMAP.md`, `.planning/milestones/v1.7-REQUIREMENTS.md`
+
+---
+
 ## v0.x — Prototype (pre-tracking)
 
 **Shipped:** Core gameplay loop, basic item/affix system, hammer crafting, area clearing.
