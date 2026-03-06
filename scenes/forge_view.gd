@@ -308,8 +308,9 @@ func update_currency_button_states() -> void:
 		# Disable button if no currency available
 		button.disabled = (count <= 0)
 
-		# Update button text with currency name and count
-		button.text = currencies[currency_type].currency_name + " (" + str(count) + ")"
+		# Update button text with short name and count (drop " Hammer" — redundant in sidebar)
+		var short_name: String = currencies[currency_type].currency_name.replace(" Hammer", "")
+		button.text = short_name + " (" + str(count) + ")"
 		button.icon = hammer_icons.get(currency_type)
 
 	# If selected standard currency count is 0, deselect it
@@ -327,7 +328,8 @@ func update_currency_button_states() -> void:
 		var count: int = GameState.tag_currency_counts.get(tag_type, 0)
 		var button: Button = currency_buttons[tag_type]
 		button.disabled = (count <= 0)
-		button.text = currencies[tag_type].currency_name + " (" + str(count) + ")"
+		var short_name: String = currencies[tag_type].currency_name.replace(" Hammer", "")
+		button.text = short_name + " (" + str(count) + ")"
 		button.icon = hammer_icons.get(tag_type, null)
 
 	# Deselect if selected tag currency is now 0

@@ -128,35 +128,35 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 55.0)
 toggle_mode = true
 theme_override_font_sizes/font_size = 11
-text = "Fire Hammer (0)"
+text = "Fire (0)"
 
 [node name="ColdHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 55.0)
 toggle_mode = true
 theme_override_font_sizes/font_size = 11
-text = "Cold Hammer (0)"
+text = "Cold (0)"
 
 [node name="LightningHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 55.0)
 toggle_mode = true
 theme_override_font_sizes/font_size = 11
-text = "Lightning Hammer (0)"
+text = "Lightning (0)"
 
 [node name="DefenseHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 55.0)
 toggle_mode = true
 theme_override_font_sizes/font_size = 11
-text = "Defense Hammer (0)"
+text = "Defense (0)"
 
 [node name="PhysicalHammerBtn" type="Button" parent="HammerSidebar/TagHammerSection"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 55.0)
 toggle_mode = true
 theme_override_font_sizes/font_size = 11
-text = "Physical Hammer (0)"
+text = "Physical (0)"
 
 [node name="InventoryLabel" type="Label" parent="."]
 layout_mode = 0
