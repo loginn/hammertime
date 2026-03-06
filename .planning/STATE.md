@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: null
-milestone_name: null
-status: between_milestones
-stopped_at: v1.7 Meta-Progression shipped
+milestone: v1.8
+milestone_name: Content Pass — Items & Mods
+status: defining_requirements
+stopped_at: null
 last_updated: "2026-03-06"
-last_activity: 2026-03-06 — v1.7 milestone completed and archived
+last_activity: 2026-03-06 — Milestone v1.8 started
 progress:
   total_phases: 0
   completed_phases: 0
@@ -17,7 +17,7 @@ progress:
 # Project State: Hammertime
 
 **Updated:** 2026-03-06
-**Milestone:** None (v1.7 shipped, next milestone not started)
+**Milestone:** v1.8 Content Pass — Items & Mods
 
 ## Project Reference
 
@@ -30,10 +30,10 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Current Position
 
-Status: Between milestones — v1.7 Meta-Progression shipped 2026-03-06
-Last activity: 2026-03-06 - Completed quick task 10: Fix the icons in the crafting view
-
-Progress: [██████████] 100% (9 milestones shipped: v0.1 through v1.7)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-06 — Milestone v1.8 started
 
 ## Performance Metrics
 
@@ -63,6 +63,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [ ] Add item drop filter for unwanted loot (FILT-01 — deferred to future)
 - [x] Fix the icons in the crafting view (quick-10)
 - [ ] Add large number formatting with suffix notation
+- [ ] Remove crafting inventory (simplify item management)
+- [ ] Give ES more identity for spellcasters (e.g. ES mitigation buff for int archetype) — deferred to hero milestone
 
 ### Blockers/Concerns
 

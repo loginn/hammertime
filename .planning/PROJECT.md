@@ -103,7 +103,16 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 
 <!-- Current scope. Building toward these. -->
 
-(No active milestone — run `/gsd:new-milestone` to plan next)
+## Current Milestone: v1.8 Content Pass — Items & Mods
+
+**Goal:** Expand item bases to 3 per slot (str/dex/int archetypes), add spell damage channel with cast speed, and broaden the affix pool to support distinct playstyles.
+
+**Target features:**
+- 3 item base types per equipment slot (strength/dexterity/intelligence archetypes)
+- Spell damage as alternate damage channel with separate cast timer
+- New affixes: spell damage (flat + %), cast speed, and enabling existing disabled suffixes
+- Dex items emphasizing evasion, crit, and attack speed
+- Int items emphasizing spell damage, cast speed, and energy shield
 
 ### Out of Scope
 
