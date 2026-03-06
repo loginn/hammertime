@@ -4,12 +4,13 @@
 
 ## Problem
 
-5 of the 6 hammer currency buttons in `forge_view.tscn` were missing `theme_override_constants/icon_max_width = 32`. Only `RunicHammerBtn` had it. The 216x216 PNG icons rendered as tiny dots or were invisible on the other buttons because `expand_icon = true` without a max width constraint doesn't properly scale large icons down.
+Hammer buttons in the forge sidebar used text-based buttons with tiny/invisible icons. The wireframe design (Wireframe/Hero view.png) calls for icon-only square tiles with count overlays.
 
 ## Changes
 
-- **`scenes/forge_view.tscn`:** Added `theme_override_constants/icon_max_width = 32` to ForgeHammerBtn, TackHammerBtn, GrandHammerBtn, ClawHammerBtn, and TuningHammerBtn.
+- **`scenes/forge_view.tscn`:** Replaced 110x65 text buttons with 90x90 icon-only square buttons in a 2-column grid. Each button has a child `CountLabel` (bottom-right, black text with white outline, font size 13). Tag hammer section repositioned below main grid and switched from VBoxContainer to Control with manual layout.
+- **`scenes/forge_view.gd`:** `update_currency_button_states()` now updates the `CountLabel` child instead of button text. Tooltips show full hammer name, count, and description on hover. Added `hammer_descriptions` dictionary for tooltip content. Removed static tooltip assignments from `_ready()`.
 
 ## Result
 
-All 6 hammer buttons now consistently display their icons at 32px width, matching the RunicHammerBtn that was already working correctly.
+Hammer sidebar now matches the wireframe: large icon tiles, count overlay on bottom-right, name + description on hover.

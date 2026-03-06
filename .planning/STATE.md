@@ -75,7 +75,7 @@ None — between milestones.
 | 7 | Handle untracked / unstaged files | 2026-02-19 | 2648f05 | [7-handle-untracked-unstaged-files](./quick/7-handle-untracked-unstaged-files/) |
 | 8 | Audit and fix affix pipeline (disable 9 dead mods, fix FLAT_HEALTH/FLAT_ARMOR aggregation) | 2026-02-19 | 5b29755 | [8-audit-and-fix-affix-pipeline-to-ensure-a](./quick/8-audit-and-fix-affix-pipeline-to-ensure-a/) |
 | 9 | Rename original_base_xxx to base_xxx and base_xxx to computed_xxx; remove BasicArmor/BasicHelmet FLAT_ARMOR implicits | 2026-02-19 | ac58cda | [9-rename-original-base-xxx-to-base-xxx-and](./quick/9-rename-original-base-xxx-to-base-xxx-and/) |
-| 10 | Fix the icons in the crafting view | 2026-03-06 | 7d8bb03 | [10-fix-the-icons](./quick/10-fix-the-icons/) |
+| 10 | Fix the icons in the crafting view | 2026-03-06 | 0501d90 | [10-fix-the-icons](./quick/10-fix-the-icons/) |
 
 ## Session Continuity
 
