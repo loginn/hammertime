@@ -38,9 +38,9 @@ expand_icon = true
 
 [node name="CountLabel" type="Label" parent="HammerSidebar/RunicHammerBtn"]
 layout_mode = 0
-offset_left = 2.0
+offset_left = 0.0
 offset_top = 27.0
-offset_right = 43.0
+offset_right = 38.0
 offset_bottom = 43.0
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0, 0, 0, 1)
@@ -62,9 +62,9 @@ expand_icon = true
 
 [node name="CountLabel" type="Label" parent="HammerSidebar/ForgeHammerBtn"]
 layout_mode = 0
-offset_left = 2.0
+offset_left = 0.0
 offset_top = 27.0
-offset_right = 43.0
+offset_right = 38.0
 offset_bottom = 43.0
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0, 0, 0, 1)
@@ -86,9 +86,9 @@ expand_icon = true
 
 [node name="CountLabel" type="Label" parent="HammerSidebar/TackHammerBtn"]
 layout_mode = 0
-offset_left = 2.0
+offset_left = 0.0
 offset_top = 27.0
-offset_right = 43.0
+offset_right = 38.0
 offset_bottom = 43.0
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0, 0, 0, 1)
@@ -110,9 +110,9 @@ expand_icon = true
 
 [node name="CountLabel" type="Label" parent="HammerSidebar/GrandHammerBtn"]
 layout_mode = 0
-offset_left = 2.0
+offset_left = 0.0
 offset_top = 27.0
-offset_right = 43.0
+offset_right = 38.0
 offset_bottom = 43.0
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0, 0, 0, 1)
@@ -134,9 +134,9 @@ expand_icon = true
 
 [node name="CountLabel" type="Label" parent="HammerSidebar/ClawHammerBtn"]
 layout_mode = 0
-offset_left = 2.0
+offset_left = 0.0
 offset_top = 27.0
-offset_right = 43.0
+offset_right = 38.0
 offset_bottom = 43.0
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0, 0, 0, 1)
@@ -158,9 +158,9 @@ expand_icon = true
 
 [node name="CountLabel" type="Label" parent="HammerSidebar/TuningHammerBtn"]
 layout_mode = 0
-offset_left = 2.0
+offset_left = 0.0
 offset_top = 27.0
-offset_right = 43.0
+offset_right = 38.0
 offset_bottom = 43.0
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0, 0, 0, 1)
