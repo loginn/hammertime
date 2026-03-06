@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Phase 40 — Prestige UI
+**Current focus:** Phase 41 — Integration Verification
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload.
 
 ## Current Position
 
-Phase: 40 of 41 (Prestige UI — complete)
-Plan: 2 of 2 in current phase (phase 40 done)
-Status: Phase 40 complete — prestige view scene + tab integration + fade transition
-Last activity: 2026-03-06 — Phase 40 Plan 02 executed (tab integration, prestige tab reveal, fade-to-black reload)
+Phase: 41 of 41 (Integration Verification — complete)
+Plan: 1 of 1 in current phase (phase 41 done)
+Status: Phase 41 complete — end-to-end prestige loop verification test scene
+Last activity: 2026-03-06 — Phase 41 Plan 01 executed (integration test scene with 9 test groups)
 
 Progress: [████████░░] 80% (8 milestones complete, v1.7 in progress)
 
@@ -106,9 +106,9 @@ Key v1.7 constraints (from research):
 ## Session Continuity
 
 Last session: 2026-03-06
-Stopped at: Completed 40-02-PLAN.md (tab integration + fade transition — phase 40 done)
+Stopped at: Completed 41-01-PLAN.md (integration verification test scene — phase 41 done)
 Resume file: None
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-03-06 — Phase 40 complete: prestige view + tab integration + fade transition + reload*
+*Last updated: 2026-03-06 — Phase 41 complete: end-to-end prestige loop integration test scene*
