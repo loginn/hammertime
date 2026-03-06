@@ -30,46 +30,46 @@ color = Color(0.2, 0.2, 0.2, 1)
 layout_mode = 0
 offset_left = 15.0
 offset_top = 15.0
-offset_right = 105.0
-offset_bottom = 105.0
+offset_right = 60.0
+offset_bottom = 60.0
 toggle_mode = true
 icon = ExtResource("4_runic")
 expand_icon = true
 
 [node name="CountLabel" type="Label" parent="HammerSidebar/RunicHammerBtn"]
 layout_mode = 0
-offset_left = 40.0
-offset_top = 62.0
-offset_right = 88.0
-offset_bottom = 82.0
-theme_override_font_sizes/font_size = 13
+offset_left = 2.0
+offset_top = 27.0
+offset_right = 43.0
+offset_bottom = 43.0
+theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
-theme_override_constants/outline_size = 3
+theme_override_constants/outline_size = 5
 horizontal_alignment = 2
 text = "0"
 mouse_filter = 2
 
 [node name="ForgeHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
-offset_left = 115.0
+offset_left = 70.0
 offset_top = 15.0
-offset_right = 205.0
-offset_bottom = 105.0
+offset_right = 115.0
+offset_bottom = 60.0
 toggle_mode = true
 icon = ExtResource("5_forge")
 expand_icon = true
 
 [node name="CountLabel" type="Label" parent="HammerSidebar/ForgeHammerBtn"]
 layout_mode = 0
-offset_left = 40.0
-offset_top = 62.0
-offset_right = 88.0
-offset_bottom = 82.0
-theme_override_font_sizes/font_size = 13
+offset_left = 2.0
+offset_top = 27.0
+offset_right = 43.0
+offset_bottom = 43.0
+theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
-theme_override_constants/outline_size = 3
+theme_override_constants/outline_size = 5
 horizontal_alignment = 2
 text = "0"
 mouse_filter = 2
@@ -77,47 +77,47 @@ mouse_filter = 2
 [node name="TackHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
 offset_left = 15.0
-offset_top = 115.0
-offset_right = 105.0
-offset_bottom = 205.0
+offset_top = 70.0
+offset_right = 60.0
+offset_bottom = 115.0
 toggle_mode = true
 icon = ExtResource("6_tack")
 expand_icon = true
 
 [node name="CountLabel" type="Label" parent="HammerSidebar/TackHammerBtn"]
 layout_mode = 0
-offset_left = 40.0
-offset_top = 62.0
-offset_right = 88.0
-offset_bottom = 82.0
-theme_override_font_sizes/font_size = 13
+offset_left = 2.0
+offset_top = 27.0
+offset_right = 43.0
+offset_bottom = 43.0
+theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
-theme_override_constants/outline_size = 3
+theme_override_constants/outline_size = 5
 horizontal_alignment = 2
 text = "0"
 mouse_filter = 2
 
 [node name="GrandHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
-offset_left = 115.0
-offset_top = 115.0
-offset_right = 205.0
-offset_bottom = 205.0
+offset_left = 70.0
+offset_top = 70.0
+offset_right = 115.0
+offset_bottom = 115.0
 toggle_mode = true
 icon = ExtResource("7_grand")
 expand_icon = true
 
 [node name="CountLabel" type="Label" parent="HammerSidebar/GrandHammerBtn"]
 layout_mode = 0
-offset_left = 40.0
-offset_top = 62.0
-offset_right = 88.0
-offset_bottom = 82.0
-theme_override_font_sizes/font_size = 13
+offset_left = 2.0
+offset_top = 27.0
+offset_right = 43.0
+offset_bottom = 43.0
+theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
-theme_override_constants/outline_size = 3
+theme_override_constants/outline_size = 5
 horizontal_alignment = 2
 text = "0"
 mouse_filter = 2
@@ -125,47 +125,47 @@ mouse_filter = 2
 [node name="ClawHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
 offset_left = 15.0
-offset_top = 215.0
-offset_right = 105.0
-offset_bottom = 305.0
+offset_top = 125.0
+offset_right = 60.0
+offset_bottom = 170.0
 toggle_mode = true
 icon = ExtResource("8_claw")
 expand_icon = true
 
 [node name="CountLabel" type="Label" parent="HammerSidebar/ClawHammerBtn"]
 layout_mode = 0
-offset_left = 40.0
-offset_top = 62.0
-offset_right = 88.0
-offset_bottom = 82.0
-theme_override_font_sizes/font_size = 13
+offset_left = 2.0
+offset_top = 27.0
+offset_right = 43.0
+offset_bottom = 43.0
+theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
-theme_override_constants/outline_size = 3
+theme_override_constants/outline_size = 5
 horizontal_alignment = 2
 text = "0"
 mouse_filter = 2
 
 [node name="TuningHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
-offset_left = 115.0
-offset_top = 215.0
-offset_right = 205.0
-offset_bottom = 305.0
+offset_left = 70.0
+offset_top = 125.0
+offset_right = 115.0
+offset_bottom = 170.0
 toggle_mode = true
 icon = ExtResource("9_tuning")
 expand_icon = true
 
 [node name="CountLabel" type="Label" parent="HammerSidebar/TuningHammerBtn"]
 layout_mode = 0
-offset_left = 40.0
-offset_top = 62.0
-offset_right = 88.0
-offset_bottom = 82.0
-theme_override_font_sizes/font_size = 13
+offset_left = 2.0
+offset_top = 27.0
+offset_right = 43.0
+offset_bottom = 43.0
+theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
-theme_override_constants/outline_size = 3
+theme_override_constants/outline_size = 5
 horizontal_alignment = 2
 text = "0"
 mouse_filter = 2
@@ -173,7 +173,7 @@ mouse_filter = 2
 [node name="TagHammerSection" type="Control" parent="HammerSidebar"]
 layout_mode = 0
 offset_left = 15.0
-offset_top = 315.0
+offset_top = 180.0
 offset_right = 205.0
 offset_bottom = 600.0
 visible = false
