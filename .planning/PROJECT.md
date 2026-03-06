@@ -108,11 +108,12 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 **Goal:** Expand item bases to 3 per slot (str/dex/int archetypes), add spell damage channel with cast speed, and broaden the affix pool to support distinct playstyles.
 
 **Target features:**
-- 3 item base types per equipment slot (strength/dexterity/intelligence archetypes)
-- Spell damage as alternate damage channel with separate cast timer
-- New affixes: spell damage (flat + %), cast speed, and enabling existing disabled suffixes
-- Dex items emphasizing evasion, crit, and attack speed
-- Int items emphasizing spell damage, cast speed, and energy shield
+- 9 weapon bases (3 per archetype) with varied implicits + 12 armor slot bases (1 per archetype x 4 slots) = 21 total
+- Spell damage as alternate damage channel with separate cast timer in CombatEngine
+- Damage over time system (bleed/poison/burn) with tick processing
+- New affixes: spell damage (flat + %), cast speed, evade, bleed/poison/burn
+- Inventory rework: single crafting bench per slot (max 1 item), drops discarded if occupied
+- Existing items renamed to thematic names (BasicArmor -> Iron Plate, etc.)
 
 ### Out of Scope
 
