@@ -108,6 +108,16 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ Save format v7 with 21-type serialization registry — v1.8
 - ✓ 35-group integration test suite (up from 28 at v1.7) — v1.8
 
+## Current Milestone: v1.9 Heroes
+
+**Goal:** Add hero archetypes with subvariants that unlock on prestige, empowering players with affinity-based passive bonuses.
+
+**Target features:**
+- Hero archetypes (STR/DEX/INT) with subvariants for DoT vs Hits and elemental affinities
+- Passive affinity bonuses (e.g., Fire Wizard gets 100% more fire damage)
+- Prestige hero selection: pick 1 from 3 random heroes (1 per archetype)
+- Hero choice resets on each prestige
+
 ### Active
 
 <!-- Current scope. Building toward these. -->
@@ -251,4 +261,4 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Slot-first then archetype drop distribution | 20% per slot, uniform within slot; prevents weapon flooding | ✓ Good -- fair distribution |
 
 ---
-*Last updated: 2026-03-08 after v1.8 milestone shipped*
+*Last updated: 2026-03-09 — v1.9 Heroes milestone started*

@@ -1,37 +1,38 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.8
-milestone_name: Content Pass — Items & Mods
-status: verifying
-stopped_at: Completed 49-01-PLAN.md
-last_updated: "2026-03-08T21:35:25.582Z"
-last_activity: 2026-03-08 — Phase 49 plan 01 complete (Save Version Bump & Integration Verification)
+milestone: v1.9
+milestone_name: Heroes
+status: planning
+stopped_at: Milestone initialized
+last_updated: "2026-03-09"
+last_activity: 2026-03-09 — Milestone v1.9 started
 progress:
-  total_phases: 8
-  completed_phases: 8
-  total_plans: 18
-  completed_plans: 18
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State: Hammertime
 
-**Updated:** 2026-03-08
-**Milestone:** v1.8 Content Pass — Items & Mods
+**Updated:** 2026-03-09
+**Milestone:** v1.9 Heroes
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-08)
+See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Planning next milestone
+**Current focus:** Defining requirements for hero archetypes with prestige-based selection
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload, PrestigeManager autoload.
 
 ## Current Position
 
-Milestone: v1.8 Content Pass — Items & Mods (SHIPPED 2026-03-08)
-Status: Between milestones
-Last activity: 2026-03-08 — v1.8 milestone complete
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-09 — Milestone v1.9 started
 
 ## Performance Metrics
 
@@ -62,7 +63,6 @@ All decisions logged in PROJECT.md Key Decisions table.
 ### Pending Todos
 
 - [ ] Add item drop filter for unwanted loot (FILT-01 — deferred to future)
-- [x] Fix the icons in the crafting view (quick-10)
 - [ ] Add large number formatting with suffix notation
 - [ ] Remove crafting inventory (simplify item management)
 - [ ] Give ES more identity for spellcasters (e.g. ES mitigation buff for int archetype) — deferred to hero milestone
@@ -70,7 +70,7 @@ All decisions logged in PROJECT.md Key Decisions table.
 
 ### Blockers/Concerns
 
-None — between milestones.
+None.
 
 ### Quick Tasks Completed
 
@@ -83,10 +83,10 @@ None — between milestones.
 
 ## Session Continuity
 
-Last session: 2026-03-08T21:29:35Z
-Stopped at: Completed 49-01-PLAN.md
+Last session: 2026-03-09
+Stopped at: Milestone initialized
 Resume file: None
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-03-08 — Phase 48 plan 01 complete*
+*Last updated: 2026-03-09 — Milestone v1.9 started*
