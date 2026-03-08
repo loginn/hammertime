@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Heroes
 status: planning
-stopped_at: Milestone initialized
+stopped_at: Phase 50 not started
 last_updated: "2026-03-09"
-last_activity: 2026-03-09 — Milestone v1.9 started
+last_activity: 2026-03-09 — Roadmap created (phases 50-54)
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Defining requirements for hero archetypes with prestige-based selection
+**Current focus:** Hero archetypes with prestige-based selection — Phase 50 Data Foundation
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload, PrestigeManager autoload.
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 50 — Data Foundation (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-09 — Milestone v1.9 started
+Status: Roadmap created, ready for Phase 50 planning
+Last activity: 2026-03-09 — Roadmap created (phases 50-54)
 
 ## Performance Metrics
 
@@ -84,9 +84,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-09
-Stopped at: Milestone initialized
+Stopped at: Phase 50 not started
 Resume file: None
 
 ---
 *State initialized: 2026-02-15*
-*Last updated: 2026-03-09 — Milestone v1.9 started*
+*Last updated: 2026-03-09 — v1.9 roadmap created*

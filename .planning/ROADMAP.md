@@ -12,6 +12,7 @@
 - ✅ **v1.6 Tech Debt Cleanup** — Phases 31-34 (shipped 2026-02-20)
 - ✅ **v1.7 Meta-Progression** — Phases 35-41 (shipped 2026-03-06)
 - ✅ **v1.8 Content Pass — Items & Mods** — Phases 42-49 (shipped 2026-03-08)
+- 🔨 **v1.9 Heroes** — Phases 50-54 (in progress)
 
 ## Phases
 
@@ -144,6 +145,66 @@ Full details: `.planning/milestones/v1.8-ROADMAP.md`
 
 </details>
 
+<details open>
+<summary>🔨 v1.9 Heroes (Phases 50-54) — IN PROGRESS</summary>
+
+### Phase 50: Data Foundation
+
+**Goal:** Create the HeroArchetype Resource with all 9 hero definitions and wire up GameState/GameEvents infrastructure.
+**Requirements:** HERO-01, HERO-02, HERO-03
+
+**Success criteria:**
+1. `HeroArchetype.REGISTRY` contains 9 entries — 3 archetypes x 3 subvariants each with unique id, name, title, and color
+2. `HeroArchetype.generate_choices()` returns exactly 3 heroes (1 STR, 1 DEX, 1 INT) with random subvariant selection
+3. `GameState.hero_archetype` field is nullable and defaults to null for classless Adventurer
+4. `GameEvents` emits `hero_selection_needed` and `hero_selected` signals without errors
+
+### Phase 51: Stat Integration
+
+**Goal:** Wire archetype passive bonuses into Hero.update_stats() as multiplicative "more" modifiers applied after equipment aggregation.
+**Requirements:** PASS-01, PASS-02
+
+**Success criteria:**
+1. Hero with a fire damage archetype shows higher fire DPS than an identical classless hero with the same gear
+2. DoT subvariant heroes receive +20% bleed/poison/burn chance bonus visible in stat totals
+3. Bonuses apply after equipment stacking (multiplicative "more"), not during StatCalculator aggregation
+4. CombatEngine requires zero changes — it reads pre-computed damage ranges that already include bonuses
+
+### Phase 52: Save & Persistence
+
+**Goal:** Bump save format to v8 with hero_archetype_id persistence; old saves (v7 and below) trigger a fresh new game.
+**Requirements:** SAVE-01
+
+**Success criteria:**
+1. Saving and loading a game round-trips the selected hero archetype correctly
+2. Loading a v7 save file triggers a new game instead of crashing or corrupting state
+3. Classless Adventurer (null archetype) saves and loads correctly at P0
+4. Auto-save and export/import strings include hero_archetype_id
+
+### Phase 53: Selection UI
+
+**Goal:** Build the 3-card hero selection overlay that appears after prestige and blocks gameplay until a hero is picked.
+**Requirements:** SEL-01, SEL-02, SEL-03
+
+**Success criteria:**
+1. After prestige (P1+), a 3-card overlay appears showing one STR, one DEX, and one INT hero with name, title, color, and passive description
+2. Clicking a card selects that hero, dismisses the overlay, and resumes gameplay with the chosen archetype active
+3. P0 players never see the selection overlay and play as classless Adventurer
+4. The overlay fits within 1280x720 viewport and blocks all input to underlying views until dismissed
+
+### Phase 54: Polish & Balance
+
+**Goal:** Display hero bonuses in ForgeView stat panel, verify all 9 heroes across all damage channels, and tune bonus magnitudes.
+**Requirements:** PASS-03
+
+**Success criteria:**
+1. ForgeView stat panel shows a separate labeled line for the active hero's passive bonus contribution
+2. All 9 heroes produce correct damage output across attack, spell, and DoT channels (integration tests)
+3. Hero bonus magnitude is tuned so matching element gear + hero feels powerful but non-matching gear remains viable
+4. Classless Adventurer stat panel shows no hero bonus line
+
+</details>
+
 ## Progress
 
 | Phase             | Milestone | Plans Complete | Status      | Completed  |
@@ -158,7 +219,8 @@ Full details: `.planning/milestones/v1.8-ROADMAP.md`
 | 31-34             | v1.6      | 5/5            | Complete    | 2026-02-20 |
 | 35-41             | v1.7      | 9/9            | Complete    | 2026-03-06 |
 | 42-49             | v1.8      | 18/18          | Complete    | 2026-03-08 |
+| 50-54             | v1.9      | 0/?            | Not started | —          |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-08 — v1.8 Content Pass shipped*
+*Last updated: 2026-03-09 — v1.9 Heroes roadmap added*

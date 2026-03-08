@@ -43,16 +43,16 @@
 
 | REQ-ID | Phase | Plan | Status |
 |--------|-------|------|--------|
-| HERO-01 | — | — | — |
-| HERO-02 | — | — | — |
-| HERO-03 | — | — | — |
-| PASS-01 | — | — | — |
-| PASS-02 | — | — | — |
-| PASS-03 | — | — | — |
-| SEL-01 | — | — | — |
-| SEL-02 | — | — | — |
-| SEL-03 | — | — | — |
-| SAVE-01 | — | — | — |
+| HERO-01 | 50 | — | not started |
+| HERO-02 | 50 | — | not started |
+| HERO-03 | 50 | — | not started |
+| PASS-01 | 51 | — | not started |
+| PASS-02 | 51 | — | not started |
+| PASS-03 | 54 | — | not started |
+| SEL-01 | 53 | — | not started |
+| SEL-02 | 53 | — | not started |
+| SEL-03 | 53 | — | not started |
+| SAVE-01 | 52 | — | not started |
 
 ---
 *Requirements defined: 2026-03-09*
