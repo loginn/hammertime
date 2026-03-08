@@ -1,414 +1,389 @@
 # Architecture Research
 
-**Domain:** Str/Dex/Int item archetypes (3 base types per slot), spell damage channel with cast speed, and broadened affix pool -- integration with existing Hammertime v1.7 architecture
-**Researched:** 2026-03-06
-**Confidence:** HIGH (based on direct codebase analysis of all affected files)
+**Domain:** ARPG idle game -- hero archetype integration with prestige-based selection
+**Researched:** 2026-03-09
+**Confidence:** HIGH (based on direct codebase analysis of Hero, StatCalculator, PrestigeManager, GameState, SaveManager, CombatEngine, and all 21 item base types)
 
 ---
 
 ## System Overview
 
-The v1.8 content pass adds two major features:
+```
+                          PRESTIGE FLOW
+                          =============
+  PrestigeView                PrestigeManager              GameState
+  [Upgrade Forge] ──press──> execute_prestige() ────────> _wipe_run_state()
+        │                         │                            │
+        │                         │  (NEW) Before wipe:        │  (NEW) After wipe:
+        │                         │  ┌─────────────────────┐   │  ┌──────────────────┐
+        │                         │  │ Store prestige_level │   │  │ hero_archetype   │
+        │                         │  └─────────────────────┘   │  │   = null (cleared)│
+        │                         │                            │  └──────────────────┘
+        │                         ▼                            │
+        │              GameEvents.prestige_completed ───────────┤
+        │                         │                            │
+        │              (NEW) GameEvents.hero_selection_needed ──┤
+        │                         │                            │
+        ▼                         ▼                            ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                    HERO SELECTION FLOW (NEW)                     │
+  │                                                                 │
+  │  HeroSelectionView (new scene)                                  │
+  │  ┌─────────────────────────────────────────────────────────┐    │
+  │  │ 1. HeroArchetype.generate_choices() -> [STR, DEX, INT] │    │
+  │  │ 2. Display 3 cards with name + passive description      │    │
+  │  │ 3. Player picks one                                     │    │
+  │  │ 4. GameState.hero_archetype = chosen                    │    │
+  │  │ 5. hero.apply_archetype(chosen)                         │    │
+  │  │ 6. GameEvents.hero_selected.emit(chosen)                │    │
+  │  │ 7. SaveManager auto-saves                               │    │
+  │  └─────────────────────────────────────────────────────────┘    │
+  └─────────────────────────────────────────────────────────────────┘
 
-1. **Three item archetypes per slot** (str/dex/int) replacing the single base type per slot
-2. **Spell damage as a second damage channel** with its own cast timer in CombatEngine
+                          COMBAT FLOW
+                          ===========
+  CombatEngine._on_hero_attack()
+        │
+        ▼
+  Roll per-element damage from hero.damage_ranges
+        │
+        ▼
+  (NEW) Apply hero archetype passive bonus
+        │  hero.archetype_damage_multipliers[element] -> "more" multiplier
+        │  Multiplied AFTER all additive stacking (final multiplicative layer)
+        │
+        ▼
+  Per-hit crit roll -> pack.take_damage()
 
-Currently there are 5 concrete item classes (LightSword, BasicArmor, BasicHelmet, BasicBoots, BasicRing) -- one per slot. Each extends a slot-specific intermediate class (Weapon, Armor, Helmet, Boots, Ring) which extends Item. This hierarchy is sound and does not need restructuring -- new archetypes simply add more leaf classes extending the same intermediates.
+
+                     STAT CALCULATION FLOW
+                     =====================
+  Hero.update_stats()
+        │
+        ├── calculate_crit_stats()
+        ├── calculate_damage_ranges()      ◄── StatCalculator.calculate_damage_range()
+        ├── (NEW) apply_archetype_bonuses() ◄── HeroArchetype.passive_bonuses
+        ├── calculate_dps()                 ◄── Uses post-bonus damage_ranges
+        ├── calculate_spell_damage_ranges()
+        ├── (NEW) apply_archetype_spell_bonuses()
+        ├── calculate_spell_dps()
+        ├── calculate_defense()
+        └── calculate_dot_stats()
+```
+
+## Component Responsibilities
+
+| Component | Current Role | New Role (v1.9) |
+|-----------|-------------|-----------------|
+| `HeroArchetype` | Does not exist | NEW Resource: archetype identity, subvariant name, passive bonus definitions |
+| `HeroSelectionView` | Does not exist | NEW Scene: 3-card hero picker shown after prestige or first game |
+| `Hero` | Equipment, stats, combat state | + `archetype` field, `apply_archetype_bonuses()`, archetype-aware damage multipliers |
+| `StatCalculator` | DPS/defense math with flat+% stacking | + `apply_more_multiplier()` static method for "more" (multiplicative) bonuses |
+| `PrestigeManager` | Prestige levels, currency cost, run wipe | + Emit hero_selection_needed signal, gate hero selection on prestige |
+| `GameState` | Hero instance, area, currencies | + `hero_archetype` field (nullable, persisted), starter weapon tied to archetype |
+| `SaveManager` | JSON save/load v7 | + Serialize/restore hero_archetype (bump to v8) |
+| `GameEvents` | Signal bus | + `hero_selection_needed`, `hero_selected` signals |
+| `MainView` | Tab navigation, prestige fade | + Show HeroSelectionView overlay after prestige fade |
+| `ForgeView` | Equipment + crafting | No changes (archetype bonus shown in hero stats panel via existing update_stats) |
+| `CombatEngine` | Dual timer combat | + Apply archetype multipliers to per-hit damage |
+| `LootTable` | Item drops, tier rolling | + Starter weapon selection by archetype |
 
 ---
 
-## 1. Integration Points -- Existing Code Requiring Modification
+## Recommended Project Structure
 
-### 1a. `autoloads/tag.gd` -- New StatTypes and Tags
-
-Current StatType enum has 19 entries. Needs additions:
+### New Files
 
 ```
-FLAT_SPELL_DAMAGE,      # Flat spell damage (analogous to FLAT_DAMAGE)
-INCREASED_SPELL_DAMAGE, # % spell damage
-INCREASED_CAST_SPEED,   # % cast speed (analogous to INCREASED_SPEED for attacks)
+models/hero_archetype.gd          # HeroArchetype Resource (class_name HeroArchetype)
+scenes/hero_selection_view.gd      # Hero picker UI logic
+scenes/hero_selection_view.tscn    # Hero picker scene (3-card layout)
 ```
 
-Tag constants may need a `SPELL` constant alongside existing `ATTACK`:
+### Modified Files
 
 ```
-const SPELL = "SPELL"
+models/hero.gd                     # + archetype field, apply_archetype_bonuses()
+models/stats/stat_calculator.gd    # + apply_more_multiplier() static method
+autoloads/game_state.gd            # + hero_archetype field, archetype-aware wipe/init
+autoloads/game_events.gd           # + hero_selection_needed, hero_selected signals
+autoloads/prestige_manager.gd      # + trigger hero selection after wipe
+autoloads/save_manager.gd          # + save/load hero_archetype, bump to v8
+scenes/main_view.gd                # + HeroSelectionView integration, post-prestige flow
+scenes/main_view.tscn              # + HeroSelectionView node in scene tree
 ```
-
-No existing tags need renaming. The `ATTACK` tag already exists and disambiguates from `SPELL`.
-
-### 1b. `autoloads/item_affixes.gd` -- New Affix Definitions
-
-**New prefixes needed:**
-- Flat Spell Damage (physical/fire/cold/lightning variants, mirroring existing flat damage prefixes)
-- % Spell Damage (mirroring % Physical/Elemental Damage)
-
-**Suffixes to enable:**
-- Cast Speed (currently disabled, line 247: `#Affix.new("Cast Speed", ...)`) -- needs stat_types `[Tag.StatType.INCREASED_CAST_SPEED]` and tags `[Tag.MAGIC, Tag.SPELL]`
-
-**No structural changes** to the Affix class itself -- it already supports damage range parameters (dmg_min_lo/hi, dmg_max_lo/hi) and tag-based routing.
-
-### 1c. `models/stats/stat_calculator.gd` -- Spell Damage Calculation
-
-Currently has `calculate_dps()` which computes attack DPS and `calculate_damage_range()` which computes per-element attack damage ranges.
-
-**Needs new static methods:**
-- `calculate_spell_damage_range(base_spell_min, base_spell_max, affixes)` -- mirrors `calculate_damage_range()` but filters on `FLAT_SPELL_DAMAGE` and `INCREASED_SPELL_DAMAGE` StatTypes
-- `calculate_spell_dps(base_spell_damage, base_cast_speed, affixes, crit_chance, crit_damage)` -- mirrors `calculate_dps()` but uses `INCREASED_CAST_SPEED` instead of `INCREASED_SPEED`
-
-**Key design question:** Should spell and attack damage share percentage modifiers? Recommendation: **No** -- keep them fully independent. `INCREASED_DAMAGE` applies to attacks only, `INCREASED_SPELL_DAMAGE` to spells only. This creates meaningful build diversity (attack vs spell builds).
-
-### 1d. `models/combat/combat_engine.gd` -- Spell Cast Timer
-
-Currently uses dual timers (hero_attack_timer, pack_attack_timer). The hero attack timer fires `_on_hero_attack()` which rolls per-element damage from `hero.damage_ranges`.
-
-**Needs a third timer: `hero_spell_timer`.**
-
-Changes:
-- `_start_pack_fight()` must start spell timer if hero has spell damage (cast speed > 0)
-- New `_on_hero_spell_cast()` handler that rolls from `hero.spell_damage_ranges` and applies damage to pack
-- `_get_hero_cast_speed()` pulls cast speed from equipped int weapon (or returns 0.0 if no spell source)
-- `_stop_timers()` must also stop spell timer
-
-**The spell timer is independent of the attack timer.** A hero with both attack and spell damage uses both simultaneously (dual channel). This is the key combat identity difference: str builds do pure attack damage, int builds do pure spell damage, and hybrid builds do both at reduced individual power.
-
-### 1e. `models/combat/defense_calculator.gd` -- Minimal Changes
-
-The `is_spell` parameter already exists in `calculate_damage_taken()` (line 105). Currently only affects evasion dodge check (spells bypass evasion). **No changes needed** for hero spell output -- `is_spell` is for incoming damage classification only.
-
-### 1f. `models/hero.gd` -- Spell Damage Range Tracking
-
-Currently tracks `damage_ranges` dict with per-element min/max for attacks.
-
-**Needs parallel tracking:**
-- `spell_damage_ranges` dict mirroring `damage_ranges` structure
-- `total_spell_dps` float
-- `base_cast_speed` float (from int weapon)
-- `calculate_spell_damage_ranges()` method mirroring `calculate_damage_ranges()`
-- `calculate_spell_dps()` method mirroring `calculate_dps()`
-- `update_stats()` must call spell calculation methods in correct order
-
-### 1g. `scenes/gameplay_view.gd` -- Item Drop Pool Expansion
-
-`get_random_item_base()` (line 274) currently has a hardcoded list:
-```gdscript
-var item_types = [LightSword, BasicHelmet, BasicArmor, BasicBoots, BasicRing]
-```
-
-This must expand to include all 15 base types (3 per slot). Equal weight random selection is fine -- players craft whatever drops.
-
-### 1h. `autoloads/game_state.gd` -- Starter Item Changes
-
-`initialize_fresh_game()` and `_wipe_run_state()` both create `LightSword.new()` as the starter weapon. This is still appropriate -- str/sword is the beginner archetype. No changes needed unless a different starter is desired.
-
-### 1i. `scenes/forge_view.gd` -- UI for Multiple Base Types
-
-The crafting view uses slot tabs (weapon, helmet, armor, boots, ring). Currently each slot implicitly has one base type. With 3 bases per slot, the **slot concept remains the same** -- all 3 weapon archetypes go into the "weapon" slot array. The inventory already holds `Array` per slot with a 10-item cap.
-
-**No structural UI changes needed.** Item names differentiate archetypes (e.g., "Light Sword" vs "Battle Axe" vs "Spell Staff"). The ForgeView already displays item_name on buttons.
-
-### 1j. `models/items/item.gd` -- Serialization Registry
-
-`ITEM_TYPE_STRINGS` (line 74) and `create_from_dict()` (line 80) have a hardcoded match statement for deserialization. Must add all 10 new base types:
-
-```gdscript
-const ITEM_TYPE_STRINGS: PackedStringArray = [
-    "LightSword", "BasicArmor", "BasicHelmet", "BasicBoots", "BasicRing",
-    # New str archetypes
-    "BattleAxe", "HeavyPlate", "GreatHelm", "IronGreaves", "WarBand",
-    # New int archetypes
-    "SpellStaff", "SilkRobe", "CircletOfFocus", "MysticSlippers", "ArcaneLoop",
-]
-```
-
-Names are illustrative -- actual names TBD in design phase.
 
 ---
 
-## 2. New Components Needed
+## Architectural Patterns
 
-### 2a. New Concrete Item Classes (10 files)
+### Pattern 1: Resource-Based Archetype Data (follows existing Item/Affix/Hero pattern)
 
-Each extends the existing slot intermediate class. Pattern mirrors LightSword/BasicArmor/etc.
-
-**Str archetype (melee/tanky):**
-- `models/items/battle_axe.gd` -- extends Weapon. Higher base damage, slower attack speed. Tags include `[Tag.PHYSICAL, Tag.ATTACK]`.
-- `models/items/heavy_plate.gd` -- extends Armor. Higher base_armor, implicit armor%.
-- `models/items/great_helm.gd` -- extends Helmet. Higher base_armor, implicit flat armor.
-- `models/items/iron_greaves.gd` -- extends Boots. Higher base_armor, implicit armor.
-- `models/items/war_band.gd` -- extends Ring. Higher base_damage, attack-focused tags.
-
-**Dex archetype (fast/evasive):**
-- `models/items/curved_blade.gd` -- extends Weapon. Lower base damage, higher base_attack_speed. Tags include `[Tag.ATTACK, Tag.CRITICAL, Tag.SPEED, Tag.EVASION]`.
-- `models/items/leather_vest.gd` -- extends Armor. Higher base_evasion, implicit evasion%.
-- `models/items/scout_cap.gd` -- extends Helmet. Higher base_evasion, implicit crit chance.
-- `models/items/swift_boots.gd` -- extends Boots. Higher base_evasion, implicit movement speed.
-- `models/items/jade_ring.gd` -- extends Ring. Crit/speed-focused tags and implicits.
-
-**Int archetype (spell/ES):**
-- `models/items/spell_staff.gd` -- extends Weapon. Has `base_spell_damage_min/max` and `base_cast_speed` instead of (or in addition to) attack speed. Tags include `[Tag.SPELL, Tag.MAGIC, Tag.ELEMENTAL]`.
-
-This is the trickiest integration point. The Weapon class currently assumes attack-based damage. Two approaches:
-
-**Option A: Add spell fields to Weapon class.** Weapon gains optional `base_spell_damage_min`, `base_spell_damage_max`, `base_cast_speed` fields. SpellStaff sets these; LightSword/BattleAxe/CurvedBlade leave them at 0. Weapon.update_value() calculates both attack DPS and spell DPS.
-
-**Option B: Create a SpellWeapon intermediate class.** `SpellWeapon extends Weapon` adds spell-specific fields. SpellStaff extends SpellWeapon.
-
-**Recommendation: Option A.** Fewer classes, simpler serialization, and hybrid items become possible in the future. The Weapon class is already compact (26 lines).
-
-Remaining int items:
-- `models/items/silk_robe.gd` -- extends Armor. Higher base_energy_shield, implicit ES%.
-- `models/items/circlet.gd` -- extends Helmet. Higher base_energy_shield, implicit flat mana.
-- `models/items/mystic_slippers.gd` -- extends Boots. Higher base_energy_shield, implicit cast speed.
-- `models/items/arcane_loop.gd` -- extends Ring. Spell damage/cast speed-focused tags.
-
-### 2b. No New Intermediate Classes Needed
-
-The existing Weapon, Armor, Helmet, Boots, Ring intermediates handle all stat computation. Dex and str armor items just set different base stats and valid_tags. Int items set higher ES bases and ES-favoring tags.
-
----
-
-## 3. Data Flow Changes
-
-### 3a. Attack Damage Flow (existing, unchanged)
-
-```
-Weapon.base_damage_min/max
-    -> Hero.calculate_damage_ranges()
-        -> StatCalculator.calculate_damage_range(weapon_min, weapon_max, affixes)
-            -> hero.damage_ranges["physical"/"fire"/"cold"/"lightning"]
-                -> CombatEngine._on_hero_attack()
-                    -> randf_range(el_min, el_max) per element
-                        -> pack.take_damage(total)
-```
-
-### 3b. Spell Damage Flow (new)
-
-```
-Weapon.base_spell_damage_min/max (set by SpellStaff, 0 for attack weapons)
-    -> Hero.calculate_spell_damage_ranges()
-        -> StatCalculator.calculate_spell_damage_range(spell_min, spell_max, affixes)
-            -> hero.spell_damage_ranges["physical"/"fire"/"cold"/"lightning"]
-                -> CombatEngine._on_hero_spell_cast()
-                    -> randf_range(el_min, el_max) per element
-                        -> pack.take_damage(total)
-```
-
-Key differences from attack flow:
-- Uses `FLAT_SPELL_DAMAGE` / `INCREASED_SPELL_DAMAGE` StatTypes instead of `FLAT_DAMAGE` / `INCREASED_DAMAGE`
-- Uses `INCREASED_CAST_SPEED` instead of `INCREASED_SPEED`
-- Crit applies identically (same crit chance/damage stats affect both channels)
-- Timer cadence comes from `base_cast_speed` not `base_attack_speed`
-
-### 3c. Defense Flow (unchanged for str/dex)
-
-Str items provide more armor (already flows through `calculate_defense()` -> `computed_armor`).
-Dex items provide more evasion (already flows through `calculate_defense()` -> `computed_evasion`).
-Int items provide more ES (already flows through `calculate_defense()` -> `computed_energy_shield`).
-
-**No changes to DefenseCalculator.** The 4-stage pipeline already handles armor, evasion, and ES correctly.
-
-### 3d. Affix Filtering Flow (existing, key for archetype identity)
-
-```
-Item.valid_tags (set in concrete class _init)
-    -> Item.has_valid_tag(affix)
-        -> Item.add_prefix() / add_suffix()
-```
-
-This is the mechanism that gives archetypes distinct crafting pools:
-
-- **Str weapon** `valid_tags = [Tag.PHYSICAL, Tag.ATTACK, Tag.WEAPON]` -- gets physical damage affixes, attack speed
-- **Dex weapon** `valid_tags = [Tag.PHYSICAL, Tag.ATTACK, Tag.CRITICAL, Tag.SPEED, Tag.WEAPON]` -- gets crit + speed affixes
-- **Int weapon** `valid_tags = [Tag.SPELL, Tag.MAGIC, Tag.ELEMENTAL, Tag.WEAPON]` -- gets spell damage affixes, cast speed
-- **Int armor** `valid_tags = [Tag.DEFENSE, Tag.ENERGY_SHIELD, Tag.MAGIC]` -- favors ES prefixes over armor prefixes
-
-**No changes to the filtering mechanism itself.** Archetype identity emerges purely from `valid_tags` configuration.
-
----
-
-## 4. Item Factory Changes -- LootTable and Drop System
-
-### 4a. Current Drop Path
-
-```
-CombatEngine._on_pack_killed()
-    -> LootTable.roll_pack_item_drop()  # 18% chance
-        -> GameEvents.items_dropped.emit(area_level)
-            -> gameplay_view._on_items_dropped(level)
-                -> get_random_item_base()
-                    -> picks from [LightSword, BasicHelmet, BasicArmor, BasicBoots, BasicRing]
-                    -> rolls tier via LootTable.roll_item_tier()
-```
-
-### 4b. Required Changes
-
-`get_random_item_base()` in `scenes/gameplay_view.gd` must expand its pool:
+HeroArchetype extends Resource, holding all archetype identity and passive bonus data as pure data. No scene tree dependency, serializable, reference-counted.
 
 ```gdscript
-func get_random_item_base() -> Item:
-    var item_types = [
-        # Str
-        LightSword, BasicArmor, BasicHelmet, BasicBoots, BasicRing,
-        # Dex
-        CurvedBlade, LeatherVest, ScoutCap, SwiftBoots, JadeRing,
-        # Int
-        SpellStaff, SilkRobe, Circlet, MysticSlippers, ArcaneLoop,
-    ]
-    var random_type = item_types[randi() % item_types.size()]
-    var item = random_type.new()
-    item.tier = LootTable.roll_item_tier(GameState.area_level, GameState.max_item_tier_unlocked)
-    return item
-```
+class_name HeroArchetype extends Resource
 
-**No changes to LootTable itself.** Tier rolling, rarity system, and drop chances are all item-type-agnostic.
+enum Archetype { STR, DEX, INT }
 
-**Slot assignment is implicit.** Each concrete item's intermediate class determines its slot (Weapon -> "weapon", Armor -> "armor", etc.). The `add_item_to_inventory()` path in gameplay_view already determines slot from item type. This pattern holds for new archetypes since they extend the same intermediates.
+var archetype: Archetype
+var variant_name: String          # "Fire Wizard", "Frost Warrior", etc.
+var display_name: String          # Shown in UI
+var passive_description: String   # "100% more fire damage"
+var passive_bonuses: Dictionary   # {"fire": 1.0, "spell_fire": 1.0} = 100% more
 
-### 4c. Inventory Slot Compatibility
-
-The per-slot inventory arrays (`crafting_inventory["weapon"]` etc.) can hold any item that extends the slot's intermediate class. A SpellStaff (extends Weapon) naturally goes into the "weapon" array. A SilkRobe (extends Armor) goes into "armor". **No inventory changes needed.**
-
-The 10-item cap per slot means players see more base variety but same total count. This is good -- players must choose which archetype to keep/craft.
-
----
-
-## 5. Save Format Implications
-
-### 5a. Current Save Format (v4)
-
-Items serialize via `Item.to_dict()` which stores:
-```json
-{
-    "item_type": "LightSword",
-    "item_name": "Light Sword",
-    "tier": 8,
-    "rarity": 0,
-    "valid_tags": ["PHYSICAL", "ATTACK", "CRITICAL", "WEAPON"],
-    "implicit": {...},
-    "prefixes": [...],
-    "suffixes": [...]
+# All possible subvariants, grouped by archetype
+const VARIANTS: Dictionary = {
+    Archetype.STR: [
+        {"name": "Berserker",       "desc": "100% more physical damage",
+         "bonuses": {"physical": 1.0}},
+        {"name": "Frost Warrior",   "desc": "100% more cold damage",
+         "bonuses": {"cold": 1.0}},
+        {"name": "Warlord",         "desc": "50% more bleed damage, 50% more physical damage",
+         "bonuses": {"physical": 0.5, "bleed": 0.5}},
+    ],
+    Archetype.DEX: [
+        {"name": "Assassin",        "desc": "100% more poison damage",
+         "bonuses": {"poison": 1.0}},
+        {"name": "Storm Archer",    "desc": "100% more lightning damage",
+         "bonuses": {"lightning": 1.0}},
+        {"name": "Shadow Blade",    "desc": "50% more physical damage, 50% more crit damage",
+         "bonuses": {"physical": 0.5, "crit_damage": 0.5}},
+    ],
+    Archetype.INT: [
+        {"name": "Fire Wizard",     "desc": "100% more fire spell damage",
+         "bonuses": {"spell_fire": 1.0, "burn": 0.5}},
+        {"name": "Storm Mage",      "desc": "100% more lightning spell damage",
+         "bonuses": {"spell_lightning": 1.0}},
+        {"name": "Warlock",         "desc": "100% more spell damage",
+         "bonuses": {"spell": 0.5, "burn": 0.5}},
+    ],
 }
+
+static func generate_choices() -> Array[HeroArchetype]:
+    var choices: Array[HeroArchetype] = []
+    for arch in [Archetype.STR, Archetype.DEX, Archetype.INT]:
+        var variants: Array = VARIANTS[arch]
+        var picked: Dictionary = variants.pick_random()
+        var ha := HeroArchetype.new()
+        ha.archetype = arch
+        ha.variant_name = picked["name"]
+        ha.display_name = picked["name"]
+        ha.passive_description = picked["desc"]
+        ha.passive_bonuses = picked["bonuses"]
+        choices.append(ha)
+    return choices
+
+func to_dict() -> Dictionary:
+    return {
+        "archetype": int(archetype),
+        "variant_name": variant_name,
+        "display_name": display_name,
+        "passive_description": passive_description,
+        "passive_bonuses": passive_bonuses,
+    }
+
+static func from_dict(data: Dictionary) -> HeroArchetype:
+    var ha := HeroArchetype.new()
+    ha.archetype = data.get("archetype", 0) as Archetype
+    ha.variant_name = str(data.get("variant_name", ""))
+    ha.display_name = str(data.get("display_name", ""))
+    ha.passive_description = str(data.get("passive_description", ""))
+    ha.passive_bonuses = data.get("passive_bonuses", {})
+    return ha
 ```
 
-Deserialization uses `Item.create_from_dict()` which matches on `item_type` string.
+**Why this pattern:** Matches every other data class in the project (Item, Affix, Hero, MonsterType). Serializable via to_dict/from_dict for SaveManager. No scene tree coupling.
 
-### 5b. Does v1.8 Require Save Format v5?
+### Pattern 2: "More" Multiplier as Final Multiplicative Layer (follows PoE convention)
 
-**No.** The save format is already extensible:
+Existing StatCalculator uses additive stacking for "increased" modifiers: `base * (1.0 + sum_of_pct)`. Hero archetype bonuses use "more" multipliers: `damage * (1.0 + more_pct)`, applied AFTER all additive stacking. This is a separate multiplication step, not added to the additive pool.
 
-1. **New item types** only require adding cases to `create_from_dict()`. Old saves with only old item types deserialize fine. New item types in saves are forward-compatible because the match statement returns null for unknown types (with a warning), and the restore loop handles null gracefully.
+```gdscript
+# In Hero.apply_archetype_bonuses():
+func apply_archetype_bonuses() -> void:
+    if archetype == null:
+        return
+    for element in damage_ranges:
+        if element in archetype.passive_bonuses:
+            var more_mult := 1.0 + archetype.passive_bonuses[element]
+            damage_ranges[element]["min"] *= more_mult
+            damage_ranges[element]["max"] *= more_mult
+```
 
-2. **New StatType enum values** are stored as integer indices in affix serialization. New enum values are appended to the end of the enum, so existing indices remain stable. Affixes from old saves deserialize correctly.
+**Why this pattern:** "More" vs "increased" is the standard ARPG damage layering. Additive stacking (existing affixes) has diminishing returns. Multiplicative "more" (archetype passive) is always impactful. This makes hero choice always meaningful regardless of gear quality.
 
-3. **New Weapon fields** (base_spell_damage_min/max, base_cast_speed) can default to 0 in Weapon._init(). Old weapon saves won't have these fields, and the Weapon class doesn't serialize base stats (they come from the concrete class _init). So `create_from_dict()` instantiates the concrete class (which sets base stats in _init), then restores affixes on top. **No migration needed.**
+### Pattern 3: Signal-Gated UI Overlay (follows prestige_triggered pattern)
 
-4. **Hero spell stats** (spell_damage_ranges, total_spell_dps) are derived stats, not serialized. Calculated from equipped items via `update_stats()`.
+Hero selection uses the same pattern as prestige: a signal triggers a UI overlay that blocks normal gameplay until the player makes a choice. MainView coordinates the overlay visibility.
 
-**Conclusion: Save format v4 is sufficient. No version bump needed.** Old saves load fine (they just have old item types). New saves with new item types load fine on old code (unknown types become null, items are lost but game doesn't crash).
+```
+PrestigeManager.execute_prestige()
+  -> GameEvents.prestige_completed.emit()
+  -> MainView._on_prestige_triggered()
+    -> Fade to black
+    -> Scene reload
+    -> GameState detects hero_archetype == null
+    -> GameEvents.hero_selection_needed.emit()
+    -> MainView shows HeroSelectionView overlay
+    -> Player picks hero
+    -> GameEvents.hero_selected.emit()
+    -> MainView hides overlay, shows forge
+```
 
-However, the `SAVE_VERSION` check in SaveManager (line 62) deletes saves with version < SAVE_VERSION. As long as we keep SAVE_VERSION = 4, old saves persist through the update.
-
-### 5c. Risk: Item.ITEM_TYPE_STRINGS
-
-This PackedStringArray is only used for documentation/validation, not for deserialization logic. The match statement in `create_from_dict()` is the actual registry. Both must be updated in sync.
-
----
-
-## 6. Suggested Build Order
-
-Ordered for minimal breakage and incremental testability. Each step produces a working game.
-
-### Phase 1: Tag and StatType Foundation
-
-**Files:** `autoloads/tag.gd`
-
-Add new StatType enum entries (FLAT_SPELL_DAMAGE, INCREASED_SPELL_DAMAGE, INCREASED_CAST_SPEED) and new Tag constant (SPELL).
-
-**Risk:** None. Appending to enums and adding constants has no effect on existing code.
-
-### Phase 2: Spell Damage in StatCalculator
-
-**Files:** `models/stats/stat_calculator.gd`
-
-Add `calculate_spell_damage_range()` and `calculate_spell_dps()` static methods.
-
-**Risk:** None. New static methods, no changes to existing methods.
-**Test:** Unit test new methods with synthetic affixes.
-
-### Phase 3: Spell Affixes
-
-**Files:** `autoloads/item_affixes.gd`
-
-Add flat spell damage prefix variants and enable the Cast Speed suffix with proper stat_types.
-
-**Risk:** Low. New affixes only appear on items whose valid_tags include SPELL/MAGIC. Existing items don't have these tags, so existing crafting is unchanged.
-
-### Phase 4: Weapon Spell Fields + Hero Spell Stats
-
-**Files:** `models/items/weapon.gd`, `models/hero.gd`
-
-Add optional spell damage fields to Weapon (defaulting to 0). Add spell_damage_ranges tracking and calculation methods to Hero. Update `update_stats()` call order.
-
-**Risk:** Low. New fields default to 0, so existing weapons behave identically. Hero spell DPS starts at 0 for existing builds.
-**Test:** Verify existing weapon DPS unchanged. Verify spell DPS = 0 with no spell weapon.
-
-### Phase 5: Str/Dex Item Bases (No Spell Dependency)
-
-**Files:** 10 new files in `models/items/`
-
-Create str and dex concrete classes. These are purely data: different base stats, valid_tags, and implicits. They extend existing intermediates with zero code changes.
-
-**Also update:** `models/items/item.gd` (create_from_dict match statement), `scenes/gameplay_view.gd` (get_random_item_base pool).
-
-**Risk:** Low. New items use existing stat calculation paths. Str items are just different numbers on the same Armor/Weapon/etc classes.
-**Test:** Drop each new base type, verify stats display correctly, verify crafting produces appropriate affixes.
-
-### Phase 6: Int Item Bases (Spell Staff)
-
-**Files:** New int concrete classes in `models/items/`
-
-SpellStaff sets base_spell_damage_min/max and base_cast_speed. Int armor/helm/boots/ring set ES-heavy bases and MAGIC/SPELL tags.
-
-**Risk:** Medium. SpellStaff is the first item that actually exercises the spell damage path. Requires Phase 4 to be solid.
-**Test:** Equip SpellStaff, verify hero.spell_damage_ranges populated, verify spell DPS calculated.
-
-### Phase 7: CombatEngine Spell Timer
-
-**Files:** `models/combat/combat_engine.gd`
-
-Add hero_spell_timer, _on_hero_spell_cast(), and cast speed integration in _start_pack_fight().
-
-**Risk:** Medium. This is the highest-risk change -- a new timer in the combat state machine. Must handle all state transitions (idle, fighting, dead, map complete) correctly.
-**Test:** Equip SpellStaff, enter combat, verify spell casts fire at correct cadence. Verify attack-only weapons still work. Verify dual-channel (attack + spell ring?) works if applicable.
-
-### Phase 8: UI Polish
-
-**Files:** `scenes/forge_view.gd`, `scenes/hero_view.gd`
-
-- Show spell DPS in hero stats panel (if > 0)
-- Floating spell damage numbers (different color?)
-- Item tooltip shows spell damage range for int weapons
-
-**Risk:** Low. Display-only changes.
+**Why this pattern:** Matches existing prestige flow. No modal dialog system needed. Overlay blocks tab navigation naturally.
 
 ---
 
-## Appendix: Archetype Identity Through valid_tags
+## Data Flow
 
-The entire archetype system works through `valid_tags` on concrete item classes. No special archetype enum or class hierarchy needed.
+### Hero Selection Flow (prestige -> selection -> apply bonuses)
 
-| Archetype | Key valid_tags | Crafting Identity |
-|-----------|---------------|-------------------|
-| Str weapon | PHYSICAL, ATTACK, WEAPON | Physical damage, attack speed |
-| Dex weapon | PHYSICAL, ATTACK, CRITICAL, SPEED, WEAPON | Crit chance, crit damage, attack speed |
-| Int weapon | SPELL, MAGIC, ELEMENTAL, WEAPON | Spell damage, cast speed, elemental |
-| Str armor | DEFENSE, ARMOR, PHYSICAL | Flat armor, % armor |
-| Dex armor | DEFENSE, EVASION | Flat evasion, % evasion |
-| Int armor | DEFENSE, ENERGY_SHIELD, MAGIC | Flat ES, % ES |
+```
+1. Player clicks "Upgrade Forge" (prestige_view.gd)
+2. PrestigeManager.execute_prestige()
+   a. Advance prestige_level
+   b. GameState._wipe_run_state()  -- hero_archetype set to null
+   c. GameEvents.prestige_completed.emit()
+3. MainView._on_prestige_triggered()
+   a. Fade to black
+   b. Scene reload (get_tree().reload_current_scene())
+4. GameState._ready() -> initialize_fresh_game()
+   a. hero_archetype = null (fresh state)
+   b. SaveManager.load_game() restores prestige_level but hero_archetype is null
+5. MainView._ready()
+   a. Detects GameState.hero_archetype == null AND GameState.prestige_level > 0
+      (OR first game ever at P0 -- design choice)
+   b. Emits GameEvents.hero_selection_needed
+   c. Shows HeroSelectionView overlay
+6. HeroSelectionView._ready()
+   a. choices = HeroArchetype.generate_choices()  -- 1 STR, 1 DEX, 1 INT
+   b. Displays 3 cards with variant_name + passive_description
+7. Player taps a card
+   a. GameState.hero_archetype = chosen
+   b. Hero applies archetype: GameState.hero.archetype = chosen
+   c. GameState.hero.update_stats()  -- recalculates with archetype bonuses
+   d. Starter weapon set based on archetype:
+      STR -> Broadsword, DEX -> Dagger, INT -> Wand
+   e. GameState.crafting_inventory["weapon"] = archetype_starter_weapon
+   f. GameEvents.hero_selected.emit(chosen)
+   g. SaveManager auto-saves
+8. MainView hides overlay, shows forge view
+```
 
-This means build diversity emerges from item choice + crafting, not from a class selection screen. Players organically discover builds by equipping different archetypes and seeing what affixes appear.
+### Passive Bonus Application Flow (hero bonus -> StatCalculator -> combat)
+
+```
+Hero.update_stats() call chain:
+  1. calculate_crit_stats()        -- base 5% + equipment
+  2. calculate_damage_ranges()     -- weapon base + flat affixes + % increased
+  3. apply_archetype_bonuses()     -- NEW: "more" multiplier on damage_ranges
+     For each element with a bonus:
+       damage_ranges[element]["min"] *= (1.0 + bonus)
+       damage_ranges[element]["max"] *= (1.0 + bonus)
+  4. calculate_dps()               -- uses post-bonus ranges for DPS display
+  5. calculate_spell_damage_ranges()
+  6. apply_archetype_spell_bonuses() -- NEW: "more" multiplier on spell_damage_ranges
+  7. calculate_spell_dps()
+  8. calculate_defense()
+  9. calculate_dot_stats()         -- NEW: apply DoT bonuses (bleed/poison/burn "more")
+
+CombatEngine per-hit flow (UNCHANGED):
+  - Reads hero.damage_ranges (already includes archetype bonus)
+  - Rolls per-element, applies crit
+  - No CombatEngine changes needed for passive damage bonuses
+
+DPS Display (ForgeView hero stats panel):
+  - Reads hero.total_dps (already includes archetype bonus via calculate_dps)
+  - No ForgeView changes needed for damage display
+  - NEW: Show archetype name + passive below hero name
+```
 
 ---
 
-*Last updated: 2026-03-06*
+## Integration Points
+
+### Modified Components
+
+| File | Change | Complexity | Dependencies |
+|------|--------|------------|--------------|
+| `models/hero.gd` | Add `archetype: HeroArchetype` field, `apply_archetype_bonuses()`, `apply_archetype_spell_bonuses()` in update_stats() chain | Medium | HeroArchetype resource |
+| `autoloads/game_state.gd` | Add `hero_archetype: HeroArchetype` field, null on fresh/wipe, archetype-aware starter weapon in `_wipe_run_state()` | Low | HeroArchetype resource |
+| `autoloads/game_events.gd` | Add `hero_selection_needed` and `hero_selected(archetype: HeroArchetype)` signals | Trivial | None |
+| `autoloads/prestige_manager.gd` | No code change needed (hero_archetype nulled by _wipe_run_state) | None | GameState wipe handles it |
+| `autoloads/save_manager.gd` | Serialize hero_archetype in `_build_save_data()`, restore in `_restore_state()`, bump SAVE_VERSION to 8 | Low | HeroArchetype.to_dict/from_dict |
+| `scenes/main_view.gd` | Show HeroSelectionView after scene reload when hero_archetype is null, connect hero_selected signal | Medium | HeroSelectionView scene |
+| `scenes/main_view.tscn` | Add HeroSelectionView node to scene tree | Low | hero_selection_view.tscn |
+| `scenes/forge_view.gd` | Display archetype name + passive in hero stats panel | Low | GameState.hero_archetype |
+
+### New Components
+
+| File | Purpose | Complexity | Dependencies |
+|------|---------|------------|--------------|
+| `models/hero_archetype.gd` | HeroArchetype Resource: archetype enum, variant data, passive bonuses, generate_choices(), to_dict/from_dict | Medium | Tag constants for element keys |
+| `scenes/hero_selection_view.gd` | 3-card picker UI: generate choices, display cards, handle selection, emit signal | Medium | HeroArchetype, GameState, GameEvents |
+| `scenes/hero_selection_view.tscn` | Scene layout: 3 card panels with labels, centered overlay | Low | hero_selection_view.gd |
+
+---
+
+## Anti-Patterns
+
+### 1. DO NOT bake archetype bonuses into StatCalculator's additive pool
+
+**Wrong:** Adding archetype bonus to the `additive_damage_mult` sum in StatCalculator.calculate_damage_range().
+**Why wrong:** Archetype bonuses are "more" (multiplicative), not "increased" (additive). Mixing them into the additive pool makes them subject to diminishing returns and breaks the ARPG damage layering convention. A 100% more bonus should always double damage, regardless of how much "increased" the player has stacked.
+**Correct:** Apply as a separate multiplicative step after all additive stacking, in Hero.apply_archetype_bonuses().
+
+### 2. DO NOT store archetype choice in PrestigeManager
+
+**Wrong:** Adding hero_archetype field to PrestigeManager alongside prestige_level.
+**Why wrong:** PrestigeManager is a stateless utility (all state lives in GameState). Archetype is run-scoped state that gets wiped on prestige, same as hero equipment and currencies.
+**Correct:** Store on GameState (run-scoped, wiped by _wipe_run_state). PrestigeManager stays pure logic.
+
+### 3. DO NOT modify CombatEngine to apply archetype bonuses per-hit
+
+**Wrong:** Adding archetype multiplier application inside CombatEngine._on_hero_attack().
+**Why wrong:** CombatEngine reads pre-computed hero.damage_ranges. If archetype bonuses are already baked into those ranges during update_stats(), CombatEngine needs zero changes. Adding per-hit application would either double-count or require CombatEngine to know about archetypes (coupling).
+**Correct:** Apply bonuses in Hero.update_stats() chain so damage_ranges already reflect the "more" multiplier. CombatEngine stays archetype-unaware.
+
+### 4. DO NOT create a separate HeroClass + HeroArchetype two-level hierarchy
+
+**Wrong:** Creating both a HeroClass resource (STR/DEX/INT) and a HeroArchetype resource (Fire Wizard, etc.) with a parent-child relationship.
+**Why wrong:** Over-engineering for 9 variants. The archetype enum on HeroArchetype already captures the STR/DEX/INT grouping. A two-level hierarchy adds indirection without value.
+**Correct:** Single HeroArchetype resource with an `archetype` enum field for the STR/DEX/INT grouping.
+
+### 5. DO NOT show hero selection at P0 first game
+
+**Wrong:** Forcing hero selection on brand new players who have never played.
+**Why wrong:** New players should experience the crafting loop first. Hero selection is a prestige reward that adds replayability. Showing it at P0 adds decision complexity before the player understands what damage types even mean.
+**Correct:** P0 starts with a default "Adventurer" (no archetype, no passive bonus). First hero selection appears after first prestige (P1+). The archetype is the prestige reward that makes each run feel different.
+
+---
+
+## Build Order
+
+The suggested implementation order respects dependency chains:
+
+| Phase | Component | Rationale |
+|-------|-----------|-----------|
+| 1 | `models/hero_archetype.gd` | Foundation data class, no dependencies. Must exist before anything else can reference it. |
+| 2 | `autoloads/game_events.gd` + `autoloads/game_state.gd` | Add signals and hero_archetype field. Low risk, enables all downstream work. |
+| 3 | `models/hero.gd` | Add archetype field and apply_archetype_bonuses() in update_stats(). Depends on HeroArchetype existing. |
+| 4 | `autoloads/save_manager.gd` | Serialize/restore hero_archetype. Depends on HeroArchetype.to_dict/from_dict and GameState.hero_archetype. Bump save version. |
+| 5 | `scenes/hero_selection_view.gd` + `.tscn` | UI for picking hero. Depends on HeroArchetype.generate_choices(), GameState, GameEvents. |
+| 6 | `scenes/main_view.gd` + `.tscn` | Wire HeroSelectionView into post-prestige flow. Depends on everything above. |
+| 7 | `scenes/forge_view.gd` | Display archetype name/passive in hero stats panel. Polish step, no blockers. |
+| 8 | Integration tests | Verify prestige->selection->save round-trip, archetype bonus math, P0 default behavior. |
+
+---
+
+## Sources
+
+- Direct codebase analysis of all files listed in Modified/New Components tables
+- `/mnt/c/Users/vince/Documents/GitHub/hammertime/.planning/PROJECT.md` -- v1.9 milestone definition
+- Existing architectural patterns: Resource-based data model, signal bus, template method currency, prestige fade flow
+- PoE damage layering conventions: "increased" (additive) vs "more" (multiplicative) as standard ARPG pattern
+
+---
+*Architecture research for: hero archetype integration*
+*Researched: 2026-03-09*

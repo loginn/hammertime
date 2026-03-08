@@ -1,225 +1,246 @@
 # Pitfalls Research
 
-**Domain:** Hammertime -- Adding Item Archetypes (str/dex/int) and Dual Damage Channels (attack + spell) to Existing ARPG Idle Game
-**Researched:** 2026-03-06
-**Confidence:** HIGH -- All pitfalls grounded in direct analysis of the existing codebase (Item, Affix, StatCalculator, CombatEngine, Tag, ItemAffixes, LootTable, ForgeView, save format v4). Balance pitfalls informed by ARPG dual-channel design patterns and idle game automation constraints.
+**Domain:** ARPG idle game — hero archetype addition (v1.9)
+**Researched:** 2026-03-09
+**Confidence:** HIGH — All pitfalls grounded in direct analysis of existing codebase (Hero, StatCalculator, CombatEngine, PrestigeManager, SaveManager, GameState, Tag). Architecture-specific risks verified against current save format v7, 41-affix pool, 21 item bases, and prestige wipe flow.
 
 ---
 
-## 1. Balance Pitfalls -- Spell vs Attack Parity
+## Critical Pitfalls
 
-### 1a. One channel dominates, the other is dead content
+### Pitfall 1: Multiplicative bonus stacking breaks damage scaling
 
-**The problem:** When you add spell damage alongside attacks, the math almost always favors one channel. In Hammertime, attacks already have a tuned pipeline: base weapon damage -> flat adds -> % increased -> speed -> crit. If spell damage uses the same formula but with different base values, whichever channel has better scaling per affix slot wins, and the loser becomes a wasted mod.
+**What goes wrong:** Hero affinity bonuses like "100% more fire damage" are multiplicative modifiers. The existing StatCalculator uses additive stacking for `INCREASED_DAMAGE` (line 29-31: `additive_damage_mult += affix.value / 100.0`, applied once as `damage *= (1.0 + sum)`). A hero affinity that multiplies after this additive sum creates a new scaling layer. A Fire Wizard with 100% more fire damage effectively doubles the output of every fire affix. Players who stack fire gear + fire affinity get exponential returns while non-matching elements get zero bonus. The gap between "right element" and "wrong element" becomes a cliff, not a slope.
 
-**Why it hits idle games harder:** Players cannot manually alternate between attack and spell rotations to balance things. The auto-combat loop picks one cadence. If spells deal 30% more DPS than attacks at equivalent gear, every informed player ignores attack mods entirely. There is no skill expression to make the weaker channel work.
+**Why it happens:** "More" (multiplicative) vs "increased" (additive) is the classic ARPG balance trap. Additive bonuses have diminishing marginal value (going from 100% to 200% increased is a 50% relative gain). Multiplicative bonuses have constant marginal value (100% more always doubles). When a hero affinity is the only multiplicative layer, it dominates all other gearing decisions.
 
-**Hammertime-specific risk:** The CombatEngine currently uses a single `hero_attack_timer` with `base_attack_speed` from the weapon. Adding a spell timer means two independent damage streams. If both scale with the same crit stats (crit chance and crit damage are currently suffixes available to all WEAPON/CRITICAL tagged items), the channel with higher base throughput double-dips on shared multipliers and pulls ahead exponentially.
+**How to avoid:**
+- Make hero affinity bonuses additive with existing `INCREASED_DAMAGE` stacking, not a separate multiplier. "100% increased fire damage" added to the existing sum means it competes with gear mods for value, not multiplying on top of them.
+- If multiplicative is the design intent, use smaller values (20-30% more, not 100% more) and test at endgame gear levels where the base additive sum is already 200-400%.
+- Test the ratio: (best-in-slot fire gear + fire affinity) vs (best-in-slot fire gear + no affinity). If the ratio exceeds 2x, the affinity is too strong and invalidates non-matching heroes.
 
-**Prevention:**
-- Make attack speed and cast speed separate suffix pools that do not cross-apply. Attack speed should not accelerate spell casts and vice versa.
-- Give spells and attacks different crit scaling or make crit a shared stat that amplifies total DPS equally regardless of channel.
-- Use a single DPS formula that sums both channels. Balance by making the affix budget the same: 3 spell affixes on a weapon should produce comparable DPS to 3 attack affixes at the same tier.
-- Test with a spreadsheet: max-rolled T1 attack weapon vs max-rolled T1 spell weapon must land within 10% DPS of each other.
+**Warning signs:** Players always pick the hero matching their best weapon's element. Hero selection becomes a solved optimization, not a meaningful choice. Non-matching heroes feel like a punishment.
 
-### 1b. Hybrid builds outperform pure builds
-
-**The problem:** If a weapon can roll both attack and spell damage affixes, a rare item with 3 attack prefixes + 3 spell suffixes (or vice versa) stacks two full damage pipelines. Pure attack or pure spell builds only use one pipeline's worth of scaling.
-
-**Why it is tempting:** More build diversity sounds good. But in an idle game, the auto-combat does not know which channel to prioritize. If both channels fire independently, hybrid is always strictly better because the hero deals damage from two timers simultaneously.
-
-**Prevention:**
-- Constrain item bases so str weapons have attack tags and int weapons have spell tags. A Light Sword should not roll spell damage. A Staff should not roll attack speed.
-- If hybrid items exist (e.g., a ring), make the affix pool shared so you are choosing between attack and spell mods for the same slots, not stacking both.
-
-### 1c. Cast speed vs attack speed equivalence
-
-**The problem:** Attack speed currently ranges around 1.0-1.8 hits/sec (Light Sword is 1.8). If cast speed uses a different base or different affix scaling, the time-to-kill diverges. A 5% cast speed affix on a 2.0 base is worth more than 5% attack speed on a 1.0 base.
-
-**Prevention:**
-- Normalize: if base_attack_speed = 1.8, set base_cast_speed to a value that produces equivalent DPS when combined with spell base damage. E.g., if spell base damage is 2x attack base damage, cast speed should be half.
-- Use two stat types (INCREASED_ATTACK_SPEED, INCREASED_CAST_SPEED) so the hero stat panel is unambiguous about which timer each mod affects.
+**Phase to address:** Design phase (before any code). The stacking rule (additive vs multiplicative) must be decided and documented before StatCalculator is touched.
 
 ---
 
-## 2. Content Bloat Pitfalls -- Too Many Bases/Affixes
+### Pitfall 2: Hero affinity bonus applied in wrong calculation stage
 
-### 2a. Base proliferation overwhelming the crafting loop
+**What goes wrong:** StatCalculator has a strict order: flat damage -> additive % -> speed -> crit. The hero affinity bonus must be injected at exactly the right stage. If applied before flat damage is added, it does not scale flat mods. If applied after crit, it double-scales with crit multiplier. If applied per-element inside `calculate_damage_range()` but the hero has a "generic" affinity (like "100% more STR damage"), the routing logic for which elements qualify becomes a source of bugs.
 
-**The problem:** Going from 5 item bases (LightSword, BasicArmor, BasicHelmet, BasicBoots, BasicRing) to 15 (3 per slot) triples the item pool. Each base drops at 18% per pack kill. With 15 bases the chance of getting the specific base you want drops from 20% to 6.7%. Players spend 3x longer finding the right blank base before they can even start crafting.
+**Why it happens:** The current `calculate_damage_range()` accumulates per-element (physical/fire/cold/lightning) and applies percentage modifiers per group (physical_pct vs elemental_pct). A hero affinity that says "fire damage" needs to be routed to fire only, but the existing code has no injection point for a per-element multiplier that comes from a source other than affixes.
 
-**Hammertime-specific risk:** Per-slot inventory arrays hold 10 items each. With 3 bases per slot, each slot fills 3x faster with bases the player does not want. Players spend more time melting unwanted bases than crafting.
+**How to avoid:**
+- Do NOT modify StatCalculator's internal loop to check for hero affinity. StatCalculator is a pure function operating on affixes. Instead, apply the hero bonus in Hero.calculate_damage_ranges() after StatCalculator returns, scaling the relevant element's min/max.
+- Create a clear separation: StatCalculator handles gear math. Hero handles hero-level bonuses applied to StatCalculator's output.
+- Add integration tests that verify: (a) affinity does not double-count with INCREASED_DAMAGE affixes, (b) affinity applies to the correct element only, (c) affinity works with both attack and spell damage channels.
 
-**Prevention:**
-- Weight drops toward the archetype the player is building. If the hero has a str weapon equipped, bias weapon drops toward str bases. This is an implicit loot filter.
-- Alternatively, keep drops slot-based (weapon/armor/etc.) and let the player choose the archetype when they start crafting on a blank base. This avoids base proliferation entirely in the drop pool.
-- Do not add archetype variants for ring. Ring is already a utility slot. 1 ring base with broad tags is better than 3 ring bases with narrow tags.
+**Warning signs:** DPS display shows different numbers than actual combat damage. Fire Wizard's displayed DPS does not match observed kill speed. Crit + affinity produces unexpectedly high numbers.
 
-### 2b. Affix pool dilution
-
-**The problem:** Currently there are 18 prefixes and 9 active suffixes in ItemAffixes. Adding spell damage (flat + %) adds at minimum 4-5 new prefixes (flat spell per element, % spell damage) and 1-2 suffixes (cast speed). The weapon prefix pool goes from 9 offensive prefixes to 14+. When rolling a Runic Hammer on a weapon, the chance of hitting a useful physical damage mod drops from ~1/9 to ~1/14 (36% dilution).
-
-**Why this kills crafting feel:** The core loop is "hammer strike matters." If the pool is so diluted that most hammer strikes give unwanted mods, the crafting loop feels like slot machine gambling rather than directed crafting. The Tag Hammers (Fire, Cold, Lightning, Physical, Defense) help but only for Forge-equivalent operations at P1+.
-
-**Hammertime-specific risk:** The existing tag filtering system uses `valid_tags` on items to constrain which affixes can roll. If str/int/dex items all share the same WEAPON tag, they can roll each other's mods. A Staff rolling "Physical Damage" or a Sword rolling "Spell Damage" is confusing and wasteful.
-
-**Prevention:**
-- Use archetype tags (Tag.STRENGTH, Tag.DEXTERITY, Tag.INTELLIGENCE) on item bases. Spell damage affixes get Tag.INTELLIGENCE. Attack damage affixes get Tag.STRENGTH or Tag.ATTACK. The valid_tags system already supports this without code changes to the rolling logic in Item.add_prefix()/add_suffix().
-- Do NOT add spell affixes to the global pool that all WEAPON items can roll. Scope them to items with the INT tag.
-- Keep total rollable affixes per item base roughly constant. If a str weapon can roll 9 prefixes and an int weapon can roll 9 prefixes, the pool size per item is unchanged even though the global pool grew.
-
-### 2c. Tag hammer effectiveness diluted
-
-**The problem:** Tag Hammers (Fire, Cold, Lightning, Physical, Defense) guarantee at least one mod with the target tag. If spell damage affixes also carry element tags (e.g., "Flat Spell Fire Damage" with Tag.FIRE), the Fire Hammer on a str weapon might guarantee a spell damage mod on an item that cannot use it -- if the spell mod passes the tag filter but the item has no spell channel.
-
-**Prevention:**
-- Spell damage affixes should carry Tag.INTELLIGENCE (or Tag.SPELL) in addition to element tags. Str weapons without Tag.INTELLIGENCE in valid_tags never see them in the valid pool. The tag hammer then naturally selects from the correct subset.
-- Test every tag hammer against every item base: verify no nonsensical guarantees.
+**Phase to address:** Implementation phase. The injection point must be verified with unit tests before integration.
 
 ---
 
-## 3. Architecture Pitfalls -- Breaking Existing Systems
+### Pitfall 3: Save migration — hero_class field missing from v7 saves
 
-### 3a. Save format migration (v4 -> v5)
+**What goes wrong:** Current save format v7 has no hero_class or hero_archetype field. When v1.9 ships with save format v8, existing v7 saves load with no hero class. The current SaveManager policy (line 62) is to DELETE outdated saves: `push_warning("SaveManager: Outdated save (v%d), deleting and starting fresh")`. This means every existing player loses all progress — prestige levels, unlocked tiers, everything — on update.
 
-**The problem:** Item.create_from_dict() uses a match statement on item_type_str with 5 hardcoded cases (LightSword, BasicArmor, BasicHelmet, BasicBoots, BasicRing). Adding 10 new base types requires 10 new match arms. If a player loads a v4 save, all items are old types. If you rename LightSword to StrSword, every saved weapon becomes null (push_warning path in create_from_dict).
+**Why it happens:** The delete-on-old-version policy was acceptable when saves represented hours of play (v2->v3 transition). At v7, players may have completed multiple prestige cycles. Deleting their save is a retention-killing event.
 
-**Hammertime-specific risk:** The project already deleted v2/v3 saves rather than migrating them. But v4 saves represent real player progress through the prestige system (up to 7 prestige levels). Deleting them is much more costly.
+**How to avoid:**
+- Add a migration path: `_migrate_v7_to_v8()` that defaults hero_class to null (no archetype selected). The game treats null hero_class as "classless" — equivalent to current gameplay with no bonuses. Player picks a hero on their next prestige.
+- Change the save version check from "delete if old" to "migrate if old." The delete policy served its purpose in early development but is toxic for a game with meta-progression.
+- Test: create a v7 save with P3+ progress, load in v8 code, verify prestige_level and max_item_tier_unlocked survive.
 
-**Prevention:**
-- Keep LightSword as-is. It IS the str sword. Add new classes (Staff, Wand, etc.) alongside it.
-- Add new match arms to create_from_dict() for new types. Old saves deserialize fine because old type strings still work.
-- Bump save format to v5. Write a _migrate_v4_to_v5() that adds any new fields to existing items (e.g., a `damage_channel` field defaulting to "attack" for all old items).
-- Test: create a v4 save, load it in v5 code, verify all items survive with correct stats.
+**Warning signs:** Test suite does not include a v7-to-v8 migration test. Save format bumped without migration function.
 
-### 3b. StatCalculator assumptions about single damage channel
-
-**The problem:** StatCalculator.calculate_dps() assumes a single damage pipeline: base_damage -> flat -> % -> speed -> crit. calculate_damage_range() assumes all damage is attack damage routed through weapon base. Adding spell damage means either:
-1. Two parallel calls to calculate_dps() (one for attack, one for spell), or
-2. A unified calculate_dps() that sums both channels.
-
-Option 1 risks doubling crit scaling (crit applies to both channels independently). Option 2 requires significant refactoring of the DPS method signature.
-
-**Prevention:**
-- Extend calculate_damage_range() to accept a channel parameter ("attack" or "spell"). Filter affixes by channel tag before accumulating. Return per-channel ranges.
-- Hero.damage_ranges (currently used by CombatEngine for per-element rolling) should become Hero.attack_damage_ranges and Hero.spell_damage_ranges.
-- CombatEngine._on_hero_attack() fires from hero_attack_timer using attack ranges. A new _on_hero_cast() fires from hero_cast_timer using spell ranges.
-- Do NOT let crit stats double-apply. Either crit applies once to the sum, or each channel has its own crit that does not stack additively.
-
-### 3c. CombatEngine dual timer complexity
-
-**The problem:** CombatEngine currently has hero_attack_timer and pack_attack_timer (2 timers). Adding a spell cast timer makes 3 timers total. The state machine (IDLE, FIGHTING, MAP_COMPLETE, HERO_DEAD) now has more edge cases: what if the spell timer fires during pack_transition_delay? What if the hero dies between an attack and a cast?
-
-**Prevention:**
-- Only add spell timer if the hero has spell damage > 0. If no spell mods equipped, no spell timer runs. This keeps the default case identical to current behavior.
-- Spell timer obeys the same state guards that _on_hero_attack() uses: `if state != State.FIGHTING: return`.
-- _stop_timers() must stop all 3 timers. Add spell_cast_timer to the stop list.
-- Consider a single hero timer that alternates between attack and cast if both are active (simpler state, but changes DPS math -- probably not worth the tradeoff).
-
-### 3d. Item type string registry fragility
-
-**The problem:** ITEM_TYPE_STRINGS is a const PackedStringArray and create_from_dict() is a match statement. Both must be updated in lockstep for every new base type. Adding 10 bases means 10 error-prone manual entries.
-
-**Prevention:**
-- Consider a registry Dictionary mapping string -> Script. New bases register themselves. Reduces match statement maintenance.
-- At minimum, add integration tests that verify every entry in ITEM_TYPE_STRINGS round-trips through to_dict()/create_from_dict().
-
-### 3e. Weapon.update_value() single-channel assumption
-
-**The problem:** Weapon.update_value() calls StatCalculator.calculate_dps() with self.base_damage and self.base_speed. A spell weapon (Staff) would need a different base damage and base cast speed. If Staff extends Weapon, it inherits base_damage_min/max and base_attack_speed fields that are semantically wrong for spells.
-
-**Prevention:**
-- Staff should extend Weapon but use its own fields: base_spell_min, base_spell_max, base_cast_speed. Or generalize Weapon to have channel-agnostic field names.
-- Better: keep Weapon as the base class with generic damage fields. The "channel" is metadata (a tag or enum), not a class hierarchy difference. A Staff's base_damage_min/max represents spell base damage. The channel tag tells StatCalculator which formula to use.
+**Phase to address:** Implementation phase. Save migration must be written and tested before any other v1.9 code ships.
 
 ---
 
-## 4. UX Pitfalls -- Overwhelming Player Choice in an Idle Game
+### Pitfall 4: Prestige wipe does not reset hero class, or resets it wrong
 
-### 4a. Item type buttons explosion
+**What goes wrong:** `_wipe_run_state()` in GameState (line 93) creates a fresh `Hero.new()` and wipes all run-scoped state. If hero_class is stored on the Hero object, it gets wiped on prestige. But the v1.9 design says "hero choice resets on each prestige" — so it SHOULD be wiped. The pitfall is in the ordering: the prestige flow is (1) spend currency, (2) advance prestige_level, (3) wipe run state, (4) grant bonus, (5) emit signal. If hero selection happens in response to the `prestige_completed` signal (step 5), the UI must show the selection screen AFTER the wipe but BEFORE the player can do anything else. If the selection is skippable or deferred, the player plays with no hero class until they manually select one.
 
-**The problem:** ForgeView has 5 item type buttons (Weapon, Helmet, Armor, Boots, Ring). With 3 bases per slot, the player needs to see which archetype each inventory item is. Options: (a) show 15 buttons -- does not fit 1280x720 viewport, (b) show 5 slot buttons then 3 sub-buttons -- adds navigation layer, (c) show 5 slot buttons and mix archetypes in the same 10-item array.
+**Why it happens:** PrestigeManager.execute_prestige() is a synchronous function that returns bool. It does not await UI interaction. Adding a "pick your hero" step mid-prestige requires either: (a) making execute_prestige() async (breaking existing callers), or (b) splitting prestige into two phases (wipe + select), or (c) showing selection UI after prestige completes and blocking gameplay until selection is made.
 
-**Prevention:**
-- Keep 5 slot buttons. Show all bases for that slot in the existing 10-item inventory grid. Differentiate by name/color (e.g., "Light Sword" vs "Staff" vs "Dagger" in the item name label).
-- Do not sub-navigate. Idle game players want fewer clicks, not more.
-- Archetype identity should be visible at a glance: item name or a small icon/color indicator.
+**How to avoid:**
+- Option (c) is safest: prestige completes as-is, hero_class is set to null on wipe, `prestige_completed` signal triggers a hero selection overlay that blocks the Adventure tab until the player picks. GameState stores selected_hero_class. CombatEngine refuses to start_combat() if selected_hero_class is null.
+- Do NOT store hero class on the Hero Resource. Store it on GameState alongside prestige_level. It is meta-state that survives within a run but resets between prestiges.
+- Test: execute prestige, verify hero_class is null, verify combat cannot start, select hero, verify combat works.
 
-### 4b. Tooltip and stat comparison complexity
+**Warning signs:** Player can start combat with no hero class selected. Hero class persists across prestige (defeating the "pick on prestige" design). Prestige flow hangs waiting for UI input in a non-UI context.
 
-**The problem:** Stat comparison on equip hover currently shows damage delta and defense delta. With dual channels, a spell weapon replacing an attack weapon shows "-500 attack DPS, +400 spell DPS." Is that better? The is_item_better() function currently uses tier comparison for bench selection. Tier still works for same-archetype items, but a tier 3 Staff is not comparable to a tier 3 Sword if the player is building for attacks.
-
-**Prevention:**
-- Comparison should use combined DPS (attack + spell) for offensive items. This gives a single number that captures overall damage change.
-- Keep tier as the auto-bench heuristic. Manual equip uses stat comparison.
-- Add a clear label: "[Attack]" or "[Spell]" next to the item name so the player knows what channel the item supports.
-
-### 4c. New player confusion at prestige 0
-
-**The problem:** At P0, only tier 8 items drop and only basic hammers are available. If all 3 archetypes drop at P0, new players see Staffs with no way to make spell damage work (no cast timer implementation, no spell affixes in the pool). The items are mechanically dead but fill inventory slots.
-
-**Prevention:**
-- Gate int archetype behind prestige. P0 = str only (current items, no changes). P1 = dex unlocked. P2 = int unlocked. This matches the existing prestige unlock pattern (tag hammers at P1, higher tiers at P1+).
-- Alternative: all archetypes available from P0 but each archetype can roll appropriate mods from the start. Str items roll attack mods, dex items roll evasion/crit, int items roll ES/defensive mods. Spell damage channel (the offensive payoff for int) unlocks at P1.
-- Best for v1.8: all 3 archetypes drop, each with correct tags so they roll useful mods within their domain. Spell damage as a new offensive channel can land in this milestone if the combat engine changes are scoped tightly.
-
-### 4d. Crafting decision paralysis
-
-**The problem:** Currently the player has one weapon base, one armor base, etc. The decision is "craft this item or melt it." With 3 bases per slot, the decision becomes "which base to craft AND which mods to aim for." In an idle game, players check in for 30-second sessions. Adding a strategic layer that requires comparing 3 base types across 5 slots is 15 decisions per gear cycle.
-
-**Prevention:**
-- Make archetype choice obvious: str = big damage, dex = speed + crit, int = spell/ES. If the player wants more DPS, pick str weapon. The choice should take 2 seconds, not 2 minutes.
-- Show archetype strength as a single word or icon on the item button. Do not require reading affix lists to understand what each base is for.
-
-### 4e. Spell builds must work on auto-pilot
-
-**The problem:** In an active ARPG, spell builds use player-timed abilities, mana management, and positioning. In Hammertime, combat is fully automated. Spell damage needs to fire automatically like attacks do.
-
-**Prevention:**
-- Spells fire on a timer identical in structure to the attack timer. No mana cost gating idle DPS (mana exists as a stat type but has no gameplay effect -- adding mana cost for spells creates a resource management problem that fights the idle loop).
-- Do not add cooldowns, ability selection, or mana management. These are anti-idle mechanics.
-- The hero always uses both attack and spell if both have damage. No "mode switching" required.
+**Phase to address:** Design phase (data model), then implementation phase (prestige flow integration).
 
 ---
 
-## 5. Prevention Strategies Summary
+### Pitfall 5: Random hero selection produces feel-bad outcomes
 
-### Effort-ranked prevention table
+**What goes wrong:** "Pick 1 from 3 random heroes (1 per archetype)" means the player always sees one STR, one DEX, one INT option. The subvariant within each archetype is random. If the player is building fire gear and gets offered Frost Warrior (STR/cold) instead of Fire Warrior (STR/fire), their entire gear set becomes mismatched. They must either: (a) pick the mismatched hero and lose affinity value, (b) pick a different archetype and waste their gear, or (c) prestige again to reroll — which costs significant currency.
 
-| Category | Strategy | Effort | Impact |
-|----------|----------|--------|--------|
-| **Bloat** | Archetype tags on bases constrain affix pool per item via existing valid_tags | Low | Critical |
-| **Architecture** | Keep old item classes, add new ones alongside (no rename/delete) | Low | Critical |
-| **UX** | Keep 5 slot buttons, mix archetypes in same 10-item inventory | Low | High |
-| **UX** | Spells fire automatically on timer, no mana gating | Low | High |
-| **Balance** | Spreadsheet-verify T1 attack vs T1 spell DPS within 10% | Low | Critical |
-| **Architecture** | Guard spell timer with "if spell_damage > 0" | Low | High |
-| **UX** | Combined DPS for stat comparison headline number | Low | Medium |
-| **Balance** | Separate speed stat types (INCREASED_ATTACK_SPEED vs INCREASED_CAST_SPEED) | Medium | High |
-| **Architecture** | Save v5 migration defaults old items to attack channel | Medium | Critical |
-| **Architecture** | Channel-parameterized StatCalculator.calculate_damage_range() | Medium | Critical |
-| **Bloat** | Weight drops toward equipped archetype (implicit loot filter) | Medium | Medium |
-| **Bloat** | Test every tag hammer against every item base for nonsensical guarantees | Medium | High |
+**Why it happens:** Randomness in prestige selection means the player's strategic investment in specific gear can be invalidated by RNG. This is acceptable if the affinity bonus is modest (10-20% increased), but devastating if it is large (100% more).
 
-### Critical path (do these first or risk cascading rework)
+**How to avoid:**
+- Offer subvariant choice within archetype: "You picked STR. Choose: Fire Warrior or Frost Warrior." Two-step selection (archetype then subvariant) gives players agency over element matching.
+- Alternatively, make affinity bonuses element-agnostic: "STR heroes deal 30% more attack damage" regardless of element. Subvariants are cosmetic or offer minor secondary bonuses.
+- If full RNG is the design intent, keep affinity bonuses small enough that mismatches feel like "not ideal" rather than "run-ruining."
 
-1. **Define archetype tags** before adding any new item bases. Add Tag.STRENGTH, Tag.DEXTERITY, Tag.INTELLIGENCE constants. Add Tag.SPELL for spell affixes. Put archetype tags in valid_tags on each item base. This single decision constrains all downstream affix pool and tag hammer behavior.
+**Warning signs:** Players consistently prestige multiple times to fish for the right subvariant. Prestige currency cost is too low relative to the value of the "right" hero. Players complain about bad RNG on hero selection.
 
-2. **Extend StatCalculator with channel awareness** before adding spell affixes. calculate_damage_range() needs to filter by channel or DPS numbers are wrong everywhere (hero panel, item comparison, combat engine).
-
-3. **Test save round-trip** for every new item type before shipping. One missing match arm in create_from_dict() = silently lost player items on load.
-
-4. **Spreadsheet balance** attack vs spell at T1 and T8 before tuning any other numbers. If the channels are not within 10% at extremes, they will not be balanced at any point in between.
-
-### Anti-patterns to avoid
-
-- **Do not** add Tag.SPELL to the existing valid_tags on current items (LightSword, BasicArmor, etc.). Current items are attack items. Spell is a new channel for new bases only.
-- **Do not** add mana as a spell gating resource for idle combat. Mana exists as a stat type (FLAT_MANA) but has no gameplay effect. Adding mana cost for spells creates a resource management problem that directly conflicts with the idle loop.
-- **Do not** create hybrid bases that roll both attack and spell offensive mods. Every base should clearly be one archetype. Rings can be the exception as the utility slot.
-- **Do not** add more than 2-3 new tag constants. Reuse existing tags (FIRE, COLD, LIGHTNING, PHYSICAL, DEFENSE, WEAPON, ATTACK) and add only SPELL and the 3 archetype tags as new discriminators.
-- **Do not** show "Spell DPS: 0" on attack items or "Attack DPS: 0" on spell items. If a channel is inactive, hide it entirely. Zero is noise, not signal.
-- **Do not** rename or remove LightSword, BasicArmor, BasicHelmet, BasicBoots, or BasicRing. These are the str archetype. Add dex and int classes alongside them.
+**Phase to address:** Design phase. This is a core game feel decision that affects balance numbers and UI design.
 
 ---
 
-*Research completed 2026-03-06 for v1.8 Content Pass planning.*
+### Pitfall 6: Hero affinity interacts badly with DoT system
+
+**What goes wrong:** CombatEngine has three DoT types: bleed (physical, attack-mode), poison (chaos, attack-mode), burn (fire, spell-mode). A Fire Wizard with "100% more fire damage" should boost burn ticks (burn is fire element) but NOT bleed or poison. However, burn damage in CombatEngine (line 192-197) is calculated as a percentage of the spell hit damage, which already includes fire affinity if applied in Hero.calculate_spell_damage_ranges(). If fire affinity is ALSO applied to the burn tick separately, it double-dips.
+
+Conversely, a Poison Assassin with "100% more poison damage" needs to boost poison ticks. But poison tick damage (line 149-150) is calculated from flat poison damage affixes, not from hit damage. If the affinity applies to hit damage, poison gets zero benefit. If it applies to DoT damage, it must specifically target poison and not bleed/burn.
+
+**Why it happens:** The DoT system has three different damage derivation formulas (bleed scales from hit damage, poison scales from flat poison affixes, burn scales from spell hit damage). A generic "more damage" affinity interacts differently with each formula. Element-specific affinities must be carefully routed through the correct DoT path.
+
+**How to avoid:**
+- Define explicitly what each affinity affects: hit damage only, DoT damage only, or both. Document this in the hero class definition, not buried in combat code.
+- If affinity affects hit damage and DoT scales from hit damage (bleed, burn), the affinity naturally flows through. No double-application needed.
+- If affinity should separately boost DoT, add a `dot_damage_multiplier` field on Hero that is set by the affinity. Apply it once in `_on_dot_tick()`.
+- Test each hero subvariant against each DoT type: verify no double-dipping, verify the correct DoT benefits.
+
+**Warning signs:** Fire Wizard's burn DPS is suspiciously higher than expected. Poison Assassin's poison DPS does not benefit from hero affinity at all. Bleed damage is boosted by a cold affinity because it scales from total hit damage which includes cold bonuses.
+
+**Phase to address:** Implementation phase. Requires explicit test cases for every hero-DoT combination.
+
+---
+
+### Pitfall 7: CombatEngine `is_spell_user` flag conflicts with hero archetype
+
+**What goes wrong:** Currently, `is_spell_user` is a boolean on Hero (line 62) that determines whether CombatEngine uses `hero_attack_timer` or `hero_spell_timer` (line 88-94). This flag is persisted in the save (line 112). With hero archetypes, the damage channel should be determined by the hero class (INT heroes use spells, STR/DEX heroes use attacks). If `is_spell_user` is set by the weapon type (INT weapons set it true) but the hero class is STR, there is a conflict: STR hero with INT weapon — does the hero attack or cast?
+
+**Why it happens:** `is_spell_user` was added in v1.8 as a weapon-driven flag. Hero archetypes add a second source of truth for damage channel selection. Two authorities for the same decision create inconsistency.
+
+**How to avoid:**
+- Make hero archetype the authority for damage channel. INT hero = spell user, STR/DEX hero = attack user. Remove `is_spell_user` from Hero; derive it from hero_class.
+- If hybrid builds are desired (STR hero using INT weapon), define the rule explicitly: weapon determines channel, hero provides affinity bonus regardless. But this must be a conscious design decision, not an accident.
+- Remove `is_spell_user` from the save format entirely. Derive it from hero_class on load.
+
+**Warning signs:** `is_spell_user` and hero_class can disagree. Changing weapons mid-run flips the combat channel without changing hero class. Save contains both `is_spell_user` and `hero_class` with no validation that they agree.
+
+**Phase to address:** Design phase (who is the authority for damage channel?), then implementation phase.
+
+---
+
+### Pitfall 8: Hero selection UI does not fit mobile viewport
+
+**What goes wrong:** The viewport is 1280x720 (PROJECT.md line 166). A hero selection screen showing 3 archetypes with subvariants, affinity descriptions, and stat previews can easily overflow. If each hero card shows: name, archetype icon, affinity description, and stat bonuses, that is 3 cards with 4-5 lines each. Add a "Select" button per card and the screen is packed.
+
+**Why it happens:** Hero selection is a one-time-per-prestige screen, so developers often over-design it with rich detail. But the game runs at 1280x720 with font size 11 (KEY DECISIONS), and the existing prestige_view already uses significant vertical space for the 7-level unlock table.
+
+**How to avoid:**
+- Keep hero cards minimal: Name + one-line affinity description + Select button. Three cards in a horizontal row fit 1280px at ~400px each with margins.
+- Do NOT show stat previews or detailed breakdowns. The player has no gear yet (prestige just wiped it). Previewing stats against zero gear is meaningless.
+- Use the same font size (11) and styling as the existing prestige_view to maintain visual consistency.
+- Test at exactly 1280x720. Do not design at a higher resolution and scale down.
+
+**Warning signs:** Hero selection text is truncated or overlaps. Scroll bars appear on a screen that should fit without scrolling. Font size is increased from 11 to fit more text, breaking consistency with other views.
+
+**Phase to address:** Implementation phase (UI). Prototype the layout at target resolution before building functionality.
+
+---
+
+### Pitfall 9: Hero class creates item drop frustration
+
+**What goes wrong:** With 21 item bases distributed across STR/DEX/INT, and hero affinity bonuses favoring one archetype's items, players want drops that match their hero. Current drop distribution is slot-first then uniform within slot (KEY DECISIONS: "20% per slot, uniform within slot"). A Fire Wizard gets STR weapons and DEX weapons at the same rate as INT weapons. Two-thirds of weapon drops are useless for the hero's affinity.
+
+**Why it happens:** The loot system was designed before hero classes existed. Adding hero classes without adjusting drop weights creates a mismatch between what the player needs and what the game gives them.
+
+**How to avoid:**
+- Add hero-weighted drops in LootTable: if hero_class is INT, INT item bases within each slot have 2x weight. This does not eliminate non-matching drops (they are still useful for experimentation) but makes matching drops more common.
+- Do NOT make it 100% matching drops. That eliminates the possibility of the player trying a different archetype within a run.
+- Defer this to a polish phase if the base implementation is complex. The game already drops all items as Normal rarity (crafting-only mods), so non-matching bases are still usable — they just lack the affinity bonus.
+
+**Warning signs:** Players melt 60%+ of drops without looking at them. Inventory fills with bases the player cannot use effectively. Time-to-upgrade increases 3x compared to pre-hero-class gameplay.
+
+**Phase to address:** Balance/polish phase, after core hero system works.
+
+---
+
+## Technical Debt Patterns
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Store hero_class as string instead of enum | No new enum, faster to implement | String comparison everywhere, typo bugs, no autocomplete | Never — use an enum or const. 9 subvariants means 9 string literals scattered across code. |
+| Hardcode affinity bonuses in CombatEngine | Quick to test | CombatEngine becomes aware of hero classes, violating its role as a combat state machine | Only in prototype. Move to Hero or a new HeroArchetype Resource before shipping. |
+| Skip save migration, bump version and delete old saves | No migration code to write | Every existing player loses progress including prestige levels | Unacceptable at v7+. Migration is mandatory. |
+| Put hero selection in prestige_view.gd | Reuse existing scene, no new file | prestige_view grows too large, mixes prestige logic with hero selection | Acceptable if hero selection is <50 lines. Extract if it grows. |
+| Use `is_spell_user` alongside hero_class | No refactor of existing v1.8 code | Two sources of truth for damage channel | Only during transition. Remove `is_spell_user` before shipping. |
+| Apply affinity in StatCalculator directly | Single calculation pass | StatCalculator loses its "pure gear math" property, becomes coupled to hero state | Never. StatCalculator should remain a pure function. |
+
+---
+
+## Performance Traps
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Recalculating affinity bonus every combat tick | Frame drops during combat, especially with DoT ticks | Cache affinity multiplier on Hero.update_stats(). Only recalculate on equip/hero selection. | Immediately on any mid-combat stat recalculation |
+| Hero selection UI instantiating 9 hero card scenes on every prestige | Noticeable hitch during prestige transition | Pre-instantiate cards, update text/visibility. Or use a simple VBoxContainer with labels, not scenes. | Prestige cycles happen frequently in endgame |
+| Iterating all 21 item base types to find matching archetype on every drop | Slow LootTable.roll_pack_item_drop() | Build a lookup dictionary (archetype -> base types per slot) once at startup. | 8-15 packs per map, each rolling item drops. 15+ dictionary lookups per clear. |
+| String-based hero class comparison in hot paths | Micro-stutter accumulation | Use integer enum for hero class. String comparison only in UI display and save serialization. | Noticeable at 200+ area levels with fast kill speed |
+
+---
+
+## UX Pitfalls
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Showing hero selection before explaining what heroes do | Player picks randomly, regrets choice, no undo | Show a 2-line explanation of each hero's bonus before the selection buttons. One sentence max. |
+| No indication of current hero in main gameplay UI | Player forgets which hero they picked, cannot verify bonuses are active | Add hero name/icon to the hero stats panel in forge_view. Small, non-intrusive. |
+| Hero affinity described with ARPG jargon ("100% more fire damage") | Casual idle players do not know "more" vs "increased" | Use plain language: "Fire damage doubled" or "Fire attacks deal 2x damage." Avoid ARPG-specific terminology. |
+| Offering hero selection at P0 (first prestige) | Player has no context for what archetypes mean, no gear to match | Gate hero selection to P1+. P0 plays classless. First prestige introduces the hero system as a reward. |
+| Hero bonuses not reflected in stat panel | Player cannot see the impact of their choice | Show affinity bonus as a separate line in offense stats: "Fire Affinity: +100% fire damage" |
+| Allowing hero respec without prestige | Trivializes the choice, removes prestige incentive | Hero locks on selection, resets on next prestige. No mid-run respec. |
+
+---
+
+## "Looks Done But Isn't" Checklist
+
+- [ ] Hero affinity bonus shows in DPS display but is not actually applied in CombatEngine damage rolls
+- [ ] Hero affinity works for attack damage but not spell damage (or vice versa)
+- [ ] Hero affinity works for hit damage but not for DoT ticks that scale from hits
+- [ ] Save round-trips hero_class correctly but does not re-derive `is_spell_user` from it on load
+- [ ] Hero selection screen appears on prestige but player can dismiss it and play with no hero
+- [ ] Prestige wipe resets hero_class but the old affinity multiplier is still cached on Hero stats
+- [ ] Hero-weighted drops work for weapons but not for armor/helmet/boots/ring slots
+- [ ] All 9 subvariants are defined in code but only 3 are tested (one per archetype)
+- [ ] Hero selection works on first prestige but crashes on subsequent prestiges (UI not cleaned up)
+- [ ] Export/import save string includes hero_class but import does not validate against known hero types
+- [ ] Test suite covers hero damage bonus but not the case where hero_class is null (classless state)
+- [ ] Hero affinity bonus tooltip says "100% more" but code implements it as additive "100% increased"
+
+---
+
+## Pitfall-to-Phase Mapping
+
+| Pitfall | Prevention Phase | Verification |
+|---------|-----------------|--------------|
+| P1: Multiplicative stacking | Design — decide additive vs multiplicative before coding | Spreadsheet: max-gear + affinity vs max-gear + no affinity ratio |
+| P2: Wrong calculation stage | Implementation — injection point tests | Unit test: affinity * INCREASED_DAMAGE does not double-count |
+| P3: Save migration v7->v8 | Implementation — before any other v1.9 code | Integration test: v7 save loads in v8 with null hero_class |
+| P4: Prestige wipe ordering | Design + Implementation — data model then flow | Integration test: prestige -> null hero -> selection -> combat |
+| P5: Feel-bad random selection | Design — subvariant choice mechanism | Playtest: 10 prestige cycles, track frustration with offered heroes |
+| P6: DoT interaction | Implementation — per-DoT-type test coverage | Unit test: each hero subvariant x each DoT type = correct multiplier |
+| P7: is_spell_user conflict | Design — single authority for damage channel | Remove is_spell_user, derive from hero_class. Grep for all usages. |
+| P8: UI viewport overflow | Implementation — layout prototype first | Visual test: screenshot at 1280x720, no truncation/overlap |
+| P9: Drop frustration | Balance/polish — after core system works | Metric: % of drops melted without crafting. Target <50%. |
+
+---
+
+## Sources
+
+- Direct codebase analysis: `StatCalculator` (calculate_damage_range additive stacking pattern), `CombatEngine` (is_spell_user branching, DoT formulas), `PrestigeManager` (execute_prestige flow), `SaveManager` (version check delete policy, _build_save_data fields), `GameState` (_wipe_run_state scope), `Hero` (update_stats order, damage_ranges caching), `Tag` (existing STR/DEX/INT constants, StatType enum)
+- PROJECT.md: v1.9 target features, architecture constraints, key decisions (font size 11, 1280x720 viewport, additive stacking convention, tier comparison, slot-first drops)
+- v1.8 pitfalls research (this file, previous version): save migration lessons, affix pool dilution patterns, CombatEngine timer complexity
+
+---
+*Pitfalls research for: hero archetype addition*
+*Researched: 2026-03-09*
