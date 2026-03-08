@@ -1,5 +1,33 @@
 # Milestones: Hammertime
 
+## v1.8 — Content Pass — Items & Mods (Shipped: 2026-03-08)
+
+**Goal:** Expand item bases to 3 per slot (STR/DEX/INT archetypes), add spell damage channel with cast speed, damage over time system, and broaden the affix pool.
+
+**Phases:** 8 phases (42-49), 18 plans | **Timeline:** 3 days (2026-03-06 → 2026-03-08)
+**Stats:** 14,375 LOC GDScript (up from 11,171)
+
+**Key accomplishments:**
+- 21 item base types across 5 equipment slots with STR/DEX/INT archetype identity, valid_tags constraining affix pools, and thematic naming
+- Inventory rework from 10-item arrays to single crafting bench per slot, simplifying the item management path
+- Spell damage channel with StatCalculator integration, Hero tracking, dual DPS display, and CombatEngine spell timer as third independent timer
+- 14 new affixes (spell damage flat/%, cast speed, evade, bleed/poison/burn chance and damage) expanding the rollable pool
+- Damage over time system (bleed/poison/burn) with CombatEngine tick processing, stacking rules, defense interaction, and UI feedback
+- Save version bumped to v7, all 21 bases in drop pool with slot-first distribution, 35-group integration test suite
+
+**Git range:** `feat(42-01)` → `feat(49-01)`
+
+**Tech debt:**
+- LOOT-03 (combined DPS comparison) dropped — tier-only comparison stays
+- LOOT-04 (archetype labels) dropped — item names are self-documenting
+- P2-P7 prestige costs still stub values (999999)
+
+**What's next:** Planning next milestone
+
+**Archives:** `.planning/milestones/v1.8-ROADMAP.md`, `.planning/milestones/v1.8-REQUIREMENTS.md`
+
+---
+
 ## v1.7 — Meta-Progression (Shipped: 2026-03-06)
 
 **Goal:** Add prestige reset loop with currency-gated tier progression, expanded affix tiers, and tag-targeted crafting currencies.

@@ -65,16 +65,14 @@ func initialize_fresh_game() -> void:
 		"tuning": 0
 	}
 
-	# Initialize crafting state — per-slot arrays (Phase 28)
+	# Initialize crafting state — single bench per slot (Phase 43)
 	crafting_inventory = {
-		"weapon": [],
-		"helmet": [],
-		"armor": [],
-		"boots": [],
-		"ring": [],
+		"weapon": Broadsword.new(8),
+		"helmet": null,
+		"armor": null,
+		"boots": null,
+		"ring": null,
 	}
-	# Starter weapon goes into weapon slot array
-	crafting_inventory["weapon"] = [LightSword.new()]
 	crafting_bench_type = "weapon"
 
 	# Initialize area progress
@@ -105,15 +103,14 @@ func _wipe_run_state() -> void:
 	hero.equipped_items["boots"] = null
 	hero.equipped_items["ring"] = null
 
-	# 3. Crafting inventory -- fresh state with starter weapon
+	# 3. Crafting inventory -- fresh state with starter weapon (Phase 43: single bench per slot)
 	crafting_inventory = {
-		"weapon": [],
-		"helmet": [],
-		"armor": [],
-		"boots": [],
-		"ring": [],
+		"weapon": Broadsword.new(8),
+		"helmet": null,
+		"armor": null,
+		"boots": null,
+		"ring": null,
 	}
-	crafting_inventory["weapon"] = [LightSword.new()]
 	crafting_bench_type = "weapon"
 
 	# 4. Standard currencies -- reset to fresh-game defaults

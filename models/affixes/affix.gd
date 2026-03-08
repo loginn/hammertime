@@ -70,7 +70,7 @@ func _init(
 	self.dmg_max_hi = p_dmg_max_hi * (tier_range.y + 1 - tier)
 
 	# Roll initial damage range if this is a flat damage affix
-	if Tag.StatType.FLAT_DAMAGE in self.stat_types and (dmg_min_hi > 0 or dmg_max_hi > 0):
+	if dmg_min_hi > 0 or dmg_max_hi > 0:
 		self.add_min = randi_range(self.dmg_min_lo, self.dmg_min_hi)
 		self.add_max = randi_range(self.dmg_max_lo, self.dmg_max_hi)
 		# Guard: ensure add_min <= add_max
@@ -85,7 +85,7 @@ func is_prefix() -> bool:
 
 
 func reroll() -> void:
-	if Tag.StatType.FLAT_DAMAGE in self.stat_types and (dmg_min_hi > 0 or dmg_max_hi > 0):
+	if dmg_min_hi > 0 or dmg_max_hi > 0:
 		# Damage range affix: re-roll from TEMPLATE bounds (never from rolled values)
 		self.add_min = randi_range(self.dmg_min_lo, self.dmg_min_hi)
 		self.add_max = randi_range(self.dmg_max_lo, self.dmg_max_hi)

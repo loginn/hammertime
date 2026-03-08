@@ -84,6 +84,22 @@ grow_vertical = 2
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="HeroDotAccumulator" type="Label" parent="CombatUI/UIRoot/HeroHealthContainer"]
+layout_mode = 1
+offset_top = 32.0
+offset_right = 100.0
+offset_bottom = 52.0
+visible = false
+theme_override_font_sizes/font_size = 12
+
+[node name="HeroDotStatus" type="Label" parent="CombatUI/UIRoot/HeroHealthContainer"]
+layout_mode = 1
+offset_left = 110.0
+offset_top = 32.0
+offset_right = 250.0
+offset_bottom = 52.0
+theme_override_font_sizes/font_size = 12
+
 [node name="PackHealthContainer" type="Control" parent="CombatUI/UIRoot"]
 layout_mode = 1
 offset_left = 350.0
@@ -110,6 +126,22 @@ grow_horizontal = 2
 grow_vertical = 2
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="PackDotAccumulator" type="Label" parent="CombatUI/UIRoot/PackHealthContainer"]
+layout_mode = 1
+offset_top = 32.0
+offset_right = 100.0
+offset_bottom = 52.0
+visible = false
+theme_override_font_sizes/font_size = 12
+
+[node name="PackDotStatus" type="Label" parent="CombatUI/UIRoot/PackHealthContainer"]
+layout_mode = 1
+offset_left = 110.0
+offset_top = 32.0
+offset_right = 250.0
+offset_bottom = 52.0
+theme_override_font_sizes/font_size = 12
 
 [node name="PackProgressContainer" type="Control" parent="CombatUI/UIRoot"]
 layout_mode = 1

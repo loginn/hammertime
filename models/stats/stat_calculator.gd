@@ -136,6 +136,101 @@ static func _get_damage_element(tags: Array) -> String:
 	return "physical"
 
 
+## Calculates spell damage ranges from base spell damage and equipped affixes.
+## Returns Dictionary with three elements: "spell", "spell_fire", "spell_lightning"
+## Each element: {"min": float, "max": float}
+## Routing by stat_type: FLAT_SPELL_DAMAGE -> "spell", FLAT_SPELL_FIRE_DAMAGE -> "spell_fire",
+## FLAT_SPELL_LIGHTNING_DAMAGE -> "spell_lightning".
+## INCREASED_SPELL_DAMAGE scales all three elements uniformly.
+static func calculate_spell_damage_range(
+	base_spell_min: int,
+	base_spell_max: int,
+	affixes: Array
+) -> Dictionary:
+	var elements := {
+		"spell": {"min": float(base_spell_min), "max": float(base_spell_max)},
+		"spell_fire": {"min": 0.0, "max": 0.0},
+		"spell_lightning": {"min": 0.0, "max": 0.0},
+	}
+
+	# Step 1: Add flat spell damage from affixes, routed by stat_type
+	for affix: Affix in affixes:
+		if Tag.StatType.FLAT_SPELL_DAMAGE in affix.stat_types:
+			elements["spell"]["min"] += affix.add_min
+			elements["spell"]["max"] += affix.add_max
+		if Tag.StatType.FLAT_SPELL_FIRE_DAMAGE in affix.stat_types:
+			elements["spell_fire"]["min"] += affix.add_min
+			elements["spell_fire"]["max"] += affix.add_max
+		if Tag.StatType.FLAT_SPELL_LIGHTNING_DAMAGE in affix.stat_types:
+			elements["spell_lightning"]["min"] += affix.add_min
+			elements["spell_lightning"]["max"] += affix.add_max
+
+	# Step 2: Apply %increased spell damage (additive stacking, scales ALL elements)
+	var spell_pct := 0.0
+	for affix: Affix in affixes:
+		if Tag.StatType.INCREASED_SPELL_DAMAGE not in affix.stat_types:
+			continue
+		spell_pct += affix.value / 100.0
+
+	for el in elements:
+		elements[el]["min"] *= (1.0 + spell_pct)
+		elements[el]["max"] *= (1.0 + spell_pct)
+
+	return elements
+
+
+## Calculates spell DPS using correct order of operations:
+## base -> flat spell damage -> additive spell damage% -> cast speed -> crit multiplier
+##
+## If base_cast_speed == 0 and no INCREASED_CAST_SPEED affixes, returns 0.0 (no spell channel).
+static func calculate_spell_dps(
+	base_spell_damage: float,
+	base_cast_speed: float,
+	affixes: Array,
+	base_crit_chance: float = 5.0,
+	base_crit_damage: float = 150.0
+) -> float:
+	var damage := base_spell_damage
+	var cast_speed := base_cast_speed
+	var crit_chance := base_crit_chance
+	var crit_damage := base_crit_damage
+
+	# Step 1: Flat spell damage additions
+	for affix: Affix in affixes:
+		if Tag.StatType.FLAT_SPELL_DAMAGE in affix.stat_types:
+			damage += affix.value
+
+	# Step 2: Additive spell damage multipliers
+	var additive_spell_mult := 0.0
+	for affix: Affix in affixes:
+		if Tag.StatType.INCREASED_SPELL_DAMAGE in affix.stat_types:
+			additive_spell_mult += affix.value / 100.0
+	damage *= (1.0 + additive_spell_mult)
+
+	# Step 3: Cast speed (additive -- sum all cast speed modifiers, apply once)
+	var additive_cast_speed_mult := 0.0
+	for affix: Affix in affixes:
+		if Tag.StatType.INCREASED_CAST_SPEED in affix.stat_types:
+			additive_cast_speed_mult += affix.value / 100.0
+	cast_speed *= (1.0 + additive_cast_speed_mult)
+
+	# If no cast speed, no spell channel
+	if cast_speed == 0.0:
+		return 0.0
+
+	# Step 4: Crit modifiers
+	for affix: Affix in affixes:
+		if Tag.StatType.CRIT_CHANCE in affix.stat_types:
+			crit_chance += affix.value
+		if Tag.StatType.CRIT_DAMAGE in affix.stat_types:
+			crit_damage += affix.value
+
+	# Step 5: Final Spell DPS = damage * cast_speed * crit_multiplier
+	var base_dps := damage * cast_speed
+	var crit_multiplier := _calculate_crit_multiplier(crit_chance, crit_damage)
+	return base_dps * crit_multiplier
+
+
 ## Correct crit multiplier using weighted average formula:
 ## E[multiplier] = (1 - c) * 1.0 + c * d = 1 + c * (d - 1)
 ## Where c = crit_chance/100, d = crit_damage/100

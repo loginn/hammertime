@@ -2,6 +2,48 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v1.8 — Content Pass — Items & Mods
+
+**Shipped:** 2026-03-08
+**Phases:** 8 | **Plans:** 18
+
+### What Was Built
+- 21 item base types across 5 slots with STR/DEX/INT archetype identity and valid_tags constraining affix pools
+- Single crafting bench per slot replacing 10-item array inventory model
+- Spell damage channel with StatCalculator, Hero tracking, dual DPS display, and CombatEngine spell timer
+- 14 new affixes (spell damage flat/%, cast speed, bleed/poison/burn chance and damage)
+- DoT system with tick processing, stacking rules, resistance-only defense path, and combat UI feedback
+- Save format v7 with full 21-type serialization registry and integration test suite (35 groups)
+
+### What Worked
+- 8-phase dependency chain (foundation → inventory → bases → affixes → spell channel → spell combat → DoT → integration) kept each phase focused and testable
+- CONTEXT.md sessions before planning eliminated scope ambiguity — LOOT-03/LOOT-04 dropped early by user decision, zero rework
+- Splitting spell damage wiring (phase 46, no CombatEngine) from spell combat (phase 47, CombatEngine) isolated the highest-risk change
+- Base class proliferation (21 types) completed cleanly by doing serialization registry in a dedicated plan
+- DoT defense interaction designed with PoE conventions (bleed bypasses resistance, burn uses fire resistance) — familiar mental model
+
+### What Was Inefficient
+- Coverage table in ROADMAP.md became garbled with duplicate columns during phase completion updates — needs better update tooling
+- Some summary files lacked one_liner field, making automated accomplishment extraction fail — format inconsistency across phases
+- Phase 44 was the largest (3 plans, 21 item classes) — could have been split further to reduce per-plan complexity
+
+### Patterns Established
+- valid_tags on item bases as the archetype identity mechanism — no class system needed
+- Spell timer as independent third CombatEngine timer — clean extension point for future damage channels
+- DoT resistance-only defense path in DefenseCalculator — separate from full 4-stage pipeline
+- Slot-first-then-archetype drop distribution — prevents weapon flooding
+
+### Key Lessons
+1. Dropping requirements early (LOOT-03/LOOT-04) via CONTEXT.md discussion is better than implementing then removing — saves an entire plan's worth of work
+2. The "foundation constants first, zero functional changes" pattern (Phase 42) eliminates merge conflicts in later phases — all consumers can reference new constants immediately
+3. Isolating CombatEngine changes (spell timer, DoT ticks) in single-purpose phases prevents cascading regressions
+
+### Cost Observations
+- Model mix: predominantly sonnet for executor agents, opus for orchestration
+- Notable: 8 phases with 18 plans shipped in 3 days — fastest per-plan throughput of any milestone
+
+---
+
 ## Milestone: v1.7 — Meta-Progression
 
 **Shipped:** 2026-03-06
@@ -59,6 +101,7 @@
 | v1.5 | 4 | 4 | Inventory rework |
 | v1.6 | 4 | 5 | Tech debt cleanup |
 | v1.7 | 7 | 9 | CONTEXT.md discussions, integration testing, Nyquist validation introduced |
+| v1.8 | 8 | 18 | Largest milestone — 3 new systems (archetypes, spell channel, DoT) in 3 days |
 
 ### Top Lessons (Verified Across Milestones)
 

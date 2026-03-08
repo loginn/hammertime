@@ -64,6 +64,10 @@ var inventory_types: Array = ["weapon", "helmet", "armor", "boots", "ring"]
 var equip_confirm_pending: bool = false
 var equip_timer: Timer
 
+# Melt confirmation state
+var melt_confirm_pending: bool = false
+var melt_timer: Timer
+
 # Hero display state
 var currently_hovered_type: String = ""
 var equip_hover_active: bool = false
@@ -169,27 +173,28 @@ func _ready() -> void:
 	equip_timer.timeout.connect(_on_equip_timer_timeout)
 	add_child(equip_timer)
 
-	# Load crafting inventory from GameState (Phase 28: arrays)
-	var has_saved_items := false
-	for type_name in inventory_types:
-		if not GameState.crafting_inventory[type_name].is_empty():
-			has_saved_items = true
-			break
+	# Create melt confirmation timer
+	melt_timer = Timer.new()
+	melt_timer.name = "MeltTimer"
+	melt_timer.one_shot = true
+	melt_timer.wait_time = 3.0
+	melt_timer.timeout.connect(_on_melt_timer_timeout)
+	add_child(melt_timer)
 
-	# Starter weapon is created by GameState.initialize_fresh_game() in the weapon array.
-	# No need to create one here — it already exists if this is a fresh game.
+	# Load crafting inventory from GameState (Phase 43: single bench per slot)
+	# Starter weapon is created by GameState.initialize_fresh_game() on the weapon bench.
 
-	# Set current item from saved bench type or default to weapon (Phase 29: best item)
+	# Set current item from saved bench type or default to weapon
 	var selected_type: String = GameState.crafting_bench_type
-	if not GameState.crafting_inventory[selected_type].is_empty():
-		current_item = get_best_item(selected_type)
+	if GameState.crafting_inventory[selected_type] != null:
+		current_item = GameState.crafting_inventory[selected_type]
 	else:
-		# Fall back to first available item
+		# Fall back to first occupied bench
 		current_item = null
 		for type_name in inventory_types:
-			if not GameState.crafting_inventory[type_name].is_empty():
+			if GameState.crafting_inventory[type_name] != null:
 				selected_type = type_name
-				current_item = get_best_item(type_name)
+				current_item = GameState.crafting_inventory[type_name]
 				break
 	GameState.crafting_bench_type = selected_type
 
@@ -211,6 +216,12 @@ func _on_currency_selected(currency_type: String) -> void:
 		equip_confirm_pending = false
 		equip_timer.stop()
 		equip_button.text = "Equip"
+
+	# Reset melt confirmation when selecting currency
+	if melt_confirm_pending:
+		melt_confirm_pending = false
+		melt_timer.stop()
+		melt_button.text = "Melt"
 
 	var button: Button = currency_buttons[currency_type]
 
@@ -350,8 +361,14 @@ func _on_item_type_selected(item_type: String) -> void:
 		equip_timer.stop()
 	equip_button.text = "Equip"
 
-	# Check if there's an item of this type in the inventory (Phase 28: arrays)
-	if GameState.crafting_inventory[item_type].is_empty():
+	# Reset melt confirmation when switching types
+	melt_confirm_pending = false
+	if melt_timer != null:
+		melt_timer.stop()
+	melt_button.text = "Melt"
+
+	# Check if there's an item of this type on the bench (Phase 43: nullable)
+	if GameState.crafting_inventory[item_type] == null:
 		print("No ", item_type, " in inventory - selection ignored")
 		return
 
@@ -381,7 +398,7 @@ func update_item_type_button_states() -> void:
 
 
 func update_slot_button_labels() -> void:
-	## Updates slot button text to "SlotName (N/10)" and disables empty slots (Phase 30).
+	## Updates slot button text to just the slot name and disables empty slots (Phase 43).
 	var button_map: Dictionary = {
 		"weapon": weapon_type_btn,
 		"helmet": helmet_type_btn,
@@ -391,16 +408,15 @@ func update_slot_button_labels() -> void:
 	}
 	for slot_name in button_map.keys():
 		var btn: Button = button_map[slot_name]
-		var count: int = GameState.crafting_inventory[slot_name].size()
-		btn.text = slot_name.capitalize() + " (" + str(count) + "/10)"
-		btn.disabled = (count == 0)
+		btn.text = slot_name.capitalize()
+		btn.disabled = (GameState.crafting_inventory[slot_name] == null)
 
 
 func update_current_item() -> void:
 	var selected_type: String = get_selected_item_type()
 
-	if selected_type != "" and not GameState.crafting_inventory[selected_type].is_empty():
-		current_item = get_best_item(selected_type)
+	if selected_type != "" and GameState.crafting_inventory[selected_type] != null:
+		current_item = GameState.crafting_inventory[selected_type]
 		print("Selected ", current_item.item_name, " for crafting")
 	else:
 		current_item = null
@@ -445,21 +461,27 @@ func _on_equip_hover_exited() -> void:
 func _on_melt_pressed() -> void:
 	if current_item == null:
 		return
+
+	# Two-click confirmation (mirrors equip confirmation pattern)
+	if not melt_confirm_pending:
+		melt_confirm_pending = true
+		melt_button.text = "Confirm Melt?"
+		melt_timer.start()
+		return
+
+	# Second click — execute melt
+	melt_confirm_pending = false
+	melt_timer.stop()
+	melt_button.text = "Melt"
+
 	var slot_name: String = get_item_type(current_item)
 	print("Melted: ", current_item.item_name)
 
-	# Remove from slot array
+	# Clear the bench slot
 	if slot_name != "None":
-		var slot_array: Array = GameState.crafting_inventory[slot_name]
-		var idx: int = slot_array.find(current_item)
-		if idx >= 0:
-			slot_array.remove_at(idx)
+		GameState.crafting_inventory[slot_name] = null
 
-	# Auto-select next-best item from same slot (Phase 29)
-	if slot_name != "None":
-		current_item = get_best_item(slot_name)
-	else:
-		current_item = null
+	current_item = null
 
 	# Reset equip confirm state if active
 	equip_confirm_pending = false
@@ -487,6 +509,11 @@ func _on_equip_pressed() -> void:
 		equip_timer.start()
 		return
 
+	# Reset melt confirm if active
+	melt_confirm_pending = false
+	melt_timer.stop()
+	melt_button.text = "Melt"
+
 	# Second click (confirmed) or empty slot — do the equip
 	equip_confirm_pending = false
 	equip_timer.stop()
@@ -498,11 +525,8 @@ func _on_equip_pressed() -> void:
 	GameEvents.item_crafted.emit(current_item)
 	print("Equipped: ", current_item.item_name, " to ", slot_name)
 
-	# Remove from slot array
-	var slot_array: Array = GameState.crafting_inventory[slot_name]
-	var idx: int = slot_array.find(current_item)
-	if idx >= 0:
-		slot_array.remove_at(idx)
+	# Clear the bench slot
+	GameState.crafting_inventory[slot_name] = null
 
 	# Clear bench after equip
 	current_item = null
@@ -518,6 +542,11 @@ func _on_equip_pressed() -> void:
 func _on_equip_timer_timeout() -> void:
 	equip_confirm_pending = false
 	equip_button.text = "Equip"
+
+
+func _on_melt_timer_timeout() -> void:
+	melt_confirm_pending = false
+	melt_button.text = "Melt"
 
 
 func update_melt_equip_states() -> void:
@@ -536,13 +565,13 @@ func add_item_to_inventory(item: Item) -> void:
 		print("Unknown item type for: ", item.item_name)
 		return
 
-	# Append to slot array with 10-item cap (Phase 28)
-	var slot_array: Array = GameState.crafting_inventory[item_type]
-	if slot_array.size() >= 10:
-		print("Slot ", item_type, " is full (10/10), discarding ", item.item_name)
+	# Single-bench model: discard silently if bench is occupied (Phase 43)
+	if GameState.crafting_inventory[item_type] != null:
+		print("Bench ", item_type, " occupied, discarding ", item.item_name)
 		return
-	slot_array.append(item)
-	print("Added ", item.item_name, " to ", item_type, " slot (", slot_array.size(), "/10)")
+
+	GameState.crafting_inventory[item_type] = item
+	print("Added ", item.item_name, " to ", item_type, " bench")
 	update_inventory_display()
 
 
@@ -579,16 +608,8 @@ func is_item_better(new_item: Item, existing_item: Item) -> bool:
 
 
 func get_best_item(slot_name: String) -> Item:
-	## Returns the highest-tier item from a slot array (Phase 29).
-	## Weapon/ring: highest DPS. Armor/helmet/boots: highest tier.
-	var slot_array: Array = GameState.crafting_inventory[slot_name]
-	if slot_array.is_empty():
-		return null
-	var best: Item = slot_array[0]
-	for i in range(1, slot_array.size()):
-		if is_item_better(slot_array[i], best):
-			best = slot_array[i]
-	return best
+	## Returns the bench item for a slot, or null if empty (Phase 43: single item per slot).
+	return GameState.crafting_inventory[slot_name]
 
 
 # --- Display updates ---
@@ -601,11 +622,10 @@ func update_inventory_display() -> void:
 	var display_text: String = "Crafting Inventory:\n\n"
 
 	for item_type in inventory_types:
-		var slot_array: Array = GameState.crafting_inventory.get(item_type, [])
+		var item: Item = GameState.crafting_inventory.get(item_type)
 		var type_name: String = item_type.capitalize()
 
-		if not slot_array.is_empty():
-			var item: Item = get_best_item(item_type)
+		if item != null:
 			display_text += type_name + ": " + item.item_name
 			var rarity_name: String = "Normal"
 			match item.rarity:
@@ -616,7 +636,7 @@ func update_inventory_display() -> void:
 			display_text += " (" + rarity_name + ")"
 			display_text += "\n"
 		else:
-			display_text += type_name + ": None\n"
+			display_text += type_name + ": Empty\n"
 
 	inventory_label.text = display_text
 	update_slot_button_labels()
@@ -630,7 +650,7 @@ func update_item_stats_display() -> void:
 		item_stats_label.text = get_item_stats_text(current_item)
 		item_stats_label.modulate = current_item.get_rarity_color()
 	else:
-		item_stats_label.text = "No item on crafting bench"
+		item_stats_label.text = "No item on bench"
 		item_stats_label.modulate = Color.WHITE
 
 
@@ -668,7 +688,15 @@ func update_hero_stats_display() -> void:
 
 	# Offense section
 	hero_stats_label.text = "Hero Stats:\n\nOffense:\n"
-	hero_stats_label.text += "Total DPS: %.1f\n" % hero.get_total_dps()
+	var attack_dps := hero.get_total_dps()
+	var spell_dps_val := hero.get_total_spell_dps()
+	if attack_dps > 0 or spell_dps_val == 0:
+		hero_stats_label.text += "Attack DPS: %.1f\n" % attack_dps
+	if spell_dps_val > 0:
+		hero_stats_label.text += "Spell DPS: %.1f\n" % spell_dps_val
+	var dot_dps_val := hero.get_total_dot_dps()
+	if dot_dps_val > 0:
+		hero_stats_label.text += "DoT DPS: %.1f\n" % dot_dps_val
 	hero_stats_label.text += "Crit Chance: %.1f%%\n" % hero.get_total_crit_chance()
 	hero_stats_label.text += "Crit Damage: %.1f%%\n" % hero.get_total_crit_damage()
 
@@ -706,6 +734,11 @@ func update_hero_stats_display() -> void:
 		has_defense = true
 	if total_lightning_res > 0:
 		hero_stats_label.text += "Lightning Resistance: %d\n" % total_lightning_res
+		has_defense = true
+
+	var total_chaos_res: int = hero.get_total_chaos_resistance()
+	if total_chaos_res > 0:
+		hero_stats_label.text += "Chaos Resistance: %d\n" % total_chaos_res
 		has_defense = true
 
 	if not has_defense:
@@ -756,14 +789,18 @@ func get_stat_comparison_text() -> String:
 	if current_item is Weapon:
 		var crafted: Weapon = current_item as Weapon
 		var eq_dps: float = 0.0
+		var eq_spell_dps: float = 0.0
 		var eq_crit_chance: float = 5.0
 		var eq_crit_damage: float = 150.0
 		if equipped != null and equipped is Weapon:
 			var eq_weapon: Weapon = equipped as Weapon
 			eq_dps = eq_weapon.dps
+			eq_spell_dps = eq_weapon.spell_dps
 			eq_crit_chance = eq_weapon.crit_chance
 			eq_crit_damage = eq_weapon.crit_damage
-		text += format_stat_delta("DPS", eq_dps, crafted.dps) + "\n"
+		text += format_stat_delta("Attack DPS", eq_dps, crafted.dps) + "\n"
+		if crafted.spell_dps > 0 or eq_spell_dps > 0:
+			text += format_stat_delta("Spell DPS", eq_spell_dps, crafted.spell_dps) + "\n"
 		text += "Damage: %d-%d" % [crafted.base_damage_min, crafted.base_damage_max]
 		if equipped != null and equipped is Weapon:
 			var eq_w: Weapon = equipped as Weapon
@@ -776,14 +813,18 @@ func get_stat_comparison_text() -> String:
 	elif current_item is Ring:
 		var crafted: Ring = current_item as Ring
 		var eq_dps: float = 0.0
+		var eq_spell_dps: float = 0.0
 		var eq_crit_chance: float = 5.0
 		var eq_crit_damage: float = 150.0
 		if equipped != null and equipped is Ring:
 			var eq_ring: Ring = equipped as Ring
 			eq_dps = eq_ring.dps
+			eq_spell_dps = eq_ring.spell_dps
 			eq_crit_chance = eq_ring.crit_chance
 			eq_crit_damage = eq_ring.crit_damage
-		text += format_stat_delta("DPS", eq_dps, crafted.dps) + "\n"
+		text += format_stat_delta("Attack DPS", eq_dps, crafted.dps) + "\n"
+		if crafted.spell_dps > 0 or eq_spell_dps > 0:
+			text += format_stat_delta("Spell DPS", eq_spell_dps, crafted.spell_dps) + "\n"
 		text += format_stat_delta("Crit Chance", eq_crit_chance, crafted.crit_chance, "%.1f%%") + "\n"
 		text += format_stat_delta("Crit Damage", eq_crit_damage, crafted.crit_damage, "%.1f%%") + "\n"
 
@@ -910,13 +951,35 @@ func _sum_suffix_stat(item: Item, stat_type: int) -> int:
 
 func _format_affix_line(affix: Affix) -> String:
 	var tier_suffix := " (T%d)" % affix.tier
-	if Tag.StatType.FLAT_DAMAGE in affix.stat_types and (affix.add_min > 0 or affix.add_max > 0):
+	var flat_damage_stats := [
+		Tag.StatType.FLAT_DAMAGE,
+		Tag.StatType.FLAT_SPELL_DAMAGE,
+		Tag.StatType.BLEED_DAMAGE,
+		Tag.StatType.POISON_DAMAGE,
+		Tag.StatType.BURN_DAMAGE,
+	]
+	var has_flat_damage := false
+	for stat in affix.stat_types:
+		if stat in flat_damage_stats:
+			has_flat_damage = true
+			break
+	if has_flat_damage and (affix.add_min > 0 or affix.add_max > 0):
 		var element_name := _get_affix_element_name(affix.tags)
 		return "Adds %d to %d %s Damage%s" % [affix.add_min, affix.add_max, element_name, tier_suffix]
 	return affix.affix_name + ": " + str(affix.value) + tier_suffix
 
 
 func _get_affix_element_name(tags: Array) -> String:
+	if Tag.SPELL in tags:
+		return "Spell"
+	if Tag.DOT in tags:
+		if Tag.CHAOS in tags:
+			return "Poison"
+		if Tag.FIRE in tags:
+			return "Burn"
+		if Tag.PHYSICAL in tags:
+			return "Bleed"
+		return "DoT"
 	if Tag.FIRE in tags:
 		return "Fire"
 	if Tag.COLD in tags:
@@ -943,6 +1006,12 @@ func get_item_stats_text(item: Item) -> String:
 		stats_text += "DPS: %.1f\n" % weapon.dps
 		stats_text += "Damage: %d to %d\n" % [weapon.base_damage_min, weapon.base_damage_max]
 		stats_text += "Base Speed: %.1f\n" % weapon.base_speed
+		if weapon.base_spell_damage_min > 0 or weapon.base_spell_damage_max > 0:
+			stats_text += "Spell Damage: %d to %d\n" % [weapon.base_spell_damage_min, weapon.base_spell_damage_max]
+		if weapon.base_cast_speed > 0:
+			stats_text += "Cast Speed: %.1f\n" % weapon.base_cast_speed
+		if weapon.spell_dps > 0:
+			stats_text += "Spell DPS: %.1f\n" % weapon.spell_dps
 		stats_text += "Crit Chance: %.1f%%\n" % weapon.crit_chance
 		stats_text += "Crit Damage: %.1f%%\n" % weapon.crit_damage
 
@@ -1034,6 +1103,10 @@ func get_item_stats_text(item: Item) -> String:
 	elif item is Ring:
 		var ring_item: Ring = item as Ring
 		stats_text += "DPS: %.1f\n" % ring_item.dps
+		if ring_item.base_cast_speed > 0:
+			stats_text += "Cast Speed: %.1f\n" % ring_item.base_cast_speed
+		if ring_item.spell_dps > 0:
+			stats_text += "Spell DPS: %.1f\n" % ring_item.spell_dps
 		stats_text += "Crit Chance: %.1f%%\n" % ring_item.crit_chance
 		stats_text += "Crit Damage: %.1f%%\n" % ring_item.crit_damage
 

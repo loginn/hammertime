@@ -25,6 +25,26 @@ func show_damage(value: int, is_crit: bool) -> void:
 	queue_free()
 
 
+func show_spell_damage(value: int, is_crit: bool) -> void:
+	text = str(value)
+
+	if is_crit:
+		add_theme_color_override("font_color", Color(0.8, 0.4, 1.0))  # Bright purple for spell crit
+		pivot_offset = size / 2.0
+		scale = Vector2(1.5, 1.5)
+	else:
+		add_theme_color_override("font_color", Color(0.55, 0.35, 0.85))  # Purple for spell hit
+		scale = Vector2(1.0, 1.0)
+
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(self, "position:y", position.y - 60.0, 1.0)
+	tween.tween_property(self, "modulate:a", 0.0, 1.0)
+
+	await tween.finished
+	queue_free()
+
+
 func show_dodge() -> void:
 	text = "DODGE"
 	add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))  # White

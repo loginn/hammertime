@@ -56,7 +56,7 @@ func update_value() -> void:
 		+ int(StatCalculator.calculate_flat_stat(all_affixes, Tag.StatType.MOVEMENT_SPEED))
 	)
 
-	self.total_defense = self.computed_armor
+	self.total_defense = self.computed_armor + self.computed_evasion + self.computed_energy_shield
 
 
 func get_total_defense() -> int:

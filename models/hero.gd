@@ -15,9 +15,28 @@ var total_energy_shield: int = 0
 var total_fire_resistance: int = 0
 var total_cold_resistance: int = 0
 var total_lightning_resistance: int = 0
+var total_chaos_resistance: int = 0
 var current_energy_shield: float = 0.0
 var total_crit_chance: float = 5.0
 var total_crit_damage: float = 150.0
+
+# DoT stats — aggregated from equipment
+var total_bleed_chance: float = 0.0
+var total_bleed_damage_min: float = 0.0
+var total_bleed_damage_max: float = 0.0
+var total_bleed_damage_pct: float = 0.0
+var total_poison_chance: float = 0.0
+var total_poison_damage_min: float = 0.0
+var total_poison_damage_max: float = 0.0
+var total_poison_damage_pct: float = 0.0
+var total_burn_chance: float = 0.0
+var total_burn_damage_min: float = 0.0
+var total_burn_damage_max: float = 0.0
+var total_burn_damage_pct: float = 0.0
+var total_dot_dps: float = 0.0
+
+# DoT tracking for pack-applied DoTs on hero
+var active_dots: Array = []
 
 # Per-element damage ranges -- populated from equipment, NOT serialized
 # Keys: "physical", "fire", "cold", "lightning"
@@ -29,9 +48,18 @@ var damage_ranges: Dictionary = {
 	"lightning": {"min": 0.0, "max": 0.0},
 }
 
+# Spell damage tracking -- parallel to attack damage
+var total_spell_dps: float = 0.0
+var spell_damage_ranges: Dictionary = {
+	"spell": {"min": 0.0, "max": 0.0},
+	"spell_fire": {"min": 0.0, "max": 0.0},
+	"spell_lightning": {"min": 0.0, "max": 0.0},
+}
+
 # Hero state
 var is_alive: bool = true
 var is_clearing: bool = false
+var is_spell_user: bool = false
 
 
 func _init() -> void:
@@ -92,8 +120,11 @@ func update_stats() -> void:
 	"""Recalculate all hero stats based on equipped items"""
 	calculate_crit_stats()
 	calculate_damage_ranges()
+	calculate_spell_damage_ranges()
 	calculate_dps()
+	calculate_spell_dps()
 	calculate_defense()
+	calculate_dot_stats()
 	current_energy_shield = float(total_energy_shield)
 	# Sync health to new max_health after stat recalculation
 	health = max_health
@@ -173,6 +204,100 @@ func calculate_dps() -> float:
 	return total_dps
 
 
+func calculate_spell_damage_ranges() -> void:
+	"""Populate spell damage ranges from equipped weapon and ring affixes."""
+	# Reset all spell elements to zero
+	for element in spell_damage_ranges:
+		spell_damage_ranges[element]["min"] = 0.0
+		spell_damage_ranges[element]["max"] = 0.0
+
+	# Weapon contribution: base spell damage + weapon affixes
+	if "weapon" in equipped_items and equipped_items["weapon"] != null:
+		var weapon = equipped_items["weapon"]
+		if weapon is Weapon:
+			var all_affixes: Array = weapon.prefixes.duplicate()
+			all_affixes.append_array(weapon.suffixes)
+			if weapon.implicit:
+				all_affixes.append(weapon.implicit)
+			var weapon_spell_ranges := StatCalculator.calculate_spell_damage_range(
+				weapon.base_spell_damage_min, weapon.base_spell_damage_max, all_affixes
+			)
+			for element in weapon_spell_ranges:
+				spell_damage_ranges[element]["min"] += weapon_spell_ranges[element]["min"]
+				spell_damage_ranges[element]["max"] += weapon_spell_ranges[element]["max"]
+
+	# Ring contribution: ring has no base spell damage but may have spell damage affixes/implicit
+	if "ring" in equipped_items and equipped_items["ring"] != null:
+		var ring = equipped_items["ring"]
+		if ring is Ring:
+			var all_affixes: Array = ring.prefixes.duplicate()
+			all_affixes.append_array(ring.suffixes)
+			if ring.implicit:
+				all_affixes.append(ring.implicit)
+			var ring_spell_ranges := StatCalculator.calculate_spell_damage_range(
+				0, 0, all_affixes
+			)
+			for element in ring_spell_ranges:
+				spell_damage_ranges[element]["min"] += ring_spell_ranges[element]["min"]
+				spell_damage_ranges[element]["max"] += ring_spell_ranges[element]["max"]
+
+
+func calculate_spell_dps() -> float:
+	"""Calculate total spell DPS from spell damage ranges and cast speed."""
+	# Sum average spell damage across ALL spell elements
+	var avg_spell_damage := 0.0
+	for element in spell_damage_ranges:
+		var el_min: float = spell_damage_ranges[element]["min"]
+		var el_max: float = spell_damage_ranges[element]["max"]
+		avg_spell_damage += (el_min + el_max) / 2.0
+
+	# Aggregate base_cast_speed from weapon + ring
+	var total_base_cast_speed := 0.0
+	if "weapon" in equipped_items and equipped_items["weapon"] != null:
+		var weapon = equipped_items["weapon"]
+		if weapon is Weapon:
+			total_base_cast_speed += weapon.base_cast_speed
+	if "ring" in equipped_items and equipped_items["ring"] != null:
+		var ring = equipped_items["ring"]
+		if ring is Ring:
+			total_base_cast_speed += ring.base_cast_speed
+
+	# No cast speed means no spell channel
+	if total_base_cast_speed == 0.0:
+		total_spell_dps = 0.0
+		return total_spell_dps
+
+	# Collect INCREASED_CAST_SPEED affixes from weapon + ring
+	var cast_speed_affixes: Array = []
+	for slot in ["weapon", "ring"]:
+		if slot in equipped_items and equipped_items[slot] != null:
+			var item = equipped_items[slot]
+			if "prefixes" in item:
+				cast_speed_affixes.append_array(item.prefixes)
+			if "suffixes" in item:
+				cast_speed_affixes.append_array(item.suffixes)
+			if "implicit" in item and item.implicit != null:
+				cast_speed_affixes.append(item.implicit)
+
+	var additive_cast_speed_mult := 0.0
+	for affix: Affix in cast_speed_affixes:
+		if Tag.StatType.INCREASED_CAST_SPEED in affix.stat_types:
+			additive_cast_speed_mult += affix.value / 100.0
+	var effective_cast_speed := total_base_cast_speed * (1.0 + additive_cast_speed_mult)
+
+	if effective_cast_speed == 0.0:
+		total_spell_dps = 0.0
+		return total_spell_dps
+
+	# Apply shared crit multiplier (crit stats already calculated)
+	var crit_multiplier := StatCalculator._calculate_crit_multiplier(
+		total_crit_chance, total_crit_damage
+	)
+
+	total_spell_dps = avg_spell_damage * effective_cast_speed * crit_multiplier
+	return total_spell_dps
+
+
 func calculate_defense() -> int:
 	"""Calculate total defense from equipped armor"""
 	total_armor = 0
@@ -181,6 +306,7 @@ func calculate_defense() -> int:
 	total_fire_resistance = 0
 	total_cold_resistance = 0
 	total_lightning_resistance = 0
+	total_chaos_resistance = 0
 
 	# Start with base health (100)
 	var total_health: int = 100
@@ -219,6 +345,8 @@ func calculate_defense() -> int:
 						total_cold_resistance += suffix.value
 					if Tag.StatType.LIGHTNING_RESISTANCE in suffix.stat_types:
 						total_lightning_resistance += suffix.value
+					if Tag.StatType.CHAOS_RESISTANCE in suffix.stat_types:
+						total_chaos_resistance += suffix.value
 					if Tag.StatType.ALL_RESISTANCE in suffix.stat_types:
 						total_fire_resistance += suffix.value
 						total_cold_resistance += suffix.value
@@ -284,6 +412,11 @@ func get_total_dps() -> float:
 	return total_dps
 
 
+func get_total_spell_dps() -> float:
+	"""Get the hero's total spell DPS"""
+	return total_spell_dps
+
+
 func get_total_defense() -> int:
 	"""Get the hero's total defense"""
 	return total_defense
@@ -329,6 +462,11 @@ func get_total_lightning_resistance() -> int:
 	return total_lightning_resistance
 
 
+func get_total_chaos_resistance() -> int:
+	"""Get the hero's total chaos resistance"""
+	return total_chaos_resistance
+
+
 func get_current_energy_shield() -> float:
 	"""Get the hero's current energy shield"""
 	return current_energy_shield
@@ -371,3 +509,167 @@ func get_status_text() -> String:
 		return "Clearing areas"
 	else:
 		return "Resting"
+
+
+func calculate_dot_stats() -> void:
+	"""Aggregate DoT stats (chance, flat damage, percentage) from all equipment."""
+	total_bleed_chance = 0.0
+	total_bleed_damage_min = 0.0
+	total_bleed_damage_max = 0.0
+	total_bleed_damage_pct = 0.0
+	total_poison_chance = 0.0
+	total_poison_damage_min = 0.0
+	total_poison_damage_max = 0.0
+	total_poison_damage_pct = 0.0
+	total_burn_chance = 0.0
+	total_burn_damage_min = 0.0
+	total_burn_damage_max = 0.0
+	total_burn_damage_pct = 0.0
+
+	for slot in ["weapon", "ring", "helmet", "armor", "boots"]:
+		if slot not in equipped_items or equipped_items[slot] == null:
+			continue
+		var item = equipped_items[slot]
+		var all_affixes: Array = []
+		if "prefixes" in item:
+			all_affixes.append_array(item.prefixes)
+		if "suffixes" in item:
+			all_affixes.append_array(item.suffixes)
+		if "implicit" in item and item.implicit != null:
+			all_affixes.append(item.implicit)
+
+		for affix: Affix in all_affixes:
+			# Bleed chance
+			if Tag.StatType.BLEED_CHANCE in affix.stat_types:
+				total_bleed_chance += affix.value
+			# Bleed damage: flat (add_min > 0) or percentage (add_min == 0 and value > 0)
+			if Tag.StatType.BLEED_DAMAGE in affix.stat_types:
+				if affix.add_min > 0:
+					total_bleed_damage_min += affix.add_min
+					total_bleed_damage_max += affix.add_max
+				elif affix.value > 0:
+					total_bleed_damage_pct += affix.value
+			# Poison chance
+			if Tag.StatType.POISON_CHANCE in affix.stat_types:
+				total_poison_chance += affix.value
+			# Poison damage: flat or percentage
+			if Tag.StatType.POISON_DAMAGE in affix.stat_types:
+				if affix.add_min > 0:
+					total_poison_damage_min += affix.add_min
+					total_poison_damage_max += affix.add_max
+				elif affix.value > 0:
+					total_poison_damage_pct += affix.value
+			# Burn chance
+			if Tag.StatType.BURN_CHANCE in affix.stat_types:
+				total_burn_chance += affix.value
+			# Burn damage: flat or percentage
+			if Tag.StatType.BURN_DAMAGE in affix.stat_types:
+				if affix.add_min > 0:
+					total_burn_damage_min += affix.add_min
+					total_burn_damage_max += affix.add_max
+				elif affix.value > 0:
+					total_burn_damage_pct += affix.value
+
+	calculate_dot_dps()
+
+
+func calculate_dot_dps() -> void:
+	"""Calculate expected DoT DPS for hero stats display."""
+	total_dot_dps = 0.0
+
+	if not is_spell_user:
+		# Attack-mode: bleed + poison
+		var attack_speed := 1.0
+		if "weapon" in equipped_items and equipped_items["weapon"] != null:
+			var weapon = equipped_items["weapon"]
+			if weapon is Weapon:
+				attack_speed = weapon.base_attack_speed
+
+		# Bleed DPS
+		if total_bleed_chance > 0.0:
+			var avg_hit_damage := 0.0
+			for element in damage_ranges:
+				var el_min: float = damage_ranges[element]["min"]
+				var el_max: float = damage_ranges[element]["max"]
+				avg_hit_damage += (el_min + el_max) / 2.0
+
+			var bleed_base_pct := 0.15
+			var avg_flat_bleed := (total_bleed_damage_min + total_bleed_damage_max) / 2.0
+			var bleed_scaling := avg_flat_bleed / maxf(avg_hit_damage, 1.0)
+			var tick_damage := avg_hit_damage * (bleed_base_pct + bleed_scaling) * (1.0 + total_bleed_damage_pct / 100.0)
+			var effective_stacks := minf(attack_speed * (total_bleed_chance / 100.0) * 4.0, 8.0)
+			total_dot_dps += tick_damage * effective_stacks
+
+		# Poison DPS
+		if total_poison_chance > 0.0:
+			var avg_flat_poison := (total_poison_damage_min + total_poison_damage_max) / 2.0
+			var tick_per_stack := avg_flat_poison * (1.0 + total_poison_damage_pct / 100.0)
+			var effective_stacks := attack_speed * (total_poison_chance / 100.0) * 4.0
+			total_dot_dps += tick_per_stack * effective_stacks
+	else:
+		# Spell-mode: burn only
+		if total_burn_chance > 0.0:
+			var avg_spell_hit_damage := 0.0
+			for element in spell_damage_ranges:
+				var el_min: float = spell_damage_ranges[element]["min"]
+				var el_max: float = spell_damage_ranges[element]["max"]
+				avg_spell_hit_damage += (el_min + el_max) / 2.0
+
+			var burn_base_pct := 0.25
+			var avg_flat_burn := (total_burn_damage_min + total_burn_damage_max) / 2.0
+			var burn_scaling := avg_flat_burn / maxf(avg_spell_hit_damage, 1.0)
+			var tick_damage := avg_spell_hit_damage * (burn_base_pct + burn_scaling) * (1.0 + total_burn_damage_pct / 100.0)
+			total_dot_dps += tick_damage * (total_burn_chance / 100.0)
+
+
+func get_total_dot_dps() -> float:
+	"""Get the hero's total DoT DPS"""
+	return total_dot_dps
+
+
+## Applies a pack DoT on the hero. Single stack refresh for pack DoTs.
+## Returns the current stack count for this dot_type after application.
+func apply_dot(dot_type: String, damage_per_tick: float, dot_element: String) -> int:
+	var duration := 4
+	# Single stack refresh: replace existing or add new
+	var existing := active_dots.filter(func(d): return d["type"] == dot_type)
+	if existing.size() > 0:
+		existing[0]["damage_per_tick"] = damage_per_tick
+		existing[0]["ticks_remaining"] = duration
+		existing[0]["element"] = dot_element
+	else:
+		active_dots.append({
+			"type": dot_type,
+			"damage_per_tick": damage_per_tick,
+			"ticks_remaining": duration,
+			"element": dot_element,
+		})
+	return active_dots.filter(func(d): return d["type"] == dot_type).size()
+
+
+## Processes all active DoTs on hero: accumulates damage per type, decrements ticks, removes expired.
+## Returns array of {"type": String, "damage": float, "element": String} for each type that ticked.
+func process_dot_tick() -> Array:
+	var damage_by_type: Dictionary = {}
+	var element_by_type: Dictionary = {}
+	for dot in active_dots:
+		var t: String = dot["type"]
+		if t not in damage_by_type:
+			damage_by_type[t] = 0.0
+			element_by_type[t] = dot["element"]
+		damage_by_type[t] += dot["damage_per_tick"]
+		dot["ticks_remaining"] -= 1
+
+	# Remove expired entries
+	active_dots = active_dots.filter(func(d): return d["ticks_remaining"] > 0)
+
+	# Build result array
+	var results: Array = []
+	for t in damage_by_type:
+		results.append({"type": t, "damage": damage_by_type[t], "element": element_by_type[t]})
+	return results
+
+
+## Removes all active DoT effects on hero.
+func clear_dots() -> void:
+	active_dots.clear()

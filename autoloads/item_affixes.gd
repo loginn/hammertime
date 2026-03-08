@@ -173,6 +173,61 @@ var prefixes: Array[Affix] = [
 		[Tag.StatType.FLAT_MANA],
 		Vector2i(1, 32)
 	),
+	# Spell damage prefixes (AFF-01, AFF-02)
+	Affix.new(
+		"Spell Damage",
+		Affix.AffixType.PREFIX,
+		2, 10,
+		[Tag.SPELL, Tag.FLAT, Tag.WEAPON],
+		[Tag.StatType.FLAT_SPELL_DAMAGE],
+		Vector2i(1, 32),
+		3, 5, 7, 10  # matches physical damage parity
+	),
+	Affix.new(
+		"%Spell Damage",
+		Affix.AffixType.PREFIX,
+		2, 10,
+		[Tag.SPELL, Tag.PERCENTAGE, Tag.WEAPON],
+		[Tag.StatType.INCREASED_SPELL_DAMAGE],
+		Vector2i(1, 32)
+	),
+	# DoT flat damage prefixes (AFF-05)
+	Affix.new(
+		"Bleed Damage",
+		Affix.AffixType.PREFIX,
+		2, 10,
+		[Tag.DOT, Tag.PHYSICAL, Tag.WEAPON],
+		[Tag.StatType.BLEED_DAMAGE],
+		Vector2i(1, 32),
+		2, 3, 4, 6  # lower than direct damage: DoT is supplemental
+	),
+	Affix.new(
+		"Poison Damage",
+		Affix.AffixType.PREFIX,
+		2, 10,
+		[Tag.DOT, Tag.CHAOS, Tag.WEAPON],
+		[Tag.StatType.POISON_DAMAGE],
+		Vector2i(1, 32),
+		2, 3, 4, 6
+	),
+	Affix.new(
+		"Burn Damage",
+		Affix.AffixType.PREFIX,
+		2, 10,
+		[Tag.DOT, Tag.FIRE, Tag.WEAPON],
+		[Tag.StatType.BURN_DAMAGE],
+		Vector2i(1, 32),
+		2, 3, 4, 6
+	),
+	# Generic %DoT damage prefix (AFF-05)
+	Affix.new(
+		"%DoT Damage",
+		Affix.AffixType.PREFIX,
+		2, 10,
+		[Tag.DOT, Tag.WEAPON],
+		[Tag.StatType.BLEED_DAMAGE, Tag.StatType.POISON_DAMAGE, Tag.StatType.BURN_DAMAGE],
+		Vector2i(1, 32)
+	),
 ]
 var suffixes: Array[Affix] = [
 	Affix.new(
@@ -240,13 +295,74 @@ var suffixes: Array[Affix] = [
 		[Tag.StatType.CRIT_DAMAGE],
 		Vector2i(1, 32)
 	),
-	# DISABLED: These suffixes have no stat_type implementation yet.
-	# Re-enable when the corresponding mechanics (DoT, cast speed, dodge, suppression,
-	# evasion from suffix, physical/magical reduction, sigil) are added to Tag.StatType
-	# and hero.gd stat aggregation.
-	#Affix.new("Cast Speed", Affix.AffixType.SUFFIX, 2, 10, [Tag.MAGIC], []),
-	#Affix.new("Damage over time", Affix.AffixType.SUFFIX, 2, 10, [Tag.DOT, Tag.WEAPON], []),
-	#Affix.new("Bleed Damage", Affix.AffixType.SUFFIX, 2, 10, [Tag.DOT, Tag.PHYSICAL, Tag.WEAPON], []),
+	# Cast Speed suffix (AFF-03)
+	Affix.new(
+		"Cast Speed",
+		Affix.AffixType.SUFFIX,
+		2, 10,
+		[Tag.SPEED],
+		[Tag.StatType.INCREASED_CAST_SPEED],
+		Vector2i(1, 32)
+	),
+	# Chaos Resistance suffix (bonus)
+	Affix.new(
+		"Chaos Resistance",
+		Affix.AffixType.SUFFIX,
+		1, 3,
+		[Tag.DEFENSE, Tag.CHAOS, Tag.WEAPON],
+		[Tag.StatType.CHAOS_RESISTANCE],
+		Vector2i(1, 32)
+	),
+	# DoT chance suffixes (AFF-05)
+	Affix.new(
+		"Bleed Chance",
+		Affix.AffixType.SUFFIX,
+		3, 10,
+		[Tag.DOT, Tag.PHYSICAL, Tag.WEAPON],
+		[Tag.StatType.BLEED_CHANCE],
+		Vector2i(1, 32)
+	),
+	Affix.new(
+		"%Bleed Damage",
+		Affix.AffixType.SUFFIX,
+		2, 10,
+		[Tag.DOT, Tag.PHYSICAL, Tag.WEAPON],
+		[Tag.StatType.BLEED_DAMAGE],
+		Vector2i(1, 32)
+	),
+	Affix.new(
+		"Poison Chance",
+		Affix.AffixType.SUFFIX,
+		3, 10,
+		[Tag.DOT, Tag.CHAOS, Tag.WEAPON],
+		[Tag.StatType.POISON_CHANCE],
+		Vector2i(1, 32)
+	),
+	Affix.new(
+		"%Poison Damage",
+		Affix.AffixType.SUFFIX,
+		2, 10,
+		[Tag.DOT, Tag.CHAOS, Tag.WEAPON],
+		[Tag.StatType.POISON_DAMAGE],
+		Vector2i(1, 32)
+	),
+	Affix.new(
+		"Burn Chance",
+		Affix.AffixType.SUFFIX,
+		3, 10,
+		[Tag.DOT, Tag.FIRE, Tag.WEAPON],
+		[Tag.StatType.BURN_CHANCE],
+		Vector2i(1, 32)
+	),
+	Affix.new(
+		"%Burn Damage",
+		Affix.AffixType.SUFFIX,
+		2, 10,
+		[Tag.DOT, Tag.FIRE, Tag.WEAPON],
+		[Tag.StatType.BURN_DAMAGE],
+		Vector2i(1, 32)
+	),
+	# DISABLED: Future suffixes — no stat_type implementation yet.
 	#Affix.new("Sigil", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.MAGIC], []),
 	#Affix.new("Evade", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),
 	#Affix.new("Physical Reduction", Affix.AffixType.SUFFIX, 2, 10, [Tag.DEFENSE, Tag.WEAPON], []),

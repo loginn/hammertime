@@ -6,6 +6,8 @@ var base_speed: int
 var dps: float
 var crit_chance: float = 5.0
 var crit_damage: float = 150.0
+var base_cast_speed: float = 0.0
+var spell_dps: float = 0.0
 
 
 func update_value() -> void:
@@ -13,6 +15,9 @@ func update_value() -> void:
 	all_affixes.append(self.implicit)
 	self.dps = StatCalculator.calculate_dps(
 		self.base_damage, self.base_speed, all_affixes, self.crit_chance, self.crit_damage
+	)
+	self.spell_dps = StatCalculator.calculate_spell_dps(
+		0, self.base_cast_speed, all_affixes, self.crit_chance, self.crit_damage
 	)
 
 

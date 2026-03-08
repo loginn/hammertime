@@ -48,7 +48,7 @@ func update_value() -> void:
 		StatCalculator.calculate_percentage_stat(flat_health, all_affixes, Tag.StatType.PERCENT_HEALTH)
 	)
 
-	self.total_defense = self.computed_armor
+	self.total_defense = self.computed_armor + self.computed_evasion + self.computed_energy_shield
 
 
 func get_total_defense() -> int:

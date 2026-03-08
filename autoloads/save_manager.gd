@@ -1,7 +1,7 @@
 extends Node
 
 const SAVE_PATH = "user://hammertime_save.json"
-const SAVE_VERSION = 4
+const SAVE_VERSION = 7
 const AUTO_SAVE_INTERVAL = 300.0  # 5 minutes
 
 var auto_save_timer: Timer
@@ -90,11 +90,11 @@ func _build_save_data() -> Dictionary:
 
 	var crafting_inv := {}
 	for type_name in GameState.crafting_inventory:
-		var slot_array: Array = GameState.crafting_inventory[type_name]
-		var items_data: Array = []
-		for item in slot_array:
-			items_data.append(item.to_dict())
-		crafting_inv[type_name] = items_data
+		var item = GameState.crafting_inventory[type_name]
+		if item != null:
+			crafting_inv[type_name] = item.to_dict()
+		else:
+			crafting_inv[type_name] = null
 
 	return {
 		"version": SAVE_VERSION,
@@ -109,6 +109,7 @@ func _build_save_data() -> Dictionary:
 		"prestige_level": GameState.prestige_level,
 		"max_item_tier_unlocked": GameState.max_item_tier_unlocked,
 		"tag_currency_counts": GameState.tag_currency_counts.duplicate(),
+		"is_spell_user": GameState.hero.is_spell_user,
 	}
 
 
@@ -132,18 +133,15 @@ func _restore_state(data: Dictionary) -> bool:
 	for currency_type in saved_currencies:
 		GameState.currency_counts[currency_type] = int(saved_currencies[currency_type])
 
-	# Restore crafting inventory (v2: arrays in save, arrays in GameState)
+	# Restore crafting inventory (v5: single item per slot)
 	var saved_crafting: Dictionary = data.get("crafting_inventory", {})
 	for slot_name in ["weapon", "helmet", "armor", "boots", "ring"]:
-		var slot_data = saved_crafting.get(slot_name, [])
-		var items_array: Array = []
-		if slot_data is Array:
-			for item_data in slot_data:
-				if item_data is Dictionary:
-					var item = Item.create_from_dict(item_data)
-					if item != null:
-						items_array.append(item)
-		GameState.crafting_inventory[slot_name] = items_array
+		var slot_data = saved_crafting.get(slot_name)
+		if slot_data != null and slot_data is Dictionary:
+			var item = Item.create_from_dict(slot_data)
+			GameState.crafting_inventory[slot_name] = item
+		else:
+			GameState.crafting_inventory[slot_name] = null
 
 	GameState.crafting_bench_type = str(data.get("crafting_bench_type", "weapon"))
 
@@ -160,6 +158,9 @@ func _restore_state(data: Dictionary) -> bool:
 	var saved_tag_currencies: Dictionary = data.get("tag_currency_counts", {})
 	for tag_type in saved_tag_currencies:
 		GameState.tag_currency_counts[tag_type] = int(saved_tag_currencies[tag_type])
+
+	# Restore spell mode
+	GameState.hero.is_spell_user = bool(data.get("is_spell_user", false))
 
 	# Recalculate all derived hero stats from restored equipment
 	GameState.hero.update_stats()

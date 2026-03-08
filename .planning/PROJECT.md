@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An ARPG-style crafting idle game built in Godot 4.5. Players send a hero to fight monster packs across 4 biomes (Forest → Shadow Realm), collect item bases and crafting hammers, then use those hammers to craft and equip gear. Better gear lets the hero survive harder packs, which drop better and more plentiful loot. Items come in Normal, Magic, and Rare tiers with defensive and offensive affixes across 32 affix tiers, craftable with 11 themed hammers (6 base + 5 tag-targeted). A prestige system lets players reset progress to unlock better item tiers (1-8) and tag-targeted crafting currencies. Combat is pack-based idle auto-combat with death mechanics, defensive stat integration, and floating damage feedback. Game state persists via JSON save/load with auto-save and export/import strings.
+An ARPG-style crafting idle game built in Godot 4.5. Players send a hero to fight monster packs across 4 biomes (Forest → Shadow Realm), collect item bases and crafting hammers, then use those hammers to craft and equip gear. Better gear lets the hero survive harder packs, which drop better and more plentiful loot. 21 item base types across 5 equipment slots support 3 archetypes (STR/DEX/INT) with archetype-specific affix pools. Items come in Normal, Magic, and Rare tiers with 41 active affixes across 32 affix tiers, craftable with 11 themed hammers (6 base + 5 tag-targeted). Dual damage channels (attack + spell) with independent combat timers and damage over time (bleed/poison/burn) create distinct playstyles. A prestige system lets players reset progress to unlock better item tiers (1-8) and tag-targeted crafting currencies. Combat is pack-based idle auto-combat with death mechanics, defensive stat integration, DoT tick processing, and floating damage feedback. Game state persists via JSON save/load (format v7) with auto-save and export/import strings.
 
 ## Core Value
 
@@ -99,21 +99,18 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ Prestige UI with 7-level unlock table, two-click confirmation, fade transition, dynamic tab reveal — v1.7
 - ✓ 50-test integration verification suite for prestige loop, save round-trips, and regression checks — v1.7
 
+- ✓ 21 item base types (9 weapons + 12 armor/helmet/boots/ring) across STR/DEX/INT archetypes — v1.8
+- ✓ Single crafting bench per slot replacing 10-item arrays — v1.8
+- ✓ Spell damage channel with StatCalculator, Hero tracking, and CombatEngine spell timer — v1.8
+- ✓ 14 new affixes (spell damage, cast speed, bleed/poison/burn chance and damage) — v1.8
+- ✓ Damage over time system (bleed/poison/burn) with tick processing and defense interaction — v1.8
+- ✓ Archetype-specific affix pools via valid_tags on item bases — v1.8
+- ✓ Save format v7 with 21-type serialization registry — v1.8
+- ✓ 35-group integration test suite (up from 28 at v1.7) — v1.8
+
 ### Active
 
 <!-- Current scope. Building toward these. -->
-
-## Current Milestone: v1.8 Content Pass — Items & Mods
-
-**Goal:** Expand item bases to 3 per slot (str/dex/int archetypes), add spell damage channel with cast speed, and broaden the affix pool to support distinct playstyles.
-
-**Target features:**
-- 9 weapon bases (3 per archetype) with varied implicits + 12 armor slot bases (1 per archetype x 4 slots) = 21 total
-- Spell damage as alternate damage channel with separate cast timer in CombatEngine
-- Damage over time system (bleed/poison/burn) with tick processing
-- New affixes: spell damage (flat + %), cast speed, evade, bleed/poison/burn
-- Inventory rework: single crafting bench per slot (max 1 item), drops discarded if occupied
-- Existing items renamed to thematic names (BasicArmor -> Iron Plate, etc.)
 
 ### Out of Scope
 
@@ -136,21 +133,22 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 ## Context
 
 - Built with Godot 4.5 (GDScript), targeting mobile renderer
-- 11,171 LOC GDScript across ~60 files
+- 14,375 LOC GDScript across ~70 files
 - Feature-based folder structure: models/, scenes/, autoloads/, utils/, tools/
 - Autoloads: ItemAffixes, Tag, GameState, GameEvents, SaveManager, PrestigeManager
 - Scene structure: main.tscn with main_view coordinating forge_view, gameplay_view, prestige_view, settings_view via 4-tab bar
-- ForgeView combines hero equipment (left) and crafting inventory (right) with tag hammer section (P1+)
-- StatCalculator handles all DPS/defense calculations with flat + percentage stacking
-- DefenseCalculator handles all incoming damage with 4-stage pipeline
+- ForgeView combines hero equipment (left) and single crafting bench per slot (right) with tag hammer section (P1+)
+- StatCalculator handles all DPS/defense calculations including spell damage and DoT DPS with flat + percentage stacking
+- DefenseCalculator handles all incoming damage with 4-stage pipeline; DoT uses resistance-only path
 - All data classes extend Resource (Item, Affix, Implicit, Hero, Currency, TagHammer, MonsterType, MonsterPack, BiomeConfig)
+- 21 item base types across 5 slots with STR/DEX/INT archetype identity via valid_tags
 - Currency system uses template method pattern (base Currency.apply() with _do_apply() overrides); TagHammer extends Currency
-- LootTable provides per-pack currency drops, item drops, and tag currency drops (P1+) with area scaling
-- CombatEngine manages pack-by-pack combat with state machine lifecycle and dual attack timers
+- LootTable provides per-pack currency drops, item drops with slot-first distribution, and tag currency drops (P1+) with area scaling
+- CombatEngine manages pack-by-pack combat with state machine lifecycle, dual attack timers, spell timer, and DoT tick processing
 - PrestigeManager handles 7 prestige levels with currency-cost gating and full run-state wipe
-- SaveManager handles JSON save/load (format v4), auto-save timer, event triggers, prestige auto-save, and Base64 export/import
-- 27 active affixes with Vector2i(1, 32) tier ranges; item tiers 1-8 constrain affix tier floor at crafting time
-- Shipped 9 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges), v1.5 (inventory rework), v1.6 (tech debt cleanup), v1.7 (meta-progression)
+- SaveManager handles JSON save/load (format v7), auto-save timer, event triggers, prestige auto-save, and Base64 export/import
+- 41 active affixes with Vector2i(1, 32) tier ranges; item tiers 1-8 constrain affix tier floor at crafting time
+- Shipped 10 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges), v1.5 (inventory rework), v1.6 (tech debt cleanup), v1.7 (meta-progression), v1.8 (content pass)
 
 ## Constraints
 
@@ -244,5 +242,13 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Two-click prestige confirmation | First click shows "Reset progress?", 3-second timer reset, second click executes | ✓ Good -- non-intrusive safety, matches forge equip pattern |
 | Dynamic prestige tab reveal | Tab appears when can_prestige() first returns true, stays permanently | ✓ Good -- discovery moment without cluttering P0 UI |
 
+| Single bench per slot (no arrays) | Simplifies item path before 21-base proliferation; forces deliberate crafting | ✓ Good -- cleaner UX, simpler saves |
+| valid_tags on item bases | Archetype identity constrains affix pools without class system | ✓ Good -- emergent build diversity |
+| Spell timer as third independent CombatEngine timer | Spell and attack channels fire independently at different speeds | ✓ Good -- distinct INT playstyle |
+| DoT resistance-only defense path | DoT bypasses evasion and armor; bleed bypasses all resistance (PoE convention) | ✓ Good -- DoT has clear identity |
+| LOOT-03/LOOT-04 dropped by design | Tier-only comparison stays; item names self-document archetype | ✓ Good -- avoided unnecessary complexity |
+| DoT multi-stack on packs, single-stack on hero | Hero refreshes DoT (simpler), packs stack per source (rewards investment) | ✓ Good -- balanced risk/reward |
+| Slot-first then archetype drop distribution | 20% per slot, uniform within slot; prevents weapon flooding | ✓ Good -- fair distribution |
+
 ---
-*Last updated: 2026-03-06 after v1.7 milestone shipped*
+*Last updated: 2026-03-08 after v1.8 milestone shipped*

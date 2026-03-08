@@ -24,9 +24,18 @@ signal currencies_found(drops: Dictionary)
 @onready var pack_progress_container: Control = $CombatUI/UIRoot/PackProgressContainer
 @onready var floating_text_container: Control = $CombatUI/UIRoot/FloatingTextContainer
 
+# DoT UI elements
+@onready var pack_dot_accumulator: Label = $CombatUI/UIRoot/PackHealthContainer/PackDotAccumulator
+@onready var hero_dot_accumulator: Label = $CombatUI/UIRoot/HeroHealthContainer/HeroDotAccumulator
+@onready var pack_dot_status: Label = $CombatUI/UIRoot/PackHealthContainer/PackDotStatus
+@onready var hero_dot_status: Label = $CombatUI/UIRoot/HeroHealthContainer/HeroDotStatus
+
 var is_combat_active: bool = false
 var item_bases_collected: Array = []
 var combat_started_once: bool = false
+
+var pack_dot_fade_tween: Tween = null
+var hero_dot_fade_tween: Tween = null
 
 ## Default state label color
 var default_label_color := Color(1.0, 1.0, 1.0)
@@ -45,6 +54,7 @@ func _ready() -> void:
 	GameEvents.combat_started.connect(_on_combat_started)
 	GameEvents.pack_killed.connect(_on_pack_killed)
 	GameEvents.hero_attacked.connect(_on_hero_attacked)
+	GameEvents.hero_spell_hit.connect(_on_hero_spell_hit)
 	GameEvents.pack_attacked.connect(_on_pack_attacked)
 	GameEvents.hero_died.connect(_on_hero_died)
 	GameEvents.map_completed.connect(_on_map_completed)
@@ -53,6 +63,11 @@ func _ready() -> void:
 	# Connect drop system signals (Phase 16)
 	GameEvents.items_dropped.connect(_on_items_dropped)
 	GameEvents.currency_dropped.connect(_on_currency_dropped)
+
+	# Connect DoT signals (Phase 48)
+	GameEvents.dot_applied.connect(_on_dot_applied)
+	GameEvents.dot_ticked.connect(_on_dot_ticked)
+	GameEvents.dot_expired.connect(_on_dot_expired)
 
 	_setup_bar_styles()
 	update_display()
@@ -136,12 +151,20 @@ func _on_combat_started(_area_level: int, _pack_count: int) -> void:
 func _on_pack_killed(_pack_index: int, _total_packs: int) -> void:
 	combat_state_label.text = "Pack cleared!"
 	combat_state_label.add_theme_color_override("font_color", default_label_color)
+	pack_dot_accumulator.visible = false
+	pack_dot_status.text = ""
 	update_display()
 
 
 func _on_hero_attacked(damage: float, is_crit: bool) -> void:
 	# Hero attacked the pack — show damage near pack HP bar
 	_spawn_floating_text(pack_damage_pos, int(damage), is_crit)
+	update_display()
+
+
+func _on_hero_spell_hit(damage: float, is_crit: bool) -> void:
+	# Hero spell hit the pack — show purple damage near pack HP bar
+	_spawn_floating_text(pack_damage_pos, int(damage), is_crit, false, true)
 	update_display()
 
 
@@ -158,6 +181,8 @@ func _on_pack_attacked(result: Dictionary) -> void:
 func _on_hero_died() -> void:
 	combat_state_label.text = "Hero died! Retrying..."
 	combat_state_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+	hero_dot_accumulator.visible = false
+	hero_dot_status.text = ""
 	if not combat_engine.auto_retry:
 		is_combat_active = false
 		start_clearing_button.text = "Start Combat"
@@ -176,7 +201,110 @@ func _on_map_completed(completed_level: int) -> void:
 func _on_combat_stopped() -> void:
 	combat_state_label.text = "Combat stopped."
 	combat_state_label.add_theme_color_override("font_color", default_label_color)
+	pack_dot_accumulator.visible = false
+	hero_dot_accumulator.visible = false
+	pack_dot_status.text = ""
+	hero_dot_status.text = ""
 	update_display()
+
+
+# --- DoT signal handlers (Phase 48) ---
+
+
+func _on_dot_applied(target: String, dot_type: String, stack_count: int) -> void:
+	_update_dot_status(target)
+
+
+func _on_dot_ticked(target: String, dot_type: String, damage: float, total_accumulated: float) -> void:
+	var accumulator: Label
+	if target == "pack":
+		accumulator = pack_dot_accumulator
+	else:
+		accumulator = hero_dot_accumulator
+
+	# Show accumulator with running total
+	accumulator.visible = true
+	accumulator.text = str(int(total_accumulated))
+	accumulator.modulate.a = 1.0
+
+	# Color by DoT type
+	match dot_type:
+		"bleed":
+			accumulator.add_theme_color_override("font_color", Color(0.9, 0.2, 0.2))  # Red
+		"poison":
+			accumulator.add_theme_color_override("font_color", Color(0.2, 0.9, 0.3))  # Green
+		"burn":
+			accumulator.add_theme_color_override("font_color", Color(1.0, 0.6, 0.1))  # Orange
+
+	# Cancel any existing fade tween
+	if target == "pack" and pack_dot_fade_tween != null:
+		pack_dot_fade_tween.kill()
+		pack_dot_fade_tween = null
+	elif target == "hero" and hero_dot_fade_tween != null:
+		hero_dot_fade_tween.kill()
+		hero_dot_fade_tween = null
+
+	_update_dot_status(target)
+
+
+func _on_dot_expired(target: String, dot_type: String) -> void:
+	_update_dot_status(target)
+
+	# Check if ALL DoTs expired for this target — if so, start fade
+	var has_active_dots := false
+	if target == "pack":
+		var pack := combat_engine.get_current_pack()
+		if pack != null:
+			has_active_dots = pack.active_dots.size() > 0
+		if not has_active_dots:
+			_fade_out_accumulator(pack_dot_accumulator, "pack")
+	else:
+		has_active_dots = GameState.hero.active_dots.size() > 0
+		if not has_active_dots:
+			_fade_out_accumulator(hero_dot_accumulator, "hero")
+
+
+func _update_dot_status(target: String) -> void:
+	var status_label: Label
+	var dots: Array
+	if target == "pack":
+		status_label = pack_dot_status
+		var pack := combat_engine.get_current_pack()
+		if pack == null:
+			status_label.text = ""
+			return
+		dots = pack.active_dots
+	else:
+		status_label = hero_dot_status
+		dots = GameState.hero.active_dots
+
+	# Count stacks per type
+	var counts := {}
+	for dot in dots:
+		var t: String = dot["type"]
+		counts[t] = counts.get(t, 0) + 1
+
+	# Build status text: "BLEED x3  POISON x7  BURN"
+	var parts := []
+	for dot_type in ["bleed", "poison", "burn"]:
+		if dot_type in counts:
+			var count: int = counts[dot_type]
+			if count > 1:
+				parts.append("%s x%d" % [dot_type.to_upper(), count])
+			else:
+				parts.append(dot_type.to_upper())
+	status_label.text = "  ".join(parts)
+
+
+func _fade_out_accumulator(accumulator: Label, target: String) -> void:
+	var tween := create_tween()
+	tween.tween_interval(2.0)  # Hold for 2 seconds
+	tween.tween_property(accumulator, "modulate:a", 0.0, 1.0)  # Fade over 1 second
+	tween.tween_callback(func(): accumulator.visible = false)
+	if target == "pack":
+		pack_dot_fade_tween = tween
+	else:
+		hero_dot_fade_tween = tween
 
 
 # --- Drop signal handlers (Phase 16) ---
@@ -197,12 +325,14 @@ func _on_currency_dropped(_drops: Dictionary) -> void:
 # --- Floating text ---
 
 
-func _spawn_floating_text(spawn_pos: Vector2, value: int, is_crit: bool = false, is_dodge: bool = false) -> void:
+func _spawn_floating_text(spawn_pos: Vector2, value: int, is_crit: bool = false, is_dodge: bool = false, is_spell: bool = false) -> void:
 	var label = FLOATING_LABEL.instantiate()
 	label.position = spawn_pos + Vector2(randf_range(-20.0, 20.0), 0.0)
 	floating_text_container.add_child(label)
 	if is_dodge:
 		label.show_dodge()
+	elif is_spell:
+		label.show_spell_damage(value, is_crit)
 	else:
 		label.show_damage(value, is_crit)
 
@@ -272,10 +402,23 @@ func update_display() -> void:
 
 
 func get_random_item_base() -> Item:
-	var item_types = [LightSword, BasicHelmet, BasicArmor, BasicBoots, BasicRing]
-	var random_type = item_types[randi() % item_types.size()]
-	var item = random_type.new()
-	# Roll item tier from area-weighted distribution
-	item.tier = LootTable.roll_item_tier(GameState.area_level, GameState.max_item_tier_unlocked)
+	# Roll tier from area-weighted distribution
+	var tier = LootTable.roll_item_tier(GameState.area_level, GameState.max_item_tier_unlocked)
+
+	# Slot-first: pick random slot (20% each)
+	var slots = ["weapon", "armor", "helmet", "boots", "ring"]
+	var slot = slots[randi() % slots.size()]
+
+	# Then archetype: pick random base within slot
+	var bases: Dictionary = {
+		"weapon": [Broadsword, Battleaxe, Warhammer, Dagger, VenomBlade, Shortbow, Wand, LightningRod, Sceptre],
+		"armor": [IronPlate, LeatherVest, SilkRobe],
+		"helmet": [IronHelm, LeatherHood, Circlet],
+		"boots": [IronGreaves, LeatherBoots, SilkSlippers],
+		"ring": [IronBand, JadeRing, SapphireRing],
+	}
+
+	var slot_bases = bases[slot]
+	var base_class = slot_bases[randi() % slot_bases.size()]
 	# Items always drop as Normal (0 affixes) — crafting is the sole source of mods
-	return item
+	return base_class.new(tier)

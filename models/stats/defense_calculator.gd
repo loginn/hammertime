@@ -80,6 +80,48 @@ static func apply_es_split(
 	return { "es_damage": es_portion, "life_damage": life_portion }
 
 
+## Calculates damage taken from a DoT tick. Simplified pipeline:
+## - No evasion (DoT bypasses dodge)
+## - No armor (DoT bypasses physical mitigation)
+## - Resistance: only matching resistance applies (none for physical/bleed)
+## - ES/Life split: applies normally (50/50)
+##
+## Parameters:
+## - raw_dot_damage: tick damage before mitigation
+## - dot_element: "physical", "chaos", or "fire"
+## - hero_fire_res: total fire resistance
+## - hero_chaos_res: total chaos resistance
+## - current_es: current energy shield amount
+##
+## Returns: { "life_damage": float, "es_damage": float }
+static func calculate_dot_damage_taken(
+	raw_dot_damage: float,
+	dot_element: String,
+	hero_fire_res: int,
+	hero_chaos_res: int,
+	current_es: float
+) -> Dictionary:
+	var damage := raw_dot_damage
+
+	# Resistance reduction (element-specific)
+	match dot_element:
+		"fire":
+			var reduction := calculate_resistance_reduction(hero_fire_res)
+			damage *= (1.0 - reduction)
+		"chaos":
+			var reduction := calculate_resistance_reduction(hero_chaos_res)
+			damage *= (1.0 - reduction)
+		# "physical" (bleed): no resistance exists, full damage passes through
+
+	damage = maxf(0.0, damage)
+
+	# ES/Life split (same as direct hits)
+	if current_es > 0.0:
+		return apply_es_split(damage, current_es)
+
+	return { "es_damage": 0.0, "life_damage": damage }
+
+
 ## Full defense pipeline: Evasion -> Resistances -> Armor -> ES/Life split.
 ##
 ## Defense application order (from CONTEXT.md):

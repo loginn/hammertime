@@ -72,7 +72,13 @@ func to_dict() -> Dictionary:
 
 ## Registry of concrete item types for deserialization.
 const ITEM_TYPE_STRINGS: PackedStringArray = [
-	"LightSword", "BasicArmor", "BasicHelmet", "BasicBoots", "BasicRing"
+	"Broadsword", "Battleaxe", "Warhammer",
+	"Dagger", "VenomBlade", "Shortbow",
+	"Wand", "LightningRod", "Sceptre",
+	"IronPlate", "LeatherVest", "SilkRobe",
+	"IronHelm", "LeatherHood", "Circlet",
+	"IronGreaves", "LeatherBoots", "SilkSlippers",
+	"IronBand", "JadeRing", "SapphireRing",
 ]
 
 
@@ -81,17 +87,50 @@ static func create_from_dict(data: Dictionary) -> Item:
 	var item_type_str: String = data.get("item_type", "")
 
 	var item: Item = null
+	var tier: int = int(data.get("tier", 8))
 	match item_type_str:
-		"LightSword":
-			item = LightSword.new()
-		"BasicArmor":
-			item = BasicArmor.new()
-		"BasicHelmet":
-			item = BasicHelmet.new()
-		"BasicBoots":
-			item = BasicBoots.new()
-		"BasicRing":
-			item = BasicRing.new()
+		"Broadsword":
+			item = Broadsword.new(tier)
+		"Battleaxe":
+			item = Battleaxe.new(tier)
+		"Warhammer":
+			item = Warhammer.new(tier)
+		"Dagger":
+			item = Dagger.new(tier)
+		"VenomBlade":
+			item = VenomBlade.new(tier)
+		"Shortbow":
+			item = Shortbow.new(tier)
+		"Wand":
+			item = Wand.new(tier)
+		"LightningRod":
+			item = LightningRod.new(tier)
+		"Sceptre":
+			item = Sceptre.new(tier)
+		"IronPlate":
+			item = IronPlate.new(tier)
+		"LeatherVest":
+			item = LeatherVest.new(tier)
+		"SilkRobe":
+			item = SilkRobe.new(tier)
+		"IronHelm":
+			item = IronHelm.new(tier)
+		"LeatherHood":
+			item = LeatherHood.new(tier)
+		"Circlet":
+			item = Circlet.new(tier)
+		"IronGreaves":
+			item = IronGreaves.new(tier)
+		"LeatherBoots":
+			item = LeatherBoots.new(tier)
+		"SilkSlippers":
+			item = SilkSlippers.new(tier)
+		"IronBand":
+			item = IronBand.new(tier)
+		"JadeRing":
+			item = JadeRing.new(tier)
+		"SapphireRing":
+			item = SapphireRing.new(tier)
 		_:
 			push_warning("Unknown item type for deserialization: " + item_type_str)
 			return null

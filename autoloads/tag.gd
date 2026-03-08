@@ -20,6 +20,14 @@ const MANA = "MANA"
 const MOVEMENT = "MOVEMENT"
 const UTILITY = "UTILITY"
 const EVASION = "EVASION"
+# Element types
+const CHAOS = "CHAOS"
+# Damage channels
+const SPELL = "SPELL"
+# Archetype identity
+const STR = "STR"
+const DEX = "DEX"
+const INT = "INT"
 
 enum StatType {
 	FLAT_DAMAGE,
@@ -41,4 +49,20 @@ enum StatType {
 	COLD_RESISTANCE,
 	LIGHTNING_RESISTANCE,
 	ALL_RESISTANCE,
+	# Spell damage stats
+	FLAT_SPELL_DAMAGE,
+	INCREASED_SPELL_DAMAGE,
+	INCREASED_CAST_SPEED,
+	FLAT_SPELL_LIGHTNING_DAMAGE,
+	FLAT_SPELL_FIRE_DAMAGE,
+	# DoT damage stats
+	BLEED_DAMAGE,
+	POISON_DAMAGE,
+	BURN_DAMAGE,
+	# Chaos resistance
+	CHAOS_RESISTANCE,
+	# DoT chance stats
+	BLEED_CHANCE,
+	POISON_CHANCE,
+	BURN_CHANCE,
 }
