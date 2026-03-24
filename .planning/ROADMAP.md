@@ -167,6 +167,10 @@ Plans:
 
 **Goal:** Wire archetype passive bonuses into Hero.update_stats() as multiplicative "more" modifiers applied after equipment aggregation.
 **Requirements:** PASS-01, PASS-02
+**Plans:** 1 plan
+
+Plans:
+- [ ] 51-01-PLAN.md — Bonus injection into hero.gd, is_spell_user derivation, settings/save cleanup, Group 37 tests
 
 **Success criteria:**
 1. Hero with a fire damage archetype shows higher fire DPS than an identical classless hero with the same gear
@@ -223,8 +227,8 @@ Plans:
 | 31-34             | v1.6      | 5/5            | Complete    | 2026-02-20 |
 | 35-41             | v1.7      | 9/9            | Complete    | 2026-03-06 |
 | 42-49             | v1.8      | 18/18          | Complete    | 2026-03-08 |
-| 50-54             | v1.9      | 0/1            | Planning    | —          |
+| 50-54             | v1.9      | 1/2            | Planning    | —          |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-24 — Phase 50 plan created*
+*Last updated: 2026-03-25 — Phase 51 plan created*
