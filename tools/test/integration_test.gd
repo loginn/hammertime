@@ -43,6 +43,7 @@ func _ready() -> void:
 	_group_33_dot_dps_calculation()
 	_group_34_game_events_dot_signals()
 	_group_35_save_version_and_loot_integration()
+	_group_36_hero_archetype_data()
 
 	var total: int = _pass_count + _fail_count
 	print("\n=== SUMMARY ===")
@@ -1619,3 +1620,83 @@ func _group_35_save_version_and_loot_integration() -> void:
 	var forge_source := forge_script2.source_code
 	# Verify the function body is tier-only comparison
 	_check("return new_item.tier > existing_item.tier" in forge_source, "is_item_better uses tier-only comparison (LOOT-03 dropped)")
+
+
+func _group_36_hero_archetype_data() -> void:
+	print("\n--- Group 36: Hero Archetype Data (Phase 50) ---")
+	_reset_fresh()
+
+	# HERO-01: REGISTRY has exactly 9 entries
+	_check(HeroArchetype.REGISTRY.size() == 9, "REGISTRY contains exactly 9 heroes")
+
+	# HERO-01: 3 per archetype
+	var str_count := 0
+	var dex_count := 0
+	var int_count := 0
+	for hero_id in HeroArchetype.REGISTRY:
+		var data: Dictionary = HeroArchetype.REGISTRY[hero_id]
+		match data["archetype"]:
+			HeroArchetype.Archetype.STR: str_count += 1
+			HeroArchetype.Archetype.DEX: dex_count += 1
+			HeroArchetype.Archetype.INT: int_count += 1
+	_check(str_count == 3, "3 STR heroes in REGISTRY")
+	_check(dex_count == 3, "3 DEX heroes in REGISTRY")
+	_check(int_count == 3, "3 INT heroes in REGISTRY")
+
+	# HERO-02: from_id returns correct fields
+	var berserker := HeroArchetype.from_id("str_hit")
+	_check(berserker != null, "from_id('str_hit') returns non-null")
+	_check(berserker.id == "str_hit", "str_hit id is 'str_hit'")
+	_check(berserker.archetype == HeroArchetype.Archetype.STR, "str_hit archetype is STR")
+	_check(berserker.subvariant == HeroArchetype.Subvariant.HIT, "str_hit subvariant is HIT")
+	_check(berserker.title == "The Berserker", "str_hit title is 'The Berserker'")
+	_check(berserker.spell_user == false, "str_hit spell_user is false")
+	_check(berserker.passive_bonuses.has("attack_damage_more"), "str_hit has attack_damage_more bonus")
+	_check(berserker.passive_bonuses.has("physical_damage_more"), "str_hit has physical_damage_more bonus")
+
+	# HERO-02: from_id unknown returns null
+	var unknown := HeroArchetype.from_id("nonexistent")
+	_check(unknown == null, "from_id('nonexistent') returns null")
+
+	# HERO-02: generate_choices returns 3, one per archetype
+	var choices := HeroArchetype.generate_choices()
+	_check(choices.size() == 3, "generate_choices() returns exactly 3")
+	var archetypes_seen: Array[int] = []
+	for choice in choices:
+		_check(choice != null, "generate_choices() entry is non-null")
+		if choice != null:
+			archetypes_seen.append(choice.archetype)
+	archetypes_seen.sort()
+	_check(archetypes_seen == [HeroArchetype.Archetype.STR, HeroArchetype.Archetype.DEX, HeroArchetype.Archetype.INT], "generate_choices() has one per archetype")
+
+	# HERO-03: All heroes have non-empty title
+	for hero_id in HeroArchetype.REGISTRY:
+		var h := HeroArchetype.from_id(hero_id)
+		_check(h.title != "", "Hero '%s' has non-empty title" % hero_id)
+
+	# HERO-03: Color family check -- STR red (r > g and r > b), DEX green, INT blue
+	for hero_id in HeroArchetype.REGISTRY:
+		var data: Dictionary = HeroArchetype.REGISTRY[hero_id]
+		var c: Color = data["color"]
+		match data["archetype"]:
+			HeroArchetype.Archetype.STR:
+				_check(c.r > c.b, "STR hero '%s' color has red > blue" % hero_id)
+			HeroArchetype.Archetype.DEX:
+				_check(c.g > c.r, "DEX hero '%s' color has green > red" % hero_id)
+			HeroArchetype.Archetype.INT:
+				_check(c.b > c.r or (c.b > 0.4 and c.r < 0.6), "INT hero '%s' color is blue-family" % hero_id)
+
+	# HERO-02: GameState.hero_archetype is null on fresh game
+	_check(GameState.hero_archetype == null, "GameState.hero_archetype is null on fresh game")
+
+	# HERO-02: GameEvents has hero signals
+	_check(GameEvents.has_signal("hero_selection_needed"), "GameEvents has hero_selection_needed signal")
+	_check(GameEvents.has_signal("hero_selected"), "GameEvents has hero_selected signal")
+
+	# D-07: INT heroes are spell_user true, STR/DEX are false
+	for hero_id in HeroArchetype.REGISTRY:
+		var h := HeroArchetype.from_id(hero_id)
+		if h.archetype == HeroArchetype.Archetype.INT:
+			_check(h.spell_user == true, "INT hero '%s' spell_user is true" % hero_id)
+		else:
+			_check(h.spell_user == false, "Non-INT hero '%s' spell_user is false" % hero_id)
