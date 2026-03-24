@@ -3,9 +3,9 @@
 ## v1.9 Requirements
 
 ### Hero Data & Identity
-- [ ] **HERO-01**: 9 hero roster — 3 archetypes (STR/DEX/INT) × 3 subvariants each (hit, DoT, elemental)
-- [ ] **HERO-02**: HeroArchetype Resource with id, archetype, name, passive_bonuses dict, const registry in code
-- [ ] **HERO-03**: Each hero has a proper name and title (e.g., "Fiona, Fire Sorceress") with color identity
+- [x] **HERO-01**: 9 hero roster — 3 archetypes (STR/DEX/INT) × 3 subvariants each (hit, DoT, elemental)
+- [x] **HERO-02**: HeroArchetype Resource with id, archetype, name, passive_bonuses dict, const registry in code
+- [x] **HERO-03**: Each hero has a proper name and title (e.g., "Fiona, Fire Sorceress") with color identity
 
 ### Passive Bonus System
 - [ ] **PASS-01**: Multiplicative "more" bonuses applied after gear stacking in Hero.update_stats()

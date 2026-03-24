@@ -155,7 +155,7 @@ Full details: `.planning/milestones/v1.8-ROADMAP.md`
 **Plans:** 1 plan
 
 Plans:
-- [ ] 50-01-PLAN.md — HeroArchetype Resource, GameEvents signals, GameState field, integration tests
+- [x] 50-01-PLAN.md — HeroArchetype Resource, GameEvents signals, GameState field, integration tests
 
 **Success criteria:**
 1. `HeroArchetype.REGISTRY` contains 9 entries — 3 archetypes x 3 subvariants each with unique id, name, title, and color
