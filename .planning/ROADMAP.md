@@ -152,6 +152,10 @@ Full details: `.planning/milestones/v1.8-ROADMAP.md`
 
 **Goal:** Create the HeroArchetype Resource with all 9 hero definitions and wire up GameState/GameEvents infrastructure.
 **Requirements:** HERO-01, HERO-02, HERO-03
+**Plans:** 1 plan
+
+Plans:
+- [ ] 50-01-PLAN.md — HeroArchetype Resource, GameEvents signals, GameState field, integration tests
 
 **Success criteria:**
 1. `HeroArchetype.REGISTRY` contains 9 entries — 3 archetypes x 3 subvariants each with unique id, name, title, and color
@@ -219,8 +223,8 @@ Full details: `.planning/milestones/v1.8-ROADMAP.md`
 | 31-34             | v1.6      | 5/5            | Complete    | 2026-02-20 |
 | 35-41             | v1.7      | 9/9            | Complete    | 2026-03-06 |
 | 42-49             | v1.8      | 18/18          | Complete    | 2026-03-08 |
-| 50-54             | v1.9      | 0/?            | Not started | —          |
+| 50-54             | v1.9      | 0/1            | Planning    | —          |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-09 — v1.9 Heroes roadmap added*
+*Last updated: 2026-03-24 — Phase 50 plan created*
