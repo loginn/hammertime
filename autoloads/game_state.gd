@@ -21,6 +21,9 @@ var max_item_tier_unlocked: int = 8  # P0 = tier 8 (lowest quality ceiling)
 # Wiped on prestige (run currency), but kept separate for Phase 39 gating
 var tag_currency_counts: Dictionary = {}
 
+# Hero archetype -- nullable, null = classless Adventurer (SEL-02)
+var hero_archetype: HeroArchetype = null
+
 # Save corruption flag — checked by toast on scene ready
 var save_was_corrupted: bool = false
 

@@ -35,3 +35,7 @@ signal tag_currency_dropped(drops: Dictionary)
 signal dot_applied(target: String, dot_type: String, stack_count: int)
 signal dot_ticked(target: String, dot_type: String, damage: float, total_accumulated: float)
 signal dot_expired(target: String, dot_type: String)
+
+# Hero archetype signals (Phase 50)
+signal hero_selection_needed
+signal hero_selected(archetype: HeroArchetype)
