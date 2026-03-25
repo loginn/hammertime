@@ -44,6 +44,7 @@ func _ready() -> void:
 	_group_34_game_events_dot_signals()
 	_group_35_save_version_and_loot_integration()
 	_group_36_hero_archetype_data()
+	_group_37_stat_integration()
 
 	var total: int = _pass_count + _fail_count
 	print("\n=== SUMMARY ===")
@@ -1700,3 +1701,212 @@ func _group_36_hero_archetype_data() -> void:
 			_check(h.spell_user == true, "INT hero '%s' spell_user is true" % hero_id)
 		else:
 			_check(h.spell_user == false, "Non-INT hero '%s' spell_user is false" % hero_id)
+
+
+# --- Group 37: Stat Integration (Phase 51 — PASS-01, PASS-02) ---
+
+func _group_37_stat_integration() -> void:
+	print("\n--- Group 37: Stat integration (Phase 51) ---")
+
+	# Test 1: PASS-01 classless baseline — null archetype produces no bonus
+	_reset_fresh()
+	GameState.hero_archetype = null
+	var weapon_base := Broadsword.new(1)
+	GameState.hero.equipped_items["weapon"] = weapon_base
+	GameState.hero.update_stats()
+	var baseline_min: float = GameState.hero.damage_ranges["physical"]["min"]
+	var baseline_max: float = GameState.hero.damage_ranges["physical"]["max"]
+	_check(baseline_min > 0.0, "PASS-01 classless: physical min > 0 with Broadsword equipped")
+	# Set archetype to null explicitly, re-call update_stats, damage should match baseline
+	GameState.hero_archetype = null
+	GameState.hero.update_stats()
+	_check(abs(GameState.hero.damage_ranges["physical"]["min"] - baseline_min) < 0.01,
+		"PASS-01 classless: null archetype produces identical stats to baseline (min)")
+	_check(abs(GameState.hero.damage_ranges["physical"]["max"] - baseline_max) < 0.01,
+		"PASS-01 classless: null archetype produces identical stats to baseline (max)")
+
+	# Test 2: PASS-01 STR attack boost — Berserker: attack_damage_more=0.25 + physical_damage_more=0.25
+	# physical gets base * 1.25 (element) * 1.25 (channel) = base * 1.5625
+	GameState.hero_archetype = HeroArchetype.from_id("str_hit")
+	GameState.hero.update_stats()
+	var str_phys_min: float = GameState.hero.damage_ranges["physical"]["min"]
+	var expected_str_min: float = baseline_min * 1.25 * 1.25
+	_check(abs(str_phys_min - expected_str_min) < 0.01,
+		"PASS-01 STR str_hit: physical min == baseline * 1.25 * 1.25 (= * 1.5625)")
+
+	# Test 3: PASS-01 STR channel only affects attack elements — fire remains zero (no fire gear)
+	var str_fire_min: float = GameState.hero.damage_ranges["fire"]["min"]
+	_check(str_fire_min == 0.0,
+		"PASS-01 STR str_hit: fire damage remains 0 (no fire gear; attack_damage_more on zero = zero)")
+
+	# Test 4: PASS-01 INT spell boost — Arcanist: spell_damage_more=0.25 + physical_damage_more=0.25
+	# spell["spell"] = base_spell * 1.25 (physical->spell element map) * 1.25 (channel)
+	_reset_fresh()
+	GameState.hero_archetype = null
+	var wand := Wand.new(1)
+	GameState.hero.equipped_items["weapon"] = wand
+	GameState.hero.update_stats()
+	var base_spell_min: float = GameState.hero.spell_damage_ranges["spell"]["min"]
+	_check(base_spell_min > 0.0, "PASS-01 INT: Wand(1) gives nonzero spell_damage_ranges['spell']")
+	GameState.hero_archetype = HeroArchetype.from_id("int_hit")
+	GameState.hero.update_stats()
+	var int_spell_min: float = GameState.hero.spell_damage_ranges["spell"]["min"]
+	var expected_int_spell: float = base_spell_min * 1.25 * 1.25
+	_check(abs(int_spell_min - expected_int_spell) < 0.01,
+		"PASS-01 INT int_hit: spell min == base * 1.25 (physical_damage_more) * 1.25 (spell_damage_more)")
+
+	# Test 5: PASS-01 channel isolation — attack_damage_more (STR) does NOT affect spell
+	_reset_fresh()
+	GameState.hero_archetype = null
+	var sword_for_spell := Wand.new(1)
+	GameState.hero.equipped_items["weapon"] = sword_for_spell
+	GameState.hero.update_stats()
+	var spell_base_for_str: float = GameState.hero.spell_damage_ranges["spell"]["min"]
+	GameState.hero_archetype = HeroArchetype.from_id("str_hit")
+	GameState.hero.update_stats()
+	var spell_with_str: float = GameState.hero.spell_damage_ranges["spell"]["min"]
+	# STR has attack_damage_more (no effect on spell) + physical_damage_more (maps to spell via element map)
+	# physical_damage_more DOES apply to spell["spell"] via spell_element_map, but attack_damage_more does NOT
+	# So spell_with_str = spell_base_for_str * 1.25 (physical_damage_more only)
+	var expected_spell_str: float = spell_base_for_str * 1.25
+	_check(abs(spell_with_str - expected_spell_str) < 0.01,
+		"PASS-01 STR isolation: attack_damage_more does NOT affect spell; only physical_damage_more (element map) applies")
+
+	# Test 6: PASS-01 channel isolation — spell_damage_more (INT) does NOT affect attack
+	_reset_fresh()
+	GameState.hero_archetype = null
+	var broadsword_for_int := Broadsword.new(1)
+	GameState.hero.equipped_items["weapon"] = broadsword_for_int
+	GameState.hero.update_stats()
+	var atk_base_for_int: float = GameState.hero.damage_ranges["physical"]["min"]
+	GameState.hero_archetype = HeroArchetype.from_id("int_hit")
+	GameState.hero.update_stats()
+	var atk_with_int: float = GameState.hero.damage_ranges["physical"]["min"]
+	# int_hit has spell_damage_more (no effect on attack) + physical_damage_more (DOES affect attack)
+	# So atk_with_int = atk_base_for_int * 1.25 (physical_damage_more only, not spell_damage_more)
+	var expected_atk_int: float = atk_base_for_int * 1.25
+	_check(abs(atk_with_int - expected_atk_int) < 0.01,
+		"PASS-01 INT isolation: spell_damage_more does NOT affect attack; only physical_damage_more (element) applies")
+
+	# Test 7: PASS-01 DEX general applies to both channels
+	# dex_hit: damage_more=0.15 + physical_damage_more=0.25
+	# Attack: physical = base * 1.25 (element) * 1.15 (general)
+	_reset_fresh()
+	GameState.hero_archetype = null
+	var broadsword_dex := Broadsword.new(1)
+	GameState.hero.equipped_items["weapon"] = broadsword_dex
+	GameState.hero.update_stats()
+	var atk_base_dex: float = GameState.hero.damage_ranges["physical"]["min"]
+	GameState.hero_archetype = HeroArchetype.from_id("dex_hit")
+	GameState.hero.update_stats()
+	var atk_dex_min: float = GameState.hero.damage_ranges["physical"]["min"]
+	var expected_dex_atk: float = atk_base_dex * 1.25 * 1.15
+	_check(abs(atk_dex_min - expected_dex_atk) < 0.01,
+		"PASS-01 DEX dex_hit: physical attack min == base * 1.25 (element) * 1.15 (general damage_more)")
+
+	# Test 8: PASS-01 element-specific (Fire Knight / str_elem)
+	# str_elem: attack_damage_more=0.25 + fire_damage_more=0.25
+	# Physical: base * 1.25 (channel only, no physical_damage_more)
+	# Fire: 0 (no fire gear) * 1.25 * 1.25 = still 0
+	_reset_fresh()
+	GameState.hero_archetype = null
+	var sword_elem := Broadsword.new(1)
+	GameState.hero.equipped_items["weapon"] = sword_elem
+	GameState.hero.update_stats()
+	var base_phys_elem: float = GameState.hero.damage_ranges["physical"]["min"]
+	GameState.hero_archetype = HeroArchetype.from_id("str_elem")
+	GameState.hero.update_stats()
+	var phys_with_str_elem: float = GameState.hero.damage_ranges["physical"]["min"]
+	# str_elem has attack_damage_more=0.25 (channel, scales physical) but no physical_damage_more
+	var expected_phys_str_elem: float = base_phys_elem * 1.25
+	_check(abs(phys_with_str_elem - expected_phys_str_elem) < 0.01,
+		"PASS-01 Fire Knight str_elem: physical == base * 1.25 (attack_damage_more channel only, no physical bonus)")
+	_check(GameState.hero.damage_ranges["fire"]["min"] == 0.0,
+		"PASS-01 Fire Knight str_elem: fire remains 0 (no fire gear equipped)")
+
+	# Test 9: PASS-02 DoT chance — Reaver (str_dot): bleed_chance_more=0.20
+	_reset_fresh()
+	GameState.hero_archetype = null
+	var warhammer_dot := Warhammer.new(1)
+	var bleed_chance_affix := Affix.new(
+		"Bleed Chance", Affix.AffixType.SUFFIX,
+		3, 10,
+		[Tag.DOT, Tag.PHYSICAL, Tag.WEAPON],
+		[Tag.StatType.BLEED_CHANCE],
+		Vector2i(1, 32)
+	)
+	warhammer_dot.suffixes.append(bleed_chance_affix)
+	GameState.hero.equipped_items["weapon"] = warhammer_dot
+	GameState.hero.update_stats()
+	var base_bleed_chance: float = GameState.hero.total_bleed_chance
+	_check(base_bleed_chance > 0.0, "PASS-02 Reaver: bleed_chance > 0 with bleed chance affix equipped")
+	GameState.hero_archetype = HeroArchetype.from_id("str_dot")
+	GameState.hero.update_stats()
+	var boosted_bleed_chance: float = GameState.hero.total_bleed_chance
+	var expected_bleed_chance: float = base_bleed_chance * 1.20
+	_check(abs(boosted_bleed_chance - expected_bleed_chance) < 0.01,
+		"PASS-02 Reaver str_dot: bleed_chance == base_bleed_chance * 1.20 (bleed_chance_more=0.20)")
+
+	# Test 10: PASS-02 DoT chance — Plague Hunter (dex_dot): poison_chance_more=0.20
+	_reset_fresh()
+	GameState.hero_archetype = null
+	var dagger_dot := Dagger.new(1)
+	var poison_chance_affix := Affix.new(
+		"Poison Chance", Affix.AffixType.SUFFIX,
+		3, 10,
+		[Tag.DOT, Tag.PHYSICAL, Tag.WEAPON],
+		[Tag.StatType.POISON_CHANCE],
+		Vector2i(1, 32)
+	)
+	dagger_dot.suffixes.append(poison_chance_affix)
+	GameState.hero.equipped_items["weapon"] = dagger_dot
+	GameState.hero.update_stats()
+	var base_poison_chance: float = GameState.hero.total_poison_chance
+	_check(base_poison_chance > 0.0, "PASS-02 Plague Hunter: poison_chance > 0 with poison chance affix equipped")
+	GameState.hero_archetype = HeroArchetype.from_id("dex_dot")
+	GameState.hero.update_stats()
+	var boosted_poison_chance: float = GameState.hero.total_poison_chance
+	var expected_poison_chance: float = base_poison_chance * 1.20
+	_check(abs(boosted_poison_chance - expected_poison_chance) < 0.01,
+		"PASS-02 Plague Hunter dex_dot: poison_chance == base_poison_chance * 1.20 (poison_chance_more=0.20)")
+
+	# Test 11: PASS-02 DoT chance — Warlock (int_dot): burn_chance_more=0.20
+	_reset_fresh()
+	GameState.hero_archetype = null
+	var sceptre_dot := Sceptre.new(1)
+	var burn_chance_affix := Affix.new(
+		"Burn Chance", Affix.AffixType.SUFFIX,
+		3, 10,
+		[Tag.DOT, Tag.FIRE, Tag.WEAPON],
+		[Tag.StatType.BURN_CHANCE],
+		Vector2i(1, 32)
+	)
+	sceptre_dot.suffixes.append(burn_chance_affix)
+	GameState.hero.equipped_items["weapon"] = sceptre_dot
+	GameState.hero.update_stats()
+	var base_burn_chance: float = GameState.hero.total_burn_chance
+	_check(base_burn_chance > 0.0, "PASS-02 Warlock: burn_chance > 0 with burn chance affix equipped")
+	GameState.hero_archetype = HeroArchetype.from_id("int_dot")
+	GameState.hero.update_stats()
+	var boosted_burn_chance: float = GameState.hero.total_burn_chance
+	var expected_burn_chance: float = base_burn_chance * 1.20
+	_check(abs(boosted_burn_chance - expected_burn_chance) < 0.01,
+		"PASS-02 Warlock int_dot: burn_chance == base_burn_chance * 1.20 (burn_chance_more=0.20)")
+
+	# Test 12: D-02 is_spell_user derivation from archetype
+	_reset_fresh()
+	GameState.hero_archetype = HeroArchetype.from_id("int_hit")
+	GameState.hero.update_stats()
+	_check(GameState.hero.is_spell_user == true,
+		"D-02: INT hero (int_hit) derives is_spell_user == true")
+	GameState.hero_archetype = HeroArchetype.from_id("str_hit")
+	GameState.hero.update_stats()
+	_check(GameState.hero.is_spell_user == false,
+		"D-02: STR hero (str_hit) derives is_spell_user == false")
+	GameState.hero_archetype = null
+	GameState.hero.update_stats()
+	_check(GameState.hero.is_spell_user == false,
+		"D-02: null archetype derives is_spell_user == false (classless Adventurer)")
+
+	# Cleanup: reset archetype to null for test isolation
+	GameState.hero_archetype = null
