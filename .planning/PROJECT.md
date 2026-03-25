@@ -123,6 +123,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 <!-- Current scope. Building toward these. -->
 
 - ✓ HeroArchetype Resource with 9-hero REGISTRY (3 STR, 3 DEX, 3 INT), passive bonus dictionaries, generate_choices() — v1.9 Phase 50
+- ✓ Archetype passive bonuses wired into Hero.update_stats() as multiplicative "more" modifiers; is_spell_user derived from archetype; spell toggle removed — v1.9 Phase 51
 
 ### Out of Scope
 
@@ -263,4 +264,4 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Slot-first then archetype drop distribution | 20% per slot, uniform within slot; prevents weapon flooding | ✓ Good -- fair distribution |
 
 ---
-*Last updated: 2026-03-24 — Phase 50 (Data Foundation) complete*
+*Last updated: 2026-03-25 — Phase 51 (Stat Integration) complete*
