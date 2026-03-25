@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
-status: unknown
-stopped_at: Completed 50-01-PLAN.md
-last_updated: "2026-03-24T17:29:21.029Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 51-01-PLAN.md
+last_updated: "2026-03-25T00:07:02.746Z"
 progress:
   total_phases: 5
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
 ---
 
 # Project State: Hammertime
@@ -22,14 +22,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Phase 50 — data-foundation
+**Current focus:** Phase 51 — stat-integration
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload, PrestigeManager autoload.
 
 ## Current Position
 
-Phase: 51
-Plan: Not started
+Phase: 51 (stat-integration) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -64,6 +64,9 @@ Plan: Not started
 All decisions logged in PROJECT.md Key Decisions table.
 
 - [Phase 50-data-foundation]: HeroArchetype extends Resource with plain-string passive_bonuses dict; hero_archetype field not wired to prestige wipe (Phase 52 scope)
+- [Phase 51]: is_spell_user derived from archetype at top of update_stats(), not stored or restored; spell mode toggle removed from settings_view.gd; is_spell_user removed from save format
+- [Phase 51]: Bonus application order in calculate_damage_ranges(): element-specific first, then channel-wide (attack_damage_more), then general (damage_more)
+- [Phase 51]: Spell element map: physical->spell, fire->spell_fire, lightning->spell_lightning for routing element bonuses to spell damage ranges
 
 ### Pending Todos
 
@@ -86,11 +89,12 @@ None.
 | 9 | Rename original_base_xxx to base_xxx and base_xxx to computed_xxx; remove BasicArmor/BasicHelmet FLAT_ARMOR implicits | 2026-02-19 | ac58cda | [9-rename-original-base-xxx-to-base-xxx-and](./quick/9-rename-original-base-xxx-to-base-xxx-and/) |
 | 10 | Fix the icons in the crafting view | 2026-03-06 | 0501d90 | [10-fix-the-icons](./quick/10-fix-the-icons/) |
 | Phase 50-data-foundation P01 | 2 | 3 tasks | 4 files |
+| Phase 51 P01 | 20 | 3 tasks | 4 files |
 
 ## Session Continuity
 
-Last session: 2026-03-24T17:26:49.319Z
-Stopped at: Completed 50-01-PLAN.md
+Last session: 2026-03-25T00:07:02.732Z
+Stopped at: Completed 51-01-PLAN.md
 Resume file: None
 
 ---

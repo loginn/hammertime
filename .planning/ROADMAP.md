@@ -170,7 +170,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 51-01-PLAN.md — Bonus injection into hero.gd, is_spell_user derivation, settings/save cleanup, Group 37 tests
+- [x] 51-01-PLAN.md — Bonus injection into hero.gd, is_spell_user derivation, settings/save cleanup, Group 37 tests
 
 **Success criteria:**
 1. Hero with a fire damage archetype shows higher fire DPS than an identical classless hero with the same gear

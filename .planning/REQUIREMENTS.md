@@ -8,8 +8,8 @@
 - [x] **HERO-03**: Each hero has a proper name and title (e.g., "Fiona, Fire Sorceress") with color identity
 
 ### Passive Bonus System
-- [ ] **PASS-01**: Multiplicative "more" bonuses applied after gear stacking in Hero.update_stats()
-- [ ] **PASS-02**: DoT subvariant heroes get +20% bleed/poison/burn chance bonus to bootstrap viability
+- [x] **PASS-01**: Multiplicative "more" bonuses applied after gear stacking in Hero.update_stats()
+- [x] **PASS-02**: DoT subvariant heroes get +20% bleed/poison/burn chance bonus to bootstrap viability
 - [ ] **PASS-03**: Hero bonus visible as separate line in ForgeView stat panel
 
 ### Prestige Selection
