@@ -10,7 +10,6 @@ signal new_game_started()
 
 var _new_game_confirming: bool = false
 var _import_confirming: bool = false
-var spell_mode_toggle: CheckButton
 
 
 func _ready() -> void:
@@ -20,14 +19,6 @@ func _ready() -> void:
 	import_button.pressed.connect(_on_import_pressed)
 	import_text_edit.text_changed.connect(_on_import_text_changed)
 	import_button.disabled = true  # Disabled until text entered
-
-	# Dev toggle for spell mode
-	spell_mode_toggle = CheckButton.new()
-	spell_mode_toggle.text = "Spell Mode (Dev)"
-	spell_mode_toggle.button_pressed = GameState.hero.is_spell_user
-	spell_mode_toggle.toggled.connect(_on_spell_mode_toggled)
-	add_child(spell_mode_toggle)
-	spell_mode_toggle.position = Vector2(10, 300)
 
 
 func _on_save_pressed() -> void:
@@ -76,11 +67,6 @@ func _on_import_pressed() -> void:
 		_do_import()
 
 
-func _on_spell_mode_toggled(toggled_on: bool) -> void:
-	GameState.hero.is_spell_user = toggled_on
-	GameState.hero.update_stats()
-
-
 func _do_import() -> void:
 	var result := SaveManager.import_save_string(import_text_edit.text)
 	if result["success"]:
@@ -98,4 +84,3 @@ func reset_state() -> void:
 	import_button.text = "Import Save"
 	import_text_edit.text = ""
 	import_button.disabled = true
-	spell_mode_toggle.button_pressed = GameState.hero.is_spell_user

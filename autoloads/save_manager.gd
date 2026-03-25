@@ -109,7 +109,6 @@ func _build_save_data() -> Dictionary:
 		"prestige_level": GameState.prestige_level,
 		"max_item_tier_unlocked": GameState.max_item_tier_unlocked,
 		"tag_currency_counts": GameState.tag_currency_counts.duplicate(),
-		"is_spell_user": GameState.hero.is_spell_user,
 	}
 
 
@@ -158,9 +157,6 @@ func _restore_state(data: Dictionary) -> bool:
 	var saved_tag_currencies: Dictionary = data.get("tag_currency_counts", {})
 	for tag_type in saved_tag_currencies:
 		GameState.tag_currency_counts[tag_type] = int(saved_tag_currencies[tag_type])
-
-	# Restore spell mode
-	GameState.hero.is_spell_user = bool(data.get("is_spell_user", false))
 
 	# Recalculate all derived hero stats from restored equipment
 	GameState.hero.update_stats()

@@ -118,6 +118,7 @@ func unequip_item(slot: String) -> void:
 
 func update_stats() -> void:
 	"""Recalculate all hero stats based on equipped items"""
+	is_spell_user = GameState.hero_archetype.spell_user if GameState.hero_archetype != null else false
 	calculate_crit_stats()
 	calculate_damage_ranges()
 	calculate_spell_damage_ranges()
