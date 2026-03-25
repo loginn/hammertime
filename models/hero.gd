@@ -169,6 +169,26 @@ func calculate_damage_ranges() -> void:
 				damage_ranges[element]["min"] += ring_ranges[element]["min"]
 				damage_ranges[element]["max"] += ring_ranges[element]["max"]
 
+	# Apply archetype passive bonuses (Phase 51 — PASS-01)
+	if GameState.hero_archetype != null:
+		var bonuses: Dictionary = GameState.hero_archetype.passive_bonuses
+		# Element-specific: physical_damage_more, fire_damage_more, cold_damage_more, lightning_damage_more
+		for element in damage_ranges:
+			var element_key: String = element + "_damage_more"
+			if bonuses.has(element_key):
+				damage_ranges[element]["min"] *= (1.0 + bonuses[element_key])
+				damage_ranges[element]["max"] *= (1.0 + bonuses[element_key])
+		# Channel bonus: attack_damage_more scales ALL attack elements (per D-06)
+		if bonuses.has("attack_damage_more"):
+			for element in damage_ranges:
+				damage_ranges[element]["min"] *= (1.0 + bonuses["attack_damage_more"])
+				damage_ranges[element]["max"] *= (1.0 + bonuses["attack_damage_more"])
+		# General bonus: damage_more scales ALL attack elements (DEX, per D-07)
+		if bonuses.has("damage_more"):
+			for element in damage_ranges:
+				damage_ranges[element]["min"] *= (1.0 + bonuses["damage_more"])
+				damage_ranges[element]["max"] *= (1.0 + bonuses["damage_more"])
+
 
 func calculate_dps() -> float:
 	"""Calculate total DPS from per-element damage range averages."""
@@ -241,6 +261,35 @@ func calculate_spell_damage_ranges() -> void:
 			for element in ring_spell_ranges:
 				spell_damage_ranges[element]["min"] += ring_spell_ranges[element]["min"]
 				spell_damage_ranges[element]["max"] += ring_spell_ranges[element]["max"]
+
+	# Apply archetype passive bonuses (Phase 51 — PASS-01)
+	if GameState.hero_archetype != null:
+		var bonuses: Dictionary = GameState.hero_archetype.passive_bonuses
+		# Element-specific via spell element mapping:
+		# bonus "physical_damage_more" -> spell_damage_ranges["spell"]
+		# bonus "fire_damage_more" -> spell_damage_ranges["spell_fire"]
+		# bonus "lightning_damage_more" -> spell_damage_ranges["spell_lightning"]
+		var spell_element_map: Dictionary = {
+			"physical": "spell",
+			"fire": "spell_fire",
+			"lightning": "spell_lightning",
+		}
+		for bonus_elem in spell_element_map:
+			var bonus_key: String = bonus_elem + "_damage_more"
+			var spell_key: String = spell_element_map[bonus_elem]
+			if bonuses.has(bonus_key) and spell_key in spell_damage_ranges:
+				spell_damage_ranges[spell_key]["min"] *= (1.0 + bonuses[bonus_key])
+				spell_damage_ranges[spell_key]["max"] *= (1.0 + bonuses[bonus_key])
+		# Channel bonus: spell_damage_more scales ALL spell elements (per D-06)
+		if bonuses.has("spell_damage_more"):
+			for element in spell_damage_ranges:
+				spell_damage_ranges[element]["min"] *= (1.0 + bonuses["spell_damage_more"])
+				spell_damage_ranges[element]["max"] *= (1.0 + bonuses["spell_damage_more"])
+		# General bonus: damage_more scales ALL spell elements (DEX, per D-07)
+		if bonuses.has("damage_more"):
+			for element in spell_damage_ranges:
+				spell_damage_ranges[element]["min"] *= (1.0 + bonuses["damage_more"])
+				spell_damage_ranges[element]["max"] *= (1.0 + bonuses["damage_more"])
 
 
 func calculate_spell_dps() -> float:
@@ -570,6 +619,25 @@ func calculate_dot_stats() -> void:
 					total_burn_damage_max += affix.add_max
 				elif affix.value > 0:
 					total_burn_damage_pct += affix.value
+
+	# Apply archetype passive bonuses to DoT stats (Phase 51 — PASS-01, PASS-02)
+	if GameState.hero_archetype != null:
+		var bonuses: Dictionary = GameState.hero_archetype.passive_bonuses
+		# Chance bonuses: multiply total (per D-08). Values are decimals (0.20 = 20%)
+		if bonuses.has("bleed_chance_more"):
+			total_bleed_chance *= (1.0 + bonuses["bleed_chance_more"])
+		if bonuses.has("poison_chance_more"):
+			total_poison_chance *= (1.0 + bonuses["poison_chance_more"])
+		if bonuses.has("burn_chance_more"):
+			total_burn_chance *= (1.0 + bonuses["burn_chance_more"])
+		# Damage bonuses: convert decimal to percentage then add (per D-08, Pitfall 6)
+		# 0.15 decimal -> 15.0 percentage points added to total_X_damage_pct
+		if bonuses.has("bleed_damage_more"):
+			total_bleed_damage_pct += bonuses["bleed_damage_more"] * 100.0
+		if bonuses.has("poison_damage_more"):
+			total_poison_damage_pct += bonuses["poison_damage_more"] * 100.0
+		if bonuses.has("burn_damage_more"):
+			total_burn_damage_pct += bonuses["burn_damage_more"] * 100.0
 
 	calculate_dot_dps()
 
