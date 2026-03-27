@@ -126,6 +126,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ Archetype passive bonuses wired into Hero.update_stats() as multiplicative "more" modifiers; is_spell_user derived from archetype; spell toggle removed — v1.9 Phase 51
 - ✓ Save format v8 with hero_archetype_id persistence; old saves (v7) trigger fresh game; strict import version rejection; prestige wipe nulls archetype — v1.9 Phase 52
 - ✓ 3-card hero selection overlay after prestige (P1+) with BONUS_LABELS display, colored borders, single-click selection, auto-save; 39-group integration test suite — v1.9 Phase 53
+- ✓ ForgeView stat panel shows hero title in archetype color with "Passive:" bonus section before Offense; classless Adventurer shows no hero section; bonus magnitudes locked — v1.9 Phase 54
 
 ### Out of Scope
 
@@ -266,4 +267,4 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Slot-first then archetype drop distribution | 20% per slot, uniform within slot; prevents weapon flooding | ✓ Good -- fair distribution |
 
 ---
-*Last updated: 2026-03-27 — Phase 53 (Selection UI) complete*
+*Last updated: 2026-03-27 — Phase 54 (Polish & Balance) complete*
