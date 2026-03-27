@@ -18,7 +18,7 @@
 - [ ] **SEL-03**: Selection overlay UI blocks gameplay post-prestige until hero is picked (1280x720)
 
 ### Save & Persistence
-- [ ] **SAVE-01**: Save format v8 with hero_archetype_id. Old saves trigger new game (breaking change)
+- [x] **SAVE-01**: Save format v8 with hero_archetype_id. Old saves trigger new game (breaking change)
 
 ## Future Requirements
 

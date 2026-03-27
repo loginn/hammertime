@@ -185,7 +185,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 52-01-PLAN.md — Save v8 with hero_archetype_id, strict import rejection, prestige wipe, Group 38 tests
+- [x] 52-01-PLAN.md — Save v8 with hero_archetype_id, strict import rejection, prestige wipe, Group 38 tests
 
 **Success criteria:**
 1. Saving and loading a game round-trips the selected hero archetype correctly

@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 51-01-PLAN.md
-last_updated: "2026-03-25T00:10:10.840Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 52-01-PLAN.md (Save format v8 with hero_archetype_id persistence)
+last_updated: "2026-03-27T08:47:40.060Z"
 progress:
   total_phases: 5
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 3
+  total_plans: 3
+  completed_plans: 3
 ---
 
 # Project State: Hammertime
@@ -22,14 +22,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Phase 51 — stat-integration
+**Current focus:** Phase 52 — save-persistence
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload, PrestigeManager autoload.
 
 ## Current Position
 
-Phase: 52
-Plan: Not started
+Phase: 52 (save-persistence) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [Phase 51]: is_spell_user derived from archetype at top of update_stats(), not stored or restored; spell mode toggle removed from settings_view.gd; is_spell_user removed from save format
 - [Phase 51]: Bonus application order in calculate_damage_ranges(): element-specific first, then channel-wide (attack_damage_more), then general (damage_more)
 - [Phase 51]: Spell element map: physical->spell, fire->spell_fire, lightning->spell_lightning for routing element bonuses to spell damage ranges
+- [Phase 52-save-persistence]: SAVE_VERSION bumped to 8; hero_archetype_id round-trips via from_id(); strict import rejection for pre-v8 strings; hero_archetype wiped on prestige
 
 ### Pending Todos
 
@@ -90,11 +91,12 @@ None.
 | 10 | Fix the icons in the crafting view | 2026-03-06 | 0501d90 | [10-fix-the-icons](./quick/10-fix-the-icons/) |
 | Phase 50-data-foundation P01 | 2 | 3 tasks | 4 files |
 | Phase 51 P01 | 20 | 3 tasks | 4 files |
+| Phase 52-save-persistence P01 | 8 | 2 tasks | 3 files |
 
 ## Session Continuity
 
-Last session: 2026-03-25T00:07:02.732Z
-Stopped at: Completed 51-01-PLAN.md
+Last session: 2026-03-27T08:47:40.050Z
+Stopped at: Completed 52-01-PLAN.md (Save format v8 with hero_archetype_id persistence)
 Resume file: None
 
 ---
