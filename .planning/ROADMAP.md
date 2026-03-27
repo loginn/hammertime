@@ -215,7 +215,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 54-01-PLAN.md — Hero title + passive bonus block in stat panel, visual verification
+- [x] 54-01-PLAN.md — Hero title + passive bonus block in stat panel, visual verification
 
 **Success criteria:**
 1. ForgeView stat panel shows a separate labeled line for the active hero's passive bonus contribution

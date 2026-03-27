@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 53-01-PLAN.md (Hero selection overlay)
-last_updated: "2026-03-27T10:07:39.756Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 54-01-PLAN.md (ForgeView hero bonus display)
+last_updated: "2026-03-27T17:46:17.682Z"
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 5
+  total_plans: 5
+  completed_plans: 5
 ---
 
 # Project State: Hammertime
@@ -22,14 +22,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Phase 53 — selection-ui
+**Current focus:** Phase 54 — polish-balance
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload, PrestigeManager autoload.
 
 ## Current Position
 
-Phase: 54
-Plan: Not started
+Phase: 54 (polish-balance) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -70,6 +70,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [Phase 52-save-persistence]: SAVE_VERSION bumped to 8; hero_archetype_id round-trips via from_id(); strict import rejection for pre-v8 strings; hero_archetype wiped on prestige
 - [Phase 53-selection-ui]: Overlay built programmatically in main_view.gd — no new scene files needed
 - [Phase 53-selection-ui]: BONUS_LABELS const on HeroArchetype for clean label lookup and testability
+- [Phase 54]: Hero title uses BBCode [color=#hex] rather than modulate for per-section coloring within a single RichTextLabel
+- [Phase 54]: Classless Adventurer null archetype shows no hero section in ForgeView stat panel (per D-04)
 
 ### Pending Todos
 
@@ -95,11 +97,12 @@ None.
 | Phase 51 P01 | 20 | 3 tasks | 4 files |
 | Phase 52-save-persistence P01 | 8 | 2 tasks | 3 files |
 | Phase 53-selection-ui P01 | 157 | 3 tasks | 3 files |
+| Phase 54 P01 | 15 | 2 tasks | 1 files |
 
 ## Session Continuity
 
-Last session: 2026-03-27T10:04:10.230Z
-Stopped at: Completed 53-01-PLAN.md (Hero selection overlay)
+Last session: 2026-03-27T17:46:17.667Z
+Stopped at: Completed 54-01-PLAN.md (ForgeView hero bonus display)
 Resume file: None
 
 ---
