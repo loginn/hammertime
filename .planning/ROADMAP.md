@@ -182,6 +182,10 @@ Plans:
 
 **Goal:** Bump save format to v8 with hero_archetype_id persistence; old saves (v7 and below) trigger a fresh new game.
 **Requirements:** SAVE-01
+**Plans:** 1 plan
+
+Plans:
+- [ ] 52-01-PLAN.md — Save v8 with hero_archetype_id, strict import rejection, prestige wipe, Group 38 tests
 
 **Success criteria:**
 1. Saving and loading a game round-trips the selected hero archetype correctly
@@ -227,8 +231,8 @@ Plans:
 | 31-34             | v1.6      | 5/5            | Complete    | 2026-02-20 |
 | 35-41             | v1.7      | 9/9            | Complete    | 2026-03-06 |
 | 42-49             | v1.8      | 18/18          | Complete    | 2026-03-08 |
-| 50-54             | v1.9      | 1/2            | Planning    | —          |
+| 50-54             | v1.9      | 2/4            | Planning    | —          |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-25 — Phase 51 plan created*
+*Last updated: 2026-03-27 — Phase 52 plan created*
