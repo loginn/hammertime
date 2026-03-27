@@ -10,7 +10,7 @@
 ### Passive Bonus System
 - [x] **PASS-01**: Multiplicative "more" bonuses applied after gear stacking in Hero.update_stats()
 - [x] **PASS-02**: DoT subvariant heroes get +20% bleed/poison/burn chance bonus to bootstrap viability
-- [ ] **PASS-03**: Hero bonus visible as separate line in ForgeView stat panel
+- [x] **PASS-03**: Hero bonus visible as separate line in ForgeView stat panel
 
 ### Prestige Selection
 - [x] **SEL-01**: 3-card draft on prestige — 1 STR, 1 DEX, 1 INT drawn randomly, pick one
