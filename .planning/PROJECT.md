@@ -125,6 +125,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ HeroArchetype Resource with 9-hero REGISTRY (3 STR, 3 DEX, 3 INT), passive bonus dictionaries, generate_choices() — v1.9 Phase 50
 - ✓ Archetype passive bonuses wired into Hero.update_stats() as multiplicative "more" modifiers; is_spell_user derived from archetype; spell toggle removed — v1.9 Phase 51
 - ✓ Save format v8 with hero_archetype_id persistence; old saves (v7) trigger fresh game; strict import version rejection; prestige wipe nulls archetype — v1.9 Phase 52
+- ✓ 3-card hero selection overlay after prestige (P1+) with BONUS_LABELS display, colored borders, single-click selection, auto-save; 39-group integration test suite — v1.9 Phase 53
 
 ### Out of Scope
 
@@ -150,7 +151,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - 14,375 LOC GDScript across ~70 files
 - Feature-based folder structure: models/, scenes/, autoloads/, utils/, tools/
 - Autoloads: ItemAffixes, Tag, GameState, GameEvents, SaveManager, PrestigeManager
-- Scene structure: main.tscn with main_view coordinating forge_view, gameplay_view, prestige_view, settings_view via 4-tab bar
+- Scene structure: main.tscn with main_view coordinating forge_view, gameplay_view, prestige_view, settings_view via 4-tab bar; hero selection overlay on OverlayLayer post-prestige
 - ForgeView combines hero equipment (left) and single crafting bench per slot (right) with tag hammer section (P1+)
 - StatCalculator handles all DPS/defense calculations including spell damage and DoT DPS with flat + percentage stacking
 - DefenseCalculator handles all incoming damage with 4-stage pipeline; DoT uses resistance-only path
@@ -265,4 +266,4 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Slot-first then archetype drop distribution | 20% per slot, uniform within slot; prevents weapon flooding | ✓ Good -- fair distribution |
 
 ---
-*Last updated: 2026-03-27 — Phase 52 (Save & Persistence) complete*
+*Last updated: 2026-03-27 — Phase 53 (Selection UI) complete*
