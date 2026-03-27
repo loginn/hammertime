@@ -2,6 +2,18 @@ extends Node2D
 
 var current_view: String = "forge"
 var prestige_tab_revealed: bool = false
+var _hero_overlay: Control = null
+
+const _ARCH_NAMES: Dictionary = {
+	HeroArchetype.Archetype.STR: "STR",
+	HeroArchetype.Archetype.DEX: "DEX",
+	HeroArchetype.Archetype.INT: "INT",
+}
+const _SUB_NAMES: Dictionary = {
+	HeroArchetype.Subvariant.HIT: "Hit",
+	HeroArchetype.Subvariant.DOT: "DoT",
+	HeroArchetype.Subvariant.ELEMENTAL: "Elemental",
+}
 
 @onready var forge_view: Node2D = $ContentArea/ForgeView
 @onready var gameplay_view: Node2D = $ContentArea/GameplayView
@@ -42,6 +54,10 @@ func _ready() -> void:
 
 	# Show forge view by default
 	show_view("forge")
+
+	# Hero selection check (D-08, D-09)
+	if GameState.prestige_level >= 1 and GameState.hero_archetype == null:
+		_show_hero_selection()
 
 
 func _input(event) -> void:
@@ -149,3 +165,126 @@ func _on_prestige_triggered() -> void:
 
 func _do_prestige_reload() -> void:
 	get_tree().reload_current_scene()
+
+
+func _show_hero_selection() -> void:
+	GameEvents.hero_selection_needed.emit()
+
+	var choices := HeroArchetype.generate_choices()
+
+	# Build overlay root
+	var overlay := Control.new()
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.name = "HeroSelectionOverlay"
+	_hero_overlay = overlay
+
+	# Semi-transparent background (blocks all input)
+	var bg := ColorRect.new()
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.color = Color(0, 0, 0, 0.75)
+	bg.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.add_child(bg)
+
+	# Centered layout container
+	var layout := VBoxContainer.new()
+	layout.set_anchors_preset(Control.PRESET_CENTER)
+	layout.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	layout.grow_vertical = Control.GROW_DIRECTION_BOTH
+	layout.alignment = BoxContainer.ALIGNMENT_CENTER
+	overlay.add_child(layout)
+
+	# Header label
+	var header := Label.new()
+	header.text = "Choose Your Hero"
+	header.add_theme_font_size_override("font_size", 28)
+	header.add_theme_color_override("font_color", Color.WHITE)
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	layout.add_child(header)
+
+	# Card row
+	var card_row := HBoxContainer.new()
+	card_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	card_row.add_theme_constant_override("separation", 20)
+	layout.add_child(card_row)
+
+	# Build one card per hero choice
+	for hero in choices:
+		card_row.add_child(_build_hero_card(hero))
+
+	$OverlayLayer.add_child(overlay)
+
+
+func _build_hero_card(hero: HeroArchetype) -> Control:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(360, 0)
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+
+	# Styled background with colored left border
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.12, 0.12, 1.0)
+	style.border_width_left = 5
+	style.border_color = hero.color
+	style.content_margin_left = 16
+	style.content_margin_top = 12
+	style.content_margin_right = 12
+	style.content_margin_bottom = 12
+	card.add_theme_stylebox_override("panel", style)
+
+	var content := VBoxContainer.new()
+	card.add_child(content)
+
+	# Archetype label (e.g. "STR - Hit")
+	var arch_label := Label.new()
+	arch_label.text = _ARCH_NAMES[hero.archetype] + " - " + _SUB_NAMES[hero.subvariant]
+	arch_label.add_theme_font_size_override("font_size", 16)
+	arch_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	content.add_child(arch_label)
+
+	# Hero title
+	var title_label := Label.new()
+	title_label.text = hero.title
+	title_label.add_theme_font_size_override("font_size", 22)
+	title_label.add_theme_color_override("font_color", Color.WHITE)
+	content.add_child(title_label)
+
+	# Separator
+	content.add_child(HSeparator.new())
+
+	# Passive bonus lines
+	for bonus_str in HeroArchetype.format_bonuses(hero.passive_bonuses):
+		var bonus_label := Label.new()
+		bonus_label.text = bonus_str
+		bonus_label.add_theme_font_size_override("font_size", 16)
+		bonus_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
+		content.add_child(bonus_label)
+
+	# Click handler
+	card.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_on_hero_card_selected(hero)
+	)
+
+	return card
+
+
+func _on_hero_card_selected(hero: HeroArchetype) -> void:
+	# Prevent double-click during fade
+	if _hero_overlay == null:
+		return
+	var overlay := _hero_overlay
+	_hero_overlay = null  # guard against re-entry
+
+	# Set archetype and update stats (Pitfall 6)
+	GameState.hero_archetype = hero
+	GameState.hero.update_stats()
+
+	# Persist immediately (D-14)
+	SaveManager.save_game()
+
+	# Emit signal for listeners
+	GameEvents.hero_selected.emit(hero)
+
+	# Fade out 0.3s then free (D-13)
+	var tween := create_tween()
+	tween.tween_property(overlay, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(overlay.queue_free)
