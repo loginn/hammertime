@@ -197,6 +197,10 @@ Plans:
 
 **Goal:** Build the 3-card hero selection overlay that appears after prestige and blocks gameplay until a hero is picked.
 **Requirements:** SEL-01, SEL-02, SEL-03
+**Plans:** 1 plan
+
+Plans:
+- [ ] 53-01-PLAN.md — BONUS_LABELS + format_bonuses(), hero selection overlay in main_view, Group 39 tests
 
 **Success criteria:**
 1. After prestige (P1+), a 3-card overlay appears showing one STR, one DEX, and one INT hero with name, title, color, and passive description
@@ -231,8 +235,8 @@ Plans:
 | 31-34             | v1.6      | 5/5            | Complete    | 2026-02-20 |
 | 35-41             | v1.7      | 9/9            | Complete    | 2026-03-06 |
 | 42-49             | v1.8      | 18/18          | Complete    | 2026-03-08 |
-| 50-54             | v1.9      | 2/4            | Planning    | —          |
+| 50-54             | v1.9      | 3/5            | Planning    | —          |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-27 — Phase 52 plan created*
+*Last updated: 2026-03-27 — Phase 53 plan created*
