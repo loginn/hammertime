@@ -129,6 +129,9 @@ func _wipe_run_state() -> void:
 	# 5. Tag currencies -- wiped (they are run currency per user decision)
 	tag_currency_counts = {}
 
+	# 6. Hero archetype -- wiped to force re-selection on prestige (D-07)
+	hero_archetype = null
+
 	# Recalculate derived hero stats to ensure consistency
 	hero.update_stats()
 

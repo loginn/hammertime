@@ -1,7 +1,7 @@
 extends Node
 
 const SAVE_PATH = "user://hammertime_save.json"
-const SAVE_VERSION = 7
+const SAVE_VERSION = 8
 const AUTO_SAVE_INTERVAL = 300.0  # 5 minutes
 
 var auto_save_timer: Timer
@@ -109,6 +109,8 @@ func _build_save_data() -> Dictionary:
 		"prestige_level": GameState.prestige_level,
 		"max_item_tier_unlocked": GameState.max_item_tier_unlocked,
 		"tag_currency_counts": GameState.tag_currency_counts.duplicate(),
+		# v8 hero archetype field
+		"hero_archetype_id": GameState.hero_archetype.id if GameState.hero_archetype != null else null,
 	}
 
 
@@ -157,6 +159,13 @@ func _restore_state(data: Dictionary) -> bool:
 	var saved_tag_currencies: Dictionary = data.get("tag_currency_counts", {})
 	for tag_type in saved_tag_currencies:
 		GameState.tag_currency_counts[tag_type] = int(saved_tag_currencies[tag_type])
+
+	# Restore hero archetype (v8)
+	var saved_archetype_id = data.get("hero_archetype_id", null)
+	if saved_archetype_id != null and saved_archetype_id is String and saved_archetype_id != "":
+		GameState.hero_archetype = HeroArchetype.from_id(saved_archetype_id)
+	else:
+		GameState.hero_archetype = null
 
 	# Recalculate all derived hero stats from restored equipment
 	GameState.hero.update_stats()
@@ -212,11 +221,14 @@ func import_save_string(save_string: String) -> Dictionary:
 	var data: Dictionary = parsed
 
 	# Version check — reject saves from newer game versions
-	if int(data.get("version", 0)) > SAVE_VERSION:
+	var import_version := int(data.get("version", 0))
+	if import_version > SAVE_VERSION:
 		return {"success": false, "error": "newer_version"}
 
-	# Restore state — old-version import strings (v2) succeed with default prestige values
-	# from _restore_state()'s .get() defaults. The restored state is saved as v3 via save_game() below.
+	# Reject outdated versions — no backward compatibility until first alpha release (D-05)
+	if import_version < SAVE_VERSION:
+		return {"success": false, "error": "outdated_version"}
+
 	if not _restore_state(data):
 		return {"success": false, "error": "restore_failed"}
 
