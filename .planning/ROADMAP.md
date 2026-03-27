@@ -200,7 +200,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 53-01-PLAN.md — BONUS_LABELS + format_bonuses(), hero selection overlay in main_view, Group 39 tests
+- [x] 53-01-PLAN.md — BONUS_LABELS + format_bonuses(), hero selection overlay in main_view, Group 39 tests
 
 **Success criteria:**
 1. After prestige (P1+), a 3-card overlay appears showing one STR, one DEX, and one INT hero with name, title, color, and passive description

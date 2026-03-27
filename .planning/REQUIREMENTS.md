@@ -13,9 +13,9 @@
 - [ ] **PASS-03**: Hero bonus visible as separate line in ForgeView stat panel
 
 ### Prestige Selection
-- [ ] **SEL-01**: 3-card draft on prestige — 1 STR, 1 DEX, 1 INT drawn randomly, pick one
-- [ ] **SEL-02**: P0 plays as classless Adventurer (no hero, no passive). First selection at P1
-- [ ] **SEL-03**: Selection overlay UI blocks gameplay post-prestige until hero is picked (1280x720)
+- [x] **SEL-01**: 3-card draft on prestige — 1 STR, 1 DEX, 1 INT drawn randomly, pick one
+- [x] **SEL-02**: P0 plays as classless Adventurer (no hero, no passive). First selection at P1
+- [x] **SEL-03**: Selection overlay UI blocks gameplay post-prestige until hero is picked (1280x720)
 
 ### Save & Persistence
 - [x] **SAVE-01**: Save format v8 with hero_archetype_id. Old saves trigger new game (breaking change)

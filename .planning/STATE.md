@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 52-01-PLAN.md (Save format v8 with hero_archetype_id persistence)
-last_updated: "2026-03-27T08:54:59.020Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 53-01-PLAN.md (Hero selection overlay)
+last_updated: "2026-03-27T10:04:10.241Z"
 progress:
   total_phases: 5
-  completed_phases: 3
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 4
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State: Hammertime
@@ -22,14 +22,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Phase 52 — save-persistence
+**Current focus:** Phase 53 — selection-ui
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload, PrestigeManager autoload.
 
 ## Current Position
 
-Phase: 53
-Plan: Not started
+Phase: 53 (selection-ui) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -68,6 +68,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [Phase 51]: Bonus application order in calculate_damage_ranges(): element-specific first, then channel-wide (attack_damage_more), then general (damage_more)
 - [Phase 51]: Spell element map: physical->spell, fire->spell_fire, lightning->spell_lightning for routing element bonuses to spell damage ranges
 - [Phase 52-save-persistence]: SAVE_VERSION bumped to 8; hero_archetype_id round-trips via from_id(); strict import rejection for pre-v8 strings; hero_archetype wiped on prestige
+- [Phase 53-selection-ui]: Overlay built programmatically in main_view.gd — no new scene files needed
+- [Phase 53-selection-ui]: BONUS_LABELS const on HeroArchetype for clean label lookup and testability
 
 ### Pending Todos
 
@@ -92,11 +94,12 @@ None.
 | Phase 50-data-foundation P01 | 2 | 3 tasks | 4 files |
 | Phase 51 P01 | 20 | 3 tasks | 4 files |
 | Phase 52-save-persistence P01 | 8 | 2 tasks | 3 files |
+| Phase 53-selection-ui P01 | 157 | 3 tasks | 3 files |
 
 ## Session Continuity
 
-Last session: 2026-03-27T08:47:40.050Z
-Stopped at: Completed 52-01-PLAN.md (Save format v8 with hero_archetype_id persistence)
+Last session: 2026-03-27T10:04:10.230Z
+Stopped at: Completed 53-01-PLAN.md (Hero selection overlay)
 Resume file: None
 
 ---
