@@ -120,6 +120,31 @@ const REGISTRY: Dictionary = {
 }
 
 
+const BONUS_LABELS: Dictionary = {
+	"attack_damage_more": "Attack Damage",
+	"physical_damage_more": "Physical Damage",
+	"damage_more": "Damage",
+	"bleed_chance_more": "Bleed Chance",
+	"bleed_damage_more": "Bleed Damage",
+	"poison_chance_more": "Poison Chance",
+	"poison_damage_more": "Poison Damage",
+	"burn_chance_more": "Burn Chance",
+	"burn_damage_more": "Burn Damage",
+	"fire_damage_more": "Fire Damage",
+	"cold_damage_more": "Cold Damage",
+	"lightning_damage_more": "Lightning Damage",
+	"spell_damage_more": "Spell Damage",
+}
+
+static func format_bonuses(bonuses: Dictionary) -> Array[String]:
+	var result: Array[String] = []
+	for key in bonuses:
+		var pct: int = roundi(bonuses[key] * 100)
+		var label: String = BONUS_LABELS.get(key, key)
+		result.append("+%d%% %s" % [pct, label])
+	return result
+
+
 static func from_id(hero_id: String) -> HeroArchetype:
 	if hero_id not in REGISTRY:
 		push_warning("HeroArchetype.from_id: unknown id '%s'" % hero_id)

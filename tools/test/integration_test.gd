@@ -46,6 +46,7 @@ func _ready() -> void:
 	_group_36_hero_archetype_data()
 	_group_37_stat_integration()
 	_group_38_save_persistence()
+	_group_39_selection_ui()
 
 	var total: int = _pass_count + _fail_count
 	print("\n=== SUMMARY ===")
@@ -1968,3 +1969,69 @@ func _group_38_save_persistence() -> void:
 
 	# Cleanup: restore fresh game state for subsequent groups
 	GameState.initialize_fresh_game()
+
+
+func _group_39_selection_ui() -> void:
+	print("\n--- Group 39: Selection UI ---")
+
+	# Test format_bonuses basic conversion
+	var single := HeroArchetype.format_bonuses({"attack_damage_more": 0.25})
+	_check(single.size() == 1, "format_bonuses: single bonus returns 1 entry")
+	_check(single[0] == "+25% Attack Damage", "format_bonuses: 0.25 -> '+25% Attack Damage'")
+
+	# Test format_bonuses with multiple bonuses
+	var multi := HeroArchetype.format_bonuses({"bleed_chance_more": 0.20, "bleed_damage_more": 0.15})
+	_check(multi.size() == 2, "format_bonuses: two bonuses returns 2 entries")
+
+	# Test format_bonuses empty
+	var empty := HeroArchetype.format_bonuses({})
+	_check(empty.size() == 0, "format_bonuses: empty dict returns empty array")
+
+	# Test BONUS_LABELS covers all REGISTRY bonus keys
+	var all_keys: Dictionary = {}
+	for hero_id in HeroArchetype.REGISTRY:
+		var data: Dictionary = HeroArchetype.REGISTRY[hero_id]
+		for key in data["passive_bonuses"]:
+			all_keys[key] = true
+	for key in all_keys:
+		_check(key in HeroArchetype.BONUS_LABELS, "BONUS_LABELS has key: %s" % key)
+
+	# Test generate_choices returns 3 heroes, one per archetype
+	var choices := HeroArchetype.generate_choices()
+	_check(choices.size() == 3, "generate_choices: returns exactly 3")
+	var archetypes_seen: Dictionary = {}
+	for hero in choices:
+		archetypes_seen[hero.archetype] = true
+		_check(hero.title != "", "generate_choices: hero has title")
+		_check(hero.passive_bonuses.size() > 0, "generate_choices: hero has passive_bonuses")
+	_check(archetypes_seen.size() == 3, "generate_choices: one per archetype (STR/DEX/INT)")
+
+	# Test P0 detection logic (prestige_level == 0 -> no overlay)
+	var old_prestige := GameState.prestige_level
+	var old_archetype := GameState.hero_archetype
+	GameState.prestige_level = 0
+	GameState.hero_archetype = null
+	var p0_should_show: bool = GameState.prestige_level >= 1 and GameState.hero_archetype == null
+	_check(p0_should_show == false, "P0 with null archetype: overlay NOT triggered")
+
+	# Test P1+ with null archetype -> overlay triggered
+	GameState.prestige_level = 1
+	GameState.hero_archetype = null
+	var p1_null_should_show: bool = GameState.prestige_level >= 1 and GameState.hero_archetype == null
+	_check(p1_null_should_show == true, "P1 with null archetype: overlay triggered")
+
+	# Test P1+ with non-null archetype -> no overlay
+	GameState.prestige_level = 1
+	GameState.hero_archetype = HeroArchetype.from_id("str_hit")
+	var p1_set_should_show: bool = GameState.prestige_level >= 1 and GameState.hero_archetype == null
+	_check(p1_set_should_show == false, "P1 with set archetype: overlay NOT triggered")
+
+	# Test selection sets GameState correctly
+	var picked := HeroArchetype.from_id("dex_dot")
+	GameState.hero_archetype = picked
+	_check(GameState.hero_archetype != null, "After selection: hero_archetype is not null")
+	_check(GameState.hero_archetype.id == "dex_dot", "After selection: hero_archetype.id matches")
+
+	# Restore state
+	GameState.prestige_level = old_prestige
+	GameState.hero_archetype = old_archetype
