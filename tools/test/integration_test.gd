@@ -45,6 +45,7 @@ func _ready() -> void:
 	_group_35_save_version_and_loot_integration()
 	_group_36_hero_archetype_data()
 	_group_37_stat_integration()
+	_group_38_save_persistence()
 
 	var total: int = _pass_count + _fail_count
 	print("\n=== SUMMARY ===")
@@ -1910,3 +1911,60 @@ func _group_37_stat_integration() -> void:
 
 	# Cleanup: reset archetype to null for test isolation
 	GameState.hero_archetype = null
+
+
+# --- Group 38: Save Persistence (SAVE-01) ---
+
+func _group_38_save_persistence() -> void:
+	print("\n=== GROUP 38: Save Persistence (SAVE-01) ===")
+
+	# Test 38.1: SAVE_VERSION is 8
+	_check(SaveManager.SAVE_VERSION == 8, "38.1 SAVE_VERSION is 8")
+
+	# Test 38.2: _build_save_data includes hero_archetype_id when archetype set
+	GameState.hero_archetype = HeroArchetype.from_id("str_hit")
+	var save_data := SaveManager._build_save_data()
+	_check(save_data.has("hero_archetype_id"), "38.2 save data has hero_archetype_id key")
+	_check(save_data["hero_archetype_id"] == "str_hit", "38.3 hero_archetype_id is 'str_hit'")
+
+	# Test 38.4: _build_save_data writes null when no archetype
+	GameState.hero_archetype = null
+	save_data = SaveManager._build_save_data()
+	_check(save_data["hero_archetype_id"] == null, "38.4 hero_archetype_id is null for classless")
+
+	# Test 38.5: _restore_state restores archetype from ID
+	var restore_data := save_data.duplicate(true)
+	restore_data["hero_archetype_id"] = "dex_dot"
+	restore_data["version"] = 8
+	SaveManager._restore_state(restore_data)
+	_check(GameState.hero_archetype != null, "38.5 hero_archetype restored (not null)")
+	_check(GameState.hero_archetype.id == "dex_dot", "38.6 restored archetype id is 'dex_dot'")
+
+	# Test 38.7: _restore_state handles null archetype ID
+	restore_data["hero_archetype_id"] = null
+	SaveManager._restore_state(restore_data)
+	_check(GameState.hero_archetype == null, "38.7 null archetype_id restores to null")
+
+	# Test 38.8: _restore_state handles missing key (pre-v8 data shape)
+	restore_data.erase("hero_archetype_id")
+	SaveManager._restore_state(restore_data)
+	_check(GameState.hero_archetype == null, "38.8 missing key defaults to null archetype")
+
+	# Test 38.9: import_save_string rejects old version
+	var old_save := {"version": 7, "hero_equipment": {}, "currencies": {}}
+	var old_json := JSON.stringify(old_save)
+	var old_b64 := Marshalls.utf8_to_base64(old_json)
+	var old_checksum := old_b64.md5_text()
+	var old_string := "HT1:" + old_b64 + ":" + old_checksum
+	var result := SaveManager.import_save_string(old_string)
+	_check(result["success"] == false, "38.9 old version import rejected")
+	_check(result["error"] == "outdated_version", "38.10 error is 'outdated_version'")
+
+	# Test 38.11: _wipe_run_state nulls hero_archetype
+	GameState.hero_archetype = HeroArchetype.from_id("int_elem")
+	_check(GameState.hero_archetype != null, "38.11 pre-wipe archetype is set")
+	GameState._wipe_run_state()
+	_check(GameState.hero_archetype == null, "38.12 post-wipe archetype is null")
+
+	# Cleanup: restore fresh game state for subsequent groups
+	GameState.initialize_fresh_game()
