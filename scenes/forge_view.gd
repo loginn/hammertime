@@ -680,14 +680,26 @@ func update_hero_stats_display() -> void:
 			hero_stats_label.modulate = Color.WHITE
 		return
 
-	# Default: show aggregate hero stats (no BBCode needed for default view)
+	# Default: show aggregate hero stats
 	var hero: Hero = GameState.hero
 
 	# Reset color to white for default view
 	hero_stats_label.modulate = Color.WHITE
 
+	# Hero archetype section (per D-01: before Offense, per D-04: null = no section)
+	var archetype: HeroArchetype = GameState.hero_archetype
+	if archetype != null:
+		var hex: String = archetype.color.to_html(false)
+		hero_stats_label.text = "[color=#%s]%s[/color]\n" % [hex, archetype.title]
+		hero_stats_label.text += "Passive:\n"
+		for line in HeroArchetype.format_bonuses(archetype.passive_bonuses):
+			hero_stats_label.text += "  %s\n" % line
+		hero_stats_label.text += "\n"
+	else:
+		hero_stats_label.text = ""
+
 	# Offense section
-	hero_stats_label.text = "Hero Stats:\n\nOffense:\n"
+	hero_stats_label.text += "Offense:\n"
 	var attack_dps := hero.get_total_dps()
 	var spell_dps_val := hero.get_total_spell_dps()
 	if attack_dps > 0 or spell_dps_val == 0:
