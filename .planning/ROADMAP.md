@@ -212,6 +212,10 @@ Plans:
 
 **Goal:** Display hero bonuses in ForgeView stat panel, verify all 9 heroes across all damage channels, and tune bonus magnitudes.
 **Requirements:** PASS-03
+**Plans:** 1 plan
+
+Plans:
+- [ ] 54-01-PLAN.md — Hero title + passive bonus block in stat panel, visual verification
 
 **Success criteria:**
 1. ForgeView stat panel shows a separate labeled line for the active hero's passive bonus contribution
@@ -235,8 +239,8 @@ Plans:
 | 31-34             | v1.6      | 5/5            | Complete    | 2026-02-20 |
 | 35-41             | v1.7      | 9/9            | Complete    | 2026-03-06 |
 | 42-49             | v1.8      | 18/18          | Complete    | 2026-03-08 |
-| 50-54             | v1.9      | 3/5            | Planning    | —          |
+| 50-54             | v1.9      | 4/5            | Planning    | —          |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-27 — Phase 53 plan created*
+*Last updated: 2026-03-27 — Phase 54 plan created*
