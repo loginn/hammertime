@@ -120,6 +120,13 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ Prestige wipes stash and bench via _wipe_run_state() — v1.10
 - ✓ Integration test groups 40-41 covering stash data model and drop routing — v1.10
 
+- ✓ Currency keys renamed to PoE conventions (transmute, augment, alteration, regal, chaos, exalt) — v1.10
+- ✓ Archetype-matched starter items in stash (weapon + armor) for fresh games and post-prestige — v1.10
+- ✓ Starter currency loadout: 2 Transmute + 2 Augment replacing 1 Runic — v1.10
+- ✓ Forest difficulty tuned (~50% HP/damage reduction) for zone 1 survivability with blank starter gear — v1.10
+- ✓ _place_starter_kit() with archetype-aware item selection, wired into init and prestige callback — v1.10
+- ✓ Integration test groups 42-44 covering Forest difficulty, fresh-game starter kit, post-prestige starter kit — v1.10
+
 ## Current Milestone: v1.10 Early Game Rebalance
 
 **Goal:** Make the early crafting loop feel rewarding from zone 1 — more base drops, a small stash to work with, new hammers for iterating on gear, and tuned difficulty so fresh heroes can engage with the systems.
@@ -162,6 +169,8 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - Autoloads: ItemAffixes, Tag, GameState, GameEvents, SaveManager, PrestigeManager
 - Scene structure: main.tscn with main_view coordinating forge_view, gameplay_view, prestige_view, settings_view via 4-tab bar; hero selection overlay on OverlayLayer post-prestige
 - ForgeView combines hero equipment (left) and single universal crafting bench (right) with tag hammer section (P1+); stash UI pending Phase 57
+- Currency keys use PoE conventions: transmute, augment, alteration, regal, chaos, exalt
+- Fresh games and prestige resets provide archetype-matched starter items (weapon + armor) in stash via _place_starter_kit()
 - StatCalculator handles all DPS/defense calculations including spell damage and DoT DPS with flat + percentage stacking
 - DefenseCalculator handles all incoming damage with 4-stage pipeline; DoT uses resistance-only path
 - All data classes extend Resource (Item, Affix, Implicit, Hero, Currency, TagHammer, MonsterType, MonsterPack, BiomeConfig)
@@ -172,6 +181,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - PrestigeManager handles 7 prestige levels with currency-cost gating and full run-state wipe
 - SaveManager handles JSON save/load (format v8), auto-save timer, event triggers, prestige auto-save, Base64 export/import, and strict version rejection on imports
 - 41 active affixes with Vector2i(1, 32) tier ranges; item tiers 1-8 constrain affix tier floor at crafting time
+- 44-group integration test suite (up from 41 at Phase 55)
 - Shipped 11 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges), v1.5 (inventory rework), v1.6 (tech debt cleanup), v1.7 (meta-progression), v1.8 (content pass), v1.9 (heroes)
 
 ## Constraints
@@ -296,4 +306,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 — Phase 55 (Stash Data Model) complete*
+*Last updated: 2026-03-28 — Phase 56 (Difficulty & Starter Kit) complete*
