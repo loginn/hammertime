@@ -212,7 +212,10 @@ Plans:
   3. Tapping a filled stash square moves that item to the crafting bench; the item is removed from stash and cannot be put back
   4. Hovering/long-pressing a stash item shows a popup with the item's full details (name, rarity, affixes)
   5. The stash display updates immediately when items are added from drops or removed by tapping
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 57-01-PLAN.md — StashDisplay scene tree + stash display logic + integration tests
+- [ ] 57-02-PLAN.md — Tap-to-bench interaction + flash/pulse animations + bench-clear integration
 
 ### Phase 58: New Hammers & Save v9
 
@@ -225,7 +228,10 @@ Plans:
   3. Regal Hammer is rejected (with feedback) when applied to a Normal or Rare item
   4. Save format v9 round-trips correctly: Alteration and Regal hammer counts, stash contents, and hero archetype all survive save/load and export/import
   5. Loading a v8 save starts a fresh game (strict version rejection, consistent with existing migration policy)
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 57-01-PLAN.md — StashDisplay scene tree + stash display logic + integration tests
+- [ ] 57-02-PLAN.md — Tap-to-bench interaction + flash/pulse animations + bench-clear integration
 
 ## Progress
 
@@ -243,10 +249,10 @@ Plans:
 | 42-49             | v1.8      | 18/18          | Complete    | 2026-03-08 |
 | 50-54             | v1.9      | 5/5            | Complete    | 2026-03-28 |
 | 55 (Stash Data)   | v1.10     | 1/2 | Complete    | 2026-03-28 |
-| 56 (Difficulty)   | v1.10     | 2/2 | Complete   | 2026-03-28 |
-| 57                | v1.10     | 0/TBD          | Not started | —          |
+| 56 (Difficulty)   | v1.10     | 2/2 | Complete    | 2026-03-28 |
+| 57 (Stash UI)     | v1.10     | 0/2            | Planning    | —          |
 | 58                | v1.10     | 0/TBD          | Not started | —          |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-28 — Phase 56 plans created (2 plans)*
+*Last updated: 2026-03-28 — Phase 57 plans created (2 plans)*
