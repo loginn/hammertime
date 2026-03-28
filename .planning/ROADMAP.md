@@ -163,7 +163,7 @@ Full details: `.planning/milestones/v1.9-ROADMAP.md`
 <summary>🔨 v1.10 Early Game Rebalance (Phases 55-58) — IN PROGRESS</summary>
 
 - [ ] **Phase 55: Stash Data Model** (2 plans) — 3-slot stash arrays per equipment type, auto-stash on drop, overflow feedback
-- [ ] **Phase 56: Difficulty & Starter Kit** — Tune Forest survival, starter weapon + armor in stash, starter hammers
+- [ ] **Phase 56: Difficulty & Starter Kit** (2 plans) — Currency rename to PoE names, starter kit placement, Forest difficulty tuning
 - [ ] **Phase 57: Stash UI** — Letter-icon grid in ForgeView, tap-to-bench interaction, item detail hover
 - [ ] **Phase 58: New Hammers & Save v9** — Alteration and Regal hammer currency classes, save format v9
 
@@ -191,12 +191,15 @@ Plans:
 **Goal**: Fresh P0 heroes can engage with the crafting loop from zone 1 — starter items in stash, starter hammers, and tuned Forest difficulty.
 **Depends on**: Phase 55 (stash must exist for starter items to be placed in it)
 **Requirements**: DIFF-01, DIFF-03
+**Plans:** 2 plans
+Plans:
+- [ ] 56-01-PLAN.md — Currency key rename (runic/forge/etc. to transmute/augment/etc.) + starter counts
+- [ ] 56-02-PLAN.md — Starter kit placement + Forest difficulty tuning + integration tests
 **Success Criteria** (what must be TRUE):
   1. A fresh P0 hero clears zone 1 Forest packs without dying
   2. A new game starts with a starter weapon and starter armor in the stash (not equipped)
   3. A new game starts with 2 Transmute Hammers and 2 Augment (Forge) Hammers
   4. Early Forest pack HP/damage values are tuned so starter gear is sufficient for survival
-**Plans**: TBD
 
 ### Phase 57: Stash UI
 
@@ -240,10 +243,10 @@ Plans:
 | 42-49             | v1.8      | 18/18          | Complete    | 2026-03-08 |
 | 50-54             | v1.9      | 5/5            | Complete    | 2026-03-28 |
 | 55 (Stash Data)   | v1.10     | 1/2 | Complete    | 2026-03-28 |
-| 56 (Difficulty)   | v1.10     | 0/TBD          | Not started | —          |
+| 56 (Difficulty)   | v1.10     | 0/2            | Not started | —          |
 | 57                | v1.10     | 0/TBD          | Not started | —          |
 | 58                | v1.10     | 0/TBD          | Not started | —          |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-28 — Phase 55 plans created (2 plans)*
+*Last updated: 2026-03-28 — Phase 56 plans created (2 plans)*
