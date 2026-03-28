@@ -49,6 +49,9 @@ func _ready() -> void:
 	_group_39_selection_ui()
 	_group_40_stash_data_model()
 	_group_41_stash_drop_routing()
+	_group_42_forest_difficulty_tuning()
+	_group_43_starter_kit_fresh_game()
+	_group_44_starter_kit_post_prestige()
 
 	var total: int = _pass_count + _fail_count
 	print("\n=== SUMMARY ===")
@@ -2051,9 +2054,14 @@ func _group_40_stash_data_model() -> void:
 	_check("boots" in GameState.stash, "Stash has boots key")
 	_check("ring" in GameState.stash, "Stash has ring key")
 
-	# All slots are empty arrays
+	# Starter kit places Broadsword in weapon and IronPlate in armor; other slots empty
 	for slot_name in ["weapon", "helmet", "armor", "boots", "ring"]:
 		_check(GameState.stash[slot_name] is Array, "Stash[" + slot_name + "] is Array")
+	_check(GameState.stash["weapon"].size() == 1, "Stash[weapon] has 1 starter item after fresh game")
+	_check(GameState.stash["armor"].size() == 1, "Stash[armor] has 1 starter item after fresh game")
+	_check(GameState.stash["weapon"][0] is Broadsword, "Stash[weapon][0] is starter Broadsword")
+	_check(GameState.stash["armor"][0] is IronPlate, "Stash[armor][0] is starter IronPlate")
+	for slot_name in ["helmet", "boots", "ring"]:
 		_check(GameState.stash[slot_name].size() == 0, "Stash[" + slot_name + "] is empty after fresh game")
 
 	# Crafting bench is null
@@ -2073,18 +2081,16 @@ func _group_41_stash_drop_routing() -> void:
 	print("\n--- Group 41: Stash Drop Routing (STSH-04) ---")
 	_reset_fresh()
 
-	# Add item to stash returns true
+	# Starter kit already placed 1 weapon; adding another returns true
 	var sword := Broadsword.new(8)
 	var result := GameState.add_item_to_stash(sword)
 	_check(result == true, "add_item_to_stash returns true when slot has room")
-	_check(GameState.stash["weapon"].size() == 1, "Weapon slot has 1 item after add")
-	_check(GameState.stash["weapon"][0] == sword, "Stash weapon[0] is the added sword")
+	_check(GameState.stash["weapon"].size() == 2, "Weapon slot has 2 items after adding to starter")
+	_check(GameState.stash["weapon"][1] == sword, "Stash weapon[1] is the added sword")
 
-	# Fill weapon slot to 3
+	# Fill weapon slot to 3 (already at 2: starter + sword)
 	var sword2 := Broadsword.new(8)
-	var sword3 := Broadsword.new(8)
 	GameState.add_item_to_stash(sword2)
-	GameState.add_item_to_stash(sword3)
 	_check(GameState.stash["weapon"].size() == 3, "Weapon slot has 3 items (full)")
 
 	# 4th item is discarded
@@ -2096,12 +2102,12 @@ func _group_41_stash_drop_routing() -> void:
 	# Other slots unaffected by weapon overflow
 	_check(GameState.stash["ring"].size() == 0, "Ring slot still empty after weapon overflow")
 
-	# Items route to correct slots
+	# Items route to correct slots (fresh game has 1 starter weapon + 1 starter armor)
 	_reset_fresh()
 	var helmet := IronHelm.new(8)
 	GameState.add_item_to_stash(helmet)
 	_check(GameState.stash["helmet"].size() == 1, "Helmet routes to helmet slot")
-	_check(GameState.stash["weapon"].size() == 0, "Weapon slot unaffected by helmet add")
+	_check(GameState.stash["weapon"].size() == 1, "Weapon slot has starter item, unaffected by helmet add")
 
 	var ring := JadeRing.new(8)
 	GameState.add_item_to_stash(ring)
@@ -2109,8 +2115,92 @@ func _group_41_stash_drop_routing() -> void:
 
 	var armor := IronPlate.new(8)
 	GameState.add_item_to_stash(armor)
-	_check(GameState.stash["armor"].size() == 1, "Armor routes to armor slot")
+	_check(GameState.stash["armor"].size() == 2, "Armor routes to armor slot (starter + added)")
 
 	var boots := LeatherBoots.new(8)
 	GameState.add_item_to_stash(boots)
 	_check(GameState.stash["boots"].size() == 1, "Boots routes to boots slot")
+
+
+# --- Group 42: Forest Difficulty Tuning (DIFF-01) ---
+
+func _group_42_forest_difficulty_tuning() -> void:
+	print("\n--- Group 42: Forest Difficulty Tuning (DIFF-01) ---")
+
+	# Verify Forest biome monster stats are tuned for zone 1 survival
+	var forest := BiomeConfig.get_biome_for_level(1)
+	_check(forest.biome_name == "Forest", "level 1 is Forest biome")
+
+	# Check each monster type count
+	var monsters := forest.monster_types
+	_check(monsters.size() == 6, "Forest has 6 monster types")
+
+	# Forest Bear should have reduced HP and damage
+	var bear := monsters[0]
+	_check(bear.monster_name == "Forest Bear", "first monster is Forest Bear")
+	_check(bear.base_hp == 20.0, "Forest Bear base_hp == 20.0")
+	_check(bear.base_damage == 3.5, "Forest Bear base_damage == 3.5")
+
+	# Bramble Golem (tankiest) should also be reduced
+	var golem := monsters[5]
+	_check(golem.monster_name == "Bramble Golem", "last monster is Bramble Golem")
+	_check(golem.base_hp == 26.0, "Bramble Golem base_hp == 26.0")
+	_check(golem.base_damage == 2.0, "Bramble Golem base_damage == 2.0")
+
+
+# --- Group 43: Starter Kit Fresh Game (DIFF-03) ---
+
+func _group_43_starter_kit_fresh_game() -> void:
+	print("\n--- Group 43: Starter Kit Fresh Game (DIFF-03) ---")
+
+	# Fresh game should have starter items in stash and correct currencies
+	GameState.initialize_fresh_game()
+
+	# Check starter currencies (D-04)
+	_check(GameState.currency_counts["transmute"] == 2, "fresh game has 2 transmute")
+	_check(GameState.currency_counts["augment"] == 2, "fresh game has 2 augment")
+	_check(GameState.currency_counts["alteration"] == 0, "fresh game has 0 alteration")
+
+	# Check starter items in stash (D-01, D-02 — null archetype = STR defaults)
+	var weapon_stash: Array = GameState.stash["weapon"]
+	var armor_stash: Array = GameState.stash["armor"]
+	_check(weapon_stash.size() == 1, "stash has 1 starter weapon")
+	_check(armor_stash.size() == 1, "stash has 1 starter armor")
+
+	# Verify item types (STR defaults for P0)
+	_check(weapon_stash[0] is Broadsword, "starter weapon is Broadsword")
+	_check(armor_stash[0] is IronPlate, "starter armor is IronPlate")
+
+	# Verify items are Normal rarity with no affixes (D-03)
+	_check(weapon_stash[0].rarity == Item.Rarity.NORMAL, "starter weapon is Normal rarity")
+	_check(weapon_stash[0].prefixes.size() == 0, "starter weapon has 0 prefixes")
+	_check(weapon_stash[0].suffixes.size() == 0, "starter weapon has 0 suffixes")
+
+
+# --- Group 44: Starter Kit Post-Prestige (DIFF-03, D-09) ---
+
+func _group_44_starter_kit_post_prestige() -> void:
+	print("\n--- Group 44: Starter Kit Post-Prestige (DIFF-03, D-09) ---")
+
+	# Test _place_starter_kit with each archetype
+	# STR archetype
+	GameState.initialize_fresh_game()
+	GameState._init_stash()  # Clear stash to test kit in isolation
+	var str_hero := HeroArchetype.from_id("str_hit")
+	GameState._place_starter_kit(str_hero)
+	_check(GameState.stash["weapon"][0] is Broadsword, "STR starter weapon is Broadsword")
+	_check(GameState.stash["armor"][0] is IronPlate, "STR starter armor is IronPlate")
+
+	# DEX archetype
+	GameState._init_stash()  # Clear stash
+	var dex_hero := HeroArchetype.from_id("dex_hit")
+	GameState._place_starter_kit(dex_hero)
+	_check(GameState.stash["weapon"][0] is Dagger, "DEX starter weapon is Dagger")
+	_check(GameState.stash["armor"][0] is LeatherVest, "DEX starter armor is LeatherVest")
+
+	# INT archetype
+	GameState._init_stash()  # Clear stash
+	var int_hero := HeroArchetype.from_id("int_hit")
+	GameState._place_starter_kit(int_hero)
+	_check(GameState.stash["weapon"][0] is Wand, "INT starter weapon is Wand")
+	_check(GameState.stash["armor"][0] is SilkRobe, "INT starter armor is SilkRobe")
