@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
-status: executing
-stopped_at: Completed 56-01-PLAN.md (currency key rename to PoE conventions)
-last_updated: "2026-03-28T17:58:13.070Z"
+status: verifying
+stopped_at: Completed 56-02-PLAN.md (archetype starter kit + Forest difficulty tuning)
+last_updated: "2026-03-28T18:04:55.553Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State: Hammertime
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 Phase: 56 (difficulty-starter-kit) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
 ```
@@ -90,6 +90,7 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [Phase 55-02]: ItemTypeButtons hidden not removed — Phase 57 repurposes them as stash slot navigation
 - [Phase 55-02]: Dead code stubs with push_warning for add_item_to_inventory and set_new_item_base — dead, traceable, Phase 57 may reuse
 - [Phase 56-difficulty-starter-kit]: Currency keys renamed to PoE conventions: runic->transmute, forge->augment, tack->alteration, grand->regal, claw->chaos, tuning->exalt (D-05). Starter counts updated to 2 transmute + 2 augment.
+- [Phase 56-difficulty-starter-kit]: null archetype = STR defaults (Broadsword + IronPlate) for P0 fresh game; starter items placed after archetype selection not during wipe
 
 ### Pending Todos
 
@@ -119,11 +120,12 @@ None.
 | Phase 55-stash-data-model P01 | 5 | 2 tasks | 3 files |
 | Phase 55-stash-data-model P02 | 8 | 2 tasks | 2 files |
 | Phase 56-difficulty-starter-kit P01 | 15 | 1 tasks | 6 files |
+| Phase 56-difficulty-starter-kit P02 | 18 | 3 tasks | 5 files |
 
 ## Session Continuity
 
-Last session: 2026-03-28T17:58:13.055Z
-Stopped at: Completed 56-01-PLAN.md (currency key rename to PoE conventions)
+Last session: 2026-03-28T18:04:55.537Z
+Stopped at: Completed 56-02-PLAN.md (archetype starter kit + Forest difficulty tuning)
 Resume file: None
 
 ---

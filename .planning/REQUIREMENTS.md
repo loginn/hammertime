@@ -7,7 +7,7 @@
 
 ### Difficulty
 
-- [ ] **DIFF-01**: Fresh P0 hero survives Forest packs consistently with starter gear
+- [x] **DIFF-01**: Fresh P0 hero survives Forest packs consistently with starter gear
 - [x] **DIFF-03**: Fresh hero starts with starter weapon + armor in stash, plus 2 Transmute and 2 Augment hammers
 
 ### Stash
@@ -46,7 +46,7 @@
 |-------------|-------|--------|
 | STSH-01 | Phase 55 | Complete |
 | STSH-04 | Phase 55 | Complete |
-| DIFF-01 | Phase 56 | Pending |
+| DIFF-01 | Phase 56 | Complete |
 | DIFF-03 | Phase 56 | Complete |
 | STSH-02 | Phase 57 | Pending |
 | STSH-03 | Phase 57 | Pending |
