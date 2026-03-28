@@ -47,6 +47,8 @@ func _ready() -> void:
 	_group_37_stat_integration()
 	_group_38_save_persistence()
 	_group_39_selection_ui()
+	_group_40_stash_data_model()
+	_group_41_stash_drop_routing()
 
 	var total: int = _pass_count + _fail_count
 	print("\n=== SUMMARY ===")
@@ -2035,3 +2037,80 @@ func _group_39_selection_ui() -> void:
 	# Restore state
 	GameState.prestige_level = old_prestige
 	GameState.hero_archetype = old_archetype
+
+
+func _group_40_stash_data_model() -> void:
+	print("\n--- Group 40: Stash Data Model (STSH-01) ---")
+	_reset_fresh()
+
+	# Stash exists with 5 keys
+	_check(GameState.stash.size() == 5, "Stash has 5 slot keys")
+	_check("weapon" in GameState.stash, "Stash has weapon key")
+	_check("helmet" in GameState.stash, "Stash has helmet key")
+	_check("armor" in GameState.stash, "Stash has armor key")
+	_check("boots" in GameState.stash, "Stash has boots key")
+	_check("ring" in GameState.stash, "Stash has ring key")
+
+	# All slots are empty arrays
+	for slot_name in ["weapon", "helmet", "armor", "boots", "ring"]:
+		_check(GameState.stash[slot_name] is Array, "Stash[" + slot_name + "] is Array")
+		_check(GameState.stash[slot_name].size() == 0, "Stash[" + slot_name + "] is empty after fresh game")
+
+	# Crafting bench is null
+	_check(GameState.crafting_bench == null, "Crafting bench is null after fresh game")
+
+	# Wipe run state also resets stash
+	GameState.stash["weapon"].append(Broadsword.new(8))
+	GameState.crafting_bench = Broadsword.new(8)
+	GameState._wipe_run_state()
+	_check(GameState.stash["weapon"].size() == 0, "Stash weapon empty after wipe")
+	_check(GameState.crafting_bench == null, "Crafting bench null after wipe")
+	for slot_name in ["helmet", "armor", "boots", "ring"]:
+		_check(GameState.stash[slot_name].size() == 0, "Stash[" + slot_name + "] empty after wipe")
+
+
+func _group_41_stash_drop_routing() -> void:
+	print("\n--- Group 41: Stash Drop Routing (STSH-04) ---")
+	_reset_fresh()
+
+	# Add item to stash returns true
+	var sword := Broadsword.new(8)
+	var result := GameState.add_item_to_stash(sword)
+	_check(result == true, "add_item_to_stash returns true when slot has room")
+	_check(GameState.stash["weapon"].size() == 1, "Weapon slot has 1 item after add")
+	_check(GameState.stash["weapon"][0] == sword, "Stash weapon[0] is the added sword")
+
+	# Fill weapon slot to 3
+	var sword2 := Broadsword.new(8)
+	var sword3 := Broadsword.new(8)
+	GameState.add_item_to_stash(sword2)
+	GameState.add_item_to_stash(sword3)
+	_check(GameState.stash["weapon"].size() == 3, "Weapon slot has 3 items (full)")
+
+	# 4th item is discarded
+	var sword4 := Broadsword.new(8)
+	var overflow_result := GameState.add_item_to_stash(sword4)
+	_check(overflow_result == false, "add_item_to_stash returns false on overflow")
+	_check(GameState.stash["weapon"].size() == 3, "Weapon slot stays at 3 after overflow")
+
+	# Other slots unaffected by weapon overflow
+	_check(GameState.stash["ring"].size() == 0, "Ring slot still empty after weapon overflow")
+
+	# Items route to correct slots
+	_reset_fresh()
+	var helmet := IronHelm.new(8)
+	GameState.add_item_to_stash(helmet)
+	_check(GameState.stash["helmet"].size() == 1, "Helmet routes to helmet slot")
+	_check(GameState.stash["weapon"].size() == 0, "Weapon slot unaffected by helmet add")
+
+	var ring := JadeRing.new(8)
+	GameState.add_item_to_stash(ring)
+	_check(GameState.stash["ring"].size() == 1, "Ring routes to ring slot")
+
+	var armor := IronPlate.new(8)
+	GameState.add_item_to_stash(armor)
+	_check(GameState.stash["armor"].size() == 1, "Armor routes to armor slot")
+
+	var boots := LeatherBoots.new(8)
+	GameState.add_item_to_stash(boots)
+	_check(GameState.stash["boots"].size() == 1, "Boots routes to boots slot")
