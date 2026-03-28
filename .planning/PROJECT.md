@@ -108,25 +108,28 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ Save format v7 with 21-type serialization registry — v1.8
 - ✓ 35-group integration test suite (up from 28 at v1.7) — v1.8
 
-## Current Milestone: v1.9 Heroes
+- ✓ HeroArchetype Resource with 9-hero REGISTRY (3 STR, 3 DEX, 3 INT), passive bonus dictionaries, generate_choices() — v1.9
+- ✓ Archetype passive bonuses wired into Hero.update_stats() as multiplicative "more" modifiers; is_spell_user derived from archetype — v1.9
+- ✓ Save format v8 with hero_archetype_id persistence; prestige wipe nulls archetype — v1.9
+- ✓ 3-card hero selection overlay after prestige (P1+) with BONUS_LABELS display, colored borders, single-click selection — v1.9
+- ✓ ForgeView stat panel shows hero title in archetype color with "Passive:" bonus section — v1.9
 
-**Goal:** Add hero archetypes with subvariants that unlock on prestige, empowering players with affinity-based passive bonuses.
+## Current Milestone: v1.10 Early Game Rebalance
+
+**Goal:** Make the early crafting loop feel rewarding from zone 1 — more base drops, a small stash to work with, new hammers for iterating on gear, and tuned difficulty so fresh heroes can engage with the systems.
 
 **Target features:**
-- Hero archetypes (STR/DEX/INT) with subvariants for DoT vs Hits and elemental affinities
-- Passive affinity bonuses (e.g., Fire Wizard gets 100% more fire damage)
-- Prestige hero selection: pick 1 from 3 random heroes (1 per archetype)
-- Hero choice resets on each prestige
+- Early difficulty tuning — reduce Forest/Dark Forest pack HP and damage for fresh P0 heroes
+- Higher early drop rates — scale per-pack item drop chance by biome (higher early, taper to current 18% at endgame)
+- 3-slot stash per equipment type — small inventory buffer with letter-icon UI (W for wand, S for sword, etc.)
+- Alteration Hammer — reroll all mods at current rarity, enabling iteration on Magic items
+- Regal Hammer — upgrade Magic → Rare, completing the early crafting arc (transmute → alt → regal)
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-- ✓ HeroArchetype Resource with 9-hero REGISTRY (3 STR, 3 DEX, 3 INT), passive bonus dictionaries, generate_choices() — v1.9 Phase 50
-- ✓ Archetype passive bonuses wired into Hero.update_stats() as multiplicative "more" modifiers; is_spell_user derived from archetype; spell toggle removed — v1.9 Phase 51
-- ✓ Save format v8 with hero_archetype_id persistence; old saves (v7) trigger fresh game; strict import version rejection; prestige wipe nulls archetype — v1.9 Phase 52
-- ✓ 3-card hero selection overlay after prestige (P1+) with BONUS_LABELS display, colored borders, single-click selection, auto-save; 39-group integration test suite — v1.9 Phase 53
-- ✓ ForgeView stat panel shows hero title in archetype color with "Passive:" bonus section before Offense; classless Adventurer shows no hero section; bonus magnitudes locked — v1.9 Phase 54
+(Requirements defined in REQUIREMENTS.md)
 
 ### Out of Scope
 
@@ -137,7 +140,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - Hybrid defense prefixes (armor+evasion single-slot) -- future scope
 - Visual prefix/suffix separation in UI (color-coded or sectioned) -- future scope
 - Totem system (forge god shrine with slottable pieces, favor mechanic, map modifiers) -- future scope, builds on pack-based mapping
-- Hero archetypes (melee/ranged/spell with distinct mod affinities and attack patterns) -- future milestone, layer on prestige
+- Hero archetypes beyond passive bonuses (active abilities, attack pattern changes) -- future milestone
 - Loot filtering system -- future milestone
 - Totem progression system -- future milestone
 - Stat-targeted hammers (add specific stat type affixes) -- future prestige unlock
@@ -164,7 +167,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - PrestigeManager handles 7 prestige levels with currency-cost gating and full run-state wipe
 - SaveManager handles JSON save/load (format v8), auto-save timer, event triggers, prestige auto-save, Base64 export/import, and strict version rejection on imports
 - 41 active affixes with Vector2i(1, 32) tier ranges; item tiers 1-8 constrain affix tier floor at crafting time
-- Shipped 10 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges), v1.5 (inventory rework), v1.6 (tech debt cleanup), v1.7 (meta-progression), v1.8 (content pass)
+- Shipped 11 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges), v1.5 (inventory rework), v1.6 (tech debt cleanup), v1.7 (meta-progression), v1.8 (content pass), v1.9 (heroes)
 
 ## Constraints
 
@@ -266,5 +269,22 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | DoT multi-stack on packs, single-stack on hero | Hero refreshes DoT (simpler), packs stack per source (rewards investment) | ✓ Good -- balanced risk/reward |
 | Slot-first then archetype drop distribution | 20% per slot, uniform within slot; prevents weapon flooding | ✓ Good -- fair distribution |
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-03-27 — Phase 54 (Polish & Balance) complete*
+*Last updated: 2026-03-28 — Milestone v1.10 started*
