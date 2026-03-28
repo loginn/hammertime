@@ -107,12 +107,18 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ Archetype-specific affix pools via valid_tags on item bases — v1.8
 - ✓ Save format v7 with 21-type serialization registry — v1.8
 - ✓ 35-group integration test suite (up from 28 at v1.7) — v1.8
-
 - ✓ HeroArchetype Resource with 9-hero REGISTRY (3 STR, 3 DEX, 3 INT), passive bonus dictionaries, generate_choices() — v1.9
 - ✓ Archetype passive bonuses wired into Hero.update_stats() as multiplicative "more" modifiers; is_spell_user derived from archetype — v1.9
 - ✓ Save format v8 with hero_archetype_id persistence; prestige wipe nulls archetype — v1.9
 - ✓ 3-card hero selection overlay after prestige (P1+) with BONUS_LABELS display, colored borders, single-click selection — v1.9
 - ✓ ForgeView stat panel shows hero title in archetype color with "Passive:" bonus section — v1.9
+
+- ✓ 3-slot stash per equipment type (15 total) replacing per-slot inventory arrays — v1.10
+- ✓ Single universal crafting bench replacing per-type bench switching — v1.10
+- ✓ Item drops route to stash via GameState.add_item_to_stash() with silent overflow discard — v1.10
+- ✓ stash_updated signal on GameEvents for UI reactivity — v1.10
+- ✓ Prestige wipes stash and bench via _wipe_run_state() — v1.10
+- ✓ Integration test groups 40-41 covering stash data model and drop routing — v1.10
 
 ## Current Milestone: v1.10 Early Game Rebalance
 
@@ -155,7 +161,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - Feature-based folder structure: models/, scenes/, autoloads/, utils/, tools/
 - Autoloads: ItemAffixes, Tag, GameState, GameEvents, SaveManager, PrestigeManager
 - Scene structure: main.tscn with main_view coordinating forge_view, gameplay_view, prestige_view, settings_view via 4-tab bar; hero selection overlay on OverlayLayer post-prestige
-- ForgeView combines hero equipment (left) and single crafting bench per slot (right) with tag hammer section (P1+)
+- ForgeView combines hero equipment (left) and single universal crafting bench (right) with tag hammer section (P1+); stash UI pending Phase 57
 - StatCalculator handles all DPS/defense calculations including spell damage and DoT DPS with flat + percentage stacking
 - DefenseCalculator handles all incoming damage with 4-stage pipeline; DoT uses resistance-only path
 - All data classes extend Resource (Item, Affix, Implicit, Hero, Currency, TagHammer, MonsterType, MonsterPack, BiomeConfig)
@@ -268,6 +274,10 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | DoT multi-stack on packs, single-stack on hero | Hero refreshes DoT (simpler), packs stack per source (rewards investment) | ✓ Good -- balanced risk/reward |
 | Slot-first then archetype drop distribution | 20% per slot, uniform within slot; prevents weapon flooding | ✓ Good -- fair distribution |
 
+| Stash replaces per-slot inventory | 3-slot stash per equipment type (15 total) with single universal bench; drops go to stash, player chooses bench item | ✓ Good -- deliberate crafting, clear item flow |
+| Silent overflow discard | Stash full → new item silently discarded (no toast); smart discard deferred as prestige unlock | ✓ Good -- no combat noise, future design space |
+| Save-manager compat shims | crafting_inventory/crafting_bench_type kept as computed properties for save_manager v8; removed in Phase 58 | ✓ Good -- incremental migration |
+
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
@@ -286,4 +296,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 — Milestone v1.10 started*
+*Last updated: 2026-03-28 — Phase 55 (Stash Data Model) complete*
