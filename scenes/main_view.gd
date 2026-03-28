@@ -49,7 +49,7 @@ func _ready() -> void:
 
 	# Cross-view signal wiring (ForgeView <-> GameplayView)
 	forge_view.equipment_changed.connect(gameplay_view.refresh_clearing_speed)
-	gameplay_view.item_base_found.connect(forge_view.set_new_item_base)
+	gameplay_view.item_base_found.connect(GameState.add_item_to_stash)
 	gameplay_view.currencies_found.connect(forge_view.on_currencies_found)
 
 	# Show forge view by default
