@@ -162,7 +162,7 @@ Full details: `.planning/milestones/v1.9-ROADMAP.md`
 <details open>
 <summary>🔨 v1.10 Early Game Rebalance (Phases 55-58) — IN PROGRESS</summary>
 
-- [ ] **Phase 55: Stash Data Model** — 3-slot stash arrays per equipment type, auto-stash on drop, overflow feedback
+- [ ] **Phase 55: Stash Data Model** (2 plans) — 3-slot stash arrays per equipment type, auto-stash on drop, overflow feedback
 - [ ] **Phase 56: Difficulty & Starter Kit** — Tune Forest survival, starter weapon + armor in stash, starter hammers
 - [ ] **Phase 57: Stash UI** — Letter-icon grid in ForgeView, tap-to-bench interaction, item detail hover
 - [ ] **Phase 58: New Hammers & Save v9** — Alteration and Regal hammer currency classes, save format v9
@@ -176,12 +176,15 @@ Full details: `.planning/milestones/v1.9-ROADMAP.md`
 **Goal**: A 3-slot stash buffer per equipment type exists in GameState and items dropped from combat fill it automatically.
 **Depends on**: Nothing (new data structure alongside existing single-bench model)
 **Requirements**: STSH-01, STSH-04
+**Plans:** 2 plans
+Plans:
+- [ ] 55-01-PLAN.md — Stash data model in GameState + GameEvents signal + integration tests
+- [ ] 55-02-PLAN.md — ForgeView single-bench adaptation + MainView drop signal re-wiring
 **Success Criteria** (what must be TRUE):
   1. GameState holds a stash dictionary keyed by slot type, each entry an array capped at 3 items
   2. Items dropped during combat are placed in the stash for the appropriate slot; the crafting bench is not affected
   3. When all 3 stash slots for a type are full, the new item is discarded and a toast notification tells the player which slot is full
   4. Stash state survives a save/load round-trip (persisted in save format v9, Phase 58)
-**Plans**: TBD
 
 ### Phase 56: Difficulty & Starter Kit
 
@@ -236,11 +239,11 @@ Full details: `.planning/milestones/v1.9-ROADMAP.md`
 | 35-41             | v1.7      | 9/9            | Complete    | 2026-03-06 |
 | 42-49             | v1.8      | 18/18          | Complete    | 2026-03-08 |
 | 50-54             | v1.9      | 5/5            | Complete    | 2026-03-28 |
-| 55 (Stash Data)   | v1.10     | 0/TBD          | Not started | —          |
+| 55 (Stash Data)   | v1.10     | 0/2            | Not started | —          |
 | 56 (Difficulty)   | v1.10     | 0/TBD          | Not started | —          |
 | 57                | v1.10     | 0/TBD          | Not started | —          |
 | 58                | v1.10     | 0/TBD          | Not started | —          |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-28 — v1.10 phases 55-58 added*
+*Last updated: 2026-03-28 — Phase 55 plans created (2 plans)*
