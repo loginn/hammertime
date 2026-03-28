@@ -281,6 +281,10 @@ func _on_hero_card_selected(hero: HeroArchetype) -> void:
 	# Persist immediately (D-14)
 	SaveManager.save_game()
 
+	# Place archetype-matched starter items in stash (D-09: after archetype confirmed)
+	GameState._place_starter_kit(hero)
+	SaveManager.save_game()  # Persist starter kit immediately
+
 	# Emit signal for listeners
 	GameEvents.hero_selected.emit(hero)
 

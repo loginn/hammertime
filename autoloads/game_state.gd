@@ -86,6 +86,30 @@ func _init_stash() -> void:
 	}
 
 
+## Places archetype-matched starter weapon and armor in the stash.
+## Called by initialize_fresh_game() (null archetype = STR defaults)
+## and by main_view._on_hero_card_selected() after prestige archetype selection.
+func _place_starter_kit(archetype: HeroArchetype) -> void:
+	var weapon: Item
+	var armor: Item
+	if archetype == null:
+		weapon = Broadsword.new(8)
+		armor = IronPlate.new(8)
+	else:
+		match archetype.archetype:
+			HeroArchetype.Archetype.STR:
+				weapon = Broadsword.new(8)
+				armor = IronPlate.new(8)
+			HeroArchetype.Archetype.DEX:
+				weapon = Dagger.new(8)
+				armor = LeatherVest.new(8)
+			HeroArchetype.Archetype.INT:
+				weapon = Wand.new(8)
+				armor = SilkRobe.new(8)
+	add_item_to_stash(weapon)
+	add_item_to_stash(armor)
+
+
 ## Sets up a completely fresh game state. Called before load attempts and by New Game.
 func initialize_fresh_game() -> void:
 	hero = Hero.new()
@@ -109,6 +133,7 @@ func initialize_fresh_game() -> void:
 	# Initialize stash and bench (Phase 55: single universal bench + 3-slot stash)
 	_init_stash()
 	crafting_bench = null
+	_place_starter_kit(null)  # P0 default: STR items (Broadsword + IronPlate)
 
 	# Initialize area progress
 	max_unlocked_level = 1
