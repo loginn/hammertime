@@ -5,9 +5,37 @@ var debug_hammers: bool = false  # Set to true for testing
 var hero: Hero
 var currency_counts: Dictionary = {}
 
-# Crafting state (centralized for persistence)
-var crafting_inventory: Dictionary = {}
-var crafting_bench_type: String = "weapon"
+# Stash: 3-slot buffer per equipment type. Not persisted until Phase 58 (save v9).
+var stash: Dictionary = {}
+# Single universal crafting bench (any item type). Not persisted until Phase 58 (save v9).
+var crafting_bench: Item = null
+
+# TEMPORARY: save_manager.gd v8 compat — remove in Phase 58 when save format updates
+var crafting_inventory: Dictionary:
+	get:
+		# Return bench item mapped into old format for save_manager v8 writes
+		var compat := {"weapon": null, "helmet": null, "armor": null, "boots": null, "ring": null}
+		if crafting_bench != null:
+			var slot := _get_slot_for_item(crafting_bench)
+			if slot != "":
+				compat[slot] = crafting_bench
+		return compat
+	set(value):
+		# On v8 restore, load first non-null item onto bench
+		crafting_bench = null
+		for slot_name in ["weapon", "helmet", "armor", "boots", "ring"]:
+			if value.get(slot_name) != null:
+				crafting_bench = value[slot_name]
+				break
+
+# TEMPORARY: save_manager.gd v8 compat — remove in Phase 58
+var crafting_bench_type: String:
+	get:
+		if crafting_bench == null:
+			return "weapon"
+		return _get_slot_for_item(crafting_bench)
+	set(_value):
+		pass  # Ignored — single bench has no type selector
 
 # Area progress (centralized for persistence)
 var max_unlocked_level: int = 1
@@ -48,6 +76,16 @@ func _ready() -> void:
 		print("DEBUG: Spawned with 999 of each hammer")
 
 
+func _init_stash() -> void:
+	stash = {
+		"weapon": [],
+		"helmet": [],
+		"armor": [],
+		"boots": [],
+		"ring": [],
+	}
+
+
 ## Sets up a completely fresh game state. Called before load attempts and by New Game.
 func initialize_fresh_game() -> void:
 	hero = Hero.new()
@@ -68,15 +106,9 @@ func initialize_fresh_game() -> void:
 		"tuning": 0
 	}
 
-	# Initialize crafting state — single bench per slot (Phase 43)
-	crafting_inventory = {
-		"weapon": Broadsword.new(8),
-		"helmet": null,
-		"armor": null,
-		"boots": null,
-		"ring": null,
-	}
-	crafting_bench_type = "weapon"
+	# Initialize stash and bench (Phase 55: single universal bench + 3-slot stash)
+	_init_stash()
+	crafting_bench = null
 
 	# Initialize area progress
 	max_unlocked_level = 1
@@ -106,15 +138,9 @@ func _wipe_run_state() -> void:
 	hero.equipped_items["boots"] = null
 	hero.equipped_items["ring"] = null
 
-	# 3. Crafting inventory -- fresh state with starter weapon (Phase 43: single bench per slot)
-	crafting_inventory = {
-		"weapon": Broadsword.new(8),
-		"helmet": null,
-		"armor": null,
-		"boots": null,
-		"ring": null,
-	}
-	crafting_bench_type = "weapon"
+	# 3. Stash and bench -- fresh empty state (Phase 55, D-06)
+	_init_stash()
+	crafting_bench = null
 
 	# 4. Standard currencies -- reset to fresh-game defaults
 	currency_counts = {
@@ -165,3 +191,29 @@ func spend_tag_currency(currency_type: String) -> bool:
 		return false
 	tag_currency_counts[currency_type] -= 1
 	return true
+
+
+## Adds item to the appropriate stash slot. Returns true if added, false if discarded.
+## Per D-01: drops always go to stash. Per D-03: overflow is silently discarded.
+func add_item_to_stash(item: Item) -> bool:
+	var slot: String = _get_slot_for_item(item)
+	if slot == "":
+		push_warning("GameState: Unknown item type for stash routing: " + item.item_name)
+		return false
+
+	if stash[slot].size() >= 3:
+		# D-03: silent discard, no toast
+		return false
+
+	stash[slot].append(item)
+	GameEvents.stash_updated.emit(slot)
+	return true
+
+
+func _get_slot_for_item(item: Item) -> String:
+	if item is Weapon: return "weapon"
+	if item is Helmet: return "helmet"
+	if item is Armor: return "armor"
+	if item is Boots: return "boots"
+	if item is Ring: return "ring"
+	return ""

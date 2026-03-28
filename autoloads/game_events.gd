@@ -39,3 +39,6 @@ signal dot_expired(target: String, dot_type: String)
 # Hero archetype signals (Phase 50)
 signal hero_selection_needed
 signal hero_selected(archetype: HeroArchetype)
+
+# Stash signals (Phase 55)
+signal stash_updated(slot: String)
