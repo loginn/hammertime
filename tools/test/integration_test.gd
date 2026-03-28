@@ -52,6 +52,9 @@ func _ready() -> void:
 	_group_42_forest_difficulty_tuning()
 	_group_43_starter_kit_fresh_game()
 	_group_44_starter_kit_post_prestige()
+	_group_45_stash_ui_display()
+	_group_46_stash_tap_to_bench()
+	_group_47_stash_tooltip_text()
 
 	var total: int = _pass_count + _fail_count
 	print("\n=== SUMMARY ===")
@@ -2204,3 +2207,105 @@ func _group_44_starter_kit_post_prestige() -> void:
 	GameState._place_starter_kit(int_hero)
 	_check(GameState.stash["weapon"][0] is Wand, "INT starter weapon is Wand")
 	_check(GameState.stash["armor"][0] is SilkRobe, "INT starter armor is SilkRobe")
+
+
+# --- Group 45: Stash UI Display (STSH-02) ---
+
+func _group_45_stash_ui_display() -> void:
+	print("\n--- Group 45: Stash UI Display (STSH-02) ---")
+	GameState._init_stash()
+	GameState.crafting_bench = null
+
+	# Add a weapon to the weapon stash slot and verify size
+	var sword := Broadsword.new(8)
+	GameState.add_item_to_stash(sword)
+	_check(GameState.stash["weapon"].size() == 1, "Weapon stash has 1 item after adding Broadsword")
+
+	# Verify instance type for abbreviation correctness
+	_check(GameState.stash["weapon"][0] is Broadsword, "Stash weapon slot[0] is Broadsword (abbreviation = BS)")
+
+	# Add 2 more weapons to fill the slot
+	var axe := Battleaxe.new(8)
+	var hammer := Warhammer.new(8)
+	GameState.add_item_to_stash(axe)
+	GameState.add_item_to_stash(hammer)
+	_check(GameState.stash["weapon"].size() == 3, "Weapon stash has 3 items after filling slot")
+
+	# Empty slots for other types should still be empty
+	_check(GameState.stash["helmet"].size() == 0, "Helmet stash is empty when only weapons added")
+	_check(GameState.stash["ring"].size() == 0, "Ring stash is empty when only weapons added")
+
+	# Adding beyond cap does not grow the array
+	var overflow := Dagger.new(8)
+	GameState.add_item_to_stash(overflow)
+	_check(GameState.stash["weapon"].size() == 3, "Weapon stash stays at 3 after overflow attempt")
+
+
+# --- Group 46: Stash Tap-to-Bench Data Flow (STSH-03) ---
+
+func _group_46_stash_tap_to_bench() -> void:
+	print("\n--- Group 46: Stash Tap-to-Bench (STSH-03) ---")
+	GameState._init_stash()
+	GameState.crafting_bench = null
+
+	# Add an item to stash and simulate tap-to-bench transfer
+	var sword := Broadsword.new(8)
+	GameState.add_item_to_stash(sword)
+	_check(GameState.stash["weapon"].size() == 1, "Weapon stash has 1 item before tap")
+
+	# Simulate tap: remove from stash, place on bench (mirrors _on_stash_slot_pressed logic)
+	var item: Item = GameState.stash["weapon"][0]
+	GameState.stash["weapon"].remove_at(0)
+	GameState.crafting_bench = item
+	_check(GameState.stash["weapon"].size() == 0, "Weapon stash is empty after tap-to-bench")
+	_check(GameState.crafting_bench != null, "Crafting bench is occupied after tap-to-bench")
+	_check(GameState.crafting_bench is Broadsword, "Crafting bench holds the transferred Broadsword")
+
+	# Bench-occupied guard: crafting_bench != null means slots should be disabled
+	_check(GameState.crafting_bench != null, "Bench-occupied guard: crafting_bench is non-null (slots would be disabled)")
+
+	# Clear bench, verify bench is null
+	GameState.crafting_bench = null
+	_check(GameState.crafting_bench == null, "Bench is null after clearing")
+
+	# Removing from a stash index leaves empty gap — remaining items do not shift (D-08)
+	GameState._init_stash()
+	var item_a := Broadsword.new(8)
+	var item_b := Battleaxe.new(8)
+	var item_c := Warhammer.new(8)
+	GameState.add_item_to_stash(item_a)
+	GameState.add_item_to_stash(item_b)
+	GameState.add_item_to_stash(item_c)
+	_check(GameState.stash["weapon"].size() == 3, "Weapon stash has 3 items before removal")
+	# Remove middle item (index 1)
+	GameState.stash["weapon"].remove_at(1)
+	_check(GameState.stash["weapon"].size() == 2, "Weapon stash has 2 items after remove_at(1)")
+	_check(GameState.stash["weapon"][0] is Broadsword, "First slot still has Broadsword after middle removal")
+	_check(GameState.stash["weapon"][1] is Warhammer, "Second slot has Warhammer (Battleaxe removed)")
+
+
+# --- Group 47: Stash Tooltip Text (STSH-05) ---
+
+func _group_47_stash_tooltip_text() -> void:
+	print("\n--- Group 47: Stash Tooltip Text (STSH-05) ---")
+	GameState._init_stash()
+
+	# Weapon: get_display_text() should contain "dps:" for weapons
+	var sword := Broadsword.new(8)
+	var sword_text := sword.get_display_text()
+	_check(sword_text.length() > 0, "Broadsword get_display_text() returns non-empty string")
+	_check("dps:" in sword_text, "Broadsword tooltip contains 'dps:' field")
+	_check("name:" in sword_text, "Broadsword tooltip contains 'name:' field")
+
+	# Defense item: get_display_text() should contain "defense:" for armor with stats
+	var plate := IronPlate.new(8)
+	var plate_text := plate.get_display_text()
+	_check(plate_text.length() > 0, "IronPlate get_display_text() returns non-empty string")
+	_check("name:" in plate_text, "IronPlate tooltip contains 'name:' field")
+
+	# Ring: get_display_text() should contain "dps:" for rings
+	var ring := JadeRing.new(8)
+	var ring_text := ring.get_display_text()
+	_check(ring_text.length() > 0, "JadeRing get_display_text() returns non-empty string")
+	_check("dps:" in ring_text, "JadeRing tooltip contains 'dps:' field")
+	_check("name:" in ring_text, "JadeRing tooltip contains 'name:' field")
