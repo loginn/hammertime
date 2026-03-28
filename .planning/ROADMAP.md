@@ -212,10 +212,10 @@ Plans:
   3. Tapping a filled stash square moves that item to the crafting bench; the item is removed from stash and cannot be put back
   4. Hovering/long-pressing a stash item shows a popup with the item's full details (name, rarity, affixes)
   5. The stash display updates immediately when items are added from drops or removed by tapping
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 57-01-PLAN.md — StashDisplay scene tree + stash display logic + integration tests
-- [ ] 57-02-PLAN.md — Tap-to-bench interaction + flash/pulse animations + bench-clear integration
+- [x] 57-02-PLAN.md — Tap-to-bench interaction + flash/pulse animations + bench-clear integration
 
 ### Phase 58: New Hammers & Save v9
 
@@ -230,7 +230,7 @@ Plans:
   5. Loading a v8 save starts a fresh game (strict version rejection, consistent with existing migration policy)
 **Plans:** 2 plans
 Plans:
-- [ ] 57-01-PLAN.md — StashDisplay scene tree + stash display logic + integration tests
+- [x] 57-01-PLAN.md — StashDisplay scene tree + stash display logic + integration tests
 - [ ] 57-02-PLAN.md — Tap-to-bench interaction + flash/pulse animations + bench-clear integration
 
 ## Progress
@@ -250,7 +250,7 @@ Plans:
 | 50-54             | v1.9      | 5/5            | Complete    | 2026-03-28 |
 | 55 (Stash Data)   | v1.10     | 1/2 | Complete    | 2026-03-28 |
 | 56 (Difficulty)   | v1.10     | 2/2 | Complete    | 2026-03-28 |
-| 57 (Stash UI)     | v1.10     | 1/2 | In Progress|  |
+| 57 (Stash UI)     | v1.10     | 2/2 | Complete   | 2026-03-28 |
 | 58                | v1.10     | 0/TBD          | Not started | —          |
 
 ---
