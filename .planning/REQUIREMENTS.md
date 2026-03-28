@@ -13,10 +13,10 @@
 ### Stash
 
 - [x] **STSH-01**: Player has 3 stash slots per equipment type to hold unworked bases
-- [ ] **STSH-02**: Stash displays as letter-icon squares (W for wand, S for sword, etc.) in ForgeView
+- [x] **STSH-02**: Stash displays as letter-icon squares (W for wand, S for sword, etc.) in ForgeView
 - [ ] **STSH-03**: Player can tap a stash item to move it onto the crafting bench (item cannot be returned to stash)
 - [x] **STSH-04**: Dropped items auto-stash; overflow discarded with feedback
-- [ ] **STSH-05**: Player can hover/long-press a stash item to see full item details (name, rarity, affixes)
+- [x] **STSH-05**: Player can hover/long-press a stash item to see full item details (name, rarity, affixes)
 
 ### Crafting
 
@@ -48,9 +48,9 @@
 | STSH-04 | Phase 55 | Complete |
 | DIFF-01 | Phase 56 | Complete |
 | DIFF-03 | Phase 56 | Complete |
-| STSH-02 | Phase 57 | Pending |
+| STSH-02 | Phase 57 | Complete |
 | STSH-03 | Phase 57 | Pending |
-| STSH-05 | Phase 57 | Pending |
+| STSH-05 | Phase 57 | Complete |
 | CRFT-01 | Phase 58 | Pending |
 | CRFT-02 | Phase 58 | Pending |
 | CRFT-03 | Phase 58 | Pending |
