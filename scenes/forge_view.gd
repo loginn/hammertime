@@ -404,17 +404,26 @@ func _on_stash_updated(_slot: String) -> void:
 
 
 func _on_stash_slot_pressed(slot_type: String, index: int) -> void:
+	# D-05: bench must be empty to load from stash
 	if GameState.crafting_bench != null:
 		_show_forge_error("Melt or equip first")
 		return
+
 	var items: Array = GameState.stash.get(slot_type, [])
-	if index >= items.size():
-		return
+	if index >= items.size() or items[index] == null:
+		return  # Empty slot guard
+
+	# Transfer item from stash to bench
 	var item: Item = items[index]
-	_flash_stash_slot(slot_type, index)
-	items.remove_at(index)
+	# D-08: set null to leave a gap — remaining items do not shift to fill it
+	items[index] = null
 	GameState.crafting_bench = item
 	current_item = item
+
+	# D-07: flash the now-empty slot
+	_flash_stash_slot(slot_type, index)
+
+	# Refresh all displays
 	update_current_item()
 	_update_stash_display()
 	update_melt_equip_states()

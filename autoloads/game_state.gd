@@ -220,17 +220,36 @@ func spend_tag_currency(currency_type: String) -> bool:
 
 ## Adds item to the appropriate stash slot. Returns true if added, false if discarded.
 ## Per D-01: drops always go to stash. Per D-03: overflow is silently discarded.
+## Handles null gaps left by tap-to-bench (D-08): fills first null slot before appending.
 func add_item_to_stash(item: Item) -> bool:
 	var slot: String = _get_slot_for_item(item)
 	if slot == "":
 		push_warning("GameState: Unknown item type for stash routing: " + item.item_name)
 		return false
 
-	if stash[slot].size() >= 3:
+	var items: Array = stash[slot]
+
+	# Count non-null items (null gaps from tap-to-bench do not count as free slots
+	# for the purpose of the cap check, but they ARE usable insertion points)
+	var non_null_count := 0
+	for existing in items:
+		if existing != null:
+			non_null_count += 1
+
+	if non_null_count >= 3:
 		# D-03: silent discard, no toast
 		return false
 
-	stash[slot].append(item)
+	# Fill the first null gap, or append if no gap exists
+	var inserted := false
+	for i in range(items.size()):
+		if items[i] == null:
+			items[i] = item
+			inserted = true
+			break
+	if not inserted:
+		items.append(item)
+
 	GameEvents.stash_updated.emit(slot)
 	return true
 
