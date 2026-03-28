@@ -181,22 +181,21 @@ func _ready() -> void:
 	melt_timer.timeout.connect(_on_melt_timer_timeout)
 	add_child(melt_timer)
 
-	# Load crafting inventory from GameState (Phase 43: single bench per slot)
-	# Starter weapon is created by GameState.initialize_fresh_game() on the weapon bench.
+	# Phase 55: single universal bench model — load from GameState.crafting_bench
+	current_item = GameState.crafting_bench
 
-	# Set current item from saved bench type or default to weapon
-	var selected_type: String = GameState.crafting_bench_type
-	if GameState.crafting_inventory[selected_type] != null:
-		current_item = GameState.crafting_inventory[selected_type]
-	else:
-		# Fall back to first occupied bench
-		current_item = null
-		for type_name in inventory_types:
-			if GameState.crafting_inventory[type_name] != null:
-				selected_type = type_name
-				current_item = GameState.crafting_inventory[type_name]
-				break
-	GameState.crafting_bench_type = selected_type
+	# Phase 55: ItemTypeButtons disabled — single bench model, no type switching
+	# Phase 57 will repurpose these as stash navigation
+	weapon_type_btn.disabled = true
+	helmet_type_btn.disabled = true
+	armor_type_btn.disabled = true
+	boots_type_btn.disabled = true
+	ring_type_btn.disabled = true
+	weapon_type_btn.visible = false
+	helmet_type_btn.visible = false
+	armor_type_btn.visible = false
+	boots_type_btn.visible = false
+	ring_type_btn.visible = false
 
 	# Update all displays
 	update_inventory_display()
@@ -354,79 +353,34 @@ func update_currency_button_states() -> void:
 # --- Item type selection ---
 
 
-func _on_item_type_selected(item_type: String) -> void:
-	# Reset equip confirmation when switching types
-	equip_confirm_pending = false
-	if equip_timer != null:
-		equip_timer.stop()
-	equip_button.text = "Equip"
-
-	# Reset melt confirmation when switching types
-	melt_confirm_pending = false
-	if melt_timer != null:
-		melt_timer.stop()
-	melt_button.text = "Melt"
-
-	# Check if there's an item of this type on the bench (Phase 43: nullable)
-	if GameState.crafting_inventory[item_type] == null:
-		print("No ", item_type, " in inventory - selection ignored")
-		return
-
-	# Update selected item type
-	GameState.crafting_bench_type = item_type
-	print("Selected item type: ", item_type)
-
-	# Update current item to use the selected type
-	update_current_item()
-
-	# Update button visual states
-	update_item_type_button_states()
-	update_melt_equip_states()
+func _on_item_type_selected(_item_type: String) -> void:
+	# Phase 55: disabled — single bench model, no type switching
+	pass
 
 
 func update_item_type_button_states() -> void:
-	var button_map: Dictionary = {
-		"weapon": weapon_type_btn,
-		"helmet": helmet_type_btn,
-		"armor": armor_type_btn,
-		"boots": boots_type_btn,
-		"ring": ring_type_btn
-	}
-
-	for item_type in button_map.keys():
-		button_map[item_type].button_pressed = (item_type == GameState.crafting_bench_type)
+	# Phase 55: type buttons hidden — no state to update
+	pass
 
 
 func update_slot_button_labels() -> void:
-	## Updates slot button text to just the slot name and disables empty slots (Phase 43).
-	var button_map: Dictionary = {
-		"weapon": weapon_type_btn,
-		"helmet": helmet_type_btn,
-		"armor": armor_type_btn,
-		"boots": boots_type_btn,
-		"ring": ring_type_btn
-	}
-	for slot_name in button_map.keys():
-		var btn: Button = button_map[slot_name]
-		btn.text = slot_name.capitalize()
-		btn.disabled = (GameState.crafting_inventory[slot_name] == null)
+	# Phase 55: type buttons hidden — no labels to update
+	pass
 
 
 func update_current_item() -> void:
-	var selected_type: String = get_selected_item_type()
-
-	if selected_type != "" and GameState.crafting_inventory[selected_type] != null:
-		current_item = GameState.crafting_inventory[selected_type]
+	current_item = GameState.crafting_bench
+	if current_item != null:
 		print("Selected ", current_item.item_name, " for crafting")
 	else:
-		current_item = null
-		print("No ", selected_type, " in inventory")
-
+		print("No item on bench")
 	update_item_stats_display()
 
 
 func get_selected_item_type() -> String:
-	return GameState.crafting_bench_type
+	if GameState.crafting_bench == null:
+		return ""
+	return get_item_type(GameState.crafting_bench)
 
 
 # --- Item type hover for hero stats comparison ---
@@ -477,10 +431,8 @@ func _on_melt_pressed() -> void:
 	var slot_name: String = get_item_type(current_item)
 	print("Melted: ", current_item.item_name)
 
-	# Clear the bench slot
-	if slot_name != "None":
-		GameState.crafting_inventory[slot_name] = null
-
+	# Clear the bench
+	GameState.crafting_bench = null
 	current_item = null
 
 	# Reset equip confirm state if active
@@ -525,10 +477,8 @@ func _on_equip_pressed() -> void:
 	GameEvents.item_crafted.emit(current_item)
 	print("Equipped: ", current_item.item_name, " to ", slot_name)
 
-	# Clear the bench slot
-	GameState.crafting_inventory[slot_name] = null
-
 	# Clear bench after equip
+	GameState.crafting_bench = null
 	current_item = null
 
 	# Update all displays
@@ -558,26 +508,15 @@ func update_melt_equip_states() -> void:
 # --- Inventory management ---
 
 
-func add_item_to_inventory(item: Item) -> void:
-	var item_type: String = get_item_type(item)
-
-	if item_type == "None":
-		print("Unknown item type for: ", item.item_name)
-		return
-
-	# Single-bench model: discard silently if bench is occupied (Phase 43)
-	if GameState.crafting_inventory[item_type] != null:
-		print("Bench ", item_type, " occupied, discarding ", item.item_name)
-		return
-
-	GameState.crafting_inventory[item_type] = item
-	print("Added ", item.item_name, " to ", item_type, " bench")
-	update_inventory_display()
+func add_item_to_inventory(_item: Item) -> void:
+	# Phase 55: dead code — drops route through GameState.add_item_to_stash
+	# Kept as stub for Phase 57 potential reuse
+	push_warning("ForgeView.add_item_to_inventory called — should use GameState.add_item_to_stash")
 
 
-func set_new_item_base(item_base: Item) -> void:
-	add_item_to_inventory(item_base)
-	print("New item base received: ", item_base.item_name)
+func set_new_item_base(_item_base: Item) -> void:
+	# Phase 55: dead code — drops route through GameState.add_item_to_stash via MainView
+	push_warning("ForgeView.set_new_item_base called — should use GameState.add_item_to_stash")
 
 
 func on_currencies_found(drops: Dictionary) -> void:
@@ -608,8 +547,10 @@ func is_item_better(new_item: Item, existing_item: Item) -> bool:
 
 
 func get_best_item(slot_name: String) -> Item:
-	## Returns the bench item for a slot, or null if empty (Phase 43: single item per slot).
-	return GameState.crafting_inventory[slot_name]
+	## Returns the bench item if it matches the slot, or null.
+	if GameState.crafting_bench != null and get_item_type(GameState.crafting_bench) == slot_name:
+		return GameState.crafting_bench
+	return null
 
 
 # --- Display updates ---
@@ -619,27 +560,17 @@ func update_inventory_display() -> void:
 	if inventory_label == null:
 		return
 
-	var display_text: String = "Crafting Inventory:\n\n"
-
-	for item_type in inventory_types:
-		var item: Item = GameState.crafting_inventory.get(item_type)
-		var type_name: String = item_type.capitalize()
-
-		if item != null:
-			display_text += type_name + ": " + item.item_name
-			var rarity_name: String = "Normal"
-			match item.rarity:
-				Item.Rarity.MAGIC:
-					rarity_name = "Magic"
-				Item.Rarity.RARE:
-					rarity_name = "Rare"
-			display_text += " (" + rarity_name + ")"
-			display_text += "\n"
-		else:
-			display_text += type_name + ": Empty\n"
-
-	inventory_label.text = display_text
-	update_slot_button_labels()
+	if GameState.crafting_bench != null:
+		var item: Item = GameState.crafting_bench
+		var rarity_name: String = "Normal"
+		match item.rarity:
+			Item.Rarity.MAGIC:
+				rarity_name = "Magic"
+			Item.Rarity.RARE:
+				rarity_name = "Rare"
+		inventory_label.text = "Bench: " + item.item_name + " (" + rarity_name + ")"
+	else:
+		inventory_label.text = "Bench: Empty"
 
 
 func update_item_stats_display() -> void:
