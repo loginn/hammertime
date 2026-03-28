@@ -176,9 +176,9 @@ Full details: `.planning/milestones/v1.9-ROADMAP.md`
 **Goal**: A 3-slot stash buffer per equipment type exists in GameState and items dropped from combat fill it automatically.
 **Depends on**: Nothing (new data structure alongside existing single-bench model)
 **Requirements**: STSH-01, STSH-04
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 55-01-PLAN.md — Stash data model in GameState + GameEvents signal + integration tests
+- [x] 55-01-PLAN.md — Stash data model in GameState + GameEvents signal + integration tests
 - [ ] 55-02-PLAN.md — ForgeView single-bench adaptation + MainView drop signal re-wiring
 **Success Criteria** (what must be TRUE):
   1. GameState holds a stash dictionary keyed by slot type, each entry an array capped at 3 items
@@ -239,7 +239,7 @@ Plans:
 | 35-41             | v1.7      | 9/9            | Complete    | 2026-03-06 |
 | 42-49             | v1.8      | 18/18          | Complete    | 2026-03-08 |
 | 50-54             | v1.9      | 5/5            | Complete    | 2026-03-28 |
-| 55 (Stash Data)   | v1.10     | 0/2            | Not started | —          |
+| 55 (Stash Data)   | v1.10     | 1/2 | In Progress|  |
 | 56 (Difficulty)   | v1.10     | 0/TBD          | Not started | —          |
 | 57                | v1.10     | 0/TBD          | Not started | —          |
 | 58                | v1.10     | 0/TBD          | Not started | —          |

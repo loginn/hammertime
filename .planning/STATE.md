@@ -1,15 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.10
-milestone_name: Early Game Rebalance
-status: Roadmap ready
-stopped_at: null
-last_updated: "2026-03-28T12:00:00.000Z"
+milestone: v0.1
+milestone_name: milestone
+status: executing
+stopped_at: Completed 55-01-PLAN.md (stash data model, crafting_bench, add_item_to_stash, stash_updated signal)
+last_updated: "2026-03-28T11:48:41.167Z"
+last_activity: 2026-03-28
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 # Project State: Hammertime
@@ -22,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Roadmap defined — ready to plan Phase 55 (Stash Data Model)
+**Current focus:** Phase 55 — stash-data-model
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload (format v8), PrestigeManager autoload.
 
 ## Current Position
 
-Phase: 55 (not started)
-Plan: —
-Status: Roadmap ready — run `/gsd:plan-phase 55` to begin
-Last activity: 2026-03-28 — Roadmap for v1.10 created (phases 55-58)
+Phase: 55 (stash-data-model) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-03-28
 
 ```
 v1.10 Progress: [ 55 ][ 56 ][ 57 ][ 58 ]
@@ -84,6 +85,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [Phase 53-selection-ui]: BONUS_LABELS const on HeroArchetype for clean label lookup and testability
 - [Phase 54]: Hero title uses BBCode [color=#hex] rather than modulate for per-section coloring within a single RichTextLabel
 - [Phase 54]: Classless Adventurer null archetype shows no hero section in ForgeView stat panel (per D-04)
+- [Phase 55-stash-data-model]: crafting_inventory and crafting_bench_type kept as property shims for v8 save_manager compat — real removal deferred to Phase 58
+- [Phase 55-stash-data-model]: initialize_fresh_game() and _wipe_run_state() no longer create Broadsword.new(8) starter weapon — Phase 56 handles starter items
 
 ### Pending Todos
 
@@ -110,12 +113,13 @@ None.
 | Phase 52-save-persistence P01 | 8 | 2 tasks | 3 files |
 | Phase 53-selection-ui P01 | 157 | 3 tasks | 3 files |
 | Phase 54 P01 | 15 | 2 tasks | 1 files |
+| Phase 55-stash-data-model P01 | 5 | 2 tasks | 3 files |
 
 ## Session Continuity
 
-Last session: 2026-03-28
-Stopped at: Roadmap for v1.10 created
-Resume file: None — next action is `/gsd:plan-phase 55`
+Last session: 2026-03-28T11:48:41.156Z
+Stopped at: Completed 55-01-PLAN.md (stash data model, crafting_bench, add_item_to_stash, stash_updated signal)
+Resume file: None
 
 ---
 *State initialized: 2026-02-15*
