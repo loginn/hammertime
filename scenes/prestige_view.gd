@@ -36,7 +36,7 @@ func _update_display() -> void:
 	else:
 		var next_level: int = GameState.prestige_level + 1
 		var cost: Dictionary = PrestigeManager.get_next_prestige_cost()
-		var cost_string: String = "Next: " + str(cost["forge"]) + " Forge Hammers"
+		var cost_string: String = "Next: " + str(cost["augment"]) + " Augment Hammers"
 		next_info_label.text = cost_string
 
 		var tier_unlock: int = PrestigeManager.ITEM_TIERS_BY_PRESTIGE[next_level]
@@ -108,7 +108,7 @@ func _build_unlock_table() -> void:
 		cost_label.custom_minimum_size.x = 200
 		cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		if state == "completed" or state == "next":
-			cost_label.text = str(PrestigeManager.PRESTIGE_COSTS[level]["forge"]) + " Forge"
+			cost_label.text = str(PrestigeManager.PRESTIGE_COSTS[level]["augment"]) + " Augment"
 		else:
 			cost_label.text = "???"
 		row.add_child(cost_label)

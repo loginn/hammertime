@@ -19,12 +19,12 @@ const RARITY_ANCHORS: Dictionary = {
 # _calculate_currency_chance() means drops start very rare (~29% of base
 # at unlock+1) and reach full rate by the original biome boundary.
 const CURRENCY_AREA_GATES: Dictionary = {
-	"runic": 1,
-	"tack": 1,
-	"forge": 15,    # Preview from level 15, full rate by Dark Forest (25)
-	"grand": 40,    # Preview from level 40, full rate by Cursed Woods (50)
-	"claw": 65,     # Preview from level 65, full rate by Shadow Realm (75)
-	"tuning": 65,   # Preview from level 65, full rate by Shadow Realm (75)
+	"transmute": 1,
+	"alteration": 1,
+	"augment": 15,    # Preview from level 15, full rate by Dark Forest (25)
+	"regal": 40,    # Preview from level 40, full rate by Cursed Woods (50)
+	"chaos": 65,     # Preview from level 65, full rate by Shadow Realm (75)
+	"exalt": 65,   # Preview from level 65, full rate by Shadow Realm (75)
 }
 
 ## Per-pack item drop chance. Constant across all areas.
@@ -66,12 +66,12 @@ static func roll_pack_currency_drop(
 	# Runic/Tack are basic currencies — more generous (25%, max 2)
 	# Advanced currencies drop at 20% since player accumulates multiple types simultaneously
 	var pack_currency_rules: Dictionary = {
-		"runic": {"chance": 0.25, "max_qty": 2},   # ~1 per 4 packs, sometimes 2
-		"tack": {"chance": 0.25, "max_qty": 2},     # ~1 per 4 packs, sometimes 2
-		"forge": {"chance": 0.25, "max_qty": 1},    # ~1 per 4 packs
-		"grand": {"chance": 0.20, "max_qty": 1},    # ~1 per 5 packs
-		"claw": {"chance": 0.20, "max_qty": 1},     # ~1 per 5 packs
-		"tuning": {"chance": 0.20, "max_qty": 1},   # ~1 per 5 packs
+		"transmute": {"chance": 0.25, "max_qty": 2},   # ~1 per 4 packs, sometimes 2
+		"alteration": {"chance": 0.25, "max_qty": 2},  # ~1 per 4 packs, sometimes 2
+		"augment": {"chance": 0.25, "max_qty": 1},     # ~1 per 4 packs
+		"regal": {"chance": 0.20, "max_qty": 1},       # ~1 per 5 packs
+		"chaos": {"chance": 0.20, "max_qty": 1},       # ~1 per 5 packs
+		"exalt": {"chance": 0.20, "max_qty": 1},       # ~1 per 5 packs
 	}
 
 	for currency_name in pack_currency_rules:

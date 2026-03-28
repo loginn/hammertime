@@ -38,12 +38,12 @@ enum ItemSlot { NONE = -1, WEAPON, HELMET, ARMOR, BOOTS, RING }
 
 # Currency instances
 var currencies: Dictionary = {
-	"runic": RunicHammer.new(),
-	"forge": ForgeHammer.new(),
-	"tack": TackHammer.new(),
-	"grand": GrandHammer.new(),
-	"claw": ClawHammer.new(),
-	"tuning": TuningHammer.new(),
+	"transmute": RunicHammer.new(),
+	"augment": ForgeHammer.new(),
+	"alteration": TackHammer.new(),
+	"regal": GrandHammer.new(),
+	"chaos": ClawHammer.new(),
+	"exalt": TuningHammer.new(),
 	"fire": TagHammer.new(Tag.FIRE, "Fire Hammer"),
 	"cold": TagHammer.new(Tag.COLD, "Cold Hammer"),
 	"lightning": TagHammer.new(Tag.LIGHTNING, "Lightning Hammer"),
@@ -74,12 +74,12 @@ var equip_hover_active: bool = false
 
 # Hammer tooltip descriptions (shown on hover)
 var hammer_descriptions: Dictionary = {
-	"runic": "Turns a normal item into a magic item\nwith 1-2 random mods.\nRequires: Normal rarity",
-	"forge": "Turns a normal item into a rare item\nwith 4-6 random mods.\nRequires: Normal rarity",
-	"tack": "Adds one random mod to a magic item.\nRequires: Magic rarity with room for mods",
-	"grand": "Adds one random mod to a rare item.\nRequires: Rare rarity with room for mods",
-	"claw": "Removes one random mod from an item.\nRequires: At least one mod",
-	"tuning": "Rerolls all mod values within their\ntier ranges.\nRequires: At least one mod",
+	"transmute": "Turns a normal item into a magic item\nwith 1-2 random mods.\nRequires: Normal rarity",
+	"augment": "Turns a normal item into a rare item\nwith 4-6 random mods.\nRequires: Normal rarity",
+	"alteration": "Adds one random mod to a magic item.\nRequires: Magic rarity with room for mods",
+	"regal": "Adds one random mod to a rare item.\nRequires: Rare rarity with room for mods",
+	"chaos": "Removes one random mod from an item.\nRequires: At least one mod",
+	"exalt": "Rerolls all mod values within their\ntier ranges.\nRequires: At least one mod",
 	"fire": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one fire mod.\nRequires: Normal rarity, fire mods available",
 	"cold": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one cold mod.\nRequires: Normal rarity, cold mods available",
 	"lightning": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one lightning mod.\nRequires: Normal rarity, lightning mods available",
@@ -89,24 +89,24 @@ var hammer_descriptions: Dictionary = {
 
 # Hammer icon textures
 var hammer_icons: Dictionary = {
-	"runic": preload("res://assets/runic_hammer.png"),
-	"forge": preload("res://assets/forge_hammer.png"),
-	"tack": preload("res://assets/tack_hammer.png"),
-	"grand": preload("res://assets/grand_hammer.png"),
-	"claw": preload("res://assets/claw_hammer.png"),
-	"tuning": preload("res://assets/tuning_hammer.png")
+	"transmute": preload("res://assets/runic_hammer.png"),
+	"augment": preload("res://assets/forge_hammer.png"),
+	"alteration": preload("res://assets/tack_hammer.png"),
+	"regal": preload("res://assets/grand_hammer.png"),
+	"chaos": preload("res://assets/claw_hammer.png"),
+	"exalt": preload("res://assets/tuning_hammer.png")
 }
 
 
 func _ready() -> void:
 	# Initialize currency button mapping
 	currency_buttons = {
-		"runic": runic_btn,
-		"forge": forge_btn,
-		"tack": tack_btn,
-		"grand": grand_btn,
-		"claw": claw_btn,
-		"tuning": tuning_btn
+		"transmute": runic_btn,
+		"augment": forge_btn,
+		"alteration": tack_btn,
+		"regal": grand_btn,
+		"chaos": claw_btn,
+		"exalt": tuning_btn
 	}
 	currency_buttons["fire"] = fire_hammer_btn
 	currency_buttons["cold"] = cold_hammer_btn
@@ -115,12 +115,12 @@ func _ready() -> void:
 	currency_buttons["physical"] = physical_hammer_btn
 
 	# Connect currency button signals
-	runic_btn.pressed.connect(_on_currency_selected.bind("runic"))
-	forge_btn.pressed.connect(_on_currency_selected.bind("forge"))
-	tack_btn.pressed.connect(_on_currency_selected.bind("tack"))
-	grand_btn.pressed.connect(_on_currency_selected.bind("grand"))
-	claw_btn.pressed.connect(_on_currency_selected.bind("claw"))
-	tuning_btn.pressed.connect(_on_currency_selected.bind("tuning"))
+	runic_btn.pressed.connect(_on_currency_selected.bind("transmute"))
+	forge_btn.pressed.connect(_on_currency_selected.bind("augment"))
+	tack_btn.pressed.connect(_on_currency_selected.bind("alteration"))
+	grand_btn.pressed.connect(_on_currency_selected.bind("regal"))
+	claw_btn.pressed.connect(_on_currency_selected.bind("chaos"))
+	tuning_btn.pressed.connect(_on_currency_selected.bind("exalt"))
 
 	# Connect tag hammer button signals
 	fire_hammer_btn.pressed.connect(_on_currency_selected.bind("fire"))
@@ -310,7 +310,7 @@ func _show_forge_error(message: String) -> void:
 
 func update_currency_button_states() -> void:
 	# Update standard currency buttons based on counts from GameState
-	var standard_types: Array = ["runic", "forge", "tack", "grand", "claw", "tuning"]
+	var standard_types: Array = ["transmute", "augment", "alteration", "regal", "chaos", "exalt"]
 	for currency_type in standard_types:
 		var count: int = GameState.currency_counts.get(currency_type, 0)
 		var button: Button = currency_buttons[currency_type]

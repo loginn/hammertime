@@ -75,9 +75,9 @@ func _reset_fresh() -> void:
 
 
 func _simulate_prestige() -> void:
-	# Spend forge currency (100 times)
+	# Spend augment currency (100 times)
 	for i in range(100):
-		GameState.spend_currency("forge")
+		GameState.spend_currency("augment")
 
 	# Advance prestige state
 	GameState.prestige_level = 1
@@ -117,14 +117,14 @@ func _group_2_prestige_gating() -> void:
 	print("\n=== GROUP 2: Prestige Gating ===")
 	# Continue from group 1 state (fresh game, prestige_level=0)
 
-	GameState.currency_counts["forge"] = 99
-	_check(PrestigeManager.can_prestige() == false, "can_prestige() == false with 99 forge")
+	GameState.currency_counts["augment"] = 99
+	_check(PrestigeManager.can_prestige() == false, "can_prestige() == false with 99 augment")
 
-	GameState.currency_counts["forge"] = 100
-	_check(PrestigeManager.can_prestige() == true, "can_prestige() == true with 100 forge")
+	GameState.currency_counts["augment"] = 100
+	_check(PrestigeManager.can_prestige() == true, "can_prestige() == true with 100 augment")
 
 	var cost: Dictionary = PrestigeManager.get_next_prestige_cost()
-	_check(cost.has("forge") and cost["forge"] == 100, "next prestige cost == {forge: 100}")
+	_check(cost.has("augment") and cost["augment"] == 100, "next prestige cost == {augment: 100}")
 
 
 # --- Group 3: Execute Prestige P0 -> P1 ---
@@ -132,7 +132,7 @@ func _group_2_prestige_gating() -> void:
 func _group_3_execute_prestige() -> void:
 	print("\n=== GROUP 3: Execute Prestige P0 -> P1 ===")
 	_reset_fresh()
-	GameState.currency_counts["forge"] = 100
+	GameState.currency_counts["augment"] = 100
 	_simulate_prestige()
 
 	_check(GameState.prestige_level == 1, "prestige_level == 1")
@@ -151,8 +151,8 @@ func _group_3_execute_prestige() -> void:
 		GameState.crafting_inventory["weapon"] is Broadsword,
 		"starter weapon (Broadsword) in crafting inventory after prestige"
 	)
-	_check(GameState.currency_counts["forge"] == 0, "forge currency == 0 (spent + wiped)")
-	_check(GameState.currency_counts["runic"] == 1, "runic currency == 1 (fresh default)")
+	_check(GameState.currency_counts["augment"] == 2, "augment currency == 2 (fresh default after wipe)")
+	_check(GameState.currency_counts["transmute"] == 2, "transmute currency == 2 (fresh default)")
 
 	# Tag currency total should be 1 (we set fire=1 in _simulate_prestige)
 	var tag_total: int = 0
@@ -188,7 +188,7 @@ func _group_4_save_round_trip_p0() -> void:
 		"restored tag_currency_counts is empty"
 	)
 	_check(GameState.area_level == 1, "restored area_level == 1")
-	_check(GameState.currency_counts["runic"] == 1, "restored runic currency == 1")
+	_check(GameState.currency_counts["transmute"] == 2, "restored transmute currency == 2")
 
 
 # --- Group 5: Save Round-Trip at P1 ---
@@ -196,7 +196,7 @@ func _group_4_save_round_trip_p0() -> void:
 func _group_5_save_round_trip_p1() -> void:
 	print("\n=== GROUP 5: Save Round-Trip at P1 ===")
 	_reset_fresh()
-	GameState.currency_counts["forge"] = 100
+	GameState.currency_counts["augment"] = 100
 	_simulate_prestige()
 	GameState.tag_currency_counts = {"fire": 1, "cold": 2}
 

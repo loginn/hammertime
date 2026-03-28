@@ -5,13 +5,13 @@ const MAX_PRESTIGE_LEVEL: int = 7
 # Key = prestige level (1-7), Value = {currency_type: amount}
 # P2-P7 use stub values (999999) -- unreachable until costs are tuned
 const PRESTIGE_COSTS: Dictionary = {
-	1: { "forge": 100 },
-	2: { "forge": 999999 },
-	3: { "forge": 999999 },
-	4: { "forge": 999999 },
-	5: { "forge": 999999 },
-	6: { "forge": 999999 },
-	7: { "forge": 999999 },
+	1: { "augment": 100 },
+	2: { "augment": 999999 },
+	3: { "augment": 999999 },
+	4: { "augment": 999999 },
+	5: { "augment": 999999 },
+	6: { "augment": 999999 },
+	7: { "augment": 999999 },
 }
 
 # Index = prestige level (0-7), Value = max_item_tier_unlocked

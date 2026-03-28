@@ -98,12 +98,12 @@ func initialize_fresh_game() -> void:
 
 	# Initialize currency counts
 	currency_counts = {
-		"runic": 1,
-		"forge": 0,
-		"tack": 0,
-		"grand": 0,
-		"claw": 0,
-		"tuning": 0
+		"transmute": 2,
+		"augment": 2,
+		"alteration": 0,
+		"regal": 0,
+		"chaos": 0,
+		"exalt": 0
 	}
 
 	# Initialize stash and bench (Phase 55: single universal bench + 3-slot stash)
@@ -144,12 +144,12 @@ func _wipe_run_state() -> void:
 
 	# 4. Standard currencies -- reset to fresh-game defaults
 	currency_counts = {
-		"runic": 1,
-		"forge": 0,
-		"tack": 0,
-		"grand": 0,
-		"claw": 0,
-		"tuning": 0,
+		"transmute": 2,
+		"augment": 2,
+		"alteration": 0,
+		"regal": 0,
+		"chaos": 0,
+		"exalt": 0,
 	}
 
 	# 5. Tag currencies -- wiped (they are run currency per user decision)
