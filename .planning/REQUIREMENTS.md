@@ -8,20 +8,20 @@
 ### Difficulty
 
 - [ ] **DIFF-01**: Fresh P0 hero survives Forest packs consistently with starter gear
-- [ ] **DIFF-02**: Per-pack item drop chance scales by biome (higher in Forest/Dark Forest, tapering to 18% at endgame)
-- [ ] **DIFF-03**: Fresh hero starts with starter armor in addition to starter weapon
+- [ ] **DIFF-03**: Fresh hero starts with starter weapon + armor in stash, plus 2 Transmute and 2 Augment hammers
 
 ### Stash
 
 - [ ] **STSH-01**: Player has 3 stash slots per equipment type to hold unworked bases
 - [ ] **STSH-02**: Stash displays as letter-icon squares (W for wand, S for sword, etc.) in ForgeView
-- [ ] **STSH-03**: Player can tap a stash item to move it onto the crafting bench
+- [ ] **STSH-03**: Player can tap a stash item to move it onto the crafting bench (item cannot be returned to stash)
 - [ ] **STSH-04**: Dropped items auto-stash; overflow discarded with feedback
+- [ ] **STSH-05**: Player can hover/long-press a stash item to see full item details (name, rarity, affixes)
 
 ### Crafting
 
-- [ ] **CRFT-01**: Alteration Hammer rerolls all mods at current rarity (works on Magic and Rare items)
-- [ ] **CRFT-02**: Regal Hammer upgrades Magic → Rare (adds mods to fill Rare affix limits)
+- [ ] **CRFT-01**: Alteration Hammer rerolls all mods at current rarity (Magic only; rejected on Normal/Rare)
+- [ ] **CRFT-02**: Regal Hammer upgrades Magic → Rare by adding a single mod (3-mod Rare)
 - [ ] **CRFT-03**: Save format v9 persists new hammer currencies and 3-slot stash
 
 ## Future Requirements
@@ -36,6 +36,7 @@
 |---------|--------|
 | Chaos-style full reroll | Deliberate design: no full rerolls, craft carefully |
 | Multi-bench crafting | Stash is a holding buffer, not multiple active benches |
+| Per-biome drop rate scaling | Current 18% flat rate is fine; more drops come from easier packs |
 | Endgame difficulty changes | This milestone focuses on early game only |
 | Affix tier rebalancing | 32 tiers stay as-is; future meta-progression depends on them |
 
@@ -43,22 +44,22 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DIFF-01 | — | Pending |
-| DIFF-02 | — | Pending |
-| DIFF-03 | — | Pending |
-| STSH-01 | — | Pending |
-| STSH-02 | — | Pending |
-| STSH-03 | — | Pending |
-| STSH-04 | — | Pending |
-| CRFT-01 | — | Pending |
-| CRFT-02 | — | Pending |
-| CRFT-03 | — | Pending |
+| STSH-01 | Phase 55 | Pending |
+| STSH-04 | Phase 55 | Pending |
+| DIFF-01 | Phase 56 | Pending |
+| DIFF-03 | Phase 56 | Pending |
+| STSH-02 | Phase 57 | Pending |
+| STSH-03 | Phase 57 | Pending |
+| STSH-05 | Phase 57 | Pending |
+| CRFT-01 | Phase 58 | Pending |
+| CRFT-02 | Phase 58 | Pending |
+| CRFT-03 | Phase 58 | Pending |
 
 **Coverage:**
 - v1.10 requirements: 10 total
-- Mapped to phases: 0
-- Unmapped: 10 ⚠️
+- Mapped to phases: 10
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-28*
-*Last updated: 2026-03-28 after initial definition*
+*Last updated: 2026-03-28 — traceability updated after roadmap creation*

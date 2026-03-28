@@ -12,7 +12,8 @@
 - ✅ **v1.6 Tech Debt Cleanup** — Phases 31-34 (shipped 2026-02-20)
 - ✅ **v1.7 Meta-Progression** — Phases 35-41 (shipped 2026-03-06)
 - ✅ **v1.8 Content Pass — Items & Mods** — Phases 42-49 (shipped 2026-03-08)
-- 🔨 **v1.9 Heroes** — Phases 50-54 (in progress)
+- ✅ **v1.9 Heroes** — Phases 50-54 (shipped 2026-03-28)
+- 🔨 **v1.10 Early Game Rebalance** — Phases 55-58 (in progress)
 
 ## Phases
 
@@ -145,85 +146,80 @@ Full details: `.planning/milestones/v1.8-ROADMAP.md`
 
 </details>
 
-<details open>
-<summary>🔨 v1.9 Heroes (Phases 50-54) — IN PROGRESS</summary>
+<details>
+<summary>✅ v1.9 Heroes (Phases 50-54) — SHIPPED 2026-03-28</summary>
 
-### Phase 50: Data Foundation
+- [x] Phase 50: Data Foundation (1/1 plan) — completed 2026-03-28
+- [x] Phase 51: Stat Integration (1/1 plan) — completed 2026-03-28
+- [x] Phase 52: Save & Persistence (1/1 plan) — completed 2026-03-28
+- [x] Phase 53: Selection UI (1/1 plan) — completed 2026-03-28
+- [x] Phase 54: Polish & Balance (1/1 plan) — completed 2026-03-28
 
-**Goal:** Create the HeroArchetype Resource with all 9 hero definitions and wire up GameState/GameEvents infrastructure.
-**Requirements:** HERO-01, HERO-02, HERO-03
-**Plans:** 1 plan
-
-Plans:
-- [x] 50-01-PLAN.md — HeroArchetype Resource, GameEvents signals, GameState field, integration tests
-
-**Success criteria:**
-1. `HeroArchetype.REGISTRY` contains 9 entries — 3 archetypes x 3 subvariants each with unique id, name, title, and color
-2. `HeroArchetype.generate_choices()` returns exactly 3 heroes (1 STR, 1 DEX, 1 INT) with random subvariant selection
-3. `GameState.hero_archetype` field is nullable and defaults to null for classless Adventurer
-4. `GameEvents` emits `hero_selection_needed` and `hero_selected` signals without errors
-
-### Phase 51: Stat Integration
-
-**Goal:** Wire archetype passive bonuses into Hero.update_stats() as multiplicative "more" modifiers applied after equipment aggregation.
-**Requirements:** PASS-01, PASS-02
-**Plans:** 1 plan
-
-Plans:
-- [x] 51-01-PLAN.md — Bonus injection into hero.gd, is_spell_user derivation, settings/save cleanup, Group 37 tests
-
-**Success criteria:**
-1. Hero with a fire damage archetype shows higher fire DPS than an identical classless hero with the same gear
-2. DoT subvariant heroes receive +20% bleed/poison/burn chance bonus visible in stat totals
-3. Bonuses apply after equipment stacking (multiplicative "more"), not during StatCalculator aggregation
-4. CombatEngine requires zero changes — it reads pre-computed damage ranges that already include bonuses
-
-### Phase 52: Save & Persistence
-
-**Goal:** Bump save format to v8 with hero_archetype_id persistence; old saves (v7 and below) trigger a fresh new game.
-**Requirements:** SAVE-01
-**Plans:** 1 plan
-
-Plans:
-- [x] 52-01-PLAN.md — Save v8 with hero_archetype_id, strict import rejection, prestige wipe, Group 38 tests
-
-**Success criteria:**
-1. Saving and loading a game round-trips the selected hero archetype correctly
-2. Loading a v7 save file triggers a new game instead of crashing or corrupting state
-3. Classless Adventurer (null archetype) saves and loads correctly at P0
-4. Auto-save and export/import strings include hero_archetype_id
-
-### Phase 53: Selection UI
-
-**Goal:** Build the 3-card hero selection overlay that appears after prestige and blocks gameplay until a hero is picked.
-**Requirements:** SEL-01, SEL-02, SEL-03
-**Plans:** 1 plan
-
-Plans:
-- [x] 53-01-PLAN.md — BONUS_LABELS + format_bonuses(), hero selection overlay in main_view, Group 39 tests
-
-**Success criteria:**
-1. After prestige (P1+), a 3-card overlay appears showing one STR, one DEX, and one INT hero with name, title, color, and passive description
-2. Clicking a card selects that hero, dismisses the overlay, and resumes gameplay with the chosen archetype active
-3. P0 players never see the selection overlay and play as classless Adventurer
-4. The overlay fits within 1280x720 viewport and blocks all input to underlying views until dismissed
-
-### Phase 54: Polish & Balance
-
-**Goal:** Display hero bonuses in ForgeView stat panel, verify all 9 heroes across all damage channels, and tune bonus magnitudes.
-**Requirements:** PASS-03
-**Plans:** 1 plan
-
-Plans:
-- [x] 54-01-PLAN.md — Hero title + passive bonus block in stat panel, visual verification
-
-**Success criteria:**
-1. ForgeView stat panel shows a separate labeled line for the active hero's passive bonus contribution
-2. All 9 heroes produce correct damage output across attack, spell, and DoT channels (integration tests)
-3. Hero bonus magnitude is tuned so matching element gear + hero feels powerful but non-matching gear remains viable
-4. Classless Adventurer stat panel shows no hero bonus line
+Full details: `.planning/milestones/v1.9-ROADMAP.md`
 
 </details>
+
+<details open>
+<summary>🔨 v1.10 Early Game Rebalance (Phases 55-58) — IN PROGRESS</summary>
+
+- [ ] **Phase 55: Stash Data Model** — 3-slot stash arrays per equipment type, auto-stash on drop, overflow feedback
+- [ ] **Phase 56: Difficulty & Starter Kit** — Tune Forest survival, starter weapon + armor in stash, starter hammers
+- [ ] **Phase 57: Stash UI** — Letter-icon grid in ForgeView, tap-to-bench interaction, item detail hover
+- [ ] **Phase 58: New Hammers & Save v9** — Alteration and Regal hammer currency classes, save format v9
+
+</details>
+
+## Phase Details
+
+### Phase 55: Stash Data Model
+
+**Goal**: A 3-slot stash buffer per equipment type exists in GameState and items dropped from combat fill it automatically.
+**Depends on**: Nothing (new data structure alongside existing single-bench model)
+**Requirements**: STSH-01, STSH-04
+**Success Criteria** (what must be TRUE):
+  1. GameState holds a stash dictionary keyed by slot type, each entry an array capped at 3 items
+  2. Items dropped during combat are placed in the stash for the appropriate slot; the crafting bench is not affected
+  3. When all 3 stash slots for a type are full, the new item is discarded and a toast notification tells the player which slot is full
+  4. Stash state survives a save/load round-trip (persisted in save format v9, Phase 58)
+**Plans**: TBD
+
+### Phase 56: Difficulty & Starter Kit
+
+**Goal**: Fresh P0 heroes can engage with the crafting loop from zone 1 — starter items in stash, starter hammers, and tuned Forest difficulty.
+**Depends on**: Phase 55 (stash must exist for starter items to be placed in it)
+**Requirements**: DIFF-01, DIFF-03
+**Success Criteria** (what must be TRUE):
+  1. A fresh P0 hero clears zone 1 Forest packs without dying
+  2. A new game starts with a starter weapon and starter armor in the stash (not equipped)
+  3. A new game starts with 2 Transmute Hammers and 2 Augment (Forge) Hammers
+  4. Early Forest pack HP/damage values are tuned so starter gear is sufficient for survival
+**Plans**: TBD
+
+### Phase 57: Stash UI
+
+**Goal**: Players can see stash contents at a glance and move any stash item onto the crafting bench with a single tap.
+**Depends on**: Phase 55
+**Requirements**: STSH-02, STSH-03, STSH-05
+**Success Criteria** (what must be TRUE):
+  1. ForgeView displays a row of letter-icon squares for each equipment slot type showing stash occupancy (e.g. W for wand, S for sword)
+  2. Empty stash slots render as dim/greyed squares so the player can see remaining capacity
+  3. Tapping a filled stash square moves that item to the crafting bench; the item is removed from stash and cannot be put back
+  4. Hovering/long-pressing a stash item shows a popup with the item's full details (name, rarity, affixes)
+  5. The stash display updates immediately when items are added from drops or removed by tapping
+**Plans**: TBD
+
+### Phase 58: New Hammers & Save v9
+
+**Goal**: Players have two new crafting hammers — Alteration to iterate on existing mods and Regal to graduate Magic items to Rare — and all new state persists in save format v9.
+**Depends on**: Phase 55 (stash data model must exist to be included in v9 save)
+**Requirements**: CRFT-01, CRFT-02, CRFT-03
+**Success Criteria** (what must be TRUE):
+  1. Applying an Alteration Hammer to a Magic item rerolls all mods while keeping Magic rarity; rejected on Normal or Rare with feedback
+  2. Applying a Regal Hammer to a Magic item upgrades it to Rare by adding a single mod (resulting in a 3-mod Rare)
+  3. Regal Hammer is rejected (with feedback) when applied to a Normal or Rare item
+  4. Save format v9 round-trips correctly: Alteration and Regal hammer counts, stash contents, and hero archetype all survive save/load and export/import
+  5. Loading a v8 save starts a fresh game (strict version rejection, consistent with existing migration policy)
+**Plans**: TBD
 
 ## Progress
 
@@ -239,8 +235,12 @@ Plans:
 | 31-34             | v1.6      | 5/5            | Complete    | 2026-02-20 |
 | 35-41             | v1.7      | 9/9            | Complete    | 2026-03-06 |
 | 42-49             | v1.8      | 18/18          | Complete    | 2026-03-08 |
-| 50-54             | v1.9      | 4/5            | Planning    | —          |
+| 50-54             | v1.9      | 5/5            | Complete    | 2026-03-28 |
+| 55 (Stash Data)   | v1.10     | 0/TBD          | Not started | —          |
+| 56 (Difficulty)   | v1.10     | 0/TBD          | Not started | —          |
+| 57                | v1.10     | 0/TBD          | Not started | —          |
+| 58                | v1.10     | 0/TBD          | Not started | —          |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-27 — Phase 54 plan created*
+*Last updated: 2026-03-28 — v1.10 phases 55-58 added*

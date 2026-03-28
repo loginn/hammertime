@@ -119,9 +119,8 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 **Goal:** Make the early crafting loop feel rewarding from zone 1 — more base drops, a small stash to work with, new hammers for iterating on gear, and tuned difficulty so fresh heroes can engage with the systems.
 
 **Target features:**
-- Early difficulty tuning — reduce Forest/Dark Forest pack HP and damage for fresh P0 heroes
-- Higher early drop rates — scale per-pack item drop chance by biome (higher early, taper to current 18% at endgame)
-- 3-slot stash per equipment type — small inventory buffer with letter-icon UI (W for wand, S for sword, etc.)
+- Early difficulty tuning — reduce Forest pack HP and damage so fresh P0 heroes survive with starter gear
+- 3-slot stash per equipment type — small inventory buffer with letter-icon UI (W for wand, S for sword, etc.), one-way move to bench
 - Alteration Hammer — reroll all mods at current rarity, enabling iteration on Magic items
 - Regal Hammer — upgrade Magic → Rare, completing the early crafting arc (transmute → alt → regal)
 
