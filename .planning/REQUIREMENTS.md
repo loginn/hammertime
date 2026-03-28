@@ -1,59 +1,64 @@
-# Requirements: v1.9 Heroes
+# Requirements: Hammertime v1.10 Early Game Rebalance
 
-## v1.9 Requirements
+**Defined:** 2026-03-28
+**Core Value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 
-### Hero Data & Identity
-- [x] **HERO-01**: 9 hero roster — 3 archetypes (STR/DEX/INT) × 3 subvariants each (hit, DoT, elemental)
-- [x] **HERO-02**: HeroArchetype Resource with id, archetype, name, passive_bonuses dict, const registry in code
-- [x] **HERO-03**: Each hero has a proper name and title (e.g., "Fiona, Fire Sorceress") with color identity
+## v1.10 Requirements
 
-### Passive Bonus System
-- [x] **PASS-01**: Multiplicative "more" bonuses applied after gear stacking in Hero.update_stats()
-- [x] **PASS-02**: DoT subvariant heroes get +20% bleed/poison/burn chance bonus to bootstrap viability
-- [x] **PASS-03**: Hero bonus visible as separate line in ForgeView stat panel
+### Difficulty
 
-### Prestige Selection
-- [x] **SEL-01**: 3-card draft on prestige — 1 STR, 1 DEX, 1 INT drawn randomly, pick one
-- [x] **SEL-02**: P0 plays as classless Adventurer (no hero, no passive). First selection at P1
-- [x] **SEL-03**: Selection overlay UI blocks gameplay post-prestige until hero is picked (1280x720)
+- [ ] **DIFF-01**: Fresh P0 hero survives Forest packs consistently with starter gear
+- [ ] **DIFF-02**: Per-pack item drop chance scales by biome (higher in Forest/Dark Forest, tapering to 18% at endgame)
+- [ ] **DIFF-03**: Fresh hero starts with starter armor in addition to starter weapon
 
-### Save & Persistence
-- [x] **SAVE-01**: Save format v8 with hero_archetype_id. Old saves trigger new game (breaking change)
+### Stash
+
+- [ ] **STSH-01**: Player has 3 stash slots per equipment type to hold unworked bases
+- [ ] **STSH-02**: Stash displays as letter-icon squares (W for wand, S for sword, etc.) in ForgeView
+- [ ] **STSH-03**: Player can tap a stash item to move it onto the crafting bench
+- [ ] **STSH-04**: Dropped items auto-stash; overflow discarded with feedback
+
+### Crafting
+
+- [ ] **CRFT-01**: Alteration Hammer rerolls all mods at current rarity (works on Magic and Rare items)
+- [ ] **CRFT-02**: Regal Hammer upgrades Magic → Rare (adds mods to fill Rare affix limits)
+- [ ] **CRFT-03**: Save format v9 persists new hammer currencies and 3-slot stash
 
 ## Future Requirements
 
-- Prestige-level-gated hero pool (P1 basic, P3+ full roster)
-- Hero bonus scaling with prestige level
-- Defensive hero variants
-- Dual-bonus heroes
-- Hero-specific item affixes
-- Ascendancy trees
-- Hero cosmetic effects
-- Hero-weighted item drops
+- Large number formatting with suffix notation (K/M/B)
+- Item drop filter for unwanted loot
+- WIP item save slot (park mid-craft item)
 
 ## Out of Scope
 
-- Skill trees per hero — scope explosion, contradicts idle simplicity
-- Active abilities — contradicts idle auto-combat
-- Hero-exclusive items — restricts existing 21-base pool
-- Permanent hero progression across prestiges — destroys prestige tension
-- Additive hero bonuses — scale poorly in idle exponential context
+| Feature | Reason |
+|---------|--------|
+| Chaos-style full reroll | Deliberate design: no full rerolls, craft carefully |
+| Multi-bench crafting | Stash is a holding buffer, not multiple active benches |
+| Endgame difficulty changes | This milestone focuses on early game only |
+| Affix tier rebalancing | 32 tiers stay as-is; future meta-progression depends on them |
 
 ## Traceability
 
-| REQ-ID | Phase | Plan | Status |
-|--------|-------|------|--------|
-| HERO-01 | 50 | — | not started |
-| HERO-02 | 50 | — | not started |
-| HERO-03 | 50 | — | not started |
-| PASS-01 | 51 | — | not started |
-| PASS-02 | 51 | — | not started |
-| PASS-03 | 54 | — | not started |
-| SEL-01 | 53 | — | not started |
-| SEL-02 | 53 | — | not started |
-| SEL-03 | 53 | — | not started |
-| SAVE-01 | 52 | — | not started |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| DIFF-01 | — | Pending |
+| DIFF-02 | — | Pending |
+| DIFF-03 | — | Pending |
+| STSH-01 | — | Pending |
+| STSH-02 | — | Pending |
+| STSH-03 | — | Pending |
+| STSH-04 | — | Pending |
+| CRFT-01 | — | Pending |
+| CRFT-02 | — | Pending |
+| CRFT-03 | — | Pending |
+
+**Coverage:**
+- v1.10 requirements: 10 total
+- Mapped to phases: 0
+- Unmapped: 10 ⚠️
 
 ---
-*Requirements defined: 2026-03-09*
-*Milestone: v1.9 Heroes*
+*Requirements defined: 2026-03-28*
+*Last updated: 2026-03-28 after initial definition*
