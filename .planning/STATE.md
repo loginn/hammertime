@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
-status: executing
-stopped_at: Completed 55-01-PLAN.md (stash data model, crafting_bench, add_item_to_stash, stash_updated signal)
-last_updated: "2026-03-28T11:48:41.167Z"
+status: verifying
+stopped_at: Completed 55-02-PLAN.md (ForgeView and MainView consumer migration to single bench model)
+last_updated: "2026-03-28T11:54:32.784Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 4
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 Phase: 55 (stash-data-model) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
 ```
@@ -87,6 +87,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [Phase 54]: Classless Adventurer null archetype shows no hero section in ForgeView stat panel (per D-04)
 - [Phase 55-stash-data-model]: crafting_inventory and crafting_bench_type kept as property shims for v8 save_manager compat — real removal deferred to Phase 58
 - [Phase 55-stash-data-model]: initialize_fresh_game() and _wipe_run_state() no longer create Broadsword.new(8) starter weapon — Phase 56 handles starter items
+- [Phase 55-02]: ItemTypeButtons hidden not removed — Phase 57 repurposes them as stash slot navigation
+- [Phase 55-02]: Dead code stubs with push_warning for add_item_to_inventory and set_new_item_base — dead, traceable, Phase 57 may reuse
 
 ### Pending Todos
 
@@ -114,11 +116,12 @@ None.
 | Phase 53-selection-ui P01 | 157 | 3 tasks | 3 files |
 | Phase 54 P01 | 15 | 2 tasks | 1 files |
 | Phase 55-stash-data-model P01 | 5 | 2 tasks | 3 files |
+| Phase 55-stash-data-model P02 | 8 | 2 tasks | 2 files |
 
 ## Session Continuity
 
-Last session: 2026-03-28T11:48:41.156Z
-Stopped at: Completed 55-01-PLAN.md (stash data model, crafting_bench, add_item_to_stash, stash_updated signal)
+Last session: 2026-03-28T11:54:32.777Z
+Stopped at: Completed 55-02-PLAN.md (ForgeView and MainView consumer migration to single bench model)
 Resume file: None
 
 ---
