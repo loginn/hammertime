@@ -20,12 +20,8 @@ enum ItemSlot { NONE = -1, WEAPON, HELMET, ARMOR, BOOTS, RING }
 @onready var physical_hammer_btn: Button = $HammerSidebar/TagHammerSection/PhysicalHammerBtn
 @onready var tag_hammer_section: Control = $HammerSidebar/TagHammerSection
 
-# Item type button references
-@onready var weapon_type_btn: Button = $ItemTypeButtons/WeaponButton
-@onready var helmet_type_btn: Button = $ItemTypeButtons/HelmetButton
-@onready var armor_type_btn: Button = $ItemTypeButtons/ArmorButton
-@onready var boots_type_btn: Button = $ItemTypeButtons/BootsButton
-@onready var ring_type_btn: Button = $ItemTypeButtons/RingButton
+# Stash slot button references (populated in _ready)
+var stash_slot_buttons: Dictionary = {}
 
 # Display references
 @onready var item_image: TextureRect = $ItemGraphicsPanel/ItemImage
@@ -69,7 +65,6 @@ var melt_confirm_pending: bool = false
 var melt_timer: Timer
 
 # Hero display state
-var currently_hovered_type: String = ""
 var equip_hover_active: bool = false
 
 # Hammer tooltip descriptions (shown on hover)
@@ -137,26 +132,6 @@ func _ready() -> void:
 	# Connect item image click for applying currency
 	item_image.gui_input.connect(update_item)
 
-	# Connect item type buttons
-	weapon_type_btn.pressed.connect(_on_item_type_selected.bind("weapon"))
-	helmet_type_btn.pressed.connect(_on_item_type_selected.bind("helmet"))
-	armor_type_btn.pressed.connect(_on_item_type_selected.bind("armor"))
-	boots_type_btn.pressed.connect(_on_item_type_selected.bind("boots"))
-	ring_type_btn.pressed.connect(_on_item_type_selected.bind("ring"))
-
-	# Connect item type button hover for hero stats comparison
-	weapon_type_btn.mouse_entered.connect(_on_type_hover_entered.bind("weapon"))
-	helmet_type_btn.mouse_entered.connect(_on_type_hover_entered.bind("helmet"))
-	armor_type_btn.mouse_entered.connect(_on_type_hover_entered.bind("armor"))
-	boots_type_btn.mouse_entered.connect(_on_type_hover_entered.bind("boots"))
-	ring_type_btn.mouse_entered.connect(_on_type_hover_entered.bind("ring"))
-
-	weapon_type_btn.mouse_exited.connect(_on_type_hover_exited.bind("weapon"))
-	helmet_type_btn.mouse_exited.connect(_on_type_hover_exited.bind("helmet"))
-	armor_type_btn.mouse_exited.connect(_on_type_hover_exited.bind("armor"))
-	boots_type_btn.mouse_exited.connect(_on_type_hover_exited.bind("boots"))
-	ring_type_btn.mouse_exited.connect(_on_type_hover_exited.bind("ring"))
-
 	# Connect melt/equip buttons
 	melt_button.pressed.connect(_on_melt_pressed)
 	equip_button.pressed.connect(_on_equip_pressed)
@@ -181,29 +156,53 @@ func _ready() -> void:
 	melt_timer.timeout.connect(_on_melt_timer_timeout)
 	add_child(melt_timer)
 
-	# Phase 55: single universal bench model — load from GameState.crafting_bench
+	# Load current bench item from GameState
 	current_item = GameState.crafting_bench
 
-	# Phase 55: ItemTypeButtons disabled — single bench model, no type switching
-	# Phase 57 will repurpose these as stash navigation
-	weapon_type_btn.disabled = true
-	helmet_type_btn.disabled = true
-	armor_type_btn.disabled = true
-	boots_type_btn.disabled = true
-	ring_type_btn.disabled = true
-	weapon_type_btn.visible = false
-	helmet_type_btn.visible = false
-	armor_type_btn.visible = false
-	boots_type_btn.visible = false
-	ring_type_btn.visible = false
+	# Populate stash slot button dictionary from scene tree
+	stash_slot_buttons = {
+		"weapon": [
+			$StashDisplay/WeaponGroup/WeaponSlots/WeaponSlot0,
+			$StashDisplay/WeaponGroup/WeaponSlots/WeaponSlot1,
+			$StashDisplay/WeaponGroup/WeaponSlots/WeaponSlot2,
+		],
+		"helmet": [
+			$StashDisplay/HelmetGroup/HelmetSlots/HelmetSlot0,
+			$StashDisplay/HelmetGroup/HelmetSlots/HelmetSlot1,
+			$StashDisplay/HelmetGroup/HelmetSlots/HelmetSlot2,
+		],
+		"armor": [
+			$StashDisplay/ArmorGroup/ArmorSlots/ArmorSlot0,
+			$StashDisplay/ArmorGroup/ArmorSlots/ArmorSlot1,
+			$StashDisplay/ArmorGroup/ArmorSlots/ArmorSlot2,
+		],
+		"boots": [
+			$StashDisplay/BootsGroup/BootsSlots/BootsSlot0,
+			$StashDisplay/BootsGroup/BootsSlots/BootsSlot1,
+			$StashDisplay/BootsGroup/BootsSlots/BootsSlot2,
+		],
+		"ring": [
+			$StashDisplay/RingGroup/RingSlots/RingSlot0,
+			$StashDisplay/RingGroup/RingSlots/RingSlot1,
+			$StashDisplay/RingGroup/RingSlots/RingSlot2,
+		],
+	}
+
+	# Wire stash slot buttons with tap-to-bench handler
+	for slot_type in stash_slot_buttons:
+		for i in range(3):
+			stash_slot_buttons[slot_type][i].pressed.connect(_on_stash_slot_pressed.bind(slot_type, i))
+
+	# Connect stash_updated signal for live refresh during combat
+	GameEvents.stash_updated.connect(_on_stash_updated)
 
 	# Update all displays
 	update_inventory_display()
-	update_item_type_button_states()
 	update_currency_button_states()
 	update_item_stats_display()
 	update_hero_stats_display()
 	update_melt_equip_states()
+	_update_stash_display()
 
 
 # --- Currency selection and application ---
@@ -350,22 +349,93 @@ func update_currency_button_states() -> void:
 				currency_buttons[btn_type].button_pressed = false
 
 
-# --- Item type selection ---
+# --- Stash display ---
 
 
-func _on_item_type_selected(_item_type: String) -> void:
-	# Phase 55: disabled — single bench model, no type switching
-	pass
+func _get_item_abbreviation(item: Item) -> String:
+	if item is Broadsword: return "BS"
+	if item is Battleaxe: return "BA"
+	if item is Warhammer: return "WH"
+	if item is Dagger: return "DA"
+	if item is VenomBlade: return "VB"
+	if item is Shortbow: return "SB"
+	if item is Wand: return "WN"
+	if item is LightningRod: return "LR"
+	if item is Sceptre: return "SC"
+	if item is IronHelm: return "IH"
+	if item is LeatherHood: return "LH"
+	if item is Circlet: return "CI"
+	if item is IronPlate: return "IP"
+	if item is LeatherVest: return "LV"
+	if item is SilkRobe: return "SR"
+	if item is IronGreaves: return "IG"
+	if item is LeatherBoots: return "LB"
+	if item is SilkSlippers: return "SS"
+	if item is IronBand: return "IB"
+	if item is JadeRing: return "JR"
+	if item is SapphireRing: return "SP"
+	return "??"
 
 
-func update_item_type_button_states() -> void:
-	# Phase 55: type buttons hidden — no state to update
-	pass
+func _build_stash_tooltip(item: Item) -> String:
+	return item.get_display_text()
 
 
-func update_slot_button_labels() -> void:
-	# Phase 55: type buttons hidden — no labels to update
-	pass
+func _update_stash_display() -> void:
+	for slot_type in stash_slot_buttons:
+		var items: Array = GameState.stash.get(slot_type, [])
+		for i in range(3):
+			var btn: Button = stash_slot_buttons[slot_type][i]
+			if i < items.size() and items[i] != null:
+				var item: Item = items[i]
+				btn.text = _get_item_abbreviation(item)
+				btn.tooltip_text = _build_stash_tooltip(item)
+				btn.modulate = Color(1.0, 1.0, 1.0, 1.0)
+				btn.disabled = (GameState.crafting_bench != null)
+			else:
+				btn.text = ""
+				btn.tooltip_text = ""
+				btn.modulate = Color(0.4, 0.4, 0.4, 1.0)
+				btn.disabled = true
+
+
+func _on_stash_updated(_slot: String) -> void:
+	_update_stash_display()
+
+
+func _on_stash_slot_pressed(slot_type: String, index: int) -> void:
+	if GameState.crafting_bench != null:
+		_show_forge_error("Melt or equip first")
+		return
+	var items: Array = GameState.stash.get(slot_type, [])
+	if index >= items.size():
+		return
+	var item: Item = items[index]
+	_flash_stash_slot(slot_type, index)
+	items.remove_at(index)
+	GameState.crafting_bench = item
+	current_item = item
+	update_current_item()
+	_update_stash_display()
+	update_melt_equip_states()
+	update_inventory_display()
+
+
+func _flash_stash_slot(slot_type: String, index: int) -> void:
+	var btn: Button = stash_slot_buttons[slot_type][index]
+	var tween := create_tween()
+	tween.tween_property(btn, "modulate", Color(1.0, 1.0, 0.3, 1.0), 0.08)
+	tween.tween_property(btn, "modulate", Color(0.4, 0.4, 0.4, 1.0), 0.25)
+
+
+func _pulse_stash_slots() -> void:
+	for slot_type in stash_slot_buttons:
+		for i in range(3):
+			var btn: Button = stash_slot_buttons[slot_type][i]
+			if not btn.disabled:
+				var tween := create_tween()
+				tween.tween_property(btn, "modulate:a", 0.4, 0.15)
+				tween.tween_property(btn, "modulate:a", 1.0, 0.15)
 
 
 func update_current_item() -> void:
@@ -381,19 +451,6 @@ func get_selected_item_type() -> String:
 	if GameState.crafting_bench == null:
 		return ""
 	return get_item_type(GameState.crafting_bench)
-
-
-# --- Item type hover for hero stats comparison ---
-
-
-func _on_type_hover_entered(item_type: String) -> void:
-	currently_hovered_type = item_type
-	update_hero_stats_display()
-
-
-func _on_type_hover_exited(_item_type: String) -> void:
-	currently_hovered_type = ""
-	update_hero_stats_display()
 
 
 # --- Equip button hover for stat comparison ---
@@ -443,6 +500,8 @@ func _on_melt_pressed() -> void:
 	update_item_stats_display()
 	update_melt_equip_states()
 	update_inventory_display()
+	_update_stash_display()
+	_pulse_stash_slots()
 
 
 func _on_equip_pressed() -> void:
@@ -486,6 +545,8 @@ func _on_equip_pressed() -> void:
 	update_item_stats_display()
 	update_melt_equip_states()
 	update_inventory_display()
+	_update_stash_display()
+	_pulse_stash_slots()
 	equipment_changed.emit()
 
 
@@ -592,23 +653,6 @@ func update_hero_stats_display() -> void:
 	# If hovering the Equip button, show stat comparison
 	if equip_hover_active and current_item != null:
 		hero_stats_label.text = get_stat_comparison_text()
-		return
-
-	# If hovering an item type button, show equipped item of that type for comparison
-	if currently_hovered_type != "":
-		var equipped_item: Item = GameState.hero.equipped_items.get(currently_hovered_type)
-		if equipped_item != null:
-			hero_stats_label.text = (
-				"Equipped " + currently_hovered_type.capitalize() + ":\n\n"
-				+ get_item_stats_text(equipped_item)
-			)
-			# Apply rarity color to the equipped item text
-			hero_stats_label.modulate = equipped_item.get_rarity_color()
-		else:
-			hero_stats_label.text = (
-				"Equipped " + currently_hovered_type.capitalize() + ":\n\n(Empty)"
-			)
-			hero_stats_label.modulate = Color.WHITE
 		return
 
 	# Default: show aggregate hero stats

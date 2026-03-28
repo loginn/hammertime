@@ -267,58 +267,193 @@ texture = ExtResource("2_sword")
 expand_mode = 3
 stretch_mode = 5
 
-[node name="ItemTypeButtons" type="Control" parent="."]
+[node name="StashDisplay" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
 offset_left = 340.0
-offset_top = 165.0
+offset_top = 155.0
 offset_right = 770.0
-offset_bottom = 205.0
+offset_bottom = 215.0
 
-[node name="WeaponButton" type="Button" parent="ItemTypeButtons"]
+[node name="WeaponGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
 offset_left = 0.0
 offset_top = 0.0
 offset_right = 86.0
-offset_bottom = 40.0
-theme_override_font_sizes/font_size = 11
+offset_bottom = 60.0
+
+[node name="WeaponLabel" type="Label" parent="StashDisplay/WeaponGroup"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
 text = "Weapon"
 
-[node name="HelmetButton" type="Button" parent="ItemTypeButtons"]
+[node name="WeaponSlots" type="HBoxContainer" parent="StashDisplay/WeaponGroup"]
+layout_mode = 2
+
+[node name="WeaponSlot0" type="Button" parent="StashDisplay/WeaponGroup/WeaponSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="WeaponSlot1" type="Button" parent="StashDisplay/WeaponGroup/WeaponSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="WeaponSlot2" type="Button" parent="StashDisplay/WeaponGroup/WeaponSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="HelmetGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 86.0
+offset_left = 96.0
 offset_top = 0.0
-offset_right = 172.0
-offset_bottom = 40.0
-theme_override_font_sizes/font_size = 11
+offset_right = 182.0
+offset_bottom = 60.0
+
+[node name="HelmetLabel" type="Label" parent="StashDisplay/HelmetGroup"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
 text = "Helmet"
 
-[node name="ArmorButton" type="Button" parent="ItemTypeButtons"]
+[node name="HelmetSlots" type="HBoxContainer" parent="StashDisplay/HelmetGroup"]
+layout_mode = 2
+
+[node name="HelmetSlot0" type="Button" parent="StashDisplay/HelmetGroup/HelmetSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="HelmetSlot1" type="Button" parent="StashDisplay/HelmetGroup/HelmetSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="HelmetSlot2" type="Button" parent="StashDisplay/HelmetGroup/HelmetSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="ArmorGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 172.0
+offset_left = 192.0
 offset_top = 0.0
-offset_right = 258.0
-offset_bottom = 40.0
-theme_override_font_sizes/font_size = 11
+offset_right = 278.0
+offset_bottom = 60.0
+
+[node name="ArmorLabel" type="Label" parent="StashDisplay/ArmorGroup"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
 text = "Armor"
 
-[node name="BootsButton" type="Button" parent="ItemTypeButtons"]
+[node name="ArmorSlots" type="HBoxContainer" parent="StashDisplay/ArmorGroup"]
+layout_mode = 2
+
+[node name="ArmorSlot0" type="Button" parent="StashDisplay/ArmorGroup/ArmorSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="ArmorSlot1" type="Button" parent="StashDisplay/ArmorGroup/ArmorSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="ArmorSlot2" type="Button" parent="StashDisplay/ArmorGroup/ArmorSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="BootsGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 258.0
+offset_left = 288.0
 offset_top = 0.0
-offset_right = 344.0
-offset_bottom = 40.0
-theme_override_font_sizes/font_size = 11
+offset_right = 374.0
+offset_bottom = 60.0
+
+[node name="BootsLabel" type="Label" parent="StashDisplay/BootsGroup"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
 text = "Boots"
 
-[node name="RingButton" type="Button" parent="ItemTypeButtons"]
+[node name="BootsSlots" type="HBoxContainer" parent="StashDisplay/BootsGroup"]
+layout_mode = 2
+
+[node name="BootsSlot0" type="Button" parent="StashDisplay/BootsGroup/BootsSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="BootsSlot1" type="Button" parent="StashDisplay/BootsGroup/BootsSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="BootsSlot2" type="Button" parent="StashDisplay/BootsGroup/BootsSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="RingGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 344.0
+offset_left = 384.0
 offset_top = 0.0
 offset_right = 430.0
-offset_bottom = 40.0
-theme_override_font_sizes/font_size = 11
+offset_bottom = 60.0
+
+[node name="RingLabel" type="Label" parent="StashDisplay/RingGroup"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
 text = "Ring"
+
+[node name="RingSlots" type="HBoxContainer" parent="StashDisplay/RingGroup"]
+layout_mode = 2
+
+[node name="RingSlot0" type="Button" parent="StashDisplay/RingGroup/RingSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="RingSlot1" type="Button" parent="StashDisplay/RingGroup/RingSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
+
+[node name="RingSlot2" type="Button" parent="StashDisplay/RingGroup/RingSlots"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+theme_override_font_sizes/font_size = 10
+text = ""
+disabled = true
 
 [node name="HeroGraphicsPanel" type="ColorRect" parent="."]
 offset_left = 810.0
