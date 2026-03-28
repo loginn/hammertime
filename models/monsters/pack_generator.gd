@@ -12,12 +12,12 @@ const BIOME_BOUNDARIES: Array[int] = [25, 50, 75]  # Dark Forest, Cursed Woods, 
 
 # Pre-computed avg base HP ratios: new_biome / old_biome
 # Used to ensure relief dip accounts for base stat jumps
-# Forest avg HP: (36+24+30+15+12+45)/6 = 27.0
+# Forest avg HP: (20+14+18+9+7+26)/6 = 15.67
 # Dark Forest avg HP: (42.5+80+17.5+45+35)/5 = 44.0
 # Cursed Woods avg HP: (22.5+85+37.5+45+20)/5 = 42.0
 # Shadow Realm avg HP: (47.5+100+25+40+65+17.5)/6 = 49.17
 const BIOME_STAT_RATIOS: Dictionary = {
-	25: 1.63,   # Dark Forest (44.0) / Forest (27.0)
+	25: 2.81,   # Dark Forest (44.0) / Forest (15.67)
 	50: 0.955,  # Cursed Woods (42.0) / Dark Forest (44.0)
 	75: 1.17,   # Shadow Realm (49.17) / Cursed Woods (42.0)
 }
