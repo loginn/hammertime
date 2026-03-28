@@ -191,9 +191,9 @@ Plans:
 **Goal**: Fresh P0 heroes can engage with the crafting loop from zone 1 — starter items in stash, starter hammers, and tuned Forest difficulty.
 **Depends on**: Phase 55 (stash must exist for starter items to be placed in it)
 **Requirements**: DIFF-01, DIFF-03
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 56-01-PLAN.md — Currency key rename (runic/forge/etc. to transmute/augment/etc.) + starter counts
+- [x] 56-01-PLAN.md — Currency key rename (runic/forge/etc. to transmute/augment/etc.) + starter counts
 - [ ] 56-02-PLAN.md — Starter kit placement + Forest difficulty tuning + integration tests
 **Success Criteria** (what must be TRUE):
   1. A fresh P0 hero clears zone 1 Forest packs without dying
@@ -243,7 +243,7 @@ Plans:
 | 42-49             | v1.8      | 18/18          | Complete    | 2026-03-08 |
 | 50-54             | v1.9      | 5/5            | Complete    | 2026-03-28 |
 | 55 (Stash Data)   | v1.10     | 1/2 | Complete    | 2026-03-28 |
-| 56 (Difficulty)   | v1.10     | 0/2            | Not started | —          |
+| 56 (Difficulty)   | v1.10     | 1/2 | In Progress|  |
 | 57                | v1.10     | 0/TBD          | Not started | —          |
 | 58                | v1.10     | 0/TBD          | Not started | —          |
 
