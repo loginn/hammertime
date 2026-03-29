@@ -66,19 +66,19 @@ func _place_starter_kit(archetype: HeroArchetype) -> void:
 	var weapon: Item
 	var armor: Item
 	if archetype == null:
-		weapon = Broadsword.new(8)
-		armor = IronPlate.new(8)
+		weapon = Broadsword.new(7)
+		armor = IronPlate.new(7)
 	else:
 		match archetype.archetype:
 			HeroArchetype.Archetype.STR:
-				weapon = Broadsword.new(8)
-				armor = IronPlate.new(8)
+				weapon = Broadsword.new(7)
+				armor = IronPlate.new(7)
 			HeroArchetype.Archetype.DEX:
-				weapon = Dagger.new(8)
-				armor = LeatherVest.new(8)
+				weapon = Dagger.new(7)
+				armor = LeatherVest.new(7)
 			HeroArchetype.Archetype.INT:
-				weapon = Wand.new(8)
-				armor = SilkRobe.new(8)
+				weapon = Wand.new(7)
+				armor = SilkRobe.new(7)
 	add_item_to_stash(weapon)
 	add_item_to_stash(armor)
 
