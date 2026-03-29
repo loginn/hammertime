@@ -2144,13 +2144,13 @@ func _group_42_forest_difficulty_tuning() -> void:
 
 	# Forest Bear should have reduced HP and damage
 	var bear := monsters[0]
-	_check(bear.monster_name == "Forest Bear", "first monster is Forest Bear")
+	_check(bear.type_name == "Forest Bear", "first monster is Forest Bear")
 	_check(bear.base_hp == 20.0, "Forest Bear base_hp == 20.0")
 	_check(bear.base_damage == 3.5, "Forest Bear base_damage == 3.5")
 
 	# Bramble Golem (tankiest) should also be reduced
 	var golem := monsters[5]
-	_check(golem.monster_name == "Bramble Golem", "last monster is Bramble Golem")
+	_check(golem.type_name == "Bramble Golem", "last monster is Bramble Golem")
 	_check(golem.base_hp == 26.0, "Bramble Golem base_hp == 26.0")
 	_check(golem.base_damage == 2.0, "Bramble Golem base_damage == 2.0")
 
@@ -2333,7 +2333,7 @@ func _group_48_alteration_hammer() -> void:
 	magic_item.prefixes.clear()
 	magic_item.suffixes.clear()
 	magic_item.add_prefix()
-	var old_prefix_id = magic_item.prefixes[0].stat_id if magic_item.prefixes.size() > 0 else ""
+	var old_prefix_id = magic_item.prefixes[0].affix_name if magic_item.prefixes.size() > 0 else ""
 	assert(hammer.can_apply(magic_item), "48b: Alteration accepted on Magic")
 	hammer.apply(magic_item)
 	assert(magic_item.rarity == Item.Rarity.MAGIC, "48b: rarity stays MAGIC after reroll")
@@ -2413,7 +2413,7 @@ func _group_50_save_v9_round_trip() -> void:
 	GameState.currency_counts["transmute"] = 10
 
 	# Set archetype
-	GameState.hero_archetype = HeroArchetype.from_id("dex")
+	GameState.hero_archetype = HeroArchetype.from_id("dex_hit")
 
 	# Build save dict and restore directly (avoids file I/O in tests)
 	var save_data := SaveManager._build_save_data()
@@ -2470,7 +2470,7 @@ func _group_50_save_v9_round_trip() -> void:
 
 	# Verify archetype round-tripped
 	_check(GameState.hero_archetype != null, "50s: archetype not null after restore")
-	_check(GameState.hero_archetype.id == "dex", "50t: archetype id round-tripped")
+	_check(GameState.hero_archetype.id == "dex_hit", "50t: archetype id round-tripped")
 
 	# Verify v8 rejection: build a v8-shaped save dict and confirm load_game would reject it
 	# (We test the version check logic inline since we cannot do real file I/O in tests)
