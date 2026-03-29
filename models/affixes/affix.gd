@@ -78,6 +78,11 @@ func _init(
 			var tmp = self.add_min
 			self.add_min = self.add_max
 			self.add_max = tmp
+	elif p_type == AffixType.IMPLICIT and (self.min_value > 0 or self.max_value > 0):
+		# Implicits with flat damage use min_value/max_value as add_min/add_max
+		# (they don't pass dmg bounds but still need add_min/add_max for stat routing)
+		self.add_min = self.min_value
+		self.add_max = self.max_value
 
 
 func is_prefix() -> bool:
@@ -93,11 +98,9 @@ func reroll() -> void:
 			var tmp = self.add_min
 			self.add_min = self.add_max
 			self.add_max = tmp
-		print("reroll add_min=%d add_max=%d" % [add_min, add_max])
 	else:
 		# Non-damage affix: existing scalar reroll unchanged
 		self.value = randi_range(self.min_value, self.max_value)
-		print("reroll ", self.value)
 
 
 func to_dict() -> Dictionary:

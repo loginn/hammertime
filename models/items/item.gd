@@ -240,21 +240,31 @@ func reroll_affix(affix: Affix) -> void:
 
 
 func is_affix_on_item(affix: Affix) -> bool:
-	print(self.prefixes)
 	for prefix in self.prefixes:
 		if affix.affix_name == prefix.affix_name:
-			print("affix ", affix.affix_name, " is already on item")
 			return true
 	for suffix in self.suffixes:
 		if affix.affix_name == suffix.affix_name:
-			print("affix ", affix.affix_name, " is already on item")
 			return true
 	return false
 
 
 func has_valid_tag(affix: Affix) -> bool:
+	# Defense subtype gating: if the affix has a specific defense subtype
+	# (ARMOR, EVASION, ENERGY_SHIELD), the item must also have that subtype.
+	# The generic DEFENSE tag alone is not enough to match.
+	var defense_subtypes := [Tag.ARMOR, Tag.EVASION, Tag.ENERGY_SHIELD]
+	var affix_has_subtype := false
+	for ds in defense_subtypes:
+		if ds in affix.tags:
+			affix_has_subtype = true
+			if ds in self.valid_tags:
+				return true
+
 	for tag in self.valid_tags:
 		if tag in affix.tags:
+			if tag == Tag.DEFENSE and affix_has_subtype:
+				continue
 			return true
 	return false
 
@@ -266,52 +276,40 @@ func _get_affix_tier_floor() -> int:
 
 
 func add_prefix() -> bool:
-	print("adding a prefix")
 	if len(self.prefixes) >= max_prefixes():
-		print("Cannot add more prefixes - at rarity limit (%d)" % max_prefixes())
 		return false
 
 	var valid_prefixes: Array[Affix] = []
-	#pick a random valid affix:
 	for prefix: Affix in ItemAffixes.prefixes:
 		if has_valid_tag(prefix) and not self.is_affix_on_item(prefix):
 			valid_prefixes.append(prefix)
-	print("valid: ", valid_prefixes)
 
 	if valid_prefixes.is_empty():
-		print("No valid prefixes available for this item")
 		return false
 
 	var new_prefix: Affix = valid_prefixes.pick_random()
 	if new_prefix != null:
 		var floor_val: int = _get_affix_tier_floor()
 		self.prefixes.append(Affixes.from_affix(new_prefix, floor_val))
-		print("Added prefix: ", new_prefix.affix_name)
 		return true
 
 	return false
 
 
 func add_suffix() -> bool:
-	print("adding a suffix")
 	if len(self.suffixes) >= max_suffixes():
-		print("Cannot add more suffixes - at rarity limit (%d)" % max_suffixes())
 		return false
 
 	var valid_suffixes: Array[Affix] = []
-	#pick a random valid affix:
 	for suffix: Affix in ItemAffixes.suffixes:
 		if has_valid_tag(suffix) and not self.is_affix_on_item(suffix):
 			valid_suffixes.append(suffix)
-	print("valid: ", valid_suffixes)
 
 	if valid_suffixes.is_empty():
-		print("No valid suffixes available for this item")
 		return false
 
 	var new_suffix = valid_suffixes.pick_random()
 	if new_suffix != null:
-		print("Added suffix: ", new_suffix.affix_name)
 		var floor_val: int = _get_affix_tier_floor()
 		self.suffixes.append(Affixes.from_affix(new_suffix, floor_val))
 		return true

@@ -1457,7 +1457,6 @@ func _group_33_dot_dps_calculation() -> void:
 
 	# Spell-mode hero with burn chance + burn damage: total_dot_dps > 0
 	var hero_spell := Hero.new()
-	hero_spell.is_spell_user = true
 	var sceptre := Sceptre.new(1)  # INT weapon with fire spell damage
 	var burn_chance_affix := Affix.new(
 		"Burn Chance", Affix.AffixType.SUFFIX,
@@ -1477,6 +1476,9 @@ func _group_33_dot_dps_calculation() -> void:
 	sceptre.prefixes.append(burn_damage_affix)
 	hero_spell.equipped_items["weapon"] = sceptre
 	hero_spell.update_stats()
+	hero_spell.is_spell_user = true
+	hero_spell.calculate_dot_stats()
+	hero_spell.calculate_dot_dps()
 	_check(hero_spell.total_dot_dps > 0.0, "Spell hero with burn affixes: total_dot_dps > 0")
 
 	# Hero with no DoT affixes: total_dot_dps == 0
@@ -1488,7 +1490,6 @@ func _group_33_dot_dps_calculation() -> void:
 
 	# Attack-mode hero with bleed affixes but is_spell_user = true: bleed does not contribute
 	var hero_wrong_mode := Hero.new()
-	hero_wrong_mode.is_spell_user = true
 	var warhammer2 := Warhammer.new(1)
 	var bleed_chance2 := Affix.new(
 		"Bleed Chance", Affix.AffixType.SUFFIX,
@@ -1500,6 +1501,8 @@ func _group_33_dot_dps_calculation() -> void:
 	warhammer2.suffixes.append(bleed_chance2)
 	hero_wrong_mode.equipped_items["weapon"] = warhammer2
 	hero_wrong_mode.update_stats()
+	hero_wrong_mode.is_spell_user = true
+	hero_wrong_mode.calculate_dot_dps()
 	# Bleed is attack-only; spell user should not get bleed DPS
 	# But burn_chance is 0 so total_dot_dps should be 0
 	_check(hero_wrong_mode.total_dot_dps == 0.0, "Spell-mode hero with bleed affixes: total_dot_dps == 0 (attack-only)")
