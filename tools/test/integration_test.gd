@@ -1186,7 +1186,7 @@ func _group_27_new_spell_stat_types() -> void:
 	fire_affix.affix_name = "Test Fire Spell"
 	fire_affix.add_min = 10
 	fire_affix.add_max = 20
-	fire_affix.stat_types = [Tag.StatType.FLAT_SPELL_FIRE_DAMAGE]
+	fire_affix.stat_types.append(Tag.StatType.FLAT_SPELL_FIRE_DAMAGE)
 	fire_affix.tags = [Tag.SPELL, Tag.FIRE]
 
 	var result = StatCalculator.calculate_spell_damage_range(0, 0, [fire_affix])
