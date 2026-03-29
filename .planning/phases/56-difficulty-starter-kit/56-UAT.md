@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: resolved
 phase: 56-difficulty-starter-kit
 source: [56-01-SUMMARY.md, 56-02-SUMMARY.md]
 started: 2026-03-29T00:00:00Z
-updated: 2026-03-29T00:06:00Z
+updated: 2026-03-29T01:00:00Z
 ---
 
 ## Current Test
@@ -58,7 +58,7 @@ blocked: 2
 ## Gaps
 
 - truth: "Forge view shows all 6 currency names with correct PoE labels and tooltips"
-  status: failed
+  status: resolved
   reason: "User reported: The augment is missing, the tooltips are wrong. Chaos is also missing."
   severity: major
   test: 1
@@ -81,7 +81,7 @@ blocked: 2
   debug_session: ""
 
 - truth: "Fresh game starts with exactly 2 Transmute and 2 Augment hammers"
-  status: failed
+  status: resolved
   reason: "User reported: I have 2 transmutes (with the wrong name) and 2 forges (alchemy). No augments."
   severity: major
   test: 2
@@ -96,7 +96,7 @@ blocked: 2
   debug_session: ""
 
 - truth: "Fresh game starter armor is Iron Plate"
-  status: failed
+  status: resolved
   reason: "User reported: I see a rusty plate, not an iron plate."
   severity: minor
   test: 3
