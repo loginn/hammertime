@@ -34,25 +34,17 @@ result: pass
 
 ### 6. Integration Tests Pass
 expected: Run integration_test.gd (F6 in Godot editor). Group 40 (STSH-01: stash structure, fresh game, prestige wipe) and Group 41 (STSH-04: routing, overflow, slot isolation) all pass with no failures.
-result: issue
-reported: "_check(GameState.stash[\"weapon\"][0] is Broadsword, \"starter weapon (Broadsword) in stash after prestige\") breaks"
-severity: major
+result: pass
 
 ## Summary
 
 total: 6
-passed: 5
-issues: 1
+passed: 6
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
 
 ## Gaps
 
-- truth: "Integration tests pass — Group 40 (STSH-01) and Group 41 (STSH-04) all pass with no failures"
-  status: failed
-  reason: "User reported: _check(GameState.stash[\"weapon\"][0] is Broadsword, \"starter weapon (Broadsword) in stash after prestige\") breaks"
-  severity: major
-  test: 6
-  artifacts: []
-  missing: []
+[none — original issue fixed in ad182a9, additional test fixes in 726b3b7, 1c6a4e6, 6d87a82]
