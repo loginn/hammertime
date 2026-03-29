@@ -10,33 +10,6 @@ var stash: Dictionary = {}
 # Single universal crafting bench (any item type). Not persisted until Phase 58 (save v9).
 var crafting_bench: Item = null
 
-# TEMPORARY: save_manager.gd v8 compat — remove in Phase 58 when save format updates
-var crafting_inventory: Dictionary:
-	get:
-		# Return bench item mapped into old format for save_manager v8 writes
-		var compat := {"weapon": null, "helmet": null, "armor": null, "boots": null, "ring": null}
-		if crafting_bench != null:
-			var slot := _get_slot_for_item(crafting_bench)
-			if slot != "":
-				compat[slot] = crafting_bench
-		return compat
-	set(value):
-		# On v8 restore, load first non-null item onto bench
-		crafting_bench = null
-		for slot_name in ["weapon", "helmet", "armor", "boots", "ring"]:
-			if value.get(slot_name) != null:
-				crafting_bench = value[slot_name]
-				break
-
-# TEMPORARY: save_manager.gd v8 compat — remove in Phase 58
-var crafting_bench_type: String:
-	get:
-		if crafting_bench == null:
-			return "weapon"
-		return _get_slot_for_item(crafting_bench)
-	set(_value):
-		pass  # Ignored — single bench has no type selector
-
 # Area progress (centralized for persistence)
 var max_unlocked_level: int = 1
 var area_level: int = 1
