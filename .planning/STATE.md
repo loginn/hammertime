@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 57-02-PLAN.md (stash tap-to-bench with flash/pulse animations)
-last_updated: "2026-03-28T20:58:53.417Z"
-last_activity: 2026-03-28
+status: executing
+stopped_at: Completed 58-01-PLAN.md (Alteration and Regal hammer rewrites + integration tests 48-49)
+last_updated: "2026-03-29T00:40:44.437Z"
+last_activity: 2026-03-29
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
 ---
 
 # Project State: Hammertime
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
-**Current focus:** Phase 57 — stash-ui
+**Current focus:** Phase 58 — New Hammers & Save v9
 
 **Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload (format v8), PrestigeManager autoload.
 
 ## Current Position
 
-Phase: 57 (stash-ui) — EXECUTING
+Phase: 58 (New Hammers & Save v9) — EXECUTING
 Plan: 2 of 2
-Status: Phase complete — ready for verification
-Last activity: 2026-03-28
+Status: Ready to execute
+Last activity: 2026-03-29
 
 ```
 v1.10 Progress: [ 55 ][ 56 ][ 57 ][ 58 ]
@@ -94,6 +94,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [Phase 57-stash-ui]: Used is-keyword for item abbreviation lookup; removed currently_hovered_type hover branch; accepted tooltip gap on disabled filled slots (Godot suppresses tooltips on disabled Controls)
 - [Phase 57-stash-ui]: items[index] = null over remove_at: preserves stash slot positions per D-08 no-shift rule
 - [Phase 57-stash-ui]: add_item_to_stash counts non-null items for cap and fills null gaps before append to handle D-08 null-gap arrays
+- [Phase 58]: TackHammer (Alteration) rejects on Normal and Rare; no room-for-mods check since clear() always makes room
+- [Phase 58]: GrandHammer (Regal) rejects on Normal and Rare; adds exactly one mod after setting RARE rarity — PoE Regal convention
 
 ### Pending Todos
 
@@ -126,11 +128,12 @@ None.
 | Phase 56-difficulty-starter-kit P02 | 18 | 3 tasks | 5 files |
 | Phase 57-stash-ui P01 | 25 | 2 tasks | 3 files |
 | Phase 57-stash-ui P02 | 15 | 2 tasks | 2 files |
+| Phase 58 P01 | 8 | 2 tasks | 4 files |
 
 ## Session Continuity
 
-Last session: 2026-03-28T20:58:53.398Z
-Stopped at: Completed 57-02-PLAN.md (stash tap-to-bench with flash/pulse animations)
+Last session: 2026-03-29T00:40:44.425Z
+Stopped at: Completed 58-01-PLAN.md (Alteration and Regal hammer rewrites + integration tests 48-49)
 Resume file: None
 
 ---

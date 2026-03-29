@@ -20,8 +20,8 @@
 
 ### Crafting
 
-- [ ] **CRFT-01**: Alteration Hammer rerolls all mods at current rarity (Magic only; rejected on Normal/Rare)
-- [ ] **CRFT-02**: Regal Hammer upgrades Magic → Rare by adding a single mod (3-mod Rare)
+- [x] **CRFT-01**: Alteration Hammer rerolls all mods at current rarity (Magic only; rejected on Normal/Rare)
+- [x] **CRFT-02**: Regal Hammer upgrades Magic → Rare by adding a single mod (3-mod Rare)
 - [ ] **CRFT-03**: Save format v9 persists new hammer currencies and 3-slot stash
 
 ## Future Requirements
@@ -51,8 +51,8 @@
 | STSH-02 | Phase 57 | Complete |
 | STSH-03 | Phase 57 | Complete |
 | STSH-05 | Phase 57 | Complete |
-| CRFT-01 | Phase 58 | Pending |
-| CRFT-02 | Phase 58 | Pending |
+| CRFT-01 | Phase 58 | Complete |
+| CRFT-02 | Phase 58 | Complete |
 | CRFT-03 | Phase 58 | Pending |
 
 **Coverage:**
