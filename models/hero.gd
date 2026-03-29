@@ -109,7 +109,7 @@ func equip_item(item: Item, slot: String) -> void:
 
 func unequip_item(slot: String) -> void:
 	"""Unequip an item from the specified slot"""
-	if slot in equipped_items:
+	if slot in equipped_items and equipped_items[slot] != null:
 		var item = equipped_items[slot]
 		equipped_items.erase(slot)
 		update_stats()
