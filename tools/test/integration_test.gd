@@ -109,11 +109,11 @@ func _group_1_pre_prestige_baseline() -> void:
 	_check(GameState.max_item_tier_unlocked == 8, "max_item_tier_unlocked == 8")
 	_check(PrestigeManager.can_prestige() == false, "can_prestige() == false (no forge hammers)")
 	_check(
-		GameState.crafting_inventory["weapon"] != null,
-		"starter weapon exists in crafting inventory"
+		GameState.stash["weapon"][0] != null,
+		"starter weapon exists in stash"
 	)
 	_check(
-		GameState.crafting_inventory["weapon"] is Broadsword,
+		GameState.stash["weapon"][0] is Broadsword,
 		"starter weapon is Broadsword"
 	)
 	_check(GameState.area_level == 1, "area_level == 1")
@@ -157,8 +157,8 @@ func _group_3_execute_prestige() -> void:
 	_check(all_null, "all hero equipment slots are null")
 
 	_check(
-		GameState.crafting_inventory["weapon"] is Broadsword,
-		"starter weapon (Broadsword) in crafting inventory after prestige"
+		GameState.stash["weapon"][0] is Broadsword,
+		"starter weapon (Broadsword) in stash after prestige"
 	)
 	_check(GameState.currency_counts["augment"] == 2, "augment currency == 2 (fresh default after wipe)")
 	_check(GameState.currency_counts["transmute"] == 2, "transmute currency == 2 (fresh default)")
@@ -238,7 +238,7 @@ func _group_6_crafting_regression() -> void:
 	_reset_fresh()
 	GameState.prestige_level = 1
 
-	var weapon: Item = GameState.crafting_inventory["weapon"]
+	var weapon: Item = GameState.stash["weapon"][0]
 	_check(weapon.rarity == Item.Rarity.NORMAL, "starter weapon is Normal rarity")
 
 	var hammer := RunicHammer.new()
@@ -663,7 +663,7 @@ func _group_15_starter_weapon() -> void:
 	print("\n=== GROUP 15: Starter Weapon ===")
 	_reset_fresh()
 
-	var weapon: Item = GameState.crafting_inventory["weapon"]
+	var weapon: Item = GameState.stash["weapon"][0]
 	_check(weapon is Broadsword, "Starter weapon is Broadsword")
 	_check(weapon.tier == 8, "Starter weapon tier == 8")
 	_check(weapon.item_name == "Rusty Broadsword", "Starter weapon name == 'Rusty Broadsword'")
