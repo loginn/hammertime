@@ -1187,7 +1187,8 @@ func _group_27_new_spell_stat_types() -> void:
 	fire_affix.add_min = 10
 	fire_affix.add_max = 20
 	fire_affix.stat_types.append(Tag.StatType.FLAT_SPELL_FIRE_DAMAGE)
-	fire_affix.tags = [Tag.SPELL, Tag.FIRE]
+	fire_affix.tags.append(Tag.SPELL)
+	fire_affix.tags.append(Tag.FIRE)
 
 	var result = StatCalculator.calculate_spell_damage_range(0, 0, [fire_affix])
 	_check("spell_fire" in result, "Result contains spell_fire key")
