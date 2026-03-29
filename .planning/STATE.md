@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 57-02-PLAN.md (stash tap-to-bench with flash/pulse animations)
-last_updated: "2026-03-28T20:58:53.417Z"
-last_activity: 2026-03-28
+stopped_at: Completed 58-02-PLAN.md (Save v9 stash/bench serialization and shim removal)
+last_updated: "2026-03-29T00:44:22.262Z"
+last_activity: 2026-03-29
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
 ---
 
 # Project State: Hammertime
@@ -32,7 +32,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 Phase: 57 (stash-ui) — EXECUTING
 Plan: 2 of 2
 Status: Phase complete — ready for verification
-Last activity: 2026-03-28
+Last activity: 2026-03-29
 
 ```
 v1.10 Progress: [ 55 ][ 56 ][ 57 ][ 58 ]
@@ -94,6 +94,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [Phase 57-stash-ui]: Used is-keyword for item abbreviation lookup; removed currently_hovered_type hover branch; accepted tooltip gap on disabled filled slots (Godot suppresses tooltips on disabled Controls)
 - [Phase 57-stash-ui]: items[index] = null over remove_at: preserves stash slot positions per D-08 no-shift rule
 - [Phase 57-stash-ui]: add_item_to_stash counts non-null items for cap and fills null gaps before append to handle D-08 null-gap arrays
+- [Phase 58-new-hammers-save-v9]: Save v9 rejects v8 saves strictly (delete + fresh start) — consistent with no-migration policy
+- [Phase 58-new-hammers-save-v9]: Test group 50 uses _build_save_data()/_restore_state() directly to avoid file I/O in integration tests
 
 ### Pending Todos
 
@@ -126,11 +128,12 @@ None.
 | Phase 56-difficulty-starter-kit P02 | 18 | 3 tasks | 5 files |
 | Phase 57-stash-ui P01 | 25 | 2 tasks | 3 files |
 | Phase 57-stash-ui P02 | 15 | 2 tasks | 2 files |
+| Phase 58-new-hammers-save-v9 P02 | 15 | 2 tasks | 3 files |
 
 ## Session Continuity
 
-Last session: 2026-03-28T20:58:53.398Z
-Stopped at: Completed 57-02-PLAN.md (stash tap-to-bench with flash/pulse animations)
+Last session: 2026-03-29T00:44:22.250Z
+Stopped at: Completed 58-02-PLAN.md (Save v9 stash/bench serialization and shim removal)
 Resume file: None
 
 ---
