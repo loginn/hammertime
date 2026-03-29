@@ -228,7 +228,7 @@ Plans:
   3. Regal Hammer is rejected (with feedback) when applied to a Normal or Rare item
   4. Save format v9 round-trips correctly: Alteration and Regal hammer counts, stash contents, and hero archetype all survive save/load and export/import
   5. Loading a v8 save starts a fresh game (strict version rejection, consistent with existing migration policy)
-**Plans:** 2/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 58-01-PLAN.md — Alteration + Regal hammer rewrites, forge_view tooltips, integration tests
 - [x] 58-02-PLAN.md — Save v9 stash/bench serialization, shim removal, round-trip tests
@@ -251,7 +251,7 @@ Plans:
 | 55 (Stash Data)   | v1.10     | 1/2 | Complete    | 2026-03-28 |
 | 56 (Difficulty)   | v1.10     | 2/2 | Complete    | 2026-03-28 |
 | 57 (Stash UI)     | v1.10     | 2/2 | Complete    | 2026-03-28 |
-| 58 (New Hammers)  | v1.10     | 2/2 | In Progress|  |
+| 58 (New Hammers)  | v1.10     | 2/2 | Complete    | 2026-03-29 |
 
 ---
 *Roadmap created: 2026-02-14*
