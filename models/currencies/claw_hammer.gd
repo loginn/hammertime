@@ -2,7 +2,7 @@ class_name ClawHammer extends Currency
 
 
 func _init() -> void:
-	currency_name = "Claw Hammer"
+	currency_name = "Chaos Hammer"
 
 
 ## Returns true if item has at least one explicit mod (prefix or suffix).

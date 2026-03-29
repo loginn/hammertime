@@ -2,7 +2,7 @@ class_name RunicHammer extends Currency
 
 
 func _init() -> void:
-	currency_name = "Runic Hammer"
+	currency_name = "Transmute Hammer"
 
 
 func can_apply(item: Item) -> bool:
@@ -11,7 +11,7 @@ func can_apply(item: Item) -> bool:
 
 func get_error_message(item: Item) -> String:
 	if item.rarity != Item.Rarity.NORMAL:
-		return "Runic Hammer can only be used on Normal items"
+		return "Transmute Hammer can only be used on Normal items"
 	return ""
 
 

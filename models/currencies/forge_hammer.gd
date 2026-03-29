@@ -2,7 +2,7 @@ class_name ForgeHammer extends Currency
 
 
 func _init() -> void:
-	currency_name = "Forge Hammer"
+	currency_name = "Augment Hammer"
 
 
 func can_apply(item: Item) -> bool:
@@ -11,7 +11,7 @@ func can_apply(item: Item) -> bool:
 
 func get_error_message(item: Item) -> String:
 	if item.rarity != Item.Rarity.NORMAL:
-		return "Forge Hammer can only be used on Normal items"
+		return "Augment Hammer can only be used on Normal items"
 	return ""
 
 
