@@ -73,7 +73,6 @@ func _ready() -> void:
 func _check(condition: bool, description: String) -> void:
 	if condition:
 		_pass_count += 1
-		print("[PASS] %s" % description)
 	else:
 		_fail_count += 1
 		print("[FAIL] %s" % description)
