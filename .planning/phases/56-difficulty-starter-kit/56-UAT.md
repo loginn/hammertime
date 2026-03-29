@@ -1,5 +1,5 @@
 ---
-status: partial
+status: diagnosed
 phase: 56-difficulty-starter-kit
 source: [56-01-SUMMARY.md, 56-02-SUMMARY.md]
 started: 2026-03-29T00:00:00Z
@@ -62,9 +62,22 @@ blocked: 2
   reason: "User reported: The augment is missing, the tooltips are wrong. Chaos is also missing."
   severity: major
   test: 1
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Currency model classes still have old currency_name values. ForgeHammer='Forge Hammer' (should be Augment), ClawHammer='Claw Hammer' (should be Chaos), RunicHammer='Runic Hammer' (should be Transmute), etc. forge_view.gd line 323 uses currency_name for tooltip text."
+  artifacts:
+    - path: "models/currencies/forge_hammer.gd"
+      issue: "currency_name = 'Forge Hammer' should be 'Augment Hammer'"
+    - path: "models/currencies/claw_hammer.gd"
+      issue: "currency_name = 'Claw Hammer' should be 'Chaos Hammer'"
+    - path: "models/currencies/runic_hammer.gd"
+      issue: "currency_name = 'Runic Hammer' should be 'Transmute Hammer'"
+    - path: "models/currencies/tack_hammer.gd"
+      issue: "currency_name still uses old convention"
+    - path: "models/currencies/grand_hammer.gd"
+      issue: "currency_name still uses old convention"
+    - path: "models/currencies/tuning_hammer.gd"
+      issue: "currency_name still uses old convention"
+  missing:
+    - "Update currency_name in all 6 hammer model classes to PoE names"
   debug_session: ""
 
 - truth: "Fresh game starts with exactly 2 Transmute and 2 Augment hammers"
@@ -72,9 +85,14 @@ blocked: 2
   reason: "User reported: I have 2 transmutes (with the wrong name) and 2 forges (alchemy). No augments."
   severity: major
   test: 2
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Same root cause as test 1 — currency_name display strings in hammer model classes were not updated. ForgeHammer.currency_name='Forge Hammer' displays as 'Forge' instead of 'Augment'. Counts are correct (2+2) but labels are wrong."
+  artifacts:
+    - path: "models/currencies/forge_hammer.gd"
+      issue: "currency_name = 'Forge Hammer' displays as 'Forge' instead of 'Augment'"
+    - path: "models/currencies/runic_hammer.gd"
+      issue: "currency_name = 'Runic Hammer' displays as 'Runic' instead of 'Transmute'"
+  missing:
+    - "Same fix as test 1 — update currency_name in hammer model classes"
   debug_session: ""
 
 - truth: "Fresh game starter armor is Iron Plate"
@@ -82,7 +100,12 @@ blocked: 2
   reason: "User reported: I see a rusty plate, not an iron plate."
   severity: minor
   test: 3
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "IronPlate TIER_NAMES dict maps tier 8 to 'Rusty Plate'. _place_starter_kit() creates IronPlate.new(8) which resolves to 'Rusty Plate'. Iron Plate is tier 7."
+  artifacts:
+    - path: "models/items/iron_plate.gd"
+      issue: "TIER_NAMES[8] = 'Rusty Plate', tier 7 = 'Iron Plate'"
+    - path: "autoloads/game_state.gd"
+      issue: "_place_starter_kit() uses IronPlate.new(8) — should use tier 7 for Iron Plate"
+  missing:
+    - "Change _place_starter_kit() to use IronPlate.new(7) or accept that tier 8 = Rusty Plate is correct and update expectations"
   debug_session: ""
