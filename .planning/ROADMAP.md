@@ -230,8 +230,8 @@ Plans:
   5. Loading a v8 save starts a fresh game (strict version rejection, consistent with existing migration policy)
 **Plans:** 2 plans
 Plans:
-- [x] 57-01-PLAN.md — StashDisplay scene tree + stash display logic + integration tests
-- [ ] 57-02-PLAN.md — Tap-to-bench interaction + flash/pulse animations + bench-clear integration
+- [ ] 58-01-PLAN.md — Alteration + Regal hammer rewrites, forge_view tooltips, integration tests
+- [ ] 58-02-PLAN.md — Save v9 stash/bench serialization, shim removal, round-trip tests
 
 ## Progress
 
@@ -250,9 +250,9 @@ Plans:
 | 50-54             | v1.9      | 5/5            | Complete    | 2026-03-28 |
 | 55 (Stash Data)   | v1.10     | 1/2 | Complete    | 2026-03-28 |
 | 56 (Difficulty)   | v1.10     | 2/2 | Complete    | 2026-03-28 |
-| 57 (Stash UI)     | v1.10     | 2/2 | Complete   | 2026-03-28 |
-| 58                | v1.10     | 0/TBD          | Not started | —          |
+| 57 (Stash UI)     | v1.10     | 2/2 | Complete    | 2026-03-28 |
+| 58 (New Hammers)  | v1.10     | 0/2            | Not started | —          |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-28 — Phase 57 plans created (2 plans)*
+*Last updated: 2026-03-29 — Phase 58 plans created (2 plans)*
