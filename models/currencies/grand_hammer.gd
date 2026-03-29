@@ -2,44 +2,32 @@ class_name GrandHammer extends Currency
 
 
 func _init() -> void:
-	currency_name = "Grand Hammer"
+	currency_name = "Regal Hammer"
 
 
-## Returns true if item is Rare rarity AND has room for at least one more mod.
+## Regal can only be used on Magic items.
 func can_apply(item: Item) -> bool:
-	if item.rarity != Item.Rarity.RARE:
-		return false
-	return item.prefixes.size() < item.max_prefixes() or item.suffixes.size() < item.max_suffixes()
+	return item.rarity == Item.Rarity.MAGIC
 
 
-## Returns human-readable error message explaining why currency cannot be used.
 func get_error_message(item: Item) -> String:
-	if item.rarity != Item.Rarity.RARE:
-		return "Grand Hammer can only be used on Rare items"
-	if item.prefixes.size() >= item.max_prefixes() and item.suffixes.size() >= item.max_suffixes():
-		return "Item already has maximum mods for Rare rarity"
+	if item.rarity != Item.Rarity.MAGIC:
+		return "Regal Hammer can only be used on Magic items"
 	return ""
 
 
-## Adds one random mod to the item.
-## Chooses randomly between prefix/suffix, with fallback if one type is full.
+## Upgrades Magic to Rare by adding exactly one mod.
+## Result: existing 1-2 mods + 1 new mod = 2-3 mod Rare item.
 func _do_apply(item: Item) -> void:
-	var prefix_available = item.prefixes.size() < item.max_prefixes()
-	var suffix_available = item.suffixes.size() < item.max_suffixes()
+	item.rarity = Item.Rarity.RARE
 
-	# Choose randomly if both available
-	var try_prefix_first = randi_range(0, 1) == 0
-
-	if prefix_available and suffix_available:
-		if try_prefix_first:
-			if not item.add_prefix():
-				item.add_suffix()
-		else:
-			if not item.add_suffix():
-				item.add_prefix()
-	elif prefix_available:
-		item.add_prefix()
-	elif suffix_available:
-		item.add_suffix()
+	# Add exactly one mod (prefix or suffix, random choice with fallback)
+	var choose_prefix = randi_range(0, 1) == 0
+	if choose_prefix:
+		if not item.add_prefix():
+			item.add_suffix()
+	else:
+		if not item.add_suffix():
+			item.add_prefix()
 
 	item.update_value()

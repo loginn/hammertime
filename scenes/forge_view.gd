@@ -71,8 +71,8 @@ var equip_hover_active: bool = false
 var hammer_descriptions: Dictionary = {
 	"transmute": "Turns a normal item into a magic item\nwith 1-2 random mods.\nRequires: Normal rarity",
 	"augment": "Turns a normal item into a rare item\nwith 4-6 random mods.\nRequires: Normal rarity",
-	"alteration": "Adds one random mod to a magic item.\nRequires: Magic rarity with room for mods",
-	"regal": "Adds one random mod to a rare item.\nRequires: Rare rarity with room for mods",
+	"alteration": "Rerolls all mods on a magic item.\nRequires: Magic rarity",
+	"regal": "Upgrades a magic item to rare\nby adding one mod.\nRequires: Magic rarity",
 	"chaos": "Removes one random mod from an item.\nRequires: At least one mod",
 	"exalt": "Rerolls all mod values within their\ntier ranges.\nRequires: At least one mod",
 	"fire": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one fire mod.\nRequires: Normal rarity, fire mods available",
