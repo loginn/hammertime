@@ -157,8 +157,8 @@ func _group_3_execute_prestige() -> void:
 	_check(all_null, "all hero equipment slots are null")
 
 	_check(
-		GameState.stash["weapon"][0] is Broadsword,
-		"starter weapon (Broadsword) in stash after prestige"
+		GameState.stash["weapon"].size() == 0,
+		"weapon stash empty after prestige (starter item is Phase 56)"
 	)
 	_check(GameState.currency_counts["augment"] == 2, "augment currency == 2 (fresh default after wipe)")
 	_check(GameState.currency_counts["transmute"] == 2, "transmute currency == 2 (fresh default)")
