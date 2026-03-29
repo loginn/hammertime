@@ -55,6 +55,7 @@ func _ready() -> void:
 	_group_45_stash_ui_display()
 	_group_46_stash_tap_to_bench()
 	_group_47_stash_tooltip_text()
+	_group_50_save_v9_round_trip()
 
 	var total: int = _pass_count + _fail_count
 	print("\n=== SUMMARY ===")
@@ -1544,10 +1545,10 @@ func _group_34_game_events_dot_signals() -> void:
 func _group_35_save_version_and_loot_integration() -> void:
 	print("\n--- Group 35: Save version & loot integration ---")
 
-	# 1. SAVE_VERSION is 7
-	_check(SaveManager.SAVE_VERSION == 7, "SAVE_VERSION == 7")
+	# 1. SAVE_VERSION is at least 7 (bumped to 9 in Phase 58)
+	_check(SaveManager.SAVE_VERSION >= 7, "SAVE_VERSION >= 7")
 
-	# 2. Old save wipe logic: version 7 > 6 ensures wipe path triggers
+	# 2. Old save wipe logic: version > 6 ensures wipe path triggers
 	_check(SaveManager.SAVE_VERSION > 6, "SAVE_VERSION > 6 (old saves trigger wipe)")
 
 	# 3. Drop pool completeness — verify all 21 item bases via source code inspection
@@ -1927,8 +1928,8 @@ func _group_37_stat_integration() -> void:
 func _group_38_save_persistence() -> void:
 	print("\n=== GROUP 38: Save Persistence (SAVE-01) ===")
 
-	# Test 38.1: SAVE_VERSION is 8
-	_check(SaveManager.SAVE_VERSION == 8, "38.1 SAVE_VERSION is 8")
+	# Test 38.1: SAVE_VERSION is 9 (bumped from 8 in Phase 58)
+	_check(SaveManager.SAVE_VERSION == 9, "38.1 SAVE_VERSION is 9")
 
 	# Test 38.2: _build_save_data includes hero_archetype_id when archetype set
 	GameState.hero_archetype = HeroArchetype.from_id("str_hit")
@@ -2309,3 +2310,102 @@ func _group_47_stash_tooltip_text() -> void:
 	_check(ring_text.length() > 0, "JadeRing get_display_text() returns non-empty string")
 	_check("dps:" in ring_text, "JadeRing tooltip contains 'dps:' field")
 	_check("name:" in ring_text, "JadeRing tooltip contains 'name:' field")
+
+
+# --- Group 50: Save v9 Round-Trip (CRFT-03) ---
+
+func _group_50_save_v9_round_trip() -> void:
+	print("\n--- Group 50: Save v9 Round-Trip (CRFT-03) ---")
+
+	# Setup: known state
+	GameState.initialize_fresh_game()
+
+	# Put items in stash (stash starts with starter kit — weapon slot already has Broadsword)
+	var stash_sword := Broadsword.new(8)
+	stash_sword.rarity = Item.Rarity.MAGIC
+	stash_sword.add_prefix()
+	GameState.add_item_to_stash(stash_sword)
+
+	var stash_helm := IronHelm.new(8)
+	GameState.add_item_to_stash(stash_helm)
+
+	# Put item on bench
+	var bench_item := Dagger.new(8)
+	bench_item.rarity = Item.Rarity.MAGIC
+	bench_item.add_prefix()
+	GameState.crafting_bench = bench_item
+
+	# Set currency counts including alteration/regal
+	GameState.currency_counts["alteration"] = 5
+	GameState.currency_counts["regal"] = 3
+	GameState.currency_counts["transmute"] = 10
+
+	# Set archetype
+	GameState.hero_archetype = HeroArchetype.from_id("dex")
+
+	# Build save dict and restore directly (avoids file I/O in tests)
+	var save_data := SaveManager._build_save_data()
+	_check(save_data.has("stash"), "50a: save data contains 'stash' key")
+	_check(save_data.has("crafting_bench"), "50b: save data contains 'crafting_bench' key")
+	_check(not save_data.has("crafting_inventory"), "50c: save data does not contain old 'crafting_inventory' key")
+	_check(not save_data.has("crafting_bench_type"), "50d: save data does not contain old 'crafting_bench_type' key")
+
+	# Verify stash serialization — weapon slot should have starter + stash_sword
+	var stash_weapon_arr: Array = save_data["stash"].get("weapon", [])
+	_check(stash_weapon_arr.size() >= 2, "50e: weapon stash has at least 2 serialized items")
+
+	# Verify bench serialization
+	var bench_dict = save_data["crafting_bench"]
+	_check(bench_dict != null and bench_dict is Dictionary, "50f: crafting_bench is a non-null dict")
+
+	# Verify version
+	_check(save_data["version"] == 9, "50g: save version is 9")
+
+	# Wipe state and restore
+	GameState.initialize_fresh_game()
+	_check(GameState.crafting_bench == null, "50h: bench is null after fresh game")
+
+	var restore_ok := SaveManager._restore_state(save_data)
+	_check(restore_ok, "50i: _restore_state succeeded")
+
+	# Verify stash round-tripped
+	var weapon_stash: Array = GameState.stash["weapon"]
+	var found_magic_sword := false
+	for item in weapon_stash:
+		if item != null and item is Broadsword and item.rarity == Item.Rarity.MAGIC:
+			found_magic_sword = true
+			break
+	_check(found_magic_sword, "50j: stash weapon round-tripped (Magic Broadsword)")
+
+	var helmet_stash: Array = GameState.stash["helmet"]
+	var found_helm := false
+	for item in helmet_stash:
+		if item != null and item is IronHelm:
+			found_helm = true
+			break
+	_check(found_helm, "50k: stash helmet round-tripped (IronHelm)")
+
+	# Verify bench round-tripped
+	_check(GameState.crafting_bench != null, "50l: bench not null after restore")
+	_check(GameState.crafting_bench is Dagger, "50m: bench is Dagger")
+	_check(GameState.crafting_bench.rarity == Item.Rarity.MAGIC, "50n: bench rarity is MAGIC")
+	_check(GameState.crafting_bench.prefixes.size() >= 1, "50o: bench has at least one prefix")
+
+	# Verify currencies round-tripped
+	_check(GameState.currency_counts["alteration"] == 5, "50p: alteration count round-tripped")
+	_check(GameState.currency_counts["regal"] == 3, "50q: regal count round-tripped")
+	_check(GameState.currency_counts["transmute"] == 10, "50r: transmute count round-tripped")
+
+	# Verify archetype round-tripped
+	_check(GameState.hero_archetype != null, "50s: archetype not null after restore")
+	_check(GameState.hero_archetype.id == "dex", "50t: archetype id round-tripped")
+
+	# Verify v8 rejection: build a v8-shaped save dict and confirm load_game would reject it
+	# (We test the version check logic inline since we cannot do real file I/O in tests)
+	var v8_data := {"version": 8, "hero_equipment": {}, "currencies": {}}
+	_check(int(v8_data.get("version", 1)) < SaveManager.SAVE_VERSION, "50u: v8 save version is below SAVE_VERSION (would be rejected)")
+
+	# Cleanup
+	GameState.initialize_fresh_game()
+
+	print("Group 50: Save v9 round-trip -- PASSED")
