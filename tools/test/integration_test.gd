@@ -55,6 +55,8 @@ func _ready() -> void:
 	_group_45_stash_ui_display()
 	_group_46_stash_tap_to_bench()
 	_group_47_stash_tooltip_text()
+	_group_48_alteration_hammer()
+	_group_49_regal_hammer()
 
 	var total: int = _pass_count + _fail_count
 	print("\n=== SUMMARY ===")
@@ -2309,3 +2311,72 @@ func _group_47_stash_tooltip_text() -> void:
 	_check(ring_text.length() > 0, "JadeRing get_display_text() returns non-empty string")
 	_check("dps:" in ring_text, "JadeRing tooltip contains 'dps:' field")
 	_check("name:" in ring_text, "JadeRing tooltip contains 'name:' field")
+
+
+func _group_48_alteration_hammer() -> void:
+	# CRFT-01: Alteration rerolls Magic mods, rejected on Normal/Rare
+	var hammer := TackHammer.new()
+
+	# Test 1: Rejected on Normal item
+	var normal_item := Broadsword.new(8)
+	normal_item.rarity = Item.Rarity.NORMAL
+	normal_item.prefixes.clear()
+	normal_item.suffixes.clear()
+	assert(not hammer.can_apply(normal_item), "48a: Alteration rejected on Normal")
+	assert(hammer.get_error_message(normal_item) == "Alteration Hammer can only be used on Magic items", "48a: error msg")
+
+	# Test 2: Accepted on Magic item, mods are rerolled
+	var magic_item := Broadsword.new(8)
+	magic_item.rarity = Item.Rarity.MAGIC
+	magic_item.prefixes.clear()
+	magic_item.suffixes.clear()
+	magic_item.add_prefix()
+	var old_prefix_id = magic_item.prefixes[0].stat_id if magic_item.prefixes.size() > 0 else ""
+	assert(hammer.can_apply(magic_item), "48b: Alteration accepted on Magic")
+	hammer.apply(magic_item)
+	assert(magic_item.rarity == Item.Rarity.MAGIC, "48b: rarity stays MAGIC after reroll")
+	assert(magic_item.prefixes.size() + magic_item.suffixes.size() >= 1, "48b: at least 1 mod after reroll")
+	assert(magic_item.prefixes.size() + magic_item.suffixes.size() <= 2, "48b: at most 2 mods after reroll")
+
+	# Test 3: Rejected on Rare item
+	var rare_item := Broadsword.new(8)
+	rare_item.rarity = Item.Rarity.RARE
+	assert(not hammer.can_apply(rare_item), "48c: Alteration rejected on Rare")
+	assert(hammer.get_error_message(rare_item) == "Alteration Hammer can only be used on Magic items", "48c: error msg")
+
+	print("Group 48: Alteration Hammer — PASSED")
+
+
+func _group_49_regal_hammer() -> void:
+	# CRFT-02: Regal upgrades Magic to Rare, rejected on Normal/Rare
+	var hammer := GrandHammer.new()
+
+	# Test 1: Rejected on Normal item
+	var normal_item := Broadsword.new(8)
+	normal_item.rarity = Item.Rarity.NORMAL
+	normal_item.prefixes.clear()
+	normal_item.suffixes.clear()
+	assert(not hammer.can_apply(normal_item), "49a: Regal rejected on Normal")
+	assert(hammer.get_error_message(normal_item) == "Regal Hammer can only be used on Magic items", "49a: error msg")
+
+	# Test 2: Accepted on Magic item, upgrades to Rare with +1 mod
+	var magic_item := Broadsword.new(8)
+	magic_item.rarity = Item.Rarity.MAGIC
+	magic_item.prefixes.clear()
+	magic_item.suffixes.clear()
+	magic_item.add_prefix()
+	magic_item.add_suffix()
+	var mod_count_before = magic_item.prefixes.size() + magic_item.suffixes.size()
+	assert(hammer.can_apply(magic_item), "49b: Regal accepted on Magic")
+	hammer.apply(magic_item)
+	assert(magic_item.rarity == Item.Rarity.RARE, "49b: rarity upgraded to RARE")
+	var mod_count_after = magic_item.prefixes.size() + magic_item.suffixes.size()
+	assert(mod_count_after == mod_count_before + 1, "49b: exactly one mod added (was %d, now %d)" % [mod_count_before, mod_count_after])
+
+	# Test 3: Rejected on Rare item
+	var rare_item := Broadsword.new(8)
+	rare_item.rarity = Item.Rarity.RARE
+	assert(not hammer.can_apply(rare_item), "49c: Regal rejected on Rare")
+	assert(hammer.get_error_message(rare_item) == "Regal Hammer can only be used on Magic items", "49c: error msg")
+
+	print("Group 49: Regal Hammer — PASSED")
