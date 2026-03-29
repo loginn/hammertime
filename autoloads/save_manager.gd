@@ -1,7 +1,7 @@
 extends Node
 
 const SAVE_PATH = "user://hammertime_save.json"
-const SAVE_VERSION = 8
+const SAVE_VERSION = 9
 const AUTO_SAVE_INTERVAL = 300.0  # 5 minutes
 
 var auto_save_timer: Timer
@@ -88,21 +88,13 @@ func _build_save_data() -> Dictionary:
 		else:
 			hero_equipment[slot] = null
 
-	var crafting_inv := {}
-	for type_name in GameState.crafting_inventory:
-		var item = GameState.crafting_inventory[type_name]
-		if item != null:
-			crafting_inv[type_name] = item.to_dict()
-		else:
-			crafting_inv[type_name] = null
-
 	return {
 		"version": SAVE_VERSION,
 		"timestamp": Time.get_unix_time_from_system(),
 		"hero_equipment": hero_equipment,
 		"currencies": GameState.currency_counts.duplicate(),
-		"crafting_inventory": crafting_inv,
-		"crafting_bench_type": GameState.crafting_bench_type,
+		"crafting_bench": GameState.crafting_bench.to_dict() if GameState.crafting_bench != null else null,
+		"stash": _serialize_stash(GameState.stash),
 		"max_unlocked_level": GameState.max_unlocked_level,
 		"area_level": GameState.area_level,
 		# v3 prestige fields
@@ -112,6 +104,21 @@ func _build_save_data() -> Dictionary:
 		# v8 hero archetype field
 		"hero_archetype_id": GameState.hero_archetype.id if GameState.hero_archetype != null else null,
 	}
+
+
+## Serializes the stash dictionary into a JSON-safe format.
+## Preserves null gaps (items removed by tap-to-bench).
+func _serialize_stash(stash_data: Dictionary) -> Dictionary:
+	var result := {}
+	for slot_type in stash_data:
+		var arr: Array = []
+		for item in stash_data[slot_type]:
+			if item != null:
+				arr.append(item.to_dict())
+			else:
+				arr.append(null)
+		result[slot_type] = arr
+	return result
 
 
 ## Restores game state from a parsed save dictionary. Returns true on success.
@@ -134,17 +141,28 @@ func _restore_state(data: Dictionary) -> bool:
 	for currency_type in saved_currencies:
 		GameState.currency_counts[currency_type] = int(saved_currencies[currency_type])
 
-	# Restore crafting inventory (v5: single item per slot)
-	var saved_crafting: Dictionary = data.get("crafting_inventory", {})
-	for slot_name in ["weapon", "helmet", "armor", "boots", "ring"]:
-		var slot_data = saved_crafting.get(slot_name)
-		if slot_data != null and slot_data is Dictionary:
-			var item = Item.create_from_dict(slot_data)
-			GameState.crafting_inventory[slot_name] = item
-		else:
-			GameState.crafting_inventory[slot_name] = null
+	# Restore crafting bench (v9: single item, direct)
+	var bench_data = data.get("crafting_bench", null)
+	if bench_data != null and bench_data is Dictionary:
+		GameState.crafting_bench = Item.create_from_dict(bench_data)
+	else:
+		GameState.crafting_bench = null
 
-	GameState.crafting_bench_type = str(data.get("crafting_bench_type", "weapon"))
+	# Restore stash (v9: 5-slot dict of item arrays with null gaps)
+	GameState._init_stash()
+	var saved_stash: Dictionary = data.get("stash", {})
+	for slot_type in ["weapon", "helmet", "armor", "boots", "ring"]:
+		var slot_arr = saved_stash.get(slot_type, [])
+		if slot_arr is Array:
+			for item_data in slot_arr:
+				if item_data != null and item_data is Dictionary:
+					var item = Item.create_from_dict(item_data)
+					if item != null:
+						GameState.stash[slot_type].append(item)
+					else:
+						GameState.stash[slot_type].append(null)
+				else:
+					GameState.stash[slot_type].append(null)
 
 	# Restore area progress
 	GameState.max_unlocked_level = int(data.get("max_unlocked_level", 1))

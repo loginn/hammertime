@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
-status: executing
-stopped_at: Completed 58-01-PLAN.md (Alteration and Regal hammer rewrites + integration tests 48-49)
-last_updated: "2026-03-29T00:40:44.437Z"
+status: verifying
+stopped_at: Completed 58-02-PLAN.md (Save v9 stash/bench serialization and shim removal)
+last_updated: "2026-03-29T00:44:22.262Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 4
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 Phase: 58 (New Hammers & Save v9) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-29
 
 ```
@@ -96,6 +96,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [Phase 57-stash-ui]: add_item_to_stash counts non-null items for cap and fills null gaps before append to handle D-08 null-gap arrays
 - [Phase 58]: TackHammer (Alteration) rejects on Normal and Rare; no room-for-mods check since clear() always makes room
 - [Phase 58]: GrandHammer (Regal) rejects on Normal and Rare; adds exactly one mod after setting RARE rarity — PoE Regal convention
+- [Phase 58]: Save v9 rejects v8 saves strictly (delete + fresh start) — consistent with no-migration policy
+- [Phase 58]: Test group 50 uses _build_save_data()/_restore_state() directly to avoid file I/O in integration tests
 
 ### Pending Todos
 
@@ -129,11 +131,12 @@ None.
 | Phase 57-stash-ui P01 | 25 | 2 tasks | 3 files |
 | Phase 57-stash-ui P02 | 15 | 2 tasks | 2 files |
 | Phase 58 P01 | 8 | 2 tasks | 4 files |
+| Phase 58 P02 | 15 | 2 tasks | 3 files |
 
 ## Session Continuity
 
-Last session: 2026-03-29T00:40:44.425Z
-Stopped at: Completed 58-01-PLAN.md (Alteration and Regal hammer rewrites + integration tests 48-49)
+Last session: 2026-03-29T00:44:22.250Z
+Stopped at: Completed 58-02-PLAN.md (Save v9 stash/bench serialization and shim removal)
 Resume file: None
 
 ---

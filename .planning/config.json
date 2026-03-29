@@ -4,7 +4,8 @@
     "research": true,
     "plan_check": true,
     "verifier": true,
-    "auto_advance": false
+    "auto_advance": false,
+    "_auto_chain_active": true
   },
   "git": {
     "branching_strategy": "none"
