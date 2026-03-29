@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 **Core value:** The crafting loop must feel rewarding — finding items, using hammers to shape them, and equipping the result to push further into harder content.
 **Current focus:** Phase 58 — New Hammers & Save v9
 
-**Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload (format v8), PrestigeManager autoload.
+**Architecture:** Godot 4.5 GDScript, feature-based folders (models/, scenes/, autoloads/, utils/), Resource-based data model, signal-based communication via GameEvents, JSON save/load via SaveManager autoload (format v9), PrestigeManager autoload.
 
 ## Current Position
 

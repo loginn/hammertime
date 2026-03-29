@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An ARPG-style crafting idle game built in Godot 4.5. Players send a hero to fight monster packs across 4 biomes (Forest → Shadow Realm), collect item bases and crafting hammers, then use those hammers to craft and equip gear. Better gear lets the hero survive harder packs, which drop better and more plentiful loot. 21 item base types across 5 equipment slots support 3 archetypes (STR/DEX/INT) with archetype-specific affix pools. Items come in Normal, Magic, and Rare tiers with 41 active affixes across 32 affix tiers, craftable with 11 themed hammers (6 base + 5 tag-targeted). Dual damage channels (attack + spell) with independent combat timers and damage over time (bleed/poison/burn) create distinct playstyles. A prestige system lets players reset progress to unlock better item tiers (1-8) and tag-targeted crafting currencies. Combat is pack-based idle auto-combat with death mechanics, defensive stat integration, DoT tick processing, and floating damage feedback. Game state persists via JSON save/load (format v8) with auto-save and export/import strings. Hero archetype selection persists across saves and resets on prestige.
+An ARPG-style crafting idle game built in Godot 4.5. Players send a hero to fight monster packs across 4 biomes (Forest → Shadow Realm), collect item bases and crafting hammers, then use those hammers to craft and equip gear. Better gear lets the hero survive harder packs, which drop better and more plentiful loot. 21 item base types across 5 equipment slots support 3 archetypes (STR/DEX/INT) with archetype-specific affix pools. Items come in Normal, Magic, and Rare tiers with 41 active affixes across 32 affix tiers, craftable with 11 themed hammers (6 base + 5 tag-targeted). Dual damage channels (attack + spell) with independent combat timers and damage over time (bleed/poison/burn) create distinct playstyles. A prestige system lets players reset progress to unlock better item tiers (1-8) and tag-targeted crafting currencies. Combat is pack-based idle auto-combat with death mechanics, defensive stat integration, DoT tick processing, and floating damage feedback. Game state persists via JSON save/load (format v9) with auto-save and export/import strings. Hero archetype selection persists across saves and resets on prestige.
 
 ## Core Value
 
@@ -127,6 +127,11 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ _place_starter_kit() with archetype-aware item selection, wired into init and prestige callback — v1.10
 - ✓ Integration test groups 42-44 covering Forest difficulty, fresh-game starter kit, post-prestige starter kit — v1.10
 
+- ✓ Alteration Hammer (TackHammer) rerolls all mods on Magic items, rejected on Normal/Rare — v1.10
+- ✓ Regal Hammer (GrandHammer) upgrades Magic to Rare by adding one mod, rejected on Normal/Rare — v1.10
+- ✓ Save format v9 with stash/bench serialization, v8 shim removal, strict v8 rejection — v1.10
+- ✓ Integration test groups 48-50 covering Alteration, Regal, and save v9 round-trip — v1.10
+
 ## Current Milestone: v1.10 Early Game Rebalance
 
 **Goal:** Make the early crafting loop feel rewarding from zone 1 — more base drops, a small stash to work with, new hammers for iterating on gear, and tuned difficulty so fresh heroes can engage with the systems.
@@ -179,7 +184,7 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - LootTable provides per-pack currency drops, item drops with slot-first distribution, and tag currency drops (P1+) with area scaling
 - CombatEngine manages pack-by-pack combat with state machine lifecycle, dual attack timers, spell timer, and DoT tick processing
 - PrestigeManager handles 7 prestige levels with currency-cost gating and full run-state wipe
-- SaveManager handles JSON save/load (format v8), auto-save timer, event triggers, prestige auto-save, Base64 export/import, and strict version rejection on imports
+- SaveManager handles JSON save/load (format v9), auto-save timer, event triggers, prestige auto-save, Base64 export/import, and strict version rejection on imports
 - 41 active affixes with Vector2i(1, 32) tier ranges; item tiers 1-8 constrain affix tier floor at crafting time
 - 44-group integration test suite (up from 41 at Phase 55)
 - Shipped 11 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges), v1.5 (inventory rework), v1.6 (tech debt cleanup), v1.7 (meta-progression), v1.8 (content pass), v1.9 (heroes)
