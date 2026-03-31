@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 57-stash-ui
 source: [57-VERIFICATION.md]
 started: 2026-03-28T00:00:00Z
@@ -62,21 +62,38 @@ blocked: 0
   reason: "User reported: Yes, but they are not clearly separated into 5 groups of 3"
   severity: minor
   test: 1
-  artifacts: []
-  missing: []
+  root_cause: "StashDisplay groups have only 10px gaps, no visual separators, and 9px font labels — insufficient visual distinction"
+  artifacts:
+    - path: "scenes/forge_view.tscn"
+      issue: "VBoxContainer groups at x=0,96,192,288,384 with only 10px gaps, no separators, tiny labels"
+  missing:
+    - "Increase inter-group gaps to 20-30px or add VSeparator/ColorRect dividers"
+    - "Increase group label font size from 9 to 11-12"
+  debug_session: ".planning/debug/stash-group-separation.md"
 
 - truth: "When bench is occupied, tapping a stash slot shows 'Melt or equip first' error toast"
   status: failed
   reason: "User reported: Error toast does not appear"
   severity: major
   test: 5
-  artifacts: []
-  missing: []
+  root_cause: "_update_stash_display() disables buttons when bench occupied (line 394), preventing pressed signal — toast guard in _on_stash_slot_pressed is unreachable dead code"
+  artifacts:
+    - path: "scenes/forge_view.gd"
+      issue: "Line 394 btn.disabled=(crafting_bench!=null) blocks pressed signal; lines 408-410 toast guard never reached"
+  missing:
+    - "Remove disabled state from bench-occupied condition so pressed signal fires and toast guard can execute"
+  debug_session: ".planning/debug/stash-bench-occupied-toast.md"
 
 - truth: "Yellow flash on successful stash-to-bench transfer; alpha pulse on all stash slots when bench clears"
   status: failed
   reason: "User reported: Yellow pulse does not appear, alpha pulse works but looks like there's 2 pulses"
   severity: major
   test: 6
-  artifacts: []
-  missing: []
+  root_cause: "Two bugs: (1) _flash_stash_slot called before _update_stash_display which clobbers modulate to grey on same frame; (2) disabled-to-enabled theme transition creates visual pop before alpha pulse tween"
+  artifacts:
+    - path: "scenes/forge_view.gd"
+      issue: "Line 424 flash before line 428 _update_stash_display clobbers tween; lines 512-513/557-558 disabled transition + pulse overlap"
+  missing:
+    - "Move _flash_stash_slot call to after _update_stash_display so tween overwrites grey"
+    - "Add frame delay or pre-set modulate before _pulse_stash_slots to prevent double-pulse"
+  debug_session: ".planning/debug/stash-animation-bugs.md"
