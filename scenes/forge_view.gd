@@ -424,20 +424,8 @@ func _on_stash_slot_pressed(slot_type: String, index: int) -> void:
 	# Refresh all displays
 	update_current_item()
 	_update_stash_display()
-	# D-07: flash the now-empty slot — called AFTER _update_stash_display so tween overwrites grey
-	_flash_stash_slot(slot_type, index)
 	update_melt_equip_states()
 	update_inventory_display()
-
-
-func _flash_stash_slot(slot_type: String, index: int) -> void:
-	var btn: Button = stash_slot_buttons[slot_type][index]
-	# Re-enable temporarily so Godot's disabled theme doesn't suppress the flash
-	btn.disabled = false
-	btn.modulate = Color(1.0, 1.0, 0.3, 1.0)
-	var tween := create_tween()
-	tween.tween_property(btn, "modulate", Color(0.4, 0.4, 0.4, 1.0), 0.3)
-	tween.tween_callback(func(): btn.disabled = true)
 
 
 func _pulse_stash_slots() -> void:
