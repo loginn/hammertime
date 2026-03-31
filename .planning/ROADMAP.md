@@ -164,7 +164,7 @@ Full details: `.planning/milestones/v1.9-ROADMAP.md`
 
 - [ ] **Phase 55: Stash Data Model** (2 plans) — 3-slot stash arrays per equipment type, auto-stash on drop, overflow feedback
 - [ ] **Phase 56: Difficulty & Starter Kit** (2 plans) — Currency rename to PoE names, starter kit placement, Forest difficulty tuning
-- [ ] **Phase 57: Stash UI** — Letter-icon grid in ForgeView, tap-to-bench interaction, item detail hover
+- [ ] **Phase 57: Stash UI** (2 + 1 gap closure) — Letter-icon grid in ForgeView, tap-to-bench interaction, item detail hover
 - [ ] **Phase 58: New Hammers & Save v9** — Alteration and Regal hammer currency classes, save format v9
 
 </details>
@@ -212,10 +212,11 @@ Plans:
   3. Tapping a filled stash square moves that item to the crafting bench; the item is removed from stash and cannot be put back
   4. Hovering/long-pressing a stash item shows a popup with the item's full details (name, rarity, affixes)
   5. The stash display updates immediately when items are added from drops or removed by tapping
-**Plans:** 2/2 plans complete
+**Plans:** 3 plans (2 complete + 1 gap closure)
 Plans:
 - [x] 57-01-PLAN.md — StashDisplay scene tree + stash display logic + integration tests
 - [x] 57-02-PLAN.md — Tap-to-bench interaction + flash/pulse animations + bench-clear integration
+- [ ] 57-03-PLAN.md — Gap closure: group separation, bench-occupied toast, animation fixes
 
 ### Phase 58: New Hammers & Save v9
 
@@ -250,9 +251,9 @@ Plans:
 | 50-54             | v1.9      | 5/5            | Complete    | 2026-03-28 |
 | 55 (Stash Data)   | v1.10     | 1/2 | Complete    | 2026-03-28 |
 | 56 (Difficulty)   | v1.10     | 2/2 | Complete    | 2026-03-28 |
-| 57 (Stash UI)     | v1.10     | 2/2 | Complete    | 2026-03-28 |
+| 57 (Stash UI)     | v1.10     | 2/3 | Gap closure | 2026-03-28 |
 | 58 (New Hammers)  | v1.10     | 2/2 | Complete    | 2026-03-29 |
 
 ---
 *Roadmap created: 2026-02-14*
-*Last updated: 2026-03-29 — Phase 58 plans created (2 plans)*
+*Last updated: 2026-03-31 — Phase 57 gap closure plan created (1 plan)*
