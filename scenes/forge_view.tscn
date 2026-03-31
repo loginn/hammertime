@@ -10,6 +10,17 @@
 [ext_resource type="Texture2D" uid="uid://bf57jow7yhqr" path="res://assets/claw_hammer.png" id="8_claw"]
 [ext_resource type="Texture2D" uid="uid://cmtndy2k4mh3q" path="res://assets/tuning_hammer.png" id="9_tuning"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_toast"]
+bg_color = Color(0.15, 0.1, 0.1, 0.85)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+
 [node name="ForgeView" type="Node2D"]
 script = ExtResource("1_forge")
 
@@ -523,17 +534,6 @@ bbcode_enabled = true
 scroll_active = false
 theme_override_font_sizes/normal_font_size = 11
 text = "Hero Stats:"
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_toast"]
-bg_color = Color(0.15, 0.1, 0.1, 0.85)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-content_margin_left = 16.0
-content_margin_top = 8.0
-content_margin_right = 16.0
-content_margin_bottom = 8.0
 
 [node name="ForgeErrorToast" type="PanelContainer" parent="."]
 layout_mode = 0
