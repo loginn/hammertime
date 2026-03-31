@@ -283,7 +283,7 @@ layout_mode = 3
 anchors_preset = 0
 offset_left = 340.0
 offset_top = 155.0
-offset_right = 880.0
+offset_right = 820.0
 offset_bottom = 215.0
 
 [node name="WeaponGroup" type="VBoxContainer" parent="StashDisplay"]
@@ -324,9 +324,9 @@ disabled = true
 
 [node name="HelmetGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 110.0
+offset_left = 96.0
 offset_top = 0.0
-offset_right = 196.0
+offset_right = 182.0
 offset_bottom = 60.0
 
 [node name="HelmetLabel" type="Label" parent="StashDisplay/HelmetGroup"]
@@ -360,9 +360,9 @@ disabled = true
 
 [node name="ArmorGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 220.0
+offset_left = 192.0
 offset_top = 0.0
-offset_right = 306.0
+offset_right = 278.0
 offset_bottom = 60.0
 
 [node name="ArmorLabel" type="Label" parent="StashDisplay/ArmorGroup"]
@@ -396,9 +396,9 @@ disabled = true
 
 [node name="BootsGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 330.0
+offset_left = 288.0
 offset_top = 0.0
-offset_right = 416.0
+offset_right = 374.0
 offset_bottom = 60.0
 
 [node name="BootsLabel" type="Label" parent="StashDisplay/BootsGroup"]
@@ -432,9 +432,9 @@ disabled = true
 
 [node name="RingGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 440.0
+offset_left = 384.0
 offset_top = 0.0
-offset_right = 530.0
+offset_right = 470.0
 offset_bottom = 60.0
 
 [node name="RingLabel" type="Label" parent="StashDisplay/RingGroup"]
@@ -465,6 +465,38 @@ custom_minimum_size = Vector2(28, 28)
 theme_override_font_sizes/font_size = 10
 text = ""
 disabled = true
+
+[node name="Sep1" type="ColorRect" parent="StashDisplay"]
+layout_mode = 0
+offset_left = 89.0
+offset_top = 2.0
+offset_right = 91.0
+offset_bottom = 55.0
+color = Color(0.4, 0.4, 0.4, 0.6)
+
+[node name="Sep2" type="ColorRect" parent="StashDisplay"]
+layout_mode = 0
+offset_left = 185.0
+offset_top = 2.0
+offset_right = 187.0
+offset_bottom = 55.0
+color = Color(0.4, 0.4, 0.4, 0.6)
+
+[node name="Sep3" type="ColorRect" parent="StashDisplay"]
+layout_mode = 0
+offset_left = 281.0
+offset_top = 2.0
+offset_right = 283.0
+offset_bottom = 55.0
+color = Color(0.4, 0.4, 0.4, 0.6)
+
+[node name="Sep4" type="ColorRect" parent="StashDisplay"]
+layout_mode = 0
+offset_left = 377.0
+offset_top = 2.0
+offset_right = 379.0
+offset_bottom = 55.0
+color = Color(0.4, 0.4, 0.4, 0.6)
 
 [node name="HeroGraphicsPanel" type="ColorRect" parent="."]
 offset_left = 810.0
