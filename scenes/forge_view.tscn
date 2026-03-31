@@ -283,7 +283,7 @@ layout_mode = 3
 anchors_preset = 0
 offset_left = 340.0
 offset_top = 155.0
-offset_right = 830.0
+offset_right = 880.0
 offset_bottom = 215.0
 
 [node name="WeaponGroup" type="VBoxContainer" parent="StashDisplay"]
@@ -434,7 +434,7 @@ disabled = true
 layout_mode = 0
 offset_left = 440.0
 offset_top = 0.0
-offset_right = 486.0
+offset_right = 530.0
 offset_bottom = 60.0
 
 [node name="RingLabel" type="Label" parent="StashDisplay/RingGroup"]
