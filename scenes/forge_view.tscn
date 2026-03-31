@@ -272,7 +272,7 @@ layout_mode = 3
 anchors_preset = 0
 offset_left = 340.0
 offset_top = 155.0
-offset_right = 770.0
+offset_right = 830.0
 offset_bottom = 215.0
 
 [node name="WeaponGroup" type="VBoxContainer" parent="StashDisplay"]
@@ -284,7 +284,7 @@ offset_bottom = 60.0
 
 [node name="WeaponLabel" type="Label" parent="StashDisplay/WeaponGroup"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "Weapon"
 
 [node name="WeaponSlots" type="HBoxContainer" parent="StashDisplay/WeaponGroup"]
@@ -313,14 +313,14 @@ disabled = true
 
 [node name="HelmetGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 96.0
+offset_left = 110.0
 offset_top = 0.0
-offset_right = 182.0
+offset_right = 196.0
 offset_bottom = 60.0
 
 [node name="HelmetLabel" type="Label" parent="StashDisplay/HelmetGroup"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "Helmet"
 
 [node name="HelmetSlots" type="HBoxContainer" parent="StashDisplay/HelmetGroup"]
@@ -349,14 +349,14 @@ disabled = true
 
 [node name="ArmorGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 192.0
+offset_left = 220.0
 offset_top = 0.0
-offset_right = 278.0
+offset_right = 306.0
 offset_bottom = 60.0
 
 [node name="ArmorLabel" type="Label" parent="StashDisplay/ArmorGroup"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "Armor"
 
 [node name="ArmorSlots" type="HBoxContainer" parent="StashDisplay/ArmorGroup"]
@@ -385,14 +385,14 @@ disabled = true
 
 [node name="BootsGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 288.0
+offset_left = 330.0
 offset_top = 0.0
-offset_right = 374.0
+offset_right = 416.0
 offset_bottom = 60.0
 
 [node name="BootsLabel" type="Label" parent="StashDisplay/BootsGroup"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "Boots"
 
 [node name="BootsSlots" type="HBoxContainer" parent="StashDisplay/BootsGroup"]
@@ -421,14 +421,14 @@ disabled = true
 
 [node name="RingGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 384.0
+offset_left = 440.0
 offset_top = 0.0
-offset_right = 430.0
+offset_right = 486.0
 offset_bottom = 60.0
 
 [node name="RingLabel" type="Label" parent="StashDisplay/RingGroup"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "Ring"
 
 [node name="RingSlots" type="HBoxContainer" parent="StashDisplay/RingGroup"]

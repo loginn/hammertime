@@ -391,7 +391,7 @@ func _update_stash_display() -> void:
 				btn.text = _get_item_abbreviation(item)
 				btn.tooltip_text = _build_stash_tooltip(item)
 				btn.modulate = Color(1.0, 1.0, 1.0, 1.0)
-				btn.disabled = (GameState.crafting_bench != null)
+				btn.disabled = false
 			else:
 				btn.text = ""
 				btn.tooltip_text = ""
@@ -420,12 +420,11 @@ func _on_stash_slot_pressed(slot_type: String, index: int) -> void:
 	GameState.crafting_bench = item
 	current_item = item
 
-	# D-07: flash the now-empty slot
-	_flash_stash_slot(slot_type, index)
-
 	# Refresh all displays
 	update_current_item()
 	_update_stash_display()
+	# D-07: flash the now-empty slot — called AFTER _update_stash_display so tween overwrites grey
+	_flash_stash_slot(slot_type, index)
 	update_melt_equip_states()
 	update_inventory_display()
 
@@ -438,10 +437,18 @@ func _flash_stash_slot(slot_type: String, index: int) -> void:
 
 
 func _pulse_stash_slots() -> void:
+	# Defer by one frame so the disabled->enabled theme transition completes before tween starts,
+	# preventing a visual double-pulse (theme pop + tween pulse).
+	call_deferred("_pulse_stash_slots_impl")
+
+
+func _pulse_stash_slots_impl() -> void:
 	for slot_type in stash_slot_buttons:
 		for i in range(3):
 			var btn: Button = stash_slot_buttons[slot_type][i]
 			if not btn.disabled:
+				# Reset modulate to a known clean state before tweening to avoid theme-transition pop
+				btn.modulate = Color(1.0, 1.0, 1.0, 1.0)
 				var tween := create_tween()
 				tween.tween_property(btn, "modulate:a", 0.4, 0.15)
 				tween.tween_property(btn, "modulate:a", 1.0, 0.15)
