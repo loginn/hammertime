@@ -31,18 +31,18 @@ None.
 
 ## Traceability
 
-| Requirement | Phase |
-|-------------|-------|
-| FIX-01 | — |
-| FIX-02 | — |
-| FIX-03 | — |
-| NEW-01 | — |
-| NEW-02 | — |
-| NEW-03 | — |
-| UI-01 | — |
-| INT-01 | — |
-| INT-02 | — |
-| INT-03 | — |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| FIX-01 | Phase 1 | Pending |
+| FIX-02 | Phase 1 | Pending |
+| FIX-03 | Phase 1 | Pending |
+| NEW-01 | Phase 1 | Pending |
+| NEW-02 | Phase 1 | Pending |
+| NEW-03 | Phase 1 | Pending |
+| UI-01 | Phase 2 | Pending |
+| INT-01 | Phase 3 | Pending |
+| INT-02 | Phase 3 | Pending |
+| INT-03 | Phase 3 | Pending |
 
 ---
 *Requirements defined: 2026-03-31*
