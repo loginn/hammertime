@@ -469,33 +469,33 @@ disabled = true
 [node name="Sep1" type="ColorRect" parent="StashDisplay"]
 layout_mode = 0
 offset_left = 93.0
-offset_top = 14.0
+offset_top = 16.0
 offset_right = 95.0
-offset_bottom = 42.0
+offset_bottom = 44.0
 color = Color(0.4, 0.4, 0.4, 0.6)
 
 [node name="Sep2" type="ColorRect" parent="StashDisplay"]
 layout_mode = 0
 offset_left = 189.0
-offset_top = 14.0
+offset_top = 16.0
 offset_right = 191.0
-offset_bottom = 42.0
+offset_bottom = 44.0
 color = Color(0.4, 0.4, 0.4, 0.6)
 
 [node name="Sep3" type="ColorRect" parent="StashDisplay"]
 layout_mode = 0
 offset_left = 285.0
-offset_top = 14.0
+offset_top = 16.0
 offset_right = 287.0
-offset_bottom = 42.0
+offset_bottom = 44.0
 color = Color(0.4, 0.4, 0.4, 0.6)
 
 [node name="Sep4" type="ColorRect" parent="StashDisplay"]
 layout_mode = 0
 offset_left = 381.0
-offset_top = 14.0
+offset_top = 16.0
 offset_right = 383.0
-offset_bottom = 42.0
+offset_bottom = 44.0
 color = Color(0.4, 0.4, 0.4, 0.6)
 
 [node name="HeroGraphicsPanel" type="ColorRect" parent="."]
