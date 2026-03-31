@@ -30,7 +30,8 @@ var stash_slot_buttons: Dictionary = {}
 @onready var inventory_label: Label = $InventoryLabel
 @onready var melt_button: Button = $ItemStatsPanel/MeltButton
 @onready var equip_button: Button = $ItemStatsPanel/EquipButton
-@onready var forge_error_toast: Label = $ForgeErrorToast
+@onready var forge_error_toast: PanelContainer = $ForgeErrorToast
+@onready var forge_error_label: Label = $ForgeErrorToast/Label
 
 # Currency instances
 var currencies: Dictionary = {
@@ -298,7 +299,7 @@ func _on_prestige_completed(_new_level: int) -> void:
 
 
 func _show_forge_error(message: String) -> void:
-	forge_error_toast.text = message
+	forge_error_label.text = message
 	forge_error_toast.modulate = Color(1.0, 0.4, 0.4, 1.0)
 	forge_error_toast.visible = true
 	var tween := create_tween()
