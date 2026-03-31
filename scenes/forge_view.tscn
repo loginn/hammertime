@@ -468,33 +468,33 @@ disabled = true
 
 [node name="Sep1" type="ColorRect" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 89.0
+offset_left = 90.0
 offset_top = 14.0
-offset_right = 91.0
+offset_right = 92.0
 offset_bottom = 42.0
 color = Color(0.4, 0.4, 0.4, 0.6)
 
 [node name="Sep2" type="ColorRect" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 185.0
+offset_left = 186.0
 offset_top = 14.0
-offset_right = 187.0
+offset_right = 188.0
 offset_bottom = 42.0
 color = Color(0.4, 0.4, 0.4, 0.6)
 
 [node name="Sep3" type="ColorRect" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 281.0
+offset_left = 282.0
 offset_top = 14.0
-offset_right = 283.0
+offset_right = 284.0
 offset_bottom = 42.0
 color = Color(0.4, 0.4, 0.4, 0.6)
 
 [node name="Sep4" type="ColorRect" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 377.0
+offset_left = 378.0
 offset_top = 14.0
-offset_right = 379.0
+offset_right = 380.0
 offset_bottom = 42.0
 color = Color(0.4, 0.4, 0.4, 0.6)
 
