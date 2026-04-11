@@ -6,11 +6,11 @@ enum ItemSlot { NONE = -1, WEAPON, HELMET, ARMOR, BOOTS, RING }
 
 # Hammer button references
 @onready var runic_btn: Button = $HammerSidebar/RunicHammerBtn
-@onready var forge_btn: Button = $HammerSidebar/ForgeHammerBtn
+@onready var alchemy_btn: Button = $HammerSidebar/AlchemyHammerBtn
 @onready var tack_btn: Button = $HammerSidebar/TackHammerBtn
 @onready var grand_btn: Button = $HammerSidebar/GrandHammerBtn
-@onready var claw_btn: Button = $HammerSidebar/ClawHammerBtn
-@onready var tuning_btn: Button = $HammerSidebar/TuningHammerBtn
+@onready var annulment_btn: Button = $HammerSidebar/AnnulmentHammerBtn
+@onready var divine_btn: Button = $HammerSidebar/DivineHammerBtn
 
 # Tag hammer button references
 @onready var fire_hammer_btn: Button = $HammerSidebar/TagHammerSection/FireHammerBtn
@@ -34,13 +34,20 @@ var stash_slot_buttons: Dictionary = {}
 @onready var forge_error_label: Label = $ForgeErrorToast/Label
 
 # Currency instances
+# Bridge state: UI-bound keys "augment"/"chaos"/"exalt" temporarily point at renamed classes
+# until Plan 02 introduces real Augment/Chaos/Exalt hammers. This preserves the existing
+# player-visible behavior (the buttons have always run what is now called Alchemy/Annulment/Divine)
+# while removing references to the deleted Forge/Claw/Tuning class names.
 var currencies: Dictionary = {
 	"transmute": RunicHammer.new(),
-	"augment": ForgeHammer.new(),
+	"augment": AlchemyHammer.new(),        # Bridge -- Plan 02 repoints to AugmentHammer.new()
+	"alchemy": AlchemyHammer.new(),        # NEW key, same class, no UI button yet (D-10)
 	"alteration": TackHammer.new(),
 	"regal": GrandHammer.new(),
-	"chaos": ClawHammer.new(),
-	"exalt": TuningHammer.new(),
+	"chaos": AnnulmentHammer.new(),        # Bridge -- Plan 02 repoints to ChaosHammer.new()
+	"exalt": DivineHammer.new(),           # Bridge -- Plan 02 repoints to ExaltHammer.new()
+	"divine": DivineHammer.new(),          # NEW key
+	"annulment": AnnulmentHammer.new(),    # NEW key
 	"fire": TagHammer.new(Tag.FIRE, "Fire Hammer"),
 	"cold": TagHammer.new(Tag.COLD, "Cold Hammer"),
 	"lightning": TagHammer.new(Tag.LIGHTNING, "Lightning Hammer"),
@@ -98,11 +105,11 @@ func _ready() -> void:
 	# Initialize currency button mapping
 	currency_buttons = {
 		"transmute": runic_btn,
-		"augment": forge_btn,
+		"augment": alchemy_btn,
 		"alteration": tack_btn,
 		"regal": grand_btn,
-		"chaos": claw_btn,
-		"exalt": tuning_btn
+		"chaos": annulment_btn,
+		"exalt": divine_btn
 	}
 	currency_buttons["fire"] = fire_hammer_btn
 	currency_buttons["cold"] = cold_hammer_btn
@@ -112,11 +119,11 @@ func _ready() -> void:
 
 	# Connect currency button signals
 	runic_btn.pressed.connect(_on_currency_selected.bind("transmute"))
-	forge_btn.pressed.connect(_on_currency_selected.bind("augment"))
+	alchemy_btn.pressed.connect(_on_currency_selected.bind("augment"))
 	tack_btn.pressed.connect(_on_currency_selected.bind("alteration"))
 	grand_btn.pressed.connect(_on_currency_selected.bind("regal"))
-	claw_btn.pressed.connect(_on_currency_selected.bind("chaos"))
-	tuning_btn.pressed.connect(_on_currency_selected.bind("exalt"))
+	annulment_btn.pressed.connect(_on_currency_selected.bind("chaos"))
+	divine_btn.pressed.connect(_on_currency_selected.bind("exalt"))
 
 	# Connect tag hammer button signals
 	fire_hammer_btn.pressed.connect(_on_currency_selected.bind("fire"))

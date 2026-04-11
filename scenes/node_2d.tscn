@@ -46,7 +46,7 @@ offset_bottom = 50.0
 toggle_mode = true
 text = "Runic (0)"
 
-[node name="ForgeHammerBtn" type="Button" parent="ButtonControl" unique_id=1049152401]
+[node name="AlchemyHammerBtn" type="Button" parent="ButtonControl" unique_id=1049152401]
 layout_mode = 0
 offset_top = 55.0
 offset_right = 150.0
@@ -70,7 +70,7 @@ offset_bottom = 215.0
 toggle_mode = true
 text = "Grand (0)"
 
-[node name="ClawHammerBtn" type="Button" parent="ButtonControl" unique_id=1673501972]
+[node name="AnnulmentHammerBtn" type="Button" parent="ButtonControl" unique_id=1673501972]
 layout_mode = 0
 offset_top = 220.0
 offset_right = 150.0
@@ -78,7 +78,7 @@ offset_bottom = 270.0
 toggle_mode = true
 text = "Claw (0)"
 
-[node name="TuningHammerBtn" type="Button" parent="ButtonControl" unique_id=2043849897]
+[node name="DivineHammerBtn" type="Button" parent="ButtonControl" unique_id=2043849897]
 layout_mode = 0
 offset_top = 275.0
 offset_right = 150.0
