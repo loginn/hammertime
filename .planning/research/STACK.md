@@ -203,7 +203,7 @@ GameState.hero_archetype_id = data.get("hero_archetype_id", "")
 
 | Avoid | Why | Use Instead |
 |---|---|---|
-| Multi-level class hierarchy for heroes | Only pattern in this codebase using deep inheritance is Currency (1 level: Currency -> ForgeHammer). A 3-level hero tree adds complexity with no behavior payoff. All archetypes apply bonuses identically. | Single `HeroArchetype` Resource with data dictionary |
+| Multi-level class hierarchy for heroes | Only pattern in this codebase using deep inheritance is Currency (1 level: Currency -> AlchemyHammer). A 3-level hero tree adds complexity with no behavior payoff. All archetypes apply bonuses identically. | Single `HeroArchetype` Resource with data dictionary |
 | Godot's `class_name` registration for each subvariant | 9+ registered class names for pure data objects clutters the global namespace and autocompletion. Items justify this (21 types) because they have distinct constructors and stat tables. Archetypes are just data rows. | Factory function that constructs `HeroArchetype` from registry dict |
 | Custom Resource `.tres` files for archetype definitions | Adds 9+ resource files that need manual editing in Godot editor. The project defines all game data in code (affixes, item stats, prestige costs). External resource files break this convention. | Const dictionary in GDScript |
 | Separate "more" multiplier pipeline in StatCalculator | StatCalculator is item-scoped. Adding hero-level multipliers here couples two concerns and requires passing hero/archetype data through every calculation call. | Post-equipment multiplier step in `Hero.update_stats()` |

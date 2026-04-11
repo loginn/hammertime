@@ -1,219 +1,258 @@
 # Coding Conventions
 
-**Analysis Date:** 2026-02-19
-
-## Language
-
-**GDScript** (Godot 4.6)
-- Type-safe with explicit type annotations required on function parameters and returns
-- Class-based with optional `class_name` declarations for global accessibility
+**Analysis Date:** 2026-03-31
 
 ## Naming Patterns
 
 **Files:**
-- snake_case for filenames: `item.gd`, `combat_engine.gd`, `pack_generator.gd`
-- Match class name to filename when using `class_name` declaration
-- Example: `class_name Item` lives in `item.gd`, `class_name PackGenerator` in `pack_generator.gd`
+- snake_case for all `.gd` files: `combat_engine.gd`, `forge_view.gd`, `stat_calculator.gd`
+- Scene files match their script name: `forge_view.tscn` / `forge_view.gd`
+- Concrete item subclasses use snake_case: `broadsword.gd`, `iron_plate.gd`, `silk_robe.gd`
+- Currency subclasses use snake_case: `runic_hammer.gd`, `tag_hammer.gd`
 
-**Classes:**
-- PascalCase: `Item`, `Weapon`, `CombatEngine`, `StatCalculator`, `PackGenerator`
-- Declared at top of file with `class_name ClassName`
+**Classes (class_name):**
+- PascalCase: `CombatEngine`, `StatCalculator`, `DefenseCalculator`, `MonsterPack`
+- Item hierarchy: `Item` -> `Weapon` / `Armor` / `Helmet` / `Boots` / `Ring` -> `Broadsword` / `IronPlate` etc.
+- Currency hierarchy: `Currency` -> `RunicHammer` / `AlchemyHammer` / `TagHammer` etc. (Base hammers use literal PoE names: Augment/Alchemy/Chaos/Exalt/Divine/Annulment. Legacy creative names remain for Runic/Tack/Grand/Tag.)
+- Tag autoload uses `Tag_List` (legacy name with underscore -- exception to the pattern)
 
-**Functions and Methods:**
-- snake_case: `update_stats()`, `calculate_dps()`, `take_damage()`, `is_affix_on_item()`
-- Private/internal functions prefixed with underscore: `_on_hero_attack()`, `_start_pack_fight()`, `_get_damage_element()`
-- Callback handlers named `_on_[event]()`: `_on_hero_attack()`, `_on_pack_killed()`, `_on_currency_selected()`
+**Functions:**
+- snake_case: `update_stats()`, `calculate_dps()`, `add_item_to_stash()`
+- Private functions prefixed with underscore: `_on_hero_attack()`, `_build_save_data()`, `_wipe_run_state()`
+- Signal handlers use `_on_` prefix: `_on_pack_killed()`, `_on_currency_selected()`
+- Static utility functions: `StatCalculator.calculate_dps()`, `DefenseCalculator.calculate_damage_taken()`
 
 **Variables:**
-- snake_case for all variables: `total_dps`, `max_health`, `hero_name`, `equipped_items`
-- Private variables NOT prefixed with underscore (convention differs from some languages)
-- Dictionary keys use snake_case strings: `{"prefixes": 0, "suffixes": 0}`
+- snake_case: `total_dps`, `area_level`, `current_pack_index`
+- Constants use UPPER_SNAKE_CASE: `SAVE_PATH`, `SAVE_VERSION`, `MAX_PRESTIGE_LEVEL`, `PACK_COUNT_MIN`
+- Enum values use UPPER_SNAKE_CASE: `Rarity.NORMAL`, `State.FIGHTING`, `AffixType.PREFIX`
+- Boolean state variables prefixed descriptively: `is_combat_active`, `is_alive`, `equip_confirm_pending`
+- Private state with underscore: `_save_pending`, `_hero_overlay`, `_new_game_confirming`
 
-**Constants:**
-- SCREAMING_SNAKE_CASE: `RARITY_LIMITS`, `PACK_COUNT_MIN`, `GROWTH_RATE`, `SAVE_PATH`, `AUTO_SAVE_INTERVAL`
-- Placed at top of class/file before methods
-- Can be untyped for simple values or explicitly typed for clarity
+**Signals:**
+- snake_case, past tense for events: `equipment_changed`, `item_crafted`, `area_cleared`, `hero_died`
+- Present tense for requests: `hero_selection_needed`
+- Typed parameters: `signal equipment_changed(slot: String, item: Item)`
 
-**Types (Enums):**
-- PascalCase for enum names: `Rarity`, `ItemSlot`, `AffixType`, `State`
-- SCREAMING_SNAKE_CASE for enum values: `Rarity.NORMAL`, `ItemSlot.WEAPON`, `AffixType.PREFIX`
-
-**Signal/Event names:**
-- snake_case: `equipment_changed`, `item_crafted`, `area_cleared`
-- Emitted with `.emit()` method
+**Types/Enums:**
+- PascalCase enum names: `Rarity`, `State`, `AffixType`, `StatType`, `Archetype`
+- Enums defined inside their owning class: `Item.Rarity`, `CombatEngine.State`, `Tag.StatType`
 
 ## Code Style
 
 **Formatting:**
-- Tabs for indentation (standard Godot)
-- 4-space equivalent (Godot IDE default)
-- No specific linter/formatter tool configured beyond editor defaults
-- EditorConfig minimal: UTF-8 charset only (see `.editorconfig`)
+- Tab indentation (Godot default)
+- No explicit formatter config (relies on Godot editor defaults)
+- Line length is not strictly enforced but stays reasonable (~100-120 chars)
 
-**Line Length:**
-- No strict limit enforced, but aim for ~100 characters for readability
-- Long statements may wrap across lines for clarity
+**Linting:**
+- No external linter (`.gdlintrc` not present)
+- Relies on Godot editor warnings
 
-**Whitespace:**
-- Blank lines separate logical sections within functions
-- No blank line after function declaration before body
-- One blank line between method definitions
+**Type Annotations:**
+- Use static typing on function signatures: `func can_apply(item: Item) -> bool:`
+- Use `var x: Type` for typed locals: `var hero: Hero = GameState.hero`
+- Use typed arrays where possible: `Array[Affix]`, `Array[MonsterPack]`, `Array[String]`
+- Some older code omits type annotations on locals (inconsistent)
 
-**Braces and Brackets:**
-- Opening brace on same line: `func foo() -> void: {`
-- Actually, GDScript uses colon-based scoping (not C-style braces in most contexts)
-- Dictionary/Array literals use standard brackets: `{"key": value}`, `[1, 2, 3]`
+## Documentation Style
 
-## Comments
+**Two competing styles exist in the codebase:**
 
-**When to Comment:**
-- Header comment explaining module/class purpose (examples: `## Generates scaled monster packs...`)
-- Complex algorithms: describe the math or logic (see `StatCalculator.gd` - crit formula explanation)
-- Non-obvious branching logic or special cases
-- Tier scaling and data transformations that may confuse future readers
+1. **GDScript `##` doc comments** (preferred, newer code): Used in `autoloads/`, `models/stats/`, `models/currencies/`, `models/combat/`
+   ```gdscript
+   ## Calculates DPS using correct order of operations:
+   ## base -> flat damage -> additive damage% -> speed -> crit multiplier
+   static func calculate_dps(...) -> float:
+   ```
 
-**Documentation Format:**
-- Use `## Comment` for documentation (triple slash in GDScript becomes doc comments)
-- Can appear before function or inline in docstrings
-- Examples from codebase:
-  - `## Calculates DPS using correct order of operations:` (line 4, StatCalculator)
-  - `## Creates an item from a serialized dictionary. Returns null if type unknown.` (Item.gd:79)
+2. **Python-style `"""` docstrings** (legacy, `models/hero.gd` only): 36 occurrences in `models/hero.gd`
+   ```gdscript
+   func take_damage(damage: float) -> void:
+       """Hero takes damage and updates health"""
+   ```
 
-**Avoid Stating the Obvious:**
+**Prescriptive rule:** Use `##` doc comments for all new code. Do NOT use `"""` docstrings. The `"""` in `hero.gd` is legacy and should be migrated.
+
+**Comment sections:** Use `# --- Section Name ---` for organizing related functions:
 ```gdscript
-# Bad: var health: float = 100.0  # Hero health (redundant)
-
-# Good:
-## Each element damage is rolled independently from damage_ranges
-var damage_per_hit := 0.0
-for element in hero.damage_ranges:
-    # Range is {"min": float, "max": float} for each element type
+# --- Combat signal handlers ---
+# --- Drop signal handlers (Phase 16) ---
+# --- Display ---
 ```
 
-**Debug Comments:**
-- Used rarely, examples: `# Debug override: always give hammers` (GameState.gd:33)
-- Marked clearly with DEBUG prefix when intentional dev-only code
+**Phase references:** Comments often reference design phases: `# Phase 55: dead code`, `# Phase 48`, `# v3 migration policy`. This is project-specific traceability.
 
 ## Import Organization
 
-**Autoloads (Singletons):**
-- Registered in `project.godot` under `[autoload]` section
-- Accessed directly by name: `ItemAffixes.prefixes`, `GameState.hero`, `SaveManager.load_game()`
-- Examples: `ItemAffixes`, `Tag`, `GameEvents`, `SaveManager`, `GameState`
+**No explicit imports.** GDScript uses:
+- `class_name` for global class registration (no import needed)
+- `preload()` for scene/resource loading at the top of files:
+  ```gdscript
+  const FLOATING_LABEL = preload("res://scenes/floating_label.tscn")
+  ```
+- Autoloads accessed by their registered name: `GameState`, `GameEvents`, `SaveManager`, `ItemAffixes`, `Tag`, `PrestigeManager`
 
-**Class Dependencies:**
-- Classes referenced by `class_name` are available globally (no import needed)
-- Extend base classes naturally: `class_name Weapon extends Item`
-- Static utility classes follow pattern: `StatCalculator.calculate_dps()`, `PackGenerator.generate_packs()`
-
-**Path References:**
-- Asset paths use `res://` protocol: `preload("res://assets/runic_hammer.png")`
-- Scene paths: `run/main_scene="res://scenes/main.tscn"` (project.godot)
+**Path Aliases:**
+- `res://` for project-relative paths
+- `user://` for save data paths
 
 ## Error Handling
 
-**Strategy:**
-- Use `push_warning()` for non-fatal issues: `push_warning("SaveManager: Save file appears corrupted...")`
-- Return false/null on failure with warning: `if file == null: push_warning(...); return false`
-- Guard clauses for early returns: `if state != State.FIGHTING: return` (CombatEngine.gd:73-74)
-- Fallback values: `return biome.primary_element` (PackGenerator.gd:49)
+**Patterns:**
+- `push_warning()` for non-fatal warnings: `push_warning("GameState: Save file appears corrupted, starting fresh")`
+- Guard clauses with early returns: `if current_item == null: return`
+- Boolean return values for success/failure: `func save_game() -> bool`, `func spend_currency() -> bool`
+- Result dictionaries for complex operations: `func import_save_string() -> Dictionary` returns `{"success": bool, "error": String}`
+- No exceptions or try/catch -- GDScript does not support them; use return values
+
+**Prescriptive rules:**
+- Use `push_warning()` for unexpected but recoverable states
+- Use guard clauses at function top, not nested if/else
+- Return `bool` for simple success/failure, `Dictionary` for operations with error details
+
+## Logging
+
+**Framework:** `print()` statements (console output)
 
 **Patterns:**
+- Debug logging via `print()` scattered throughout gameplay code: `print("Equipped ", item.item_name, " to ", slot)`
+- 92 `print()` calls across 7 files (excluding test file)
+- `models/hero.gd` has 6 print calls for combat events
+- `scenes/forge_view.gd` has 11 print calls for UI actions
+- No log levels, no structured logging
+
+**Prescriptive rule:** `print()` is acceptable for development. No logging framework is used.
+
+## Signal/Event Patterns
+
+**Central event bus:** `autoloads/game_events.gd` defines all cross-scene signals. Connected in `_ready()`:
 ```gdscript
-# Guard against null/invalid state
-var pack := get_current_pack()
-if pack == null or not pack.is_alive():
-    return
-
-# Check preconditions and warn
-if currency_type not in currency_counts:
-    return false
-if currency_counts[currency_type] <= 0:
-    return false
-
-# Validate data during deserialization
-var parsed = JSON.parse_string(json_text)
-if parsed == null or not (parsed is Dictionary):
-    push_warning("SaveManager: Save file contains invalid JSON")
-    return false
+GameEvents.combat_started.connect(_on_combat_started)
+GameEvents.pack_killed.connect(_on_pack_killed)
 ```
 
-## Data Validation
+**Local signals:** Scenes define their own signals for parent-child communication:
+```gdscript
+signal equipment_changed()       # forge_view.gd
+signal prestige_triggered()      # prestige_view.gd
+signal new_game_started()        # settings_view.gd
+signal item_base_found(item_base: Item)  # gameplay_view.gd
+```
 
-**Type Safety:**
-- Explicit type annotations on all function parameters: `func take_damage(damage: float) -> void:`
-- Return types always specified: `-> int`, `-> float`, `-> Dictionary`, `-> Array[Affix]`
-- Type-safe arrays: `Array[Affix]`, `Array[MonsterPack]` (not raw `Array`)
+**Wiring:** Cross-view signal connections happen in `main_view.gd`:
+```gdscript
+forge_view.equipment_changed.connect(gameplay_view.refresh_clearing_speed)
+gameplay_view.item_base_found.connect(GameState.add_item_to_stash)
+```
 
-**Defensive Checks:**
-- Check for null before accessing: `if weapon != null and weapon is Weapon:`
-- Verify dictionary keys exist: `if slot in equipped_items:`, `data.get("key", default_value)`
-- Bounds checking on arrays: `if current_pack_index >= current_packs.size():`
+## Resource/Data Model Patterns
 
-**Data Integrity:**
-- Ensure value consistency after calculations: `if self.add_min > self.add_max: swap` (Affix.gd:77-80)
-- Use `match` statements for exhaustive enum checks: `match rarity: Rarity.NORMAL: ...`
-- Serialize/deserialize with version tracking: `const SAVE_VERSION = 2` (SaveManager)
+**All game data models extend Resource:**
+```gdscript
+class_name Item extends Resource
+class_name Hero extends Resource
+class_name Currency extends Resource
+class_name Affix extends Resource
+```
 
-## Function Design
+**Serialization pattern:** Every persistable model implements `to_dict() -> Dictionary` and a static `from_dict(data: Dictionary) -> T`:
+```gdscript
+func to_dict() -> Dictionary:
+    return {"item_type": get_item_type_string(), "tier": tier, ...}
 
-**Size Guidelines:**
-- Prefer functions under 50 lines
-- Complex functions (100+ lines) are broken into helper methods: `calculate_defense()` calls sub-calculations
-- Example: `CombatEngine._on_hero_attack()` (15 lines) is concise and focused
+static func create_from_dict(data: Dictionary) -> Item:
+    match item_type_str:
+        "Broadsword": item = Broadsword.new(tier)
+        ...
+```
 
-**Parameters:**
-- Keep parameter count low (< 5 ideal)
-- Use keyword args or pass objects for many related params: `calculate_damage_taken(damage, element, is_spell, armor, evasion, es, ...)`
-- Default parameters used when sensible: `func calculate_dps(..., base_crit_chance: float = 5.0, base_crit_damage: float = 150.0)`
+**Factory pattern:** `Item.create_from_dict()` is a manual match-based factory. New item types require adding a case.
 
-**Return Values:**
-- Single return type, not multiple outputs
-- Use Dictionary for structured returns: `DefenseCalculator.calculate_damage_taken()` returns `{"dodged": bool, "life_damage": float, "es_damage": float}`
-- Consistent null returns for "not found": `return null` (Item.create_from_dict on unknown type)
-- Boolean returns for success/failure: `func spend_currency(currency_type: String) -> bool:`
+**Template Method pattern:** `Currency.apply()` calls `can_apply()` then `_do_apply()`. Subclasses override `can_apply()` and `_do_apply()`.
 
-## Module Design
+## UI Patterns
 
-**Exports:**
-- Public methods have no underscore prefix: `save_game()`, `load_game()`, `calculate_dps()`
-- Private/helper methods start with underscore: `_restore_state()`, `_build_save_data()`
-- Static utility classes expose only static methods (no instance methods): `StatCalculator`, `PackGenerator`, `DefenseCalculator`, `LootTable`
+**Two-click confirmation:** Used for destructive actions (equip overwrite, melt, prestige, new game, import):
+```gdscript
+if not equip_confirm_pending:
+    equip_confirm_pending = true
+    equip_button.text = "Confirm Overwrite?"
+    equip_timer.start()
+    return
+# Second click -- execute
+```
+Timer resets the confirmation state after 3 seconds.
 
-**File Organization:**
-- One primary class per file (GDScript convention)
-- Related constants and enums defined in same file as class
-- Helper data structures (dictionaries, arrays) declared as class members or static const
+**Toast/Error display:** Forge errors use a tween-based fade:
+```gdscript
+forge_error_toast.visible = true
+var tween := create_tween()
+tween.tween_interval(2.0)
+tween.tween_property(forge_error_toast, "modulate:a", 0.0, 0.5)
+tween.tween_callback(func(): forge_error_toast.visible = false)
+```
 
-**Inheritance Hierarchy:**
-- Base classes: `extends Resource` (data models), `extends Node` (runtime objects)
-- Subclassing for specialization: `Weapon extends Item`, `BasicSword extends Weapon`
-- Static-only utility classes: `extends RefCounted` (lightweight, no scene tree presence)
+**@onready node references:** All scene node references use `@onready var`:
+```gdscript
+@onready var hero_hp_bar: ProgressBar = $CombatUI/UIRoot/HeroHealthContainer/HeroHPBar
+```
 
-**Signal Usage:**
-- Centralized in `GameEvents` autoload
-- Defined at top of scene/node files
-- Connected in `_ready()` functions
-- Emitted by state-changing methods: `GameEvents.combat_started.emit(...)`
+**Display updates:** Views have an `update_display()` method that refreshes all UI elements. Called after every state change.
 
-## Special Patterns
+**Programmatic UI construction:** Hero selection cards in `main_view.gd` are built entirely in code (no `.tscn`), using `PanelContainer`, `VBoxContainer`, `StyleBoxFlat`.
 
-**Resource-based Models:**
-- Data models extend `Resource` class: `class_name Item extends Resource`
-- Implement `to_dict()` for serialization and `from_dict(data: Dictionary) -> ClassName` static method for deserialization
-- Allows saving to disk and reconstructing from JSON
+## Autoload Access Pattern
 
-**State Machines:**
-- Enum for states: `enum State { IDLE, FIGHTING, MAP_COMPLETE, HERO_DEAD }`
-- Current state stored in variable: `var state: State = State.IDLE`
-- Guard clauses check state before actions: `if state != State.FIGHTING: return`
+**Global singletons accessed directly by name:**
+- `GameState.hero`, `GameState.currency_counts`, `GameState.stash`
+- `GameEvents.combat_started.emit()`
+- `SaveManager.save_game()`
+- `ItemAffixes.prefixes`, `ItemAffixes.suffixes`
+- `PrestigeManager.can_prestige()`
+- `Tag.PHYSICAL`, `Tag.StatType.FLAT_DAMAGE`
 
-**Calculator/Utility Pattern:**
-- Static-only classes with no instance state: `StatCalculator`, `DefenseCalculator`, `PackGenerator`
-- All methods are `static func`
-- Named with "Calculator" or "Generator" suffix for clarity
-- Example call: `StatCalculator.calculate_dps(base_damage, base_speed, affixes)`
+**Prescriptive rule:** Access autoloads by their registered name. Do not pass them as parameters.
+
+## Static Utility Pattern
+
+**Pure calculation classes use `static func` and extend `RefCounted`:**
+- `StatCalculator` (`models/stats/stat_calculator.gd`)
+- `DefenseCalculator` (`models/stats/defense_calculator.gd`)
+- `PackGenerator` (`models/monsters/pack_generator.gd`)
+- `LootTable` (`models/loot/loot_table.gd`)
+
+These are never instantiated -- all methods are static.
+
+## Item Subclass Pattern
+
+**Concrete items follow a strict template:**
+```gdscript
+class_name Broadsword extends Weapon
+
+const TIER_NAMES: Dictionary = { 8: "Rusty Broadsword", ... }
+const TIER_STATS: Dictionary = { 8: {"dmg_min": 8, ...}, ... }
+
+func get_item_type_string() -> String:
+    return "Broadsword"
+
+func _init(p_tier: int = 8) -> void:
+    self.tier = p_tier
+    self.item_name = TIER_NAMES[p_tier]
+    self.valid_tags = [...]
+    # Set base stats from TIER_STATS
+    self.implicit = Implicit.new(...)
+    self.update_value()
+```
+
+Every new item type must:
+1. Define `TIER_NAMES` and `TIER_STATS` dicts (tiers 1-8)
+2. Override `get_item_type_string()` returning its PascalCase name
+3. Call `self.update_value()` at end of `_init()`
+4. Be added to `Item.create_from_dict()` match block and `Item.ITEM_TYPE_STRINGS`
+5. Be added to `gameplay_view.gd` `bases` dictionary for drop pool
+6. Be added to `forge_view.gd` `_get_item_abbreviation()` for stash display
 
 ---
 
-*Convention analysis: 2026-02-19*
+*Convention analysis: 2026-03-31*

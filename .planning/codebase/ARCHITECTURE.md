@@ -34,7 +34,7 @@
   - `hero.gd` — Character stats, equipment slots, stat calculation methods
   - `items/` — Item hierarchy (Item base, Weapon, Armor, Helmet, Boots, Ring)
   - `affixes/` — Affix (prefix/suffix), Implicit
-  - `currencies/` — Currency types (RunicHammer, ForgeHammer, etc.)
+  - `currencies/` — Currency types (RunicHammer, AlchemyHammer, AugmentHammer, ChaosHammer, ExaltHammer, DivineHammer, AnnulmentHammer, TackHammer, GrandHammer, TagHammer)
   - `combat/` — CombatEngine (state machine, attack timers, pack management)
   - `stats/` — StatCalculator (pure stat math), DefenseCalculator (damage reduction)
   - `monsters/` — MonsterPack, MonsterType, PackGenerator, BiomeConfig
