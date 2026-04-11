@@ -40,12 +40,12 @@ var stash_slot_buttons: Dictionary = {}
 # while removing references to the deleted Forge/Claw/Tuning class names.
 var currencies: Dictionary = {
 	"transmute": RunicHammer.new(),
-	"augment": AlchemyHammer.new(),        # Bridge -- Plan 02 repoints to AugmentHammer.new()
+	"augment": AugmentHammer.new(),
 	"alchemy": AlchemyHammer.new(),        # NEW key, same class, no UI button yet (D-10)
 	"alteration": TackHammer.new(),
 	"regal": GrandHammer.new(),
-	"chaos": AnnulmentHammer.new(),        # Bridge -- Plan 02 repoints to ChaosHammer.new()
-	"exalt": DivineHammer.new(),           # Bridge -- Plan 02 repoints to ExaltHammer.new()
+	"chaos": ChaosHammer.new(),
+	"exalt": ExaltHammer.new(),
 	"divine": DivineHammer.new(),          # NEW key
 	"annulment": AnnulmentHammer.new(),    # NEW key
 	"fire": TagHammer.new(Tag.FIRE, "Fire Hammer"),
