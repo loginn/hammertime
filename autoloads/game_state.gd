@@ -97,10 +97,13 @@ func initialize_fresh_game() -> void:
 	currency_counts = {
 		"transmute": 2,
 		"augment": 2,
+		"alchemy": 0,
 		"alteration": 0,
 		"regal": 0,
 		"chaos": 0,
-		"exalt": 0
+		"exalt": 0,
+		"divine": 0,
+		"annulment": 0,
 	}
 
 	# Initialize stash and bench (Phase 55: single universal bench + 3-slot stash)
@@ -144,10 +147,13 @@ func _wipe_run_state() -> void:
 	currency_counts = {
 		"transmute": 2,
 		"augment": 2,
+		"alchemy": 0,
 		"alteration": 0,
 		"regal": 0,
 		"chaos": 0,
 		"exalt": 0,
+		"divine": 0,
+		"annulment": 0,
 	}
 
 	# 5. Tag currencies -- wiped (they are run currency per user decision)

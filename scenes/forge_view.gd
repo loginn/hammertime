@@ -11,6 +11,9 @@ enum ItemSlot { NONE = -1, WEAPON, HELMET, ARMOR, BOOTS, RING }
 @onready var grand_btn: Button = $HammerSidebar/GrandHammerBtn
 @onready var annulment_btn: Button = $HammerSidebar/AnnulmentHammerBtn
 @onready var divine_btn: Button = $HammerSidebar/DivineHammerBtn
+@onready var augment_btn: Button = $HammerSidebar/AugmentHammerBtn
+@onready var chaos_btn: Button = $HammerSidebar/ChaosHammerBtn
+@onready var exalt_btn: Button = $HammerSidebar/ExaltHammerBtn
 
 # Tag hammer button references
 @onready var fire_hammer_btn: Button = $HammerSidebar/TagHammerSection/FireHammerBtn
@@ -33,21 +36,17 @@ var stash_slot_buttons: Dictionary = {}
 @onready var forge_error_toast: PanelContainer = $ForgeErrorToast
 @onready var forge_error_label: Label = $ForgeErrorToast/Label
 
-# Currency instances
-# Bridge state: UI-bound keys "augment"/"chaos"/"exalt" temporarily point at renamed classes
-# until Plan 02 introduces real Augment/Chaos/Exalt hammers. This preserves the existing
-# player-visible behavior (the buttons have always run what is now called Alchemy/Annulment/Divine)
-# while removing references to the deleted Forge/Claw/Tuning class names.
+# Currency instances — each UI button key maps to its matching hammer class
 var currencies: Dictionary = {
 	"transmute": RunicHammer.new(),
 	"augment": AugmentHammer.new(),
-	"alchemy": AlchemyHammer.new(),        # NEW key, same class, no UI button yet (D-10)
+	"alchemy": AlchemyHammer.new(),
 	"alteration": TackHammer.new(),
 	"regal": GrandHammer.new(),
 	"chaos": ChaosHammer.new(),
 	"exalt": ExaltHammer.new(),
-	"divine": DivineHammer.new(),          # NEW key
-	"annulment": AnnulmentHammer.new(),    # NEW key
+	"divine": DivineHammer.new(),
+	"annulment": AnnulmentHammer.new(),
 	"fire": TagHammer.new(Tag.FIRE, "Fire Hammer"),
 	"cold": TagHammer.new(Tag.COLD, "Cold Hammer"),
 	"lightning": TagHammer.new(Tag.LIGHTNING, "Lightning Hammer"),
@@ -78,11 +77,14 @@ var equip_hover_active: bool = false
 # Hammer tooltip descriptions (shown on hover)
 var hammer_descriptions: Dictionary = {
 	"transmute": "Turns a normal item into a magic item\nwith 1-2 random mods.\nRequires: Normal rarity",
-	"augment": "Turns a normal item into a rare item\nwith 4-6 random mods.\nRequires: Normal rarity",
+	"augment": "Adds 1 random mod to a Magic item\nthat has room for another mod.\nRequires: Magic rarity with < max mods",
+	"alchemy": "Converts a Normal item to Rare\nwith 4-6 random mods.\nRequires: Normal rarity",
 	"alteration": "Rerolls all mods on a magic item.\nRequires: Magic rarity",
 	"regal": "Upgrades a magic item to rare\nby adding one mod.\nRequires: Magic rarity",
-	"chaos": "Removes one random mod from an item.\nRequires: At least one mod",
-	"exalt": "Rerolls all mod values within their\ntier ranges.\nRequires: At least one mod",
+	"chaos": "Rerolls all mods on a Rare item\nwith 4-6 new random mods.\nRequires: Rare rarity",
+	"exalt": "Adds 1 random mod to a Rare item\nthat has room for another mod.\nRequires: Rare rarity with < max mods",
+	"divine": "Rerolls mod values within their\ntier ranges.\nRequires: At least one mod",
+	"annulment": "Removes 1 random mod from a\nMagic or Rare item.\nRequires: Magic or Rare rarity with at least one mod",
 	"fire": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one fire mod.\nRequires: Normal rarity, fire mods available",
 	"cold": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one cold mod.\nRequires: Normal rarity, cold mods available",
 	"lightning": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one lightning mod.\nRequires: Normal rarity, lightning mods available",
@@ -90,26 +92,48 @@ var hammer_descriptions: Dictionary = {
 	"physical": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one physical mod.\nRequires: Normal rarity, physical mods available",
 }
 
-# Hammer icon textures
+# Hammer icon textures (existing 6 — new hammers use 2-letter code placeholders)
 var hammer_icons: Dictionary = {
 	"transmute": preload("res://assets/runic_hammer.png"),
-	"augment": preload("res://assets/forge_hammer.png"),
+	"alchemy": preload("res://assets/forge_hammer.png"),
 	"alteration": preload("res://assets/tack_hammer.png"),
 	"regal": preload("res://assets/grand_hammer.png"),
-	"chaos": preload("res://assets/claw_hammer.png"),
-	"exalt": preload("res://assets/tuning_hammer.png")
+	"annulment": preload("res://assets/claw_hammer.png"),
+	"divine": preload("res://assets/tuning_hammer.png")
+}
+
+# 2-letter placeholder codes shown on every hammer button
+# (text label overlay; used as primary display when no icon exists)
+var hammer_codes: Dictionary = {
+	"transmute": "TR",
+	"augment": "AU",
+	"alchemy": "AL",
+	"alteration": "AT",
+	"regal": "RG",
+	"chaos": "CH",
+	"exalt": "EX",
+	"divine": "DI",
+	"annulment": "AN",
+	"fire": "FI",
+	"cold": "CO",
+	"lightning": "LG",
+	"defense": "DF",
+	"physical": "PH",
 }
 
 
 func _ready() -> void:
-	# Initialize currency button mapping
+	# Initialize currency button mapping — every key routes to its matching-labeled button
 	currency_buttons = {
 		"transmute": runic_btn,
-		"augment": alchemy_btn,
+		"augment": augment_btn,
+		"alchemy": alchemy_btn,
 		"alteration": tack_btn,
 		"regal": grand_btn,
-		"chaos": annulment_btn,
-		"exalt": divine_btn
+		"chaos": chaos_btn,
+		"exalt": exalt_btn,
+		"divine": divine_btn,
+		"annulment": annulment_btn,
 	}
 	currency_buttons["fire"] = fire_hammer_btn
 	currency_buttons["cold"] = cold_hammer_btn
@@ -119,11 +143,14 @@ func _ready() -> void:
 
 	# Connect currency button signals
 	runic_btn.pressed.connect(_on_currency_selected.bind("transmute"))
-	alchemy_btn.pressed.connect(_on_currency_selected.bind("augment"))
+	augment_btn.pressed.connect(_on_currency_selected.bind("augment"))
+	alchemy_btn.pressed.connect(_on_currency_selected.bind("alchemy"))
 	tack_btn.pressed.connect(_on_currency_selected.bind("alteration"))
 	grand_btn.pressed.connect(_on_currency_selected.bind("regal"))
-	annulment_btn.pressed.connect(_on_currency_selected.bind("chaos"))
-	divine_btn.pressed.connect(_on_currency_selected.bind("exalt"))
+	chaos_btn.pressed.connect(_on_currency_selected.bind("chaos"))
+	exalt_btn.pressed.connect(_on_currency_selected.bind("exalt"))
+	divine_btn.pressed.connect(_on_currency_selected.bind("divine"))
+	annulment_btn.pressed.connect(_on_currency_selected.bind("annulment"))
 
 	# Connect tag hammer button signals
 	fire_hammer_btn.pressed.connect(_on_currency_selected.bind("fire"))
@@ -131,6 +158,11 @@ func _ready() -> void:
 	lightning_hammer_btn.pressed.connect(_on_currency_selected.bind("lightning"))
 	defense_hammer_btn.pressed.connect(_on_currency_selected.bind("defense"))
 	physical_hammer_btn.pressed.connect(_on_currency_selected.bind("physical"))
+
+	# Set 2-letter placeholder code on every hammer button (visible as text overlay)
+	for currency_type in currency_buttons:
+		var btn: Button = currency_buttons[currency_type]
+		btn.text = hammer_codes[currency_type]
 
 	# Gate tag section on prestige and connect signals
 	_update_tag_section_visibility()
@@ -296,6 +328,27 @@ func _update_tag_section_visibility() -> void:
 	tag_hammer_section.visible = (GameState.prestige_level >= 1)
 
 
+# --- Debug shortcuts ---
+# F1: grant 1000 of every base hammer (standard currencies)
+# F2: grant 1000 of every tag hammer
+func _unhandled_input(event: InputEvent) -> void:
+	if event is not InputEventKey or not event.pressed or event.echo:
+		return
+	match event.keycode:
+		KEY_F1:
+			for currency_type in ["transmute", "augment", "alchemy", "alteration", "regal", "chaos", "exalt", "divine", "annulment"]:
+				GameState.currency_counts[currency_type] = 1000
+			update_currency_button_states()
+			print("DEBUG: +1000 of every base hammer")
+			get_viewport().set_input_as_handled()
+		KEY_F2:
+			for tag_type in ["fire", "cold", "lightning", "defense", "physical"]:
+				GameState.tag_currency_counts[tag_type] = 1000
+			update_currency_button_states()
+			print("DEBUG: +1000 of every tag hammer")
+			get_viewport().set_input_as_handled()
+
+
 func _on_tag_currency_dropped(_drops: Dictionary) -> void:
 	update_currency_button_states()
 
@@ -317,7 +370,7 @@ func _show_forge_error(message: String) -> void:
 
 func update_currency_button_states() -> void:
 	# Update standard currency buttons based on counts from GameState
-	var standard_types: Array = ["transmute", "augment", "alteration", "regal", "chaos", "exalt"]
+	var standard_types: Array = ["transmute", "augment", "alchemy", "alteration", "regal", "chaos", "exalt", "divine", "annulment"]
 	for currency_type in standard_types:
 		var count: int = GameState.currency_counts.get(currency_type, 0)
 		var button: Button = currency_buttons[currency_type]
@@ -345,7 +398,7 @@ func update_currency_button_states() -> void:
 		var count: int = GameState.tag_currency_counts.get(tag_type, 0)
 		var button: Button = currency_buttons[tag_type]
 		button.disabled = (count <= 0)
-		button.text = currencies[tag_type].currency_name.replace(" Hammer", "") + " (" + str(count) + ")"
+		button.text = hammer_codes[tag_type] + " (" + str(count) + ")"
 		button.tooltip_text = currencies[tag_type].currency_name + " (" + str(count) + ")\n" + hammer_descriptions[tag_type]
 
 	# Deselect if selected tag currency is now 0

@@ -181,12 +181,84 @@ horizontal_alignment = 2
 text = "0"
 mouse_filter = 2
 
-[node name="TagHammerSection" type="Control" parent="HammerSidebar"]
+[node name="AugmentHammerBtn" type="Button" parent="HammerSidebar"]
 layout_mode = 0
 offset_left = 15.0
 offset_top = 180.0
+offset_right = 60.0
+offset_bottom = 225.0
+toggle_mode = true
+text = "AU"
+theme_override_font_sizes/font_size = 14
+
+[node name="CountLabel" type="Label" parent="HammerSidebar/AugmentHammerBtn"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 27.0
+offset_right = 38.0
+offset_bottom = 43.0
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 5
+horizontal_alignment = 2
+text = "0"
+mouse_filter = 2
+
+[node name="ChaosHammerBtn" type="Button" parent="HammerSidebar"]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 180.0
+offset_right = 115.0
+offset_bottom = 225.0
+toggle_mode = true
+text = "CH"
+theme_override_font_sizes/font_size = 14
+
+[node name="CountLabel" type="Label" parent="HammerSidebar/ChaosHammerBtn"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 27.0
+offset_right = 38.0
+offset_bottom = 43.0
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 5
+horizontal_alignment = 2
+text = "0"
+mouse_filter = 2
+
+[node name="ExaltHammerBtn" type="Button" parent="HammerSidebar"]
+layout_mode = 0
+offset_left = 15.0
+offset_top = 235.0
+offset_right = 60.0
+offset_bottom = 280.0
+toggle_mode = true
+text = "EX"
+theme_override_font_sizes/font_size = 14
+
+[node name="CountLabel" type="Label" parent="HammerSidebar/ExaltHammerBtn"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 27.0
+offset_right = 38.0
+offset_bottom = 43.0
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 5
+horizontal_alignment = 2
+text = "0"
+mouse_filter = 2
+
+[node name="TagHammerSection" type="Control" parent="HammerSidebar"]
+layout_mode = 0
+offset_left = 15.0
+offset_top = 290.0
 offset_right = 205.0
-offset_bottom = 600.0
+offset_bottom = 710.0
 visible = false
 
 [node name="TagHammerSeparator" type="ColorRect" parent="HammerSidebar/TagHammerSection"]
