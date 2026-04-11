@@ -2,9 +2,9 @@
 
 ## Currency Behavior Fixes
 
-- [ ] **FIX-01**: Augment Hammer adds 1 random mod to a Magic item with room (currently does Normal→Rare)
-- [ ] **FIX-02**: Chaos Hammer rerolls all mods on a Rare item with 4-6 new mods (currently removes 1 mod)
-- [ ] **FIX-03**: Exalt Hammer adds 1 random mod to a Rare item with room (currently rerolls values)
+- [x] **FIX-01**: Augment Hammer adds 1 random mod to a Magic item with room (currently does Normal→Rare)
+- [x] **FIX-02**: Chaos Hammer rerolls all mods on a Rare item with 4-6 new mods (currently removes 1 mod)
+- [x] **FIX-03**: Exalt Hammer adds 1 random mod to a Rare item with room (currently rerolls values)
 
 ## New Currencies
 
@@ -33,9 +33,9 @@ None.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | Phase 1 | Pending |
-| FIX-02 | Phase 1 | Pending |
-| FIX-03 | Phase 1 | Pending |
+| FIX-01 | Phase 1 | Complete |
+| FIX-02 | Phase 1 | Complete |
+| FIX-03 | Phase 1 | Complete |
 | NEW-01 | Phase 1 | Complete |
 | NEW-02 | Phase 1 | Complete |
 | NEW-03 | Phase 1 | Complete |

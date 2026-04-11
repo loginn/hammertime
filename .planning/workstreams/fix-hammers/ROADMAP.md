@@ -12,7 +12,7 @@ Three phases deliver the complete PoE currency hammer set. Phase 1 corrects the 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Hammer Models** - Fix 3 mismatched hammer behaviors and add 3 new currency models
+- [x] **Phase 1: Hammer Models** - Fix 3 mismatched hammer behaviors and add 3 new currency models (completed 2026-04-11)
 - [ ] **Phase 2: Forge UI** - Expose all 8 base hammers with correct tooltips in forge view
 - [ ] **Phase 3: Integration** - Wire drop table, save format, and integration tests
 
@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   6. Annulment Hammer removes 1 random mod from a Magic or Rare item
 **Plans**: 2 plans
 - [x] 01-01-PLAN.md — Rename 3 existing mislabeled currency classes (ForgeHammer→AlchemyHammer, TuningHammer→DivineHammer, ClawHammer→AnnulmentHammer) and rewire forge_view.gd + scene tree nodes + live-doc references [NEW-01, NEW-02, NEW-03]
-- [ ] 01-02-PLAN.md — Create 3 new currency classes (AugmentHammer, ChaosHammer, ExaltHammer) and repoint augment/chaos/exalt keys in forge_view.gd currencies dict [FIX-01, FIX-02, FIX-03]
+- [x] 01-02-PLAN.md — Create 3 new currency classes (AugmentHammer, ChaosHammer, ExaltHammer) and repoint augment/chaos/exalt keys in forge_view.gd currencies dict [FIX-01, FIX-02, FIX-03]
 
 ### Phase 2: Forge UI
 **Goal**: The forge view shows all 8 base hammer buttons with tooltips that accurately describe each hammer's behavior
@@ -61,6 +61,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Hammer Models | 0/2 | Not started | - |
+| 1. Hammer Models | 2/2 | Complete   | 2026-04-11 |
 | 2. Forge UI | 0/TBD | Not started | - |
 | 3. Integration | 0/TBD | Not started | - |

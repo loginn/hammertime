@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.11
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-01-PLAN.md (hammer class renames)
-last_updated: "2026-04-11T17:45:51.513Z"
+status: verifying
+stopped_at: Completed 01-02-PLAN.md (Augment/Chaos/Exalt classes + dict repoint)
+last_updated: "2026-04-11T17:51:18.312Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State: Fix Hammers
@@ -22,7 +22,7 @@ progress:
 
 Phase: 01 (hammer-models) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-11
 
 ```
@@ -39,6 +39,8 @@ Progress: [----------] 0/3 phases complete
 - Phase 3 is all integration work — drops, save bump, test suite
 - [Phase 01-hammer-models]: Preserved byte-identical currency bodies during rename (D-03); only class_name and currency_name metadata changed
 - [Phase 01-hammer-models]: Bridge-routed augment/chaos/exalt keys to renamed classes for Plan 01; Plan 02 will repoint to real Augment/Chaos/Exalt
+- [Phase 01-hammer-models]: Augment/Exalt _do_apply bodies intentionally byte-identical (no DRY helper) per D-17
+- [Phase 01-hammer-models]: Chaos uses nested-break pool-exhaustion pattern verbatim from alchemy_hammer; no retry logic
 
 ### Pending Todos
 
@@ -50,8 +52,8 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-11T17:45:51.498Z
-Stopped at: Completed 01-01-PLAN.md (hammer class renames)
+Last session: 2026-04-11T17:51:18.303Z
+Stopped at: Completed 01-02-PLAN.md (Augment/Chaos/Exalt classes + dict repoint)
 Resume file: None
 
 ---
