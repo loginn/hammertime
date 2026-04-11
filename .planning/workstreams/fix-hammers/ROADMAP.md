@@ -30,7 +30,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. Divine Hammer rerolls mod values within their tier ranges without changing which mods are present
   6. Annulment Hammer removes 1 random mod from a Magic or Rare item
 **Plans**: 2 plans
-- [ ] 01-01-PLAN.md — Rename 3 existing mislabeled currency classes (ForgeHammer→AlchemyHammer, TuningHammer→DivineHammer, ClawHammer→AnnulmentHammer) and rewire forge_view.gd + scene tree nodes + live-doc references [NEW-01, NEW-02, NEW-03]
+- [x] 01-01-PLAN.md — Rename 3 existing mislabeled currency classes (ForgeHammer→AlchemyHammer, TuningHammer→DivineHammer, ClawHammer→AnnulmentHammer) and rewire forge_view.gd + scene tree nodes + live-doc references [NEW-01, NEW-02, NEW-03]
 - [ ] 01-02-PLAN.md — Create 3 new currency classes (AugmentHammer, ChaosHammer, ExaltHammer) and repoint augment/chaos/exalt keys in forge_view.gd currencies dict [FIX-01, FIX-02, FIX-03]
 
 ### Phase 2: Forge UI

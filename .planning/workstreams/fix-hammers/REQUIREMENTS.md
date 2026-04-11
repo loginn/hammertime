@@ -8,9 +8,9 @@
 
 ## New Currencies
 
-- [ ] **NEW-01**: Alchemy Hammer converts Normal item to Rare with 4-6 random mods
-- [ ] **NEW-02**: Divine Hammer rerolls all mod values within their tier ranges (does not change mod types)
-- [ ] **NEW-03**: Annulment Hammer removes 1 random mod from a Magic or Rare item
+- [x] **NEW-01**: Alchemy Hammer converts Normal item to Rare with 4-6 random mods
+- [x] **NEW-02**: Divine Hammer rerolls all mod values within their tier ranges (does not change mod types)
+- [x] **NEW-03**: Annulment Hammer removes 1 random mod from a Magic or Rare item
 
 ## UI & Integration
 
@@ -36,9 +36,9 @@ None.
 | FIX-01 | Phase 1 | Pending |
 | FIX-02 | Phase 1 | Pending |
 | FIX-03 | Phase 1 | Pending |
-| NEW-01 | Phase 1 | Pending |
-| NEW-02 | Phase 1 | Pending |
-| NEW-03 | Phase 1 | Pending |
+| NEW-01 | Phase 1 | Complete |
+| NEW-02 | Phase 1 | Complete |
+| NEW-03 | Phase 1 | Complete |
 | UI-01 | Phase 2 | Pending |
 | INT-01 | Phase 3 | Pending |
 | INT-02 | Phase 3 | Pending |
