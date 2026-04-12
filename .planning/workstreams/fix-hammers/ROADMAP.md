@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Hammer Models** - Fix 3 mismatched hammer behaviors and add 3 new currency models (completed 2026-04-11)
 - [ ] **Phase 2: Forge UI** - Expose all 8 base hammers with correct tooltips in forge view
-- [ ] **Phase 3: Integration** - Wire drop table, save format, and integration tests
+- [x] **Phase 3: Integration** - Wire drop table, save format, and integration tests (completed 2026-04-12)
 
 ## Phase Details
 
@@ -64,4 +64,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Hammer Models | 2/2 | Complete   | 2026-04-11 |
 | 2. Forge UI | 1/1 | Plan complete (smoke check pending) | 2026-04-12 |
-| 3. Integration | 2/3 | In Progress|  |
+| 3. Integration | 3/3 | Complete   | 2026-04-12 |

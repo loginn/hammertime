@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.11
 milestone_name: milestone
-status: executing
-stopped_at: Completed 03-01-PLAN.md — loot table drop rules
-last_updated: "2026-04-12T00:58:37.198Z"
+status: verifying
+stopped_at: Completed 03-03-PLAN.md — integration tests (Group 50 v10 + Groups 51-57)
+last_updated: "2026-04-12T01:05:28.125Z"
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State: Fix Hammers
@@ -21,7 +21,7 @@ progress:
 
 Phase: 03 (integration) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 
 ```
 Progress: [----------] 1/3 phases complete (phase 2 plan complete, smoke check pending)
@@ -44,6 +44,9 @@ Progress: [----------] 1/3 phases complete (phase 2 plan complete, smoke check p
 - [Phase 02-forge-ui]: font_size=14 added to 6 stripped buttons to match 3 existing text-only buttons
 - [Phase 03-integration]: D-07/D-08/D-09: SAVE_VERSION bumped 9→10 via single constant on line 4; delete-and-fresh policy handles v9 saves; no migration code needed (currency_counts already seeded by game_state.gd pull-forward)
 - [Phase 03-integration]: augment gate retuned from 15 to 5; alchemy/annulment/divine added to drop table with gated area levels (15/30/65) and chances (0.20/0.15/0.15)
+- [Phase 03-integration]: New test groups 51-57 use _check() not assert() to match non-aborting accumulator harness contract; Groups 48/49 left unchanged
+- [Phase 03-integration]: Alchemy/Chaos mod_count asserts >= 1 not >= 4 to survive pool exhaustion on low-tier items
+- [Phase 03-integration]: Divine edge test asserts names_before == names_after (mod-name preservation, not value equality)
 
 ### Pending Todos
 
@@ -55,8 +58,8 @@ Progress: [----------] 1/3 phases complete (phase 2 plan complete, smoke check p
 
 ## Session Continuity
 
-Last session: 2026-04-12T00:58:37.184Z
-Stopped at: Completed 03-01-PLAN.md — loot table drop rules
+Last session: 2026-04-12T01:05:28.111Z
+Stopped at: Completed 03-03-PLAN.md — integration tests (Group 50 v10 + Groups 51-57)
 Resume file: None
 
 ---
