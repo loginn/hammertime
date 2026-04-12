@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.11
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-02-PLAN.md — SAVE_VERSION bumped to 10
-last_updated: "2026-04-12T00:58:01.570Z"
+stopped_at: Completed 03-01-PLAN.md — loot table drop rules
+last_updated: "2026-04-12T00:58:37.198Z"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State: Fix Hammers
@@ -20,7 +20,7 @@ progress:
 ## Current Position
 
 Phase: 03 (integration) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 
 ```
@@ -43,6 +43,7 @@ Progress: [----------] 1/3 phases complete (phase 2 plan complete, smoke check p
 - [Phase 02-forge-ui]: All 6 legacy PNG icon references stripped from scene; hammer_icons dict deleted from GDScript
 - [Phase 02-forge-ui]: font_size=14 added to 6 stripped buttons to match 3 existing text-only buttons
 - [Phase 03-integration]: D-07/D-08/D-09: SAVE_VERSION bumped 9→10 via single constant on line 4; delete-and-fresh policy handles v9 saves; no migration code needed (currency_counts already seeded by game_state.gd pull-forward)
+- [Phase 03-integration]: augment gate retuned from 15 to 5; alchemy/annulment/divine added to drop table with gated area levels (15/30/65) and chances (0.20/0.15/0.15)
 
 ### Pending Todos
 
@@ -54,8 +55,8 @@ Progress: [----------] 1/3 phases complete (phase 2 plan complete, smoke check p
 
 ## Session Continuity
 
-Last session: 2026-04-12T00:58:01.556Z
-Stopped at: Completed 03-02-PLAN.md — SAVE_VERSION bumped to 10
+Last session: 2026-04-12T00:58:37.184Z
+Stopped at: Completed 03-01-PLAN.md — loot table drop rules
 Resume file: None
 
 ---

@@ -64,4 +64,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Hammer Models | 2/2 | Complete   | 2026-04-11 |
 | 2. Forge UI | 1/1 | Plan complete (smoke check pending) | 2026-04-12 |
-| 3. Integration | 1/3 | In Progress|  |
+| 3. Integration | 2/3 | In Progress|  |
