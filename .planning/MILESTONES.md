@@ -1,5 +1,20 @@
 # Milestones: Hammertime
 
+## v1.11 Fix Hammers (Shipped: 2026-04-12)
+
+**Phases completed:** 3 phases, 6 plans, 11 tasks
+
+**Key accomplishments:**
+
+- Renamed ClawHammer/ForgeHammer/TuningHammer to AnnulmentHammer/AlchemyHammer/DivineHammer via git mv with zero body changes, rewired forge_view.gd + 2 scene files, and updated live codebase docs.
+- Added 3 new base-hammer currency classes (AugmentHammer, ChaosHammer, ExaltHammer) implementing correct PoE behaviors and repointed the bridge-state keys in `scenes/forge_view.gd` `currencies` dict, completing the 8-base-hammer set for Phase 1.
+- One-liner:
+- 9-entry CURRENCY_AREA_GATES and pack_currency_rules now wire alchemy/annulment/divine into monster-pack drops with area gating, and retune augment gate from 15 to 5 for early Magic crafting access
+- SAVE_VERSION constant bumped from 9 to 10 in save_manager.gd — one-line change; delete-and-fresh policy and key-agnostic .duplicate() serialization handle v10 without any additional code
+- Group 50 updated to SAVE_VERSION 10 with 3 new currency round-trips; 7 new hammer test groups (Transmute through Annulment) added using _check()-only invariant assertions
+
+---
+
 ## v1.8 — Content Pass — Items & Mods (Shipped: 2026-03-08)
 
 **Goal:** Expand item bases to 3 per slot (STR/DEX/INT archetypes), add spell damage channel with cast speed, damage over time system, and broaden the affix pool.
@@ -8,6 +23,7 @@
 **Stats:** 14,375 LOC GDScript (up from 11,171)
 
 **Key accomplishments:**
+
 - 21 item base types across 5 equipment slots with STR/DEX/INT archetype identity, valid_tags constraining affix pools, and thematic naming
 - Inventory rework from 10-item arrays to single crafting bench per slot, simplifying the item management path
 - Spell damage channel with StatCalculator integration, Hero tracking, dual DPS display, and CombatEngine spell timer as third independent timer
@@ -18,6 +34,7 @@
 **Git range:** `feat(42-01)` → `feat(49-01)`
 
 **Tech debt:**
+
 - LOOT-03 (combined DPS comparison) dropped — tier-only comparison stays
 - LOOT-04 (archetype labels) dropped — item names are self-documenting
 - P2-P7 prestige costs still stub values (999999)
@@ -36,6 +53,7 @@
 **Stats:** 66 files changed, 11,171 LOC GDScript (up from ~4,895)
 
 **Key accomplishments:**
+
 - PrestigeManager autoload with 7 prestige levels, currency-cost gating, full run-state wipe preserving meta-progression
 - Save format v4 with prestige field persistence, auto-save on prestige, and delete-on-old-version migration policy
 - Affix tier expansion from 8 to 32 tiers with retuned base values for all 27 active affixes
@@ -47,6 +65,7 @@
 **Git range:** `feat(35-01)` → `feat(41-01)`
 
 **Tech debt:**
+
 - P2-P7 prestige costs are stub values (999999)
 - Double save on prestige (prestige_view + signal handler)
 - Pre-existing debug prints in affix.gd and item.gd
@@ -64,6 +83,7 @@
 **Phases:** Not tracked (built before GSD).
 
 **Key outcomes:**
+
 - Hero system with equipment slots and stat calculation
 - Item system with implicits, prefixes, suffixes, tiers
 - 3 hammer types (implicit, prefix, suffix)
@@ -80,6 +100,7 @@
 **Stats:** 45 commits, 109 files changed, 1,953 LOC GDScript
 
 **Key accomplishments:**
+
 - Formatted 18 GDScript files and added return type hints to 78 functions
 - Reorganized 25 files into feature-based folder structure (models/, scenes/, autoloads/, utils/)
 - Migrated all item/affix data classes from Node to Resource for proper serialization
@@ -99,6 +120,7 @@
 **Stats:** 39 files changed, 2,488 LOC GDScript
 
 **Key accomplishments:**
+
 - Item rarity system (Normal/Magic/Rare) with configurable affix limits and visual color coding
 - Base Currency Resource with template method pattern enforcing validate-before-mutate and consume-only-on-success
 - 6 themed crafting hammers (Runic, Forge, Tack, Grand, Claw, Tuning) with rarity-aware validation
@@ -118,6 +140,7 @@
 **Stats:** 3,161 LOC GDScript (up from 2,488)
 
 **Key accomplishments:**
+
 - 9 defensive prefix affixes for non-weapon items with tag-based filtering and StatCalculator integration
 - Hero View offense/defense sections displaying armor, evasion, energy shield, and resistance totals
 - Elemental resistance suffixes (fire/cold/lightning/all) replacing generic Elemental Reduction
@@ -129,7 +152,6 @@
 
 ---
 
-
 ## v1.2 — Pack-Based Mapping (Shipped: 2026-02-17)
 
 **Goal:** Replace time-based area clearing with pack-based map runs, adding real combat stakes and defensive stat integration.
@@ -138,6 +160,7 @@
 **Stats:** 17 code files changed (+1,163/-265 lines), 3,943 LOC GDScript (up from 3,161)
 
 **Key accomplishments:**
+
 - DefenseCalculator with 4-stage damage pipeline (evasion → resistance → armor → ES/life split)
 - MonsterPack/MonsterType/BiomeConfig Resources with 22 named monster types and biome-weighted element selection
 - CombatEngine state machine with dual attack timers and 7 combat signals on GameEvents
@@ -146,12 +169,12 @@
 - Pack-by-pack idle combat replacing timer-based area clearing
 
 **Known Gaps:**
+
 - Level 1 difficulty may be too high for fresh heroes (balance tuning deferred to v1.3+)
 
 **Archives:** `.planning/milestones/v1.2-ROADMAP.md`, `.planning/milestones/v1.2-REQUIREMENTS.md`
 
 ---
-
 
 ## v1.3 — Save/Load & Polish (Shipped: 2026-02-18)
 
@@ -161,6 +184,7 @@
 **Stats:** 74 commits, 128 files changed, 5,464 LOC GDScript (up from 3,943)
 
 **Key accomplishments:**
+
 - JSON save/load with auto-save timer (5 min) and event-driven triggers (craft, equip, area clear)
 - Unified ForgeView side-by-side layout (equipment left, crafting right) with tab bar navigation
 - Hammer tooltips, direct equip/melt workflow, two-click overwrite confirmation, and stat comparison hover
@@ -171,7 +195,6 @@
 
 ---
 
-
 ## v1.4 — Damage Ranges (Shipped: 2026-02-18)
 
 **Goal:** Replace flat damage values with min-max ranges for weapons, monsters, and affixes, giving each element a distinct variance identity and updating UI to display ranges.
@@ -180,6 +203,7 @@
 **Stats:** 11 GDScript files changed (+318/-43 lines), 4,849 LOC GDScript (down from 5,464 due to refactoring)
 
 **Key accomplishments:**
+
 - Weapon base damage min/max range fields with computed average getter for zero-change backward compatibility
 - Affix six-field damage range schema with immutable template bounds and element-specific variance (Physical 1:1.5, Cold 1:2, Fire 1:2.5, Lightning 1:4)
 - StatCalculator dual-accumulator per-element damage range calculation with correct percentage modifier routing
@@ -191,16 +215,15 @@
 
 ---
 
-
 ## v1.5 Inventory Rework (Shipped: 2026-02-19)
 
 **Phases completed:** 16 phases, 27 plans, 6 tasks
 
 **Key accomplishments:**
+
 - (none recorded)
 
 ---
-
 
 ## v1.6 — Tech Debt Cleanup (Shipped: 2026-02-20)
 
@@ -210,6 +233,7 @@
 **Stats:** 17 code files changed (+366/-409 lines), 4,849 LOC GDScript
 
 **Key accomplishments:**
+
 - Cleaned repo — removed 6 stale .tmp files and added *.tmp to .gitignore
 - Compressed 4 biomes from ~100-level spans to 25-level spans with boss wall/relief/ramp-back difficulty curve
 - Retuned currency gates to biome boundaries (25/50/75) with 12-level sqrt ramp-up for newly unlocked currencies
@@ -218,6 +242,7 @@
 - Added biome preview currency drops by shifting gates 10 levels before boundaries
 
 **Tech debt:**
+
 - RARITY_ANCHORS dict retained as dead data in loot_table.gd
 - PROG-06 drop rate ~1/14 packs vs spec ~1/50 (user accepted)
 - Code comment inaccuracy: "full rate by biome boundary" but math shows 91.3% at boundary
@@ -225,4 +250,3 @@
 **Archives:** `.planning/milestones/v1.6-ROADMAP.md`, `.planning/milestones/v1.6-REQUIREMENTS.md`
 
 ---
-
