@@ -1940,8 +1940,8 @@ func _group_37_stat_integration() -> void:
 func _group_38_save_persistence() -> void:
 	print("\n=== GROUP 38: Save Persistence (SAVE-01) ===")
 
-	# Test 38.1: SAVE_VERSION is 9 (bumped from 8 in Phase 58)
-	_check(SaveManager.SAVE_VERSION == 9, "38.1 SAVE_VERSION is 9")
+	# Test 38.1: SAVE_VERSION is 10 (bumped from 9 in Phase 3 fix-hammers)
+	_check(SaveManager.SAVE_VERSION == 10, "38.1 SAVE_VERSION is 10")
 
 	# Test 38.2: _build_save_data includes hero_archetype_id when archetype set
 	GameState.hero_archetype = HeroArchetype.from_id("str_hit")
