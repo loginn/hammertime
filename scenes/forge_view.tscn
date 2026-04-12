@@ -343,7 +343,7 @@ layout_mode = 3
 anchors_preset = 0
 offset_left = 340.0
 offset_top = 155.0
-offset_right = 820.0
+offset_right = 830.0
 offset_bottom = 215.0
 
 [node name="WeaponGroup" type="VBoxContainer" parent="StashDisplay"]
@@ -384,9 +384,9 @@ disabled = true
 
 [node name="HelmetGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 96.0
+offset_left = 110.0
 offset_top = 0.0
-offset_right = 182.0
+offset_right = 196.0
 offset_bottom = 60.0
 
 [node name="HelmetLabel" type="Label" parent="StashDisplay/HelmetGroup"]
@@ -420,9 +420,9 @@ disabled = true
 
 [node name="ArmorGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 192.0
+offset_left = 220.0
 offset_top = 0.0
-offset_right = 278.0
+offset_right = 306.0
 offset_bottom = 60.0
 
 [node name="ArmorLabel" type="Label" parent="StashDisplay/ArmorGroup"]
@@ -456,9 +456,9 @@ disabled = true
 
 [node name="BootsGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 288.0
+offset_left = 330.0
 offset_top = 0.0
-offset_right = 374.0
+offset_right = 416.0
 offset_bottom = 60.0
 
 [node name="BootsLabel" type="Label" parent="StashDisplay/BootsGroup"]
@@ -492,9 +492,9 @@ disabled = true
 
 [node name="RingGroup" type="VBoxContainer" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 384.0
+offset_left = 440.0
 offset_top = 0.0
-offset_right = 470.0
+offset_right = 486.0
 offset_bottom = 60.0
 
 [node name="RingLabel" type="Label" parent="StashDisplay/RingGroup"]
@@ -528,33 +528,33 @@ disabled = true
 
 [node name="Sep1" type="ColorRect" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 93.0
+offset_left = 99.0
 offset_top = 16.0
-offset_right = 95.0
+offset_right = 101.0
 offset_bottom = 44.0
 color = Color(0.4, 0.4, 0.4, 0.6)
 
 [node name="Sep2" type="ColorRect" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 189.0
+offset_left = 209.0
 offset_top = 16.0
-offset_right = 191.0
+offset_right = 211.0
 offset_bottom = 44.0
 color = Color(0.4, 0.4, 0.4, 0.6)
 
 [node name="Sep3" type="ColorRect" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 285.0
+offset_left = 319.0
 offset_top = 16.0
-offset_right = 287.0
+offset_right = 321.0
 offset_bottom = 44.0
 color = Color(0.4, 0.4, 0.4, 0.6)
 
 [node name="Sep4" type="ColorRect" parent="StashDisplay"]
 layout_mode = 0
-offset_left = 381.0
+offset_left = 429.0
 offset_top = 16.0
-offset_right = 383.0
+offset_right = 431.0
 offset_bottom = 44.0
 color = Color(0.4, 0.4, 0.4, 0.6)
 

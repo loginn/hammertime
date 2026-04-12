@@ -471,11 +471,20 @@ func _on_stash_slot_pressed(slot_type: String, index: int) -> void:
 	GameState.crafting_bench = item
 	current_item = item
 
-	# Refresh all displays
+	# Refresh all displays — flash AFTER _update_stash_display so the tween overwrites grey
 	update_current_item()
 	_update_stash_display()
+	_flash_stash_slot(slot_type, index)
 	update_melt_equip_states()
 	update_inventory_display()
+
+
+func _flash_stash_slot(slot_type: String, index: int) -> void:
+	# Brief yellow flash to confirm item transferred to bench
+	var btn: Button = stash_slot_buttons[slot_type][index]
+	var tween := create_tween()
+	tween.tween_property(btn, "modulate", Color(1.0, 1.0, 0.0, 1.0), 0.05)
+	tween.tween_property(btn, "modulate", Color(0.4, 0.4, 0.4, 1.0), 0.2)
 
 
 func _pulse_stash_slots() -> void:
