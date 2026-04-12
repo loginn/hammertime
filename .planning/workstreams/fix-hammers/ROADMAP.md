@@ -41,7 +41,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Forge view displays 8 base hammer buttons (Transmute, Augment, Alchemy, Alteration, Regal, Chaos, Exalt, Divine, Annulment) alongside the 5 tag hammers
   2. Each base hammer button tooltip correctly describes the currency's PoE behavior (item type requirement, what changes)
   3. New hammer buttons are greyed out when the player has zero of that currency
-**Plans**: TBD
+**Plans**: 1 plan
+- [x] 02-01-PLAN.md — Rarity-grouped 3×4 grid, strip PNG icons, remove dead hammer_icons dict, structural verification [UI-01] (pending human smoke check)
 
 ### Phase 3: Integration
 **Goal**: New currencies appear in drops, persist across saves, and all 8 hammer behaviors are verified by the test suite
@@ -62,5 +63,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Hammer Models | 2/2 | Complete   | 2026-04-11 |
-| 2. Forge UI | 0/TBD | Not started | - |
+| 2. Forge UI | 1/1 | Plan complete (smoke check pending) | 2026-04-12 |
 | 3. Integration | 0/TBD | Not started | - |
