@@ -2652,17 +2652,132 @@ func _group_54_chaos_hammer() -> void:
 
 # --- Group 55: Exalt Hammer (INT-03) ---
 func _group_55_exalt_hammer() -> void:
-	# STUB — populated by Task 3
+	# INT-03: Exalt adds 1 mod to Rare with room; rejected on Normal/Magic/full-Rare
+	var hammer := ExaltHammer.new()
+
+	# Test 1: Rejection — Magic item
+	var magic_item := Broadsword.new(8)
+	magic_item.rarity = Item.Rarity.MAGIC
+	magic_item.prefixes.clear()
+	magic_item.suffixes.clear()
+	magic_item.add_prefix()
+	_check(not hammer.can_apply(magic_item), "55a: Exalt rejected on Magic")
+	_check(hammer.get_error_message(magic_item) == "Exalt Hammer can only be used on Rare items", "55a: error msg on Magic")
+
+	# Test 2: Success — Rare with 1 prefix + 1 suffix (still has room)
+	var rare_item := Broadsword.new(8)
+	rare_item.rarity = Item.Rarity.RARE
+	rare_item.prefixes.clear()
+	rare_item.suffixes.clear()
+	rare_item.add_prefix()
+	rare_item.add_suffix()
+	var mod_count_before := rare_item.prefixes.size() + rare_item.suffixes.size()
+	_check(hammer.can_apply(rare_item), "55b: Exalt accepted on Rare with room")
+	hammer.apply(rare_item)
+	_check(rare_item.rarity == Item.Rarity.RARE, "55b: rarity stays RARE after Exalt")
+	_check(rare_item.prefixes.size() + rare_item.suffixes.size() == mod_count_before + 1, "55b: exactly one mod added")
+
+	# Test 3: Edge — Rare item with full slots (3 prefixes + 3 suffixes)
+	var full_rare := Broadsword.new(8)
+	full_rare.rarity = Item.Rarity.RARE
+	full_rare.prefixes.clear()
+	full_rare.suffixes.clear()
+	full_rare.add_prefix()
+	full_rare.add_prefix()
+	full_rare.add_prefix()
+	full_rare.add_suffix()
+	full_rare.add_suffix()
+	full_rare.add_suffix()
+	_check(not hammer.can_apply(full_rare), "55c: Exalt rejected on full Rare")
+	_check(hammer.get_error_message(full_rare) == "Rare item has no room for another mod", "55c: error msg on full Rare")
+
 	print("Group 55: Exalt Hammer — PASSED")
 
 
 # --- Group 56: Divine Hammer (INT-03) ---
 func _group_56_divine_hammer() -> void:
-	# STUB — populated by Task 3
+	# INT-03: Divine rerolls mod VALUES, preserves mod NAMES and COUNT; rejected on mod-less items
+	var hammer := DivineHammer.new()
+
+	# Test 1: Rejection — Normal item with 0 mods
+	var normal_item := Broadsword.new(8)
+	normal_item.rarity = Item.Rarity.NORMAL
+	normal_item.prefixes.clear()
+	normal_item.suffixes.clear()
+	_check(not hammer.can_apply(normal_item), "56a: Divine rejected on mod-less Normal")
+	_check(hammer.get_error_message(normal_item) == "Item has no mods to reroll", "56a: error msg on mod-less item")
+
+	# Test 2: Success — Magic item with 1 prefix, Divine works
+	var magic_item := Broadsword.new(8)
+	magic_item.rarity = Item.Rarity.MAGIC
+	magic_item.prefixes.clear()
+	magic_item.suffixes.clear()
+	magic_item.add_prefix()
+	_check(hammer.can_apply(magic_item), "56b: Divine accepted on Magic with mods")
+	hammer.apply(magic_item)
+	_check(magic_item.rarity == Item.Rarity.MAGIC, "56b: rarity stays MAGIC after Divine")
+
+	# Test 3: Edge — mod-name preservation invariant (RESEARCH.md §"Divine edge test")
+	var edge_item := Broadsword.new(8)
+	edge_item.rarity = Item.Rarity.MAGIC
+	edge_item.prefixes.clear()
+	edge_item.suffixes.clear()
+	edge_item.add_prefix()
+	edge_item.add_suffix()
+	var names_before: Array[String] = []
+	for p in edge_item.prefixes:
+		names_before.append(p.affix_name)
+	for s in edge_item.suffixes:
+		names_before.append(s.affix_name)
+	var count_before := edge_item.prefixes.size() + edge_item.suffixes.size()
+
+	_check(hammer.can_apply(edge_item), "56c: Divine accepted on Magic with prefix+suffix")
+	hammer.apply(edge_item)
+
+	_check(edge_item.prefixes.size() + edge_item.suffixes.size() == count_before, "56c: Divine preserves mod count")
+
+	var names_after: Array[String] = []
+	for p in edge_item.prefixes:
+		names_after.append(p.affix_name)
+	for s in edge_item.suffixes:
+		names_after.append(s.affix_name)
+	_check(names_before == names_after, "56c: Divine preserves mod names")
+
 	print("Group 56: Divine Hammer — PASSED")
 
 
 # --- Group 57: Annulment Hammer (INT-03) ---
 func _group_57_annulment_hammer() -> void:
-	# STUB — populated by Task 3
+	# INT-03: Annulment removes 1 random mod from Magic or Rare; rejected on mod-less items
+	var hammer := AnnulmentHammer.new()
+
+	# Test 1: Rejection — Normal item with 0 mods
+	var normal_item := Broadsword.new(8)
+	normal_item.rarity = Item.Rarity.NORMAL
+	normal_item.prefixes.clear()
+	normal_item.suffixes.clear()
+	_check(not hammer.can_apply(normal_item), "57a: Annulment rejected on mod-less Normal")
+	_check(hammer.get_error_message(normal_item) == "Item has no mods to remove", "57a: error msg on mod-less item")
+
+	# Test 2: Success — Magic item with 1 prefix + 1 suffix, Annulment removes exactly 1 mod
+	var magic_item := Broadsword.new(8)
+	magic_item.rarity = Item.Rarity.MAGIC
+	magic_item.prefixes.clear()
+	magic_item.suffixes.clear()
+	magic_item.add_prefix()
+	magic_item.add_suffix()
+	var mod_count_before := magic_item.prefixes.size() + magic_item.suffixes.size()
+	_check(hammer.can_apply(magic_item), "57b: Annulment accepted on Magic with mods")
+	hammer.apply(magic_item)
+	_check(magic_item.rarity == Item.Rarity.MAGIC, "57b: rarity stays MAGIC after Annulment")
+	_check(magic_item.prefixes.size() + magic_item.suffixes.size() == mod_count_before - 1, "57b: exactly one mod removed")
+
+	# Test 3: Edge — Magic with 0 mods (cleared after construction) rejected
+	var empty_magic := Broadsword.new(8)
+	empty_magic.rarity = Item.Rarity.MAGIC
+	empty_magic.prefixes.clear()
+	empty_magic.suffixes.clear()
+	_check(not hammer.can_apply(empty_magic), "57c: Annulment rejected on empty Magic")
+	_check(hammer.get_error_message(empty_magic) == "Item has no mods to remove", "57c: error msg on empty Magic")
+
 	print("Group 57: Annulment Hammer — PASSED")
