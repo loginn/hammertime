@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An ARPG-style crafting idle game built in Godot 4.5. Players send a hero to fight monster packs across 4 biomes (Forest → Shadow Realm), collect item bases and crafting hammers, then use those hammers to craft and equip gear. Better gear lets the hero survive harder packs, which drop better and more plentiful loot. 21 item base types across 5 equipment slots support 3 archetypes (STR/DEX/INT) with archetype-specific affix pools. Items come in Normal, Magic, and Rare tiers with 41 active affixes across 32 affix tiers, craftable with 11 themed hammers (6 base + 5 tag-targeted). Dual damage channels (attack + spell) with independent combat timers and damage over time (bleed/poison/burn) create distinct playstyles. A prestige system lets players reset progress to unlock better item tiers (1-8) and tag-targeted crafting currencies. Combat is pack-based idle auto-combat with death mechanics, defensive stat integration, DoT tick processing, and floating damage feedback. Game state persists via JSON save/load (format v9) with auto-save and export/import strings. Hero archetype selection persists across saves and resets on prestige.
+An ARPG-style crafting idle game built in Godot 4.5. Players send a hero to fight monster packs across 4 biomes (Forest → Shadow Realm), collect item bases and crafting hammers, then use those hammers to craft and equip gear. Better gear lets the hero survive harder packs, which drop better and more plentiful loot. 21 item base types across 5 equipment slots support 3 archetypes (STR/DEX/INT) with archetype-specific affix pools. Items come in Normal, Magic, and Rare tiers with 41 active affixes across 32 affix tiers, craftable with 11 themed hammers (6 base + 5 tag-targeted). Dual damage channels (attack + spell) with independent combat timers and damage over time (bleed/poison/burn) create distinct playstyles. A prestige system lets players reset progress to unlock better item tiers (1-8) and tag-targeted crafting currencies. Combat is pack-based idle auto-combat with death mechanics, defensive stat integration, DoT tick processing, and floating damage feedback. A 3-slot stash per equipment type (15 total) holds dropped items; players tap a stash slot to move an item onto the single universal crafting bench. Alteration and Regal hammers complete the early crafting arc (transmute → augment → alteration → regal). Game state persists via JSON save/load (format v10) with auto-save and export/import strings. Hero archetype selection persists across saves and resets on prestige.
 
 ## Core Value
 
@@ -132,21 +132,26 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - ✓ Save format v9 with stash/bench serialization, v8 shim removal, strict v8 rejection — v1.10
 - ✓ Integration test groups 48-50 covering Alteration, Regal, and save v9 round-trip — v1.10
 
-## Current Milestone: v1.10 Early Game Rebalance
+## Current State
 
-**Goal:** Make the early crafting loop feel rewarding from zone 1 — more base drops, a small stash to work with, new hammers for iterating on gear, and tuned difficulty so fresh heroes can engage with the systems.
+**Latest shipped:** v1.10 Early Game Rebalance (2026-04-12)
 
-**Target features:**
-- Early difficulty tuning — reduce Forest pack HP and damage so fresh P0 heroes survive with starter gear
-- 3-slot stash per equipment type — small inventory buffer with letter-icon UI (W for wand, S for sword, etc.), one-way move to bench
-- Alteration Hammer — reroll all mods at current rarity, enabling iteration on Magic items
-- Regal Hammer — upgrade Magic → Rare, completing the early crafting arc (transmute → alt → regal)
+**What shipped in v1.10:**
+- 3-slot stash per equipment type with auto-stash on drop and silent overflow
+- Single universal crafting bench replacing per-slot switching
+- Currency keys renamed to PoE conventions (transmute, augment, etc.)
+- Archetype-matched starter items + Forest difficulty tuned for zone 1 survivability
+- Alteration Hammer (reroll mods) and Regal Hammer (Magic → Rare upgrade)
+- Save format v9→v10 with stash/bench serialization
+
+**Known tech debt from v1.10:**
+- StashDisplay layout overlapped by HeroGraphicsPanel (needs UI revamp)
+- Dead code stubs in forge_view.gd (add_item_to_inventory, set_new_item_base)
+- 2 blocked UAT items (prestige-gated tests unreachable)
 
 ### Active
 
-<!-- Current scope. Building toward these. -->
-
-(Requirements defined in REQUIREMENTS.md)
+<!-- Next milestone scope defined via /gsd:new-milestone -->
 
 ### Out of Scope
 
@@ -169,11 +174,11 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 ## Context
 
 - Built with Godot 4.5 (GDScript), targeting mobile renderer
-- 14,375 LOC GDScript across ~70 files
+- 10,869 LOC GDScript across ~70 files
 - Feature-based folder structure: models/, scenes/, autoloads/, utils/, tools/
 - Autoloads: ItemAffixes, Tag, GameState, GameEvents, SaveManager, PrestigeManager
 - Scene structure: main.tscn with main_view coordinating forge_view, gameplay_view, prestige_view, settings_view via 4-tab bar; hero selection overlay on OverlayLayer post-prestige
-- ForgeView combines hero equipment (left) and single universal crafting bench (right) with tag hammer section (P1+); stash UI pending Phase 57
+- ForgeView combines hero equipment (left), single universal crafting bench (right), 15-slot StashDisplay grid, and tag hammer section (P1+)
 - Currency keys use PoE conventions: transmute, augment, alteration, regal, chaos, exalt
 - Fresh games and prestige resets provide archetype-matched starter items (weapon + armor) in stash via _place_starter_kit()
 - StatCalculator handles all DPS/defense calculations including spell damage and DoT DPS with flat + percentage stacking
@@ -184,10 +189,10 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 - LootTable provides per-pack currency drops, item drops with slot-first distribution, and tag currency drops (P1+) with area scaling
 - CombatEngine manages pack-by-pack combat with state machine lifecycle, dual attack timers, spell timer, and DoT tick processing
 - PrestigeManager handles 7 prestige levels with currency-cost gating and full run-state wipe
-- SaveManager handles JSON save/load (format v9), auto-save timer, event triggers, prestige auto-save, Base64 export/import, and strict version rejection on imports
+- SaveManager handles JSON save/load (format v10), auto-save timer, event triggers, prestige auto-save, Base64 export/import, and strict version rejection on imports
 - 41 active affixes with Vector2i(1, 32) tier ranges; item tiers 1-8 constrain affix tier floor at crafting time
-- 44-group integration test suite (up from 41 at Phase 55)
-- Shipped 11 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges), v1.5 (inventory rework), v1.6 (tech debt cleanup), v1.7 (meta-progression), v1.8 (content pass), v1.9 (heroes)
+- 50-group integration test suite (up from 44 at v1.9)
+- Shipped 12 milestones: v0.1 (architecture), v1.0 (crafting), v1.1 (content/balance), v1.2 (combat), v1.3 (save/load & polish), v1.4 (damage ranges), v1.5 (inventory rework), v1.6 (tech debt cleanup), v1.7 (meta-progression), v1.8 (content pass), v1.9 (heroes), v1.10 (early game rebalance)
 
 ## Constraints
 
@@ -292,6 +297,12 @@ The crafting loop must feel rewarding — finding items, using hammers to shape 
 | Stash replaces per-slot inventory | 3-slot stash per equipment type (15 total) with single universal bench; drops go to stash, player chooses bench item | ✓ Good -- deliberate crafting, clear item flow |
 | Silent overflow discard | Stash full → new item silently discarded (no toast); smart discard deferred as prestige unlock | ✓ Good -- no combat noise, future design space |
 | Save-manager compat shims | crafting_inventory/crafting_bench_type kept as computed properties for save_manager v8; removed in Phase 58 | ✓ Good -- incremental migration |
+| PoE currency key names | All 6 runtime currency keys renamed from internal names to PoE conventions (transmute/augment/alteration/regal/chaos/exalt) | ✓ Good -- thematic consistency with hammer names |
+| Archetype-matched starter kits | _place_starter_kit() gives STR/DEX/INT-appropriate weapon + armor at game start and post-prestige | ✓ Good -- players start with usable gear |
+| Forest difficulty halved | Monster HP/damage reduced ~50% so fresh P0 heroes survive zone 1 with starter gear | ✓ Good -- playable from first run |
+| Null-gap stash removal (D-08) | Stash slots use items[i] = null instead of remove_at() to preserve slot positions | ✓ Good -- stable UI indexing |
+| Alteration/Regal hammer pair | Alteration rerolls Magic mods, Regal upgrades Magic → Rare; completes early crafting arc | ✓ Good -- clear progression: transmute → augment → alt → regal |
+| Strict v8 save rejection | Loading v8 saves deletes and starts fresh instead of migrating; consistent with existing policy | ✓ Good -- no migration complexity |
 
 ## Evolution
 
@@ -311,4 +322,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 — Phase 57 (Stash UI) complete*
+*Last updated: 2026-04-12 after v1.10 milestone*

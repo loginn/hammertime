@@ -2,6 +2,50 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v1.10 — Early Game Rebalance
+
+**Shipped:** 2026-04-12
+**Phases:** 4 | **Plans:** 10
+
+### What Was Built
+- 3-slot stash per equipment type (15 total) with auto-stash on drop, silent overflow, and stash_updated signal
+- Single universal crafting bench replacing per-slot switching, with ForgeView migration
+- 15-slot StashDisplay grid with abbreviation labels, dim/filled states, tooltip, tap-to-bench transfer
+- Currency keys renamed to PoE conventions (transmute/augment/alteration/regal/chaos/exalt)
+- Archetype-matched starter items in stash for fresh games and post-prestige
+- Forest difficulty tuned (~50% reduction) for zone 1 survivability
+- Alteration Hammer (reroll Magic mods) and Regal Hammer (Magic → Rare upgrade)
+- Save format v9 with stash/bench serialization and v8 compat shim removal
+
+### What Worked
+- 4-phase dependency chain (data model → difficulty/starter → UI → hammers/save) kept phases clean
+- D-03 (silent overflow) and D-08 (null-gap removal) design decisions were made early in CONTEXT.md and never revisited
+- Splitting data model (Phase 55) from UI (Phase 57) allowed the stash to be usable before UI existed
+- Integration tests (groups 40-50) caught real issues and provided confidence for the save format migration
+
+### What Was Inefficient
+- Phase 57-03 gap closure was partially wasted — UAT revealed the stash layout was hidden behind the hero view, requiring a full UI revamp that couldn't be fixed incrementally
+- 2 UAT items for Phase 56 remained permanently blocked (prestige path unreachable due to difficulty)
+- SUMMARY frontmatter for STSH-03 and CRFT-03 was not populated, causing false "partial" in milestone audit
+- Phase 56 ended up with 3 plans (one extra for currency hammer renames) — scope expanded mid-milestone
+
+### Patterns Established
+- Null-gap removal (D-08): stash slots use items[i] = null instead of remove_at() for stable UI indexing
+- PoE currency naming convention: all runtime keys use transmute/augment/alteration/regal/chaos/exalt
+- Starter kit pattern: _place_starter_kit(archetype) as reusable entry point for fresh game and prestige
+
+### Key Lessons
+1. UI phases should be UAT-tested early — the stash layout overlap was only caught at the end, making 57-03 gap closure work partially wasted
+2. SUMMARY frontmatter must always include requirements-completed — the audit's 3-source cross-reference depends on it
+3. Blocked UAT items (prestige path unreachable) need a dedicated unblocking plan, not just "try again later"
+
+### Cost Observations
+- Model mix: sonnet for executor/integration-checker, opus for orchestration/planning
+- 4-day timeline for 4 phases with 10 plans
+- Notable: Phase 58 (save migration) shipped cleanly in 2 plans despite touching the most files
+
+---
+
 ## Milestone: v1.8 — Content Pass — Items & Mods
 
 **Shipped:** 2026-03-08
@@ -102,6 +146,8 @@
 | v1.6 | 4 | 5 | Tech debt cleanup |
 | v1.7 | 7 | 9 | CONTEXT.md discussions, integration testing, Nyquist validation introduced |
 | v1.8 | 8 | 18 | Largest milestone — 3 new systems (archetypes, spell channel, DoT) in 3 days |
+| v1.9 | 5 | 5 | Hero archetype system with passive bonuses and selection UI |
+| v1.10 | 4 | 10 | Stash system, early game rebalance, Alteration/Regal hammers |
 
 ### Top Lessons (Verified Across Milestones)
 

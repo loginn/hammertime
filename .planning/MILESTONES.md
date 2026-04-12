@@ -1,5 +1,24 @@
 # Milestones: Hammertime
 
+## v1.10 Early Game Rebalance (Shipped: 2026-04-12)
+
+**Phases completed:** 4 phases, 10 plans, 19 tasks
+
+**Key accomplishments:**
+
+- GameState stash dict (5 slots, 3-item Array cap), single crafting_bench, add_item_to_stash() with silent overflow, stash_updated signal, and v8 save compat shims
+- ForgeView migrated to single universal bench (GameState.crafting_bench), MainView drops re-wired to GameState.add_item_to_stash, ItemTypeButtons hidden
+- Renamed all 6 currency dictionary keys to PoE orb conventions and updated starter counts to 2 Transmute + 2 Augment across game_state, prestige_manager, loot_table, forge_view, prestige_view, and integration tests
+- _place_starter_kit() adds archetype-matched Normal tier-8 weapon+armor to stash on fresh game and post-prestige; Forest monster HP/damage halved (~50%) so blank gear heroes survive zone 1
+- Renamed 4 currency hammers to PoE conventions (Transmute/Augment/Chaos/Exalt) and changed starter items to tier 7 for proper names
+- 15-slot StashDisplay grid in ForgeView with abbreviation labels, dim/filled states, tooltip_text, tap-to-bench handler, and tween animations wired to stash_updated signal
+- Stash slot tap transfers item to crafting bench using null-gap removal (D-08), with yellow flash on transfer and alpha pulse when bench clears
+- Applied 3 UAT gap fixes but testing revealed stash layout needs full UI revamp — groups hidden behind hero view
+- Alteration Hammer rerolls all mods on Magic items (1-2 new mods, stays Magic) and Regal Hammer upgrades Magic to Rare by adding one mod — with forge_view tooltips and integration tests (groups 48-49)
+- Save format bumped to v9 with direct stash array and crafting bench serialization, v8 compat shims removed from game_state.gd, and integration test group 50 verifying full round-trip.
+
+---
+
 ## v1.11 Fix Hammers (Shipped: 2026-04-12)
 
 **Phases completed:** 3 phases, 6 plans, 11 tasks
