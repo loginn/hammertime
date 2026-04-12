@@ -21,10 +21,13 @@ const RARITY_ANCHORS: Dictionary = {
 const CURRENCY_AREA_GATES: Dictionary = {
 	"transmute": 1,
 	"alteration": 1,
-	"augment": 15,    # Preview from level 15, full rate by Dark Forest (25)
-	"regal": 40,    # Preview from level 40, full rate by Cursed Woods (50)
-	"chaos": 65,     # Preview from level 65, full rate by Shadow Realm (75)
-	"exalt": 65,   # Preview from level 65, full rate by Shadow Realm (75)
+	"augment": 5,      # Retuned from 15 — user wants Magic crafting loops from level 5 (D-01)
+	"alchemy": 15,     # Preview from level 15, full rate by ~level 27 (D-01)
+	"regal": 40,       # Preview from level 40, full rate by Cursed Woods (50)
+	"annulment": 30,   # Preview from level 30, full rate by ~level 42 (D-01)
+	"chaos": 65,       # Preview from level 65, full rate by Shadow Realm (75)
+	"exalt": 65,       # Preview from level 65, full rate by Shadow Realm (75)
+	"divine": 65,      # Preview from level 65, full rate by ~level 77 (D-01)
 }
 
 ## Per-pack item drop chance. Constant across all areas.
@@ -69,9 +72,12 @@ static func roll_pack_currency_drop(
 		"transmute": {"chance": 0.25, "max_qty": 2},   # ~1 per 4 packs, sometimes 2
 		"alteration": {"chance": 0.25, "max_qty": 2},  # ~1 per 4 packs, sometimes 2
 		"augment": {"chance": 0.25, "max_qty": 1},     # ~1 per 4 packs
+		"alchemy": {"chance": 0.20, "max_qty": 1},     # Rare creation — rarer than Augment (D-02/D-04)
 		"regal": {"chance": 0.20, "max_qty": 1},       # ~1 per 5 packs
+		"annulment": {"chance": 0.15, "max_qty": 1},   # Scalpel — rarer than Regal (D-02/D-04)
 		"chaos": {"chance": 0.20, "max_qty": 1},       # ~1 per 5 packs
 		"exalt": {"chance": 0.20, "max_qty": 1},       # ~1 per 5 packs
+		"divine": {"chance": 0.15, "max_qty": 1},      # Finisher currency — rarest (D-02/D-04)
 	}
 
 	for currency_name in pack_currency_rules:
