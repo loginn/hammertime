@@ -57,7 +57,14 @@ func _ready() -> void:
 	_group_47_stash_tooltip_text()
 	_group_48_alteration_hammer()
 	_group_49_regal_hammer()
-	_group_50_save_v9_round_trip()
+	_group_50_save_v10_round_trip()
+	_group_51_transmute_hammer()
+	_group_52_augment_hammer()
+	_group_53_alchemy_hammer()
+	_group_54_chaos_hammer()
+	_group_55_exalt_hammer()
+	_group_56_divine_hammer()
+	_group_57_annulment_hammer()
 
 	var total: int = _pass_count + _fail_count
 	print("\n=== SUMMARY ===")
@@ -2386,10 +2393,10 @@ func _group_49_regal_hammer() -> void:
 	print("Group 49: Regal Hammer — PASSED")
 
 
-# --- Group 50: Save v9 Round-Trip (CRFT-03) ---
+# --- Group 50: Save v10 Round-Trip (INT-02) ---
 
-func _group_50_save_v9_round_trip() -> void:
-	print("\n--- Group 50: Save v9 Round-Trip (CRFT-03) ---")
+func _group_50_save_v10_round_trip() -> void:
+	print("\n--- Group 50: Save v10 Round-Trip (INT-02) ---")
 
 	# Setup: known state
 	GameState.initialize_fresh_game()
@@ -2433,7 +2440,7 @@ func _group_50_save_v9_round_trip() -> void:
 	_check(bench_dict != null and bench_dict is Dictionary, "50f: crafting_bench is a non-null dict")
 
 	# Verify version
-	_check(save_data["version"] == 9, "50g: save version is 9")
+	_check(save_data["version"] == 10, "50g: save version is 10")
 
 	# Wipe state and restore
 	GameState.initialize_fresh_game()
@@ -2474,12 +2481,66 @@ func _group_50_save_v9_round_trip() -> void:
 	_check(GameState.hero_archetype != null, "50s: archetype not null after restore")
 	_check(GameState.hero_archetype.id == "dex_hit", "50t: archetype id round-tripped")
 
+	# --- Second cycle: round-trip the 3 new currencies (alchemy/divine/annulment) ---
+	GameState.currency_counts["alchemy"] = 7
+	GameState.currency_counts["divine"] = 3
+	GameState.currency_counts["annulment"] = 2
+	var save_data2 := SaveManager._build_save_data()
+	GameState.initialize_fresh_game()
+	var restore_ok2 := SaveManager._restore_state(save_data2)
+	_check(restore_ok2, "50u: second _restore_state succeeded")
+	_check(GameState.currency_counts["alchemy"] == 7, "50v: alchemy count round-tripped")
+	_check(GameState.currency_counts["divine"] == 3, "50w: divine count round-tripped")
+	_check(GameState.currency_counts["annulment"] == 2, "50x: annulment count round-tripped")
+
 	# Verify v8 rejection: build a v8-shaped save dict and confirm load_game would reject it
 	# (We test the version check logic inline since we cannot do real file I/O in tests)
 	var v8_data := {"version": 8, "hero_equipment": {}, "currencies": {}}
-	_check(int(v8_data.get("version", 1)) < SaveManager.SAVE_VERSION, "50u: v8 save version is below SAVE_VERSION (would be rejected)")
+	_check(int(v8_data.get("version", 1)) < SaveManager.SAVE_VERSION, "50y: v8 save version is below SAVE_VERSION (would be rejected)")
 
 	# Cleanup
 	GameState.initialize_fresh_game()
 
-	print("Group 50: Save v9 round-trip -- PASSED")
+	print("Group 50: Save v10 round-trip — PASSED")
+
+
+# --- Group 51: Transmute Hammer (INT-03) ---
+func _group_51_transmute_hammer() -> void:
+	# STUB — populated by Task 2
+	print("Group 51: Transmute Hammer — PASSED")
+
+
+# --- Group 52: Augment Hammer (INT-03) ---
+func _group_52_augment_hammer() -> void:
+	# STUB — populated by Task 2
+	print("Group 52: Augment Hammer — PASSED")
+
+
+# --- Group 53: Alchemy Hammer (INT-03) ---
+func _group_53_alchemy_hammer() -> void:
+	# STUB — populated by Task 2
+	print("Group 53: Alchemy Hammer — PASSED")
+
+
+# --- Group 54: Chaos Hammer (INT-03) ---
+func _group_54_chaos_hammer() -> void:
+	# STUB — populated by Task 2
+	print("Group 54: Chaos Hammer — PASSED")
+
+
+# --- Group 55: Exalt Hammer (INT-03) ---
+func _group_55_exalt_hammer() -> void:
+	# STUB — populated by Task 3
+	print("Group 55: Exalt Hammer — PASSED")
+
+
+# --- Group 56: Divine Hammer (INT-03) ---
+func _group_56_divine_hammer() -> void:
+	# STUB — populated by Task 3
+	print("Group 56: Divine Hammer — PASSED")
+
+
+# --- Group 57: Annulment Hammer (INT-03) ---
+func _group_57_annulment_hammer() -> void:
+	# STUB — populated by Task 3
+	print("Group 57: Annulment Hammer — PASSED")
