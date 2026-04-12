@@ -216,7 +216,7 @@ Plans:
 Plans:
 - [x] 57-01-PLAN.md — StashDisplay scene tree + stash display logic + integration tests
 - [x] 57-02-PLAN.md — Tap-to-bench interaction + flash/pulse animations + bench-clear integration
-- [x] 57-03-PLAN.md — Gap closure: group separation, bench-occupied toast, animation fixes
+- [~] 57-03-PLAN.md — Gap closure: group separation, bench-occupied toast, animation fixes (PARTIAL — UAT rejected, stash layout hidden behind hero view, redirecting to UI revamp)
 
 ### Phase 58: New Hammers & Save v9
 
@@ -251,7 +251,7 @@ Plans:
 | 50-54             | v1.9      | 5/5            | Complete    | 2026-03-28 |
 | 55 (Stash Data)   | v1.10     | 1/2 | Complete    | 2026-03-28 |
 | 56 (Difficulty)   | v1.10     | 2/2 | Complete    | 2026-03-28 |
-| 57 (Stash UI)     | v1.10     | 3/3 | Complete   | 2026-04-12 |
+| 57 (Stash UI)     | v1.10     | 2.5/3 | Partial — 57-03 UAT rejected   | 2026-04-12 |
 | 58 (New Hammers)  | v1.10     | 2/2 | Complete    | 2026-03-29 |
 
 ---
