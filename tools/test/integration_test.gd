@@ -2506,25 +2506,147 @@ func _group_50_save_v10_round_trip() -> void:
 
 # --- Group 51: Transmute Hammer (INT-03) ---
 func _group_51_transmute_hammer() -> void:
-	# STUB — populated by Task 2
+	# INT-03: Transmute promotes Normal item to Magic with 1-2 mods; rejected on Magic/Rare
+	var hammer := RunicHammer.new()
+
+	# Test 1: Rejection — Magic item
+	var magic_item := Broadsword.new(8)
+	magic_item.rarity = Item.Rarity.MAGIC
+	magic_item.prefixes.clear()
+	magic_item.suffixes.clear()
+	magic_item.add_prefix()
+	_check(not hammer.can_apply(magic_item), "51a: Transmute rejected on Magic")
+	_check(hammer.get_error_message(magic_item) == "Transmute Hammer can only be used on Normal items", "51a: error msg on Magic")
+
+	# Test 2: Success — Normal item promoted to Magic with ≥1 mod
+	var normal_item := Broadsword.new(8)
+	normal_item.rarity = Item.Rarity.NORMAL
+	normal_item.prefixes.clear()
+	normal_item.suffixes.clear()
+	_check(hammer.can_apply(normal_item), "51b: Transmute accepted on Normal")
+	hammer.apply(normal_item)
+	_check(normal_item.rarity == Item.Rarity.MAGIC, "51b: rarity upgraded to MAGIC")
+	var mod_count := normal_item.prefixes.size() + normal_item.suffixes.size()
+	_check(mod_count >= 1 and mod_count <= 2, "51b: Magic item has 1-2 mods after Transmute")
+
+	# Test 3: Edge — second Transmute on a Magic item (already-promoted) is rejected
+	_check(not hammer.can_apply(normal_item), "51c: second Transmute on now-Magic item rejected")
+	_check(hammer.get_error_message(normal_item) == "Transmute Hammer can only be used on Normal items", "51c: error msg on already-Magic")
+
 	print("Group 51: Transmute Hammer — PASSED")
 
 
 # --- Group 52: Augment Hammer (INT-03) ---
 func _group_52_augment_hammer() -> void:
-	# STUB — populated by Task 2
+	# INT-03: Augment adds 1 mod to Magic with room; rejected on Normal/full-Magic
+	var hammer := AugmentHammer.new()
+
+	# Test 1: Rejection — Normal item
+	var normal_item := Broadsword.new(8)
+	normal_item.rarity = Item.Rarity.NORMAL
+	normal_item.prefixes.clear()
+	normal_item.suffixes.clear()
+	_check(not hammer.can_apply(normal_item), "52a: Augment rejected on Normal")
+	_check(hammer.get_error_message(normal_item) == "Augment Hammer can only be used on Magic items", "52a: error msg on Normal")
+
+	# Test 2: Success — Magic with 1 prefix, still has suffix room
+	var magic_item := Broadsword.new(8)
+	magic_item.rarity = Item.Rarity.MAGIC
+	magic_item.prefixes.clear()
+	magic_item.suffixes.clear()
+	magic_item.add_prefix()
+	var mod_count_before := magic_item.prefixes.size() + magic_item.suffixes.size()
+	_check(hammer.can_apply(magic_item), "52b: Augment accepted on Magic with room")
+	hammer.apply(magic_item)
+	_check(magic_item.rarity == Item.Rarity.MAGIC, "52b: rarity stays MAGIC after Augment")
+	_check(magic_item.prefixes.size() + magic_item.suffixes.size() == mod_count_before + 1, "52b: exactly one mod added")
+
+	# Test 3: Edge — Magic item with full slots (1 prefix + 1 suffix)
+	var full_magic := Broadsword.new(8)
+	full_magic.rarity = Item.Rarity.MAGIC
+	full_magic.prefixes.clear()
+	full_magic.suffixes.clear()
+	full_magic.add_prefix()
+	full_magic.add_suffix()
+	_check(not hammer.can_apply(full_magic), "52c: Augment rejected on full Magic")
+	_check(hammer.get_error_message(full_magic) == "Magic item has no room for another mod", "52c: error msg on full Magic")
+
 	print("Group 52: Augment Hammer — PASSED")
 
 
 # --- Group 53: Alchemy Hammer (INT-03) ---
 func _group_53_alchemy_hammer() -> void:
-	# STUB — populated by Task 2
+	# INT-03: Alchemy converts Normal → Rare with mods; rejected on Magic/Rare
+	var hammer := AlchemyHammer.new()
+
+	# Test 1: Rejection — Magic item
+	var magic_item := Broadsword.new(8)
+	magic_item.rarity = Item.Rarity.MAGIC
+	magic_item.prefixes.clear()
+	magic_item.suffixes.clear()
+	magic_item.add_prefix()
+	_check(not hammer.can_apply(magic_item), "53a: Alchemy rejected on Magic")
+	_check(hammer.get_error_message(magic_item) == "Alchemy Hammer can only be used on Normal items", "53a: error msg on Magic")
+
+	# Test 2: Success — Normal item becomes Rare with ≥1 mod (pool exhaustion may cap below 4; see Pitfall 5)
+	var normal_item := Broadsword.new(8)
+	normal_item.rarity = Item.Rarity.NORMAL
+	normal_item.prefixes.clear()
+	normal_item.suffixes.clear()
+	_check(hammer.can_apply(normal_item), "53b: Alchemy accepted on Normal")
+	hammer.apply(normal_item)
+	_check(normal_item.rarity == Item.Rarity.RARE, "53b: rarity upgraded to RARE")
+	var mod_count := normal_item.prefixes.size() + normal_item.suffixes.size()
+	_check(mod_count >= 1, "53b: Rare item has ≥1 mod after Alchemy (pool exhaustion tolerated)")
+	_check(mod_count <= 6, "53b: Rare item has ≤6 mods after Alchemy")
+
+	# Test 3: Edge — Rare item rejected (already Rare)
+	var rare_item := Broadsword.new(8)
+	rare_item.rarity = Item.Rarity.RARE
+	_check(not hammer.can_apply(rare_item), "53c: Alchemy rejected on Rare")
+	_check(hammer.get_error_message(rare_item) == "Alchemy Hammer can only be used on Normal items", "53c: error msg on Rare")
+
 	print("Group 53: Alchemy Hammer — PASSED")
 
 
 # --- Group 54: Chaos Hammer (INT-03) ---
 func _group_54_chaos_hammer() -> void:
-	# STUB — populated by Task 2
+	# INT-03: Chaos rerolls all mods on a Rare item; rejected on Normal/Magic; accepts empty Rare
+	var hammer := ChaosHammer.new()
+
+	# Test 1: Rejection — Normal item
+	var normal_item := Broadsword.new(8)
+	normal_item.rarity = Item.Rarity.NORMAL
+	normal_item.prefixes.clear()
+	normal_item.suffixes.clear()
+	_check(not hammer.can_apply(normal_item), "54a: Chaos rejected on Normal")
+	_check(hammer.get_error_message(normal_item) == "Chaos Hammer can only be used on Rare items", "54a: error msg on Normal")
+
+	# Test 2: Success — Rare item with some mods gets rerolled (tolerate pool exhaustion at ≥1)
+	var rare_item := Broadsword.new(8)
+	rare_item.rarity = Item.Rarity.RARE
+	rare_item.prefixes.clear()
+	rare_item.suffixes.clear()
+	rare_item.add_prefix()
+	rare_item.add_suffix()
+	_check(hammer.can_apply(rare_item), "54b: Chaos accepted on Rare")
+	hammer.apply(rare_item)
+	_check(rare_item.rarity == Item.Rarity.RARE, "54b: rarity stays RARE after Chaos")
+	var post_count := rare_item.prefixes.size() + rare_item.suffixes.size()
+	_check(post_count >= 1, "54b: Rare item has ≥1 mod after Chaos")
+	_check(post_count <= 6, "54b: Rare item has ≤6 mods after Chaos")
+
+	# Test 3: Edge — empty Rare (0 mods) is accepted (D-16 Phase 1: no mod-count gate on can_apply)
+	var empty_rare := Broadsword.new(8)
+	empty_rare.rarity = Item.Rarity.RARE
+	empty_rare.prefixes.clear()
+	empty_rare.suffixes.clear()
+	_check(hammer.can_apply(empty_rare), "54c: Chaos accepted on empty Rare")
+	hammer.apply(empty_rare)
+	_check(empty_rare.rarity == Item.Rarity.RARE, "54c: rarity stays RARE after Chaos on empty Rare")
+	var edge_count := empty_rare.prefixes.size() + empty_rare.suffixes.size()
+	_check(edge_count >= 1, "54c: empty Rare gains ≥1 mod after Chaos")
+
 	print("Group 54: Chaos Hammer — PASSED")
 
 
