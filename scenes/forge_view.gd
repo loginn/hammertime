@@ -92,16 +92,6 @@ var hammer_descriptions: Dictionary = {
 	"physical": "Turns a normal item into a rare item\nwith 4-6 random mods,\nguaranteeing at least one physical mod.\nRequires: Normal rarity, physical mods available",
 }
 
-# Hammer icon textures (existing 6 — new hammers use 2-letter code placeholders)
-var hammer_icons: Dictionary = {
-	"transmute": preload("res://assets/runic_hammer.png"),
-	"alchemy": preload("res://assets/forge_hammer.png"),
-	"alteration": preload("res://assets/tack_hammer.png"),
-	"regal": preload("res://assets/grand_hammer.png"),
-	"annulment": preload("res://assets/claw_hammer.png"),
-	"divine": preload("res://assets/tuning_hammer.png")
-}
-
 # 2-letter placeholder codes shown on every hammer button
 # (text label overlay; used as primary display when no icon exists)
 var hammer_codes: Dictionary = {
