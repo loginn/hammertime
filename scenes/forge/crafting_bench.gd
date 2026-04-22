@@ -8,14 +8,23 @@ const MAX_AFFIX_SLOTS := 3
 @onready var _prefix_rail: VBoxContainer = $BenchArea/PrefixRail
 @onready var _suffix_rail: VBoxContainer = $BenchArea/SuffixRail
 @onready var _strike_button: Button = $StrikeButton
+@onready var _equip_button: Button = $EquipButton
+@onready var _melt_button: Button = $MeltButton
 @onready var _error_label: Label = $ErrorFeedback
 @onready var _empty_label: Label = $BenchArea/ItemBadge/BadgeVBox/EmptyLabel
+
+signal equip_pressed
+signal melt_pressed
 
 
 func _ready() -> void:
 	_strike_button.disabled = true
+	_equip_button.disabled = true
+	_melt_button.disabled = true
 	_error_label.text = ""
 	_error_label.visible = false
+	_equip_button.pressed.connect(func(): equip_pressed.emit())
+	_melt_button.pressed.connect(func(): melt_pressed.emit())
 	refresh(null)
 
 
@@ -88,3 +97,19 @@ func show_error(message: String) -> void:
 func clear_error() -> void:
 	_error_label.text = ""
 	_error_label.visible = false
+
+
+func update_equip_melt_state(item: Item) -> void:
+	if item == null:
+		_equip_button.disabled = true
+		_equip_button.text = "Equip"
+		_melt_button.disabled = true
+		return
+
+	var equipped: Item = GameState.hero.get_equipped(item.slot)
+	var is_equipped: bool = (equipped == item)
+	_equip_button.disabled = is_equipped
+	_equip_button.text = "Equipped" if is_equipped else "Equip"
+
+	_melt_button.disabled = is_equipped
+	_melt_button.text = "Melt" if not is_equipped else "Melt (equipped)"
