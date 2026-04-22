@@ -124,9 +124,13 @@ func _on_collect_pressed() -> void:
 
 	var status_label := _card_1_status if active_index == 0 else _card_2_status
 	var parts: Array[String] = []
-	for currency_key: String in rewards:
+	var currencies: Dictionary = rewards.get("currencies", {})
+	for currency_key: String in currencies:
 		var display_name: String = GameState.CURRENCY_DISPLAY_NAMES.get(currency_key, currency_key)
-		parts.append("%d %s" % [rewards[currency_key], display_name])
+		parts.append("%d %s" % [currencies[currency_key], display_name])
+	var items: Array = rewards.get("items", [])
+	if items.size() > 0:
+		parts.append("%d item%s" % [items.size(), "s" if items.size() > 1 else ""])
 	status_label.text = "Earned: %s" % ", ".join(parts)
 	status_label.visible = true
 	_showing_rewards = true
