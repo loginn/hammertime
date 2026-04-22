@@ -1,0 +1,125 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/prestige/prestige_screen.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.12, 0.11, 0.10, 1)
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+
+[node name="PrestigeScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="PanelBg" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="VBox" type="VBoxContainer" parent="PanelBg"]
+layout_mode = 2
+
+[node name="HeaderRow" type="HBoxContainer" parent="PanelBg/VBox"]
+layout_mode = 2
+
+[node name="HeaderLabel" type="Label" parent="PanelBg/VBox/HeaderRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 28
+text = "Prestige Level: 0"
+
+[node name="Spacer" type="Control" parent="PanelBg/VBox/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TackLabel" type="Label" parent="PanelBg/VBox/HeaderRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.88, 0.78, 1)
+theme_override_font_sizes/font_size = 18
+text = "Tack Hammers: 0"
+
+[node name="TableTitle" type="Label" parent="PanelBg/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 20
+text = "Prestige Unlock Table"
+
+[node name="UnlockTable" type="VBoxContainer" parent="PanelBg/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Separator" type="HSeparator" parent="PanelBg/VBox"]
+layout_mode = 2
+theme_override_colors/separator_color = Color(0.4, 0.35, 0.28, 1)
+
+[node name="ActionPanel" type="VBoxContainer" parent="PanelBg/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="NextPrestigeTitle" type="Label" parent="PanelBg/VBox/ActionPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 20
+text = "Next Prestige"
+
+[node name="NextCostLabel" type="Label" parent="PanelBg/VBox/ActionPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.88, 0.78, 1)
+theme_override_font_sizes/font_size = 15
+text = "Cost: 100 Tack Hammers"
+
+[node name="NextRewardLabel" type="Label" parent="PanelBg/VBox/ActionPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.88, 0.78, 1)
+theme_override_font_sizes/font_size = 15
+text = "Reward: 999 of each currency"
+
+[node name="NextUnlockLabel" type="Label" parent="PanelBg/VBox/ActionPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.88, 0.78, 1)
+theme_override_font_sizes/font_size = 15
+text = "Unlocks: Item Tier 7"
+
+[node name="NextResetsLabel" type="Label" parent="PanelBg/VBox/ActionPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.55, 0.45, 1)
+theme_override_font_sizes/font_size = 14
+text = "Resets: All currencies, inventory, hero equipment, area level"
+
+[node name="PrestigeButton" type="Button" parent="PanelBg/VBox/ActionPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(200, 50)
+size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 18
+text = "Prestige"
+
+[node name="MaxLabel" type="Label" parent="PanelBg/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.85, 0.45, 1)
+theme_override_font_sizes/font_size = 24
+text = "MAX PRESTIGE"
+
+[node name="ConfirmDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "Confirm Prestige"
+size = Vector2i(400, 250)
