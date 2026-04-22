@@ -1,0 +1,124 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/settings/settings_screen.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.1, 0.08, 0.06, 1)
+
+[node name="SettingsScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="DebugHeader" type="Label" parent="Panel/ScrollContainer/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 18
+text = "Debug Panel"
+
+[node name="DebugGrid" type="GridContainer" parent="Panel/ScrollContainer/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="BtnGrantCurrencies" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 40)
+text = "Grant 100 Currencies"
+
+[node name="BtnGrantIronKit" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 40)
+text = "Grant Iron Kit"
+
+[node name="BtnGrantSteelKit" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 40)
+text = "Grant Steel Kit"
+
+[node name="BtnAddPrestige" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 40)
+text = "+1 Prestige"
+
+[node name="BtnResetPrestige" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 40)
+text = "Reset Prestige"
+
+[node name="BtnWipeRun" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 40)
+text = "Wipe Run"
+
+[node name="BtnNewGameDebug" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 40)
+text = "New Game"
+
+[node name="Separator" type="HSeparator" parent="Panel/ScrollContainer/VBox"]
+layout_mode = 2
+theme_override_colors/separator_color = Color(0.45, 0.38, 0.3, 1)
+
+[node name="SettingsHeader" type="Label" parent="Panel/ScrollContainer/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 18
+text = "Settings"
+
+[node name="SettingsVBox" type="VBoxContainer" parent="Panel/ScrollContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BtnResetRun" type="Button" parent="Panel/ScrollContainer/VBox/SettingsVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 40)
+text = "Reset Run"
+
+[node name="BtnNewGame" type="Button" parent="Panel/ScrollContainer/VBox/SettingsVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 40)
+text = "New Game"
+
+[node name="VersionLabel" type="Label" parent="Panel/ScrollContainer/VBox/SettingsVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.38, 0.3, 1)
+theme_override_font_sizes/font_size = 12
+text = "HammerTime v0.2"
+
+[node name="ConfirmDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "Confirm New Game"
+size = Vector2i(400, 250)
+
+[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnGrantCurrencies" to="." method="_grant_currencies"]
+[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnGrantIronKit" to="." method="_grant_iron_kit"]
+[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnGrantSteelKit" to="." method="_grant_steel_kit"]
+[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnAddPrestige" to="." method="_add_prestige"]
+[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnResetPrestige" to="." method="_reset_prestige"]
+[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnWipeRun" to="." method="_wipe_run"]
+[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnNewGameDebug" to="." method="_show_new_game_dialog"]
+[connection signal="pressed" from="Panel/ScrollContainer/VBox/SettingsVBox/BtnResetRun" to="." method="_wipe_run"]
+[connection signal="pressed" from="Panel/ScrollContainer/VBox/SettingsVBox/BtnNewGame" to="." method="_show_new_game_dialog"]
