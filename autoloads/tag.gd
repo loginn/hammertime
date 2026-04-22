@@ -1,5 +1,31 @@
 class_name Tag_List extends Node
 
+enum Element {
+	PHYSICAL,
+	FIRE,
+	COLD,
+	LIGHTNING,
+}
+
+enum ItemSlot {
+	WEAPON,
+	ARMOR,
+	HELMET,
+	BOOTS,
+	RING,
+}
+
+enum MaterialTier {
+	IRON,
+	STEEL,
+}
+
+enum Rarity {
+	NORMAL,
+	MAGIC,
+	RARE,
+}
+
 const PHYSICAL = "PHYSICAL"
 const ELEMENTAL = "ELEMENTAL"
 const LIGHTNING = "LIGHTNING"
@@ -42,3 +68,46 @@ enum StatType {
 	LIGHTNING_RESISTANCE,
 	ALL_RESISTANCE,
 }
+
+const ELEMENT_NAMES: Dictionary = {
+	Element.PHYSICAL: "physical",
+	Element.FIRE: "fire",
+	Element.COLD: "cold",
+	Element.LIGHTNING: "lightning",
+}
+
+const SLOT_NAMES: Dictionary = {
+	ItemSlot.WEAPON: "weapon",
+	ItemSlot.ARMOR: "armor",
+	ItemSlot.HELMET: "helmet",
+	ItemSlot.BOOTS: "boots",
+	ItemSlot.RING: "ring",
+}
+
+const ALL_SLOTS: Array[int] = [
+	ItemSlot.WEAPON, ItemSlot.ARMOR, ItemSlot.HELMET, ItemSlot.BOOTS, ItemSlot.RING
+]
+
+const MATERIAL_TIER_CONFIG: Dictionary = {
+	MaterialTier.IRON: {
+		"name": "Iron",
+		"min_affix_tier": 5,
+		"max_affix_tier": 8,
+		"base_stat_multiplier": 1.0,
+	},
+	MaterialTier.STEEL: {
+		"name": "Steel",
+		"min_affix_tier": 1,
+		"max_affix_tier": 4,
+		"base_stat_multiplier": 1.8,
+	},
+}
+
+static func slot_name(slot: ItemSlot) -> String:
+	return SLOT_NAMES[slot]
+
+static func element_name(element: Element) -> String:
+	return ELEMENT_NAMES[element]
+
+static func material_name(tier: MaterialTier) -> String:
+	return MATERIAL_TIER_CONFIG[tier]["name"]

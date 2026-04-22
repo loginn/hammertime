@@ -1,0 +1,118 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/forge/forge_view.gd" id="1_forge"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar"]
+bg_color = Color(0.12, 0.1, 0.08, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.06, 0.04, 0.03, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_left"]
+bg_color = Color(0.15, 0.12, 0.1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_center"]
+bg_color = Color(0.1, 0.08, 0.06, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_right"]
+bg_color = Color(0.13, 0.1, 0.08, 1)
+
+[node name="ForgeView" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_forge")
+
+[node name="Background" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="VBox" type="VBoxContainer" parent="Background"]
+layout_mode = 2
+
+[node name="TopBar" type="HBoxContainer" parent="Background/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 50)
+theme_override_styles/panel = SubResource("StyleBoxFlat_topbar")
+
+[node name="TopBarBg" type="PanelContainer" parent="Background/VBox/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_topbar")
+
+[node name="HBox" type="HBoxContainer" parent="Background/VBox/TopBar/TopBarBg"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Background/VBox/TopBar/TopBarBg/HBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 22
+text = "HAMMERTIME"
+
+[node name="Spacer" type="Control" parent="Background/VBox/TopBar/TopBarBg/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TabForge" type="Button" parent="Background/VBox/TopBar/TopBarBg/HBox"]
+layout_mode = 2
+text = "The Forge"
+
+[node name="TabExpeditions" type="Button" parent="Background/VBox/TopBar/TopBarBg/HBox"]
+layout_mode = 2
+disabled = true
+text = "Expeditions"
+
+[node name="TabPrestige" type="Button" parent="Background/VBox/TopBar/TopBarBg/HBox"]
+layout_mode = 2
+disabled = true
+text = "Prestige"
+
+[node name="TabSettings" type="Button" parent="Background/VBox/TopBar/TopBarBg/HBox"]
+layout_mode = 2
+disabled = true
+text = "Settings"
+
+[node name="Body" type="HBoxContainer" parent="Background/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LeftPanel" type="PanelContainer" parent="Background/VBox/Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(250, 0)
+theme_override_styles/panel = SubResource("StyleBoxFlat_left")
+
+[node name="Label" type="Label" parent="Background/VBox/Body/LeftPanel"]
+layout_mode = 2
+text = "Hammer Rail"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CenterPanel" type="PanelContainer" parent="Background/VBox/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_center")
+
+[node name="Label" type="Label" parent="Background/VBox/Body/CenterPanel"]
+layout_mode = 2
+text = "Crafting Bench"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RightPanel" type="PanelContainer" parent="Background/VBox/Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(430, 0)
+theme_override_styles/panel = SubResource("StyleBoxFlat_right")
+
+[node name="Label" type="Label" parent="Background/VBox/Body/RightPanel"]
+layout_mode = 2
+text = "Hero Panel"
+horizontal_alignment = 1
+vertical_alignment = 1

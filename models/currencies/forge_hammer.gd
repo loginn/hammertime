@@ -1,42 +1,41 @@
 class_name ForgeHammer extends Currency
+## Augment: Add one random affix to a Magic item that isn't full
 
 
 func _init() -> void:
 	currency_name = "Forge Hammer"
+	verb = "Augment"
 
 
 func can_apply(item: Item) -> bool:
-	return item.rarity == Item.Rarity.NORMAL
+	if item.rarity != Item.Rarity.MAGIC:
+		return false
+	return item.prefixes.size() < item.max_prefixes() or item.suffixes.size() < item.max_suffixes()
 
 
 func get_error_message(item: Item) -> String:
-	if item.rarity != Item.Rarity.NORMAL:
-		return "Forge Hammer can only be used on Normal items"
+	if item.rarity != Item.Rarity.MAGIC:
+		return "Forge Hammer can only be used on Magic items"
+	if item.prefixes.size() >= item.max_prefixes() and item.suffixes.size() >= item.max_suffixes():
+		return "Item already has maximum mods for Magic rarity"
 	return ""
 
 
 func _do_apply(item: Item) -> void:
-	# Set rarity to RARE before adding mods (required for affix limit enforcement)
-	item.rarity = Item.Rarity.RARE
+	var prefix_available = item.prefixes.size() < item.max_prefixes()
+	var suffix_available = item.suffixes.size() < item.max_suffixes()
+	var try_prefix_first = randi_range(0, 1) == 0
 
-	# Add 4-6 random mods total
-	var mod_count = randi_range(4, 6)
-	for i in range(mod_count):
-		# Randomly choose prefix or suffix (50/50)
-		var choose_prefix = randi_range(0, 1) == 0
-
-		if choose_prefix:
-			# Try prefix first, if it fails try suffix
+	if prefix_available and suffix_available:
+		if try_prefix_first:
 			if not item.add_prefix():
-				# If suffix also fails, stop (pool exhausted)
-				if not item.add_suffix():
-					break
+				item.add_suffix()
 		else:
-			# Try suffix first, if it fails try prefix
 			if not item.add_suffix():
-				# If prefix also fails, stop (pool exhausted)
-				if not item.add_prefix():
-					break
+				item.add_prefix()
+	elif prefix_available:
+		item.add_prefix()
+	elif suffix_available:
+		item.add_suffix()
 
-	# Update item value after all mods added
 	item.update_value()

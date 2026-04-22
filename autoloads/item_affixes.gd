@@ -263,3 +263,50 @@ static func from_affix(template: Affix) -> Affix:
 		template.base_dmg_max_hi
 	)
 	return affix_copy
+
+
+## Create an affix copy with its tier clamped to the given material tier bounds.
+## The rolled tier is restricted to the intersection of the template's tier_range
+## and [min_tier, max_tier], ensuring material-tier gating.
+static func from_affix_gated(template: Affix, min_tier: int, max_tier: int) -> Affix:
+	var affix_copy = Affix.new(
+		template.affix_name,
+		template.type,
+		template.base_min,
+		template.base_max,
+		template.tags,
+		template.stat_types,
+		template.tier_range,
+		template.base_dmg_min_lo,
+		template.base_dmg_min_hi,
+		template.base_dmg_max_lo,
+		template.base_dmg_max_hi
+	)
+	# Clamp the tier to the material-tier allowed window
+	var effective_min := maxi(template.tier_range.x, min_tier)
+	var effective_max := mini(template.tier_range.y, max_tier)
+	affix_copy.tier = randi_range(effective_min, effective_max)
+	# Recalculate tier-dependent values
+	var scale: int = template.tier_range.y + 1 - affix_copy.tier
+	affix_copy.min_value = template.base_min * scale
+	affix_copy.max_value = template.base_max * scale
+	affix_copy.value = randi_range(affix_copy.min_value, affix_copy.max_value)
+	# Recalculate damage bounds for flat damage affixes
+	affix_copy.dmg_min_lo = template.base_dmg_min_lo * scale
+	affix_copy.dmg_min_hi = template.base_dmg_min_hi * scale
+	affix_copy.dmg_max_lo = template.base_dmg_max_lo * scale
+	affix_copy.dmg_max_hi = template.base_dmg_max_hi * scale
+	if Tag.StatType.FLAT_DAMAGE in affix_copy.stat_types and (affix_copy.dmg_min_hi > 0 or affix_copy.dmg_max_hi > 0):
+		affix_copy.add_min = randi_range(affix_copy.dmg_min_lo, affix_copy.dmg_min_hi)
+		affix_copy.add_max = randi_range(affix_copy.dmg_max_lo, affix_copy.dmg_max_hi)
+		if affix_copy.add_min > affix_copy.add_max:
+			var tmp = affix_copy.add_min
+			affix_copy.add_min = affix_copy.add_max
+			affix_copy.add_max = tmp
+	return affix_copy
+
+
+## Check whether a template affix's tier_range overlaps with the given
+## material tier bounds [min_tier, max_tier].
+static func can_roll_in_tier_range(template: Affix, min_tier: int, max_tier: int) -> bool:
+	return template.tier_range.x <= max_tier and template.tier_range.y >= min_tier

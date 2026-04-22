@@ -1,153 +1,119 @@
 extends Node
 
-var debug_hammers: bool = false  # Set to true for testing
+var debug_mode: bool = false
 
 var hero: Hero
 var currency_counts: Dictionary = {}
 
-# Crafting state (centralized for persistence)
 var crafting_inventory: Dictionary = {}
-var crafting_bench_type: String = "weapon"
+var crafting_bench_item: Item = null
 
-# Area progress (centralized for persistence)
-var max_unlocked_level: int = 1
-var area_level: int = 1
+var expedition_resolver: ExpeditionResolver = null
 
-# Prestige state -- survives resets (NOT wiped by _wipe_run_state)
-var prestige_level: int = 0
-var max_item_tier_unlocked: int = 8  # P0 = tier 8 (lowest quality ceiling)
+const CURRENCY_KEYS: Array[String] = [
+	"tack", "tuning", "forge", "grand", "runic", "claw", "scour"
+]
 
-# Tag currency inventory -- separate from standard currency_counts
-# Wiped on prestige (run currency), but kept separate for Phase 39 gating
-var tag_currency_counts: Dictionary = {}
+var _currency_classes: Dictionary = {}
 
-# Save corruption flag — checked by toast on scene ready
-var save_was_corrupted: bool = false
-
-# Import success flag — survives scene reload, checked by toast on scene ready
-var import_just_completed: bool = false
+const CURRENCY_DISPLAY_NAMES: Dictionary = {
+	"tack": "Tack Hammer",
+	"tuning": "Tuning Hammer",
+	"forge": "Forge Hammer",
+	"grand": "Grand Hammer",
+	"runic": "Runic Hammer",
+	"claw": "Claw Hammer",
+	"scour": "Scour Hammer",
+}
 
 
 func _ready() -> void:
 	initialize_fresh_game()
-
-	# Attempt to load saved game
-	var loaded := SaveManager.load_game()
-	if not loaded and SaveManager.has_save():
-		# Save file exists but couldn't be loaded (corrupted)
-		save_was_corrupted = true
-		push_warning("GameState: Save file appears corrupted, starting fresh")
-
-	# Debug override: always give hammers regardless of save state
-	if debug_hammers:
-		for key in currency_counts:
-			currency_counts[key] = 999
-		print("DEBUG: Spawned with 999 of each hammer")
+	if debug_mode:
+		_apply_debug_resources()
 
 
-## Sets up a completely fresh game state. Called before load attempts and by New Game.
 func initialize_fresh_game() -> void:
 	hero = Hero.new()
-	# Initialize empty equipment slots
-	hero.equipped_items["weapon"] = null
-	hero.equipped_items["helmet"] = null
-	hero.equipped_items["armor"] = null
-	hero.equipped_items["boots"] = null
-	hero.equipped_items["ring"] = null
 
-	# Initialize currency counts
-	currency_counts = {
-		"runic": 1,
-		"forge": 0,
-		"tack": 0,
-		"grand": 0,
-		"claw": 0,
-		"tuning": 0
-	}
+	currency_counts = {}
+	for key in CURRENCY_KEYS:
+		currency_counts[key] = 0
 
-	# Initialize crafting state — per-slot arrays (Phase 28)
-	crafting_inventory = {
-		"weapon": [],
-		"helmet": [],
-		"armor": [],
-		"boots": [],
-		"ring": [],
-	}
-	# Starter weapon goes into weapon slot array
-	crafting_inventory["weapon"] = [LightSword.new()]
-	crafting_bench_type = "weapon"
+	crafting_inventory = {}
+	for slot_val in Tag.ALL_SLOTS:
+		crafting_inventory[slot_val] = []
 
-	# Initialize area progress
-	max_unlocked_level = 1
-	area_level = 1
-
-	# Reset prestige state (only for truly fresh games)
-	prestige_level = 0
-	max_item_tier_unlocked = 8
-	tag_currency_counts = {}
-
-	# Reset corruption flag
-	save_was_corrupted = false
+	crafting_bench_item = null
+	expedition_resolver = ExpeditionResolver.new()
 
 
-## Resets all run-scoped state. Called by PrestigeManager.execute_prestige().
-## Does NOT touch prestige_level or max_item_tier_unlocked.
-func _wipe_run_state() -> void:
-	# 1. Area progress
-	area_level = 1
-	max_unlocked_level = 1
+func wipe_run_state() -> void:
+	currency_counts = {}
+	for key in CURRENCY_KEYS:
+		currency_counts[key] = 0
 
-	# 2. Hero -- fresh hero with empty equipment slots
-	hero = Hero.new()
-	hero.equipped_items["weapon"] = null
-	hero.equipped_items["helmet"] = null
-	hero.equipped_items["armor"] = null
-	hero.equipped_items["boots"] = null
-	hero.equipped_items["ring"] = null
+	crafting_inventory = {}
+	for slot_val in Tag.ALL_SLOTS:
+		crafting_inventory[slot_val] = []
 
-	# 3. Crafting inventory -- fresh state with starter weapon
-	crafting_inventory = {
-		"weapon": [],
-		"helmet": [],
-		"armor": [],
-		"boots": [],
-		"ring": [],
-	}
-	crafting_inventory["weapon"] = [LightSword.new()]
-	crafting_bench_type = "weapon"
+	crafting_bench_item = null
 
-	# 4. Standard currencies -- reset to fresh-game defaults
-	currency_counts = {
-		"runic": 1,
-		"forge": 0,
-		"tack": 0,
-		"grand": 0,
-		"claw": 0,
-		"tuning": 0,
-	}
+	if expedition_resolver != null:
+		expedition_resolver.cancel_expedition()
+	expedition_resolver = ExpeditionResolver.new()
 
-	# 5. Tag currencies -- wiped (they are run currency per user decision)
-	tag_currency_counts = {}
+	for slot_val in Tag.ALL_SLOTS:
+		hero.unequip_item(slot_val)
 
-	# Recalculate derived hero stats to ensure consistency
 	hero.update_stats()
 
 
-## Adds currencies from a drops dictionary to the inventory
 func add_currencies(drops: Dictionary) -> void:
 	for currency_type in drops:
 		if currency_type in currency_counts:
 			currency_counts[currency_type] += drops[currency_type]
 
 
-## Attempts to spend one currency of the given type
-## Returns true if successful, false if not enough currency
-func spend_currency(currency_type: String) -> bool:
+func spend_currency(currency_type: String, amount: int = 1) -> bool:
 	if currency_type not in currency_counts:
 		return false
-
-	if currency_counts[currency_type] <= 0:
+	if currency_counts[currency_type] < amount:
 		return false
-
-	currency_counts[currency_type] -= 1
+	currency_counts[currency_type] -= amount
+	GameEvents.currency_changed.emit(currency_type, currency_counts[currency_type])
 	return true
+
+
+func add_item_to_inventory(item: Item) -> void:
+	if item.slot in crafting_inventory:
+		crafting_inventory[item.slot].append(item)
+		GameEvents.inventory_changed.emit(item.slot)
+
+
+func remove_item_from_inventory(item: Item) -> void:
+	if item.slot in crafting_inventory:
+		crafting_inventory[item.slot].erase(item)
+		GameEvents.inventory_changed.emit(item.slot)
+
+
+func get_currency_instance(currency_key: String) -> Currency:
+	if _currency_classes.is_empty():
+		_currency_classes = {
+			"tack": TackHammer,
+			"tuning": TuningHammer,
+			"forge": ForgeHammer,
+			"grand": GrandHammer,
+			"runic": RunicHammer,
+			"claw": ClawHammer,
+			"scour": ScourHammer,
+		}
+	if currency_key not in _currency_classes:
+		return null
+	return _currency_classes[currency_key].new()
+
+
+func _apply_debug_resources() -> void:
+	for key in CURRENCY_KEYS:
+		currency_counts[key] = 999
+	print("DEBUG: Spawned with 999 of each hammer")

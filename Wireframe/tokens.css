@@ -1,0 +1,152 @@
+/* Hammertime — Cozy Blacksmith design tokens */
+:root {
+  /* warm woods */
+  --wood-deep: #1d130b;
+  --wood-dark: #2a1d12;
+  --wood: #3a2a1c;
+  --wood-mid: #4d3827;
+  --wood-light: #6b4c32;
+  --wood-trim: #8a6842;
+
+  /* iron */
+  --iron-deep: #14110e;
+  --iron: #2a2520;
+  --iron-mid: #3d3630;
+  --iron-light: #54493f;
+  --iron-hi: #8a7866;
+
+  /* parchment / candlelight */
+  --parch: #ede0c6;
+  --parch-hi: #f6ecd6;
+  --parch-lo: #d9c9a7;
+  --parch-edge: #b89f72;
+
+  /* brass / copper */
+  --brass: #c49b5c;
+  --brass-hi: #e6c588;
+  --brass-lo: #8e6a34;
+  --copper: #b37042;
+
+  /* ember / fire */
+  --ember: #e8874a;
+  --ember-hi: #ffb27a;
+  --ember-lo: #b05420;
+  --coal: oklch(0.38 0.04 40);
+
+  /* ink */
+  --ink: #1a1410;
+  --ink-soft: #3a2d22;
+  --ink-mid: #5c4a38;
+  --ink-faint: #8a7560;
+
+  /* item rarities (warm palette, not POE's codes) */
+  --r-normal: #b8ac95;
+  --r-magic: #7aa6cf;     /* sapphire */
+  --r-magic-hi: #a8c7e2;
+  --r-rare: #d4a748;      /* amber gold */
+  --r-rare-hi: #f2cc72;
+  --r-unique: #b5723a;    /* copper-brown */
+  --r-unique-hi: #d99a5b;
+  --r-currency: #cf8a3a;
+  --r-gem: #5c9b74;
+
+  /* affix colors */
+  --pre: #7aa6cf;   /* prefix */
+  --suf: #d4a748;   /* suffix */
+  --impl: #a89a80;  /* implicit */
+
+  /* state */
+  --ok: #78a063;
+  --danger: #b04a3a;
+  --mana: #4a6a9c;
+  --life: #a83838;
+
+  /* type */
+  --f-serif: 'Spectral', 'Iowan Old Style', 'Georgia', serif;
+  --f-ui: 'Inter', -apple-system, system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+  --f-display: 'Spectral', serif;
+}
+
+/* Shared decorative primitives */
+.hm-wood-panel {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,200,140,0.04), transparent 60%),
+    linear-gradient(180deg, var(--wood) 0%, var(--wood-dark) 100%);
+  border: 1px solid var(--wood-deep);
+  box-shadow:
+    inset 0 1px 0 rgba(255,220,170,0.08),
+    inset 0 -1px 0 rgba(0,0,0,0.4),
+    0 1px 0 rgba(0,0,0,0.5);
+}
+.hm-iron-panel {
+  background: linear-gradient(180deg, var(--iron-mid) 0%, var(--iron) 100%);
+  border: 1px solid var(--iron-deep);
+  box-shadow:
+    inset 0 1px 0 rgba(200,180,150,0.12),
+    inset 0 -1px 0 rgba(0,0,0,0.5);
+}
+.hm-parch {
+  background:
+    radial-gradient(ellipse at 50% 30%, var(--parch-hi) 0%, var(--parch) 55%, var(--parch-lo) 100%);
+  color: var(--ink);
+  border: 1px solid var(--parch-edge);
+  box-shadow: inset 0 0 40px rgba(139, 100, 54, 0.15);
+}
+.hm-inset {
+  background: var(--wood-deep);
+  border: 1px solid #000;
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,0.6),
+    inset 0 -1px 0 rgba(255,220,170,0.06);
+  border-radius: 2px;
+}
+.hm-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--wood-trim) 20%, var(--wood-trim) 80%, transparent);
+  opacity: 0.5;
+}
+.hm-nail {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, var(--iron-hi), var(--iron-deep) 70%);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.6);
+}
+.hm-placeholder {
+  background:
+    repeating-linear-gradient(135deg,
+      rgba(180,140,90,0.08) 0 8px,
+      rgba(180,140,90,0.14) 8px 16px);
+  border: 1px dashed var(--wood-trim);
+  color: var(--ink-faint);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Rarity text treatment */
+.rar-normal { color: var(--r-normal); }
+.rar-magic { color: var(--r-magic-hi); }
+.rar-rare { color: var(--r-rare-hi); }
+.rar-unique { color: var(--r-unique-hi); }
+.rar-currency { color: var(--r-currency); }
+
+/* Mono tabular numbers */
+.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+/* Hammer grid cell hover — brighten + reveal tooltip */
+.hm-hammer:hover {
+  background: radial-gradient(circle at 50% 30%, rgba(255,180,110,0.28), rgba(30,20,12,0.6)) !important;
+  border-color: var(--brass) !important;
+  z-index: 10;
+}
+.hm-hammer:hover .hm-hammer-tip {
+  opacity: 1 !important;
+}
+
+/* Inventory item hover tooltip */
+.hm-inv:hover { z-index: 10; }
+.hm-inv:hover .hm-inv-tip { opacity: 1 !important; }

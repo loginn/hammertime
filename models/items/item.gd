@@ -8,26 +8,48 @@ const RARITY_LIMITS: Dictionary = {
 	Rarity.RARE: { "prefixes": 3, "suffixes": 3 },
 }
 
+# Identity
 var item_name: String
+var slot: Tag_List.ItemSlot
+var material_tier: Tag_List.MaterialTier
+var base_id: String
+
+# Affix state
 var implicit: Implicit
 var prefixes: Array[Affix] = []
 var suffixes: Array[Affix] = []
-var tier: int
 var valid_tags: Array[String]
 var rarity: Rarity = Rarity.NORMAL
-var custom_max_prefixes = null
-var custom_max_suffixes = null
+
+# Base stats (set from base definition)
+var base_damage_min: int = 0
+var base_damage_max: int = 0
+var base_speed: int = 1
+var base_attack_speed: float = 1.0
+var base_armor: int = 0
+var base_evasion: int = 0
+var base_energy_shield: int = 0
+var base_health: int = 0
+var base_movement_speed: int = 0
+var base_mana: int = 0
+
+# Computed stats (recalculated by update_value)
+var dps: float = 0.0
+var crit_chance: float = BalanceConfig.BASE_CRIT_CHANCE
+var crit_damage: float = BalanceConfig.BASE_CRIT_DAMAGE
+var computed_armor: int = 0
+var computed_evasion: int = 0
+var computed_energy_shield: int = 0
+var computed_health: int = 0
+var computed_movement_speed: int = 0
+var computed_mana: int = 0
+var total_defense: int = 0
 
 
 func max_prefixes() -> int:
-	if custom_max_prefixes != null:
-		return custom_max_prefixes
 	return RARITY_LIMITS[rarity]["prefixes"]
 
-
 func max_suffixes() -> int:
-	if custom_max_suffixes != null:
-		return custom_max_suffixes
 	return RARITY_LIMITS[rarity]["suffixes"]
 
 
@@ -36,235 +58,189 @@ func get_rarity_color() -> Color:
 		Rarity.NORMAL:
 			return Color.WHITE
 		Rarity.MAGIC:
-			return Color("#6888F5")  # Soft blue, readable on dark
+			return Color("#6888F5")
 		Rarity.RARE:
-			return Color("#FFD700")  # Gold yellow
+			return Color("#FFD700")
 		_:
 			return Color.WHITE
 
 
-## Returns the type string for serialization. Override in concrete subclasses.
-func get_item_type_string() -> String:
-	return ""
+func is_weapon_slot() -> bool:
+	return slot == Tag_List.ItemSlot.WEAPON or slot == Tag_List.ItemSlot.RING
 
 
-## Serializes this item to a dictionary for save/load.
-func to_dict() -> Dictionary:
-	var prefix_dicts: Array = []
-	for p in prefixes:
-		prefix_dicts.append(p.to_dict())
-
-	var suffix_dicts: Array = []
-	for s in suffixes:
-		suffix_dicts.append(s.to_dict())
-
-	return {
-		"item_type": get_item_type_string(),
-		"item_name": item_name,
-		"tier": tier,
-		"rarity": int(rarity),
-		"valid_tags": Array(valid_tags),
-		"implicit": implicit.to_dict() if implicit != null else {},
-		"prefixes": prefix_dicts,
-		"suffixes": suffix_dicts,
-	}
+func is_defense_slot() -> bool:
+	return slot in [Tag_List.ItemSlot.ARMOR, Tag_List.ItemSlot.HELMET, Tag_List.ItemSlot.BOOTS]
 
 
-## Registry of concrete item types for deserialization.
-const ITEM_TYPE_STRINGS: PackedStringArray = [
-	"LightSword", "BasicArmor", "BasicHelmet", "BasicBoots", "BasicRing"
-]
-
-
-## Creates an item from a serialized dictionary. Returns null if type unknown.
-static func create_from_dict(data: Dictionary) -> Item:
-	var item_type_str: String = data.get("item_type", "")
-
-	var item: Item = null
-	match item_type_str:
-		"LightSword":
-			item = LightSword.new()
-		"BasicArmor":
-			item = BasicArmor.new()
-		"BasicHelmet":
-			item = BasicHelmet.new()
-		"BasicBoots":
-			item = BasicBoots.new()
-		"BasicRing":
-			item = BasicRing.new()
-		_:
-			push_warning("Unknown item type for deserialization: " + item_type_str)
-			return null
-
-	# Restore rarity
-	item.rarity = int(data.get("rarity", 0)) as Rarity
-
-	# Restore implicit
-	var implicit_data: Dictionary = data.get("implicit", {})
-	if not implicit_data.is_empty():
-		item.implicit = Implicit.from_dict(implicit_data)
-
-	# Restore prefixes
-	item.prefixes.clear()
-	var prefix_dicts: Array = data.get("prefixes", [])
-	for p_dict in prefix_dicts:
-		item.prefixes.append(Affix.from_dict(p_dict))
-
-	# Restore suffixes
-	item.suffixes.clear()
-	var suffix_dicts: Array = data.get("suffixes", [])
-	for s_dict in suffix_dicts:
-		item.suffixes.append(Affix.from_dict(s_dict))
-
-	# Recalculate derived stats from restored affixes
-	item.update_value()
-
-	return item
-
-
-## Recalculates item stats from current affixes.
-## Override in subclasses. Called after any affix modification (reroll, add prefix/suffix).
-## Implementations should delegate to StatCalculator for actual math.
 func update_value() -> void:
-	pass
+	if is_weapon_slot():
+		_update_weapon_value()
+	elif is_defense_slot():
+		_update_defense_value()
 
 
-func display() -> void:
-	print("\n----")
-	print("name: %s" % self.item_name)
+func _update_weapon_value() -> void:
+	var all_affixes: Array = prefixes.duplicate()
+	all_affixes.append_array(suffixes)
+	if implicit != null:
+		all_affixes.append(implicit)
 
-	# Display DPS only if the item has it (weapons and rings)
-	if self is Weapon or self is Ring:
-		print("dps: %.1f" % self.dps)
+	var base_dmg: float
+	if base_damage_min > 0 and base_damage_max > 0:
+		base_dmg = float(base_damage_min + base_damage_max) / 2.0
+	else:
+		base_dmg = 0.0
 
-	# Display defense stats for defense items
-	if self is Armor or self is Helmet or self is Boots:
-		var total_defense = self.total_defense
-		if total_defense > 0:
-			print("defense: %d" % total_defense)
+	dps = StatCalculator.calculate_dps(
+		base_dmg, float(base_speed), all_affixes, crit_chance, crit_damage
+	)
 
-	if self.implicit != null:
-		print(
-			(
-				"implicit:\n	%s ~ value: %d ~ tier %d"
-				% [self.implicit.affix_name, self.implicit.value, self.implicit.tier]
-			)
+
+func _update_defense_value() -> void:
+	var all_affixes: Array = prefixes.duplicate()
+	all_affixes.append_array(suffixes)
+	if implicit != null:
+		all_affixes.append(implicit)
+
+	var flat_armor := base_armor + int(
+		StatCalculator.calculate_flat_stat(all_affixes, Tag.StatType.FLAT_ARMOR)
+	)
+	var flat_evasion := base_evasion + int(
+		StatCalculator.calculate_flat_stat(all_affixes, Tag.StatType.FLAT_EVASION)
+	)
+	var flat_energy_shield := base_energy_shield + int(
+		StatCalculator.calculate_flat_stat(all_affixes, Tag.StatType.FLAT_ENERGY_SHIELD)
+	)
+	var flat_health := base_health + int(
+		StatCalculator.calculate_flat_stat(all_affixes, Tag.StatType.FLAT_HEALTH)
+	)
+
+	computed_armor = int(
+		StatCalculator.calculate_percentage_stat(float(flat_armor), all_affixes, Tag.StatType.PERCENT_ARMOR)
+	)
+	computed_evasion = int(
+		StatCalculator.calculate_percentage_stat(float(flat_evasion), all_affixes, Tag.StatType.PERCENT_EVASION)
+	)
+	computed_energy_shield = int(
+		StatCalculator.calculate_percentage_stat(float(flat_energy_shield), all_affixes, Tag.StatType.PERCENT_ENERGY_SHIELD)
+	)
+	computed_health = int(
+		StatCalculator.calculate_percentage_stat(float(flat_health), all_affixes, Tag.StatType.PERCENT_HEALTH)
+	)
+
+	if slot == Tag_List.ItemSlot.BOOTS:
+		computed_movement_speed = (
+			base_movement_speed
+			+ int(StatCalculator.calculate_flat_stat(all_affixes, Tag.StatType.MOVEMENT_SPEED))
 		)
-	print("prefixes:")
-	for prefix in self.prefixes:
-		print("	%s ~ value: %d ~ tier %d" % [prefix.affix_name, prefix.value, prefix.tier])
-	print("suffixes:")
-	for suffix in self.suffixes:
-		print("	%s ~ value: %d ~ tier %d" % [suffix.affix_name, suffix.value, suffix.tier])
-	print("----\n")
 
-
-func get_display_text() -> String:
-	var output = ""
-	output += "----\n"
-	output += ("name: %s\n" % self.item_name)
-
-	# Display DPS only if the item has it (weapons and rings)
-	if self is Weapon or self is Ring:
-		output += "dps: %.1f\n" % self.dps
-
-	# Display defense stats for defense items
-	if self is Armor or self is Helmet or self is Boots:
-		var total_defense = self.total_defense
-		if total_defense > 0:
-			output += "defense: %d\n" % total_defense
-
-	if self.implicit != null:
-		output += (
-			"implicit:\n	%s ~ value: %d ~ tier %d\n"
-			% [self.implicit.affix_name, self.implicit.value, self.implicit.tier]
+	if slot == Tag_List.ItemSlot.HELMET:
+		computed_mana = (
+			base_mana
+			+ int(StatCalculator.calculate_flat_stat(all_affixes, Tag.StatType.FLAT_MANA))
 		)
-	output += "prefixes:\n"
-	for prefix in self.prefixes:
-		output += (
-			"	%s ~ value: %d ~ tier %d\n" % [prefix.affix_name, prefix.value, prefix.tier]
-		)
-	output += "suffixes:\n"
-	for suffix in self.suffixes:
-		output += (
-			"	%s ~ value: %d ~ tier %d\n" % [suffix.affix_name, suffix.value, suffix.tier]
-		)
-	output += "----\n"
 
-	return output
-
-
-func reroll_affix(affix: Affix) -> void:
-	affix.reroll()
+	total_defense = computed_armor
 
 
 func is_affix_on_item(affix: Affix) -> bool:
-	print(self.prefixes)
-	for prefix in self.prefixes:
+	for prefix in prefixes:
 		if affix.affix_name == prefix.affix_name:
-			print("affix ", affix.affix_name, " is already on item")
 			return true
-	for suffix in self.suffixes:
+	for suffix in suffixes:
 		if affix.affix_name == suffix.affix_name:
-			print("affix ", affix.affix_name, " is already on item")
 			return true
 	return false
 
 
 func has_valid_tag(affix: Affix) -> bool:
-	for tag in self.valid_tags:
+	for tag in valid_tags:
 		if tag in affix.tags:
 			return true
 	return false
 
 
+func _get_material_tier_bounds() -> Vector2i:
+	var config: Dictionary = Tag_List.MATERIAL_TIER_CONFIG[material_tier]
+	return Vector2i(config["min_affix_tier"], config["max_affix_tier"])
+
+
 func add_prefix() -> bool:
-	print("adding a prefix")
-	if len(self.prefixes) >= max_prefixes():
-		print("Cannot add more prefixes - at rarity limit (%d)" % max_prefixes())
+	if prefixes.size() >= max_prefixes():
 		return false
 
+	var bounds := _get_material_tier_bounds()
 	var valid_prefixes: Array[Affix] = []
-	#pick a random valid affix:
 	for prefix: Affix in ItemAffixes.prefixes:
-		if has_valid_tag(prefix) and not self.is_affix_on_item(prefix):
+		if has_valid_tag(prefix) and not is_affix_on_item(prefix) \
+				and Affixes.can_roll_in_tier_range(prefix, bounds.x, bounds.y):
 			valid_prefixes.append(prefix)
-	print("valid: ", valid_prefixes)
 
 	if valid_prefixes.is_empty():
-		print("No valid prefixes available for this item")
 		return false
 
 	var new_prefix: Affix = valid_prefixes.pick_random()
 	if new_prefix != null:
-		self.prefixes.append(Affixes.from_affix(new_prefix))
-		print("Added prefix: ", new_prefix.affix_name)
+		prefixes.append(Affixes.from_affix_gated(new_prefix, bounds.x, bounds.y))
 		return true
 
 	return false
 
 
 func add_suffix() -> bool:
-	print("adding a suffix")
-	if len(self.suffixes) >= max_suffixes():
-		print("Cannot add more suffixes - at rarity limit (%d)" % max_suffixes())
+	if suffixes.size() >= max_suffixes():
 		return false
 
+	var bounds := _get_material_tier_bounds()
 	var valid_suffixes: Array[Affix] = []
-	#pick a random valid affix:
 	for suffix: Affix in ItemAffixes.suffixes:
-		if has_valid_tag(suffix) and not self.is_affix_on_item(suffix):
+		if has_valid_tag(suffix) and not is_affix_on_item(suffix) \
+				and Affixes.can_roll_in_tier_range(suffix, bounds.x, bounds.y):
 			valid_suffixes.append(suffix)
-	print("valid: ", valid_suffixes)
 
 	if valid_suffixes.is_empty():
-		print("No valid suffixes available for this item")
 		return false
 
 	var new_suffix = valid_suffixes.pick_random()
 	if new_suffix != null:
-		print("Added suffix: ", new_suffix.affix_name)
-		self.suffixes.append(Affixes.from_affix(new_suffix))
+		suffixes.append(Affixes.from_affix_gated(new_suffix, bounds.x, bounds.y))
 		return true
 
 	return false
+
+
+func get_display_text() -> String:
+	var output := "----\n"
+	output += "name: %s\n" % item_name
+
+	if is_weapon_slot():
+		output += "dps: %.1f\n" % dps
+		if base_damage_min > 0:
+			output += "damage: %d-%d\n" % [base_damage_min, base_damage_max]
+
+	if is_defense_slot():
+		if computed_armor > 0:
+			output += "armor: %d\n" % computed_armor
+		if computed_evasion > 0:
+			output += "evasion: %d\n" % computed_evasion
+		if computed_energy_shield > 0:
+			output += "energy shield: %d\n" % computed_energy_shield
+		if computed_health > 0:
+			output += "health: %d\n" % computed_health
+
+	if implicit != null:
+		output += "implicit:\n\t%s ~ value: %d ~ tier %d\n" % [
+			implicit.affix_name, implicit.value, implicit.tier
+		]
+
+	output += "prefixes:\n"
+	for prefix in prefixes:
+		output += "\t%s ~ value: %d ~ tier %d\n" % [prefix.affix_name, prefix.value, prefix.tier]
+
+	output += "suffixes:\n"
+	for suffix in suffixes:
+		output += "\t%s ~ value: %d ~ tier %d\n" % [suffix.affix_name, suffix.value, suffix.tier]
+
+	output += "----\n"
+	return output

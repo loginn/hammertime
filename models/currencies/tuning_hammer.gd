@@ -1,33 +1,32 @@
 class_name TuningHammer extends Currency
+## Alteration: Reroll all affixes on a Magic item (new random affixes, not just new values)
 
 
 func _init() -> void:
 	currency_name = "Tuning Hammer"
+	verb = "Alteration"
 
 
-## Returns true if item has at least one explicit mod (prefix or suffix).
 func can_apply(item: Item) -> bool:
-	return item.prefixes.size() > 0 or item.suffixes.size() > 0
+	return item.rarity == Item.Rarity.MAGIC
 
 
-## Returns human-readable error message explaining why currency cannot be used.
 func get_error_message(item: Item) -> String:
-	if item.prefixes.size() == 0 and item.suffixes.size() == 0:
-		return "Item has no mods to reroll"
+	if item.rarity != Item.Rarity.MAGIC:
+		return "Tuning Hammer can only be used on Magic items"
 	return ""
 
 
-## Rerolls all explicit mod values within their tier ranges.
-## Does NOT reroll the implicit - only prefixes and suffixes.
 func _do_apply(item: Item) -> void:
-	# Reroll all prefixes
-	for prefix in item.prefixes:
-		prefix.reroll()
-
-	# Reroll all suffixes
-	for suffix in item.suffixes:
-		suffix.reroll()
-
-	# Do NOT reroll implicit - CRAFT-06 says "rerolls all mod values"
-	# where "mods" are explicit prefixes/suffixes, not implicits
+	item.prefixes.clear()
+	item.suffixes.clear()
+	var mod_count = 1 if randf() < 0.7 else 2
+	for i in range(mod_count):
+		var choose_prefix = randi_range(0, 1) == 0
+		if choose_prefix:
+			if not item.add_prefix():
+				item.add_suffix()
+		else:
+			if not item.add_suffix():
+				item.add_prefix()
 	item.update_value()
