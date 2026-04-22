@@ -5,6 +5,7 @@ var active_hammer_key: String = ""
 @onready var _hammer_rail: VBoxContainer = %HammerRail
 @onready var _crafting_bench: VBoxContainer = %CraftingBench
 @onready var _inventory_grid: VBoxContainer = %InventoryGrid
+@onready var _hero_panel: VBoxContainer = %HeroPanel
 
 var _strike_button: Button
 
@@ -19,6 +20,7 @@ func _ready() -> void:
 	_crafting_bench.equip_pressed.connect(_on_equip_pressed)
 	_crafting_bench.melt_pressed.connect(_on_melt_pressed)
 	GameEvents.equipment_changed.connect(_on_equipment_changed)
+	_hero_panel.slot_tab_requested.connect(_on_slot_tab_requested)
 
 	_refresh_bench()
 	_update_strike_button_state()
@@ -28,6 +30,7 @@ func set_bench_item(item: Item) -> void:
 	GameState.crafting_bench_item = item
 	_refresh_bench()
 	_update_strike_button_state()
+	_hero_panel.show_deltas(item)
 
 
 func _on_item_selected(item: Item) -> void:
@@ -116,5 +119,11 @@ func _update_strike_button_state() -> void:
 	_strike_button.disabled = (count <= 0)
 
 
+func _on_slot_tab_requested(slot: int) -> void:
+	_inventory_grid.switch_to_slot(slot)
+
+
 func _on_prestige_completed() -> void:
-	pass
+	set_bench_item(null)
+	_inventory_grid.refresh_grid()
+	_hero_panel.refresh()

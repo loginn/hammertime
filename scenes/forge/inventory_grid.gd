@@ -48,6 +48,12 @@ func _update_tab_highlight() -> void:
 			btn.modulate = Color.WHITE
 
 
+func switch_to_slot(slot_val: int) -> void:
+	active_slot = slot_val as Tag_List.ItemSlot
+	_update_tab_highlight()
+	refresh_grid()
+
+
 func refresh_grid() -> void:
 	for child in _grid.get_children():
 		child.queue_free()

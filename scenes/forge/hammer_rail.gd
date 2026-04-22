@@ -22,6 +22,7 @@ var _count_labels: Dictionary = {}
 @onready var _detail_verb: Label = $MarginContainer/Content/DetailPanel/DetailVBox/DetailVerb
 @onready var _detail_effect: Label = $MarginContainer/Content/DetailPanel/DetailVBox/DetailEffect
 @onready var _detail_count: Label = $MarginContainer/Content/DetailPanel/DetailVBox/DetailCount
+@onready var _tab_elemental: Button = $MarginContainer/Content/TabRow/TabElemental
 
 
 func _ready() -> void:
@@ -29,6 +30,8 @@ func _ready() -> void:
 	_update_all_counts()
 	_detail_panel.visible = false
 	GameEvents.currency_changed.connect(_on_currency_changed)
+	GameEvents.prestige_completed.connect(_on_prestige_completed)
+	_update_elemental_tab()
 
 
 func _build_buttons() -> void:
@@ -122,3 +125,19 @@ func _update_all_counts() -> void:
 
 func get_selected_key() -> String:
 	return _selected_key
+
+
+func _update_elemental_tab() -> void:
+	if PrestigeManager.prestige_count >= 1:
+		_tab_elemental.disabled = false
+		_tab_elemental.text = "Elemental"
+		_tab_elemental.tooltip_text = "Tag hammers coming soon"
+	else:
+		_tab_elemental.disabled = true
+		_tab_elemental.text = "🔒 Elemental"
+		_tab_elemental.tooltip_text = "Unlock by completing your first Prestige"
+
+
+func _on_prestige_completed() -> void:
+	_update_elemental_tab()
+	_update_all_counts()
