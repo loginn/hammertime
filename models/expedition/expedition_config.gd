@@ -11,6 +11,8 @@ var reward_tier: int
 ## Actual reward amounts are scaled by difficulty.
 var base_currency_rewards: Dictionary = {}
 
+var drop_table: DropTable = null
+
 
 func _init(
 	p_id: String = "",
@@ -19,7 +21,8 @@ func _init(
 	p_duration: float = 30.0,
 	p_difficulty: int = 1,
 	p_reward_tier: int = 1,
-	p_rewards: Dictionary = {}
+	p_rewards: Dictionary = {},
+	p_drop_table: DropTable = null
 ) -> void:
 	expedition_id = p_id
 	expedition_name = p_name
@@ -28,6 +31,20 @@ func _init(
 	difficulty = p_difficulty
 	reward_tier = p_reward_tier
 	base_currency_rewards = p_rewards
+	drop_table = p_drop_table
+
+
+static func _training_grounds_drop_table() -> DropTable:
+	var dt := DropTable.new()
+	dt.drop_rolls = 1
+	dt.entries = [
+		DropTable.create_entry("currency", "tack", -1, 0, 2, 4, true),
+		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.IRON, 40, 1, 1, false),
+		DropTable.create_entry("currency", "tuning", -1, 30, 1, 1, false),
+		DropTable.create_entry("currency", "forge", -1, 15, 1, 1, false),
+		DropTable.create_entry("currency", "tack", -1, 15, 2, 2, false),
+	]
+	return dt
 
 
 static func training_grounds() -> ExpeditionConfig:
@@ -38,8 +55,26 @@ static func training_grounds() -> ExpeditionConfig:
 		BalanceConfig.EXPEDITION_1_BASE_TIME,
 		1,
 		1,
-		{"tack": 3}
+		{"tack": 3},
+		_training_grounds_drop_table()
 	)
+
+
+static func _dark_forest_drop_table() -> DropTable:
+	var dt := DropTable.new()
+	dt.drop_rolls = 2
+	dt.entries = [
+		DropTable.create_entry("currency", "tack", -1, 0, 5, 8, true),
+		DropTable.create_entry("currency", "tuning", -1, 0, 1, 2, true),
+		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.STEEL, 30, 1, 1, false),
+		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.IRON, 15, 1, 1, false),
+		DropTable.create_entry("currency", "forge", -1, 20, 1, 2, false),
+		DropTable.create_entry("currency", "grand", -1, 15, 1, 1, false),
+		DropTable.create_entry("currency", "tuning", -1, 10, 2, 3, false),
+		DropTable.create_entry("currency", "runic", -1, 5, 1, 1, false),
+		DropTable.create_entry("currency", "claw", -1, 5, 1, 1, false),
+	]
+	return dt
 
 
 static func dark_forest() -> ExpeditionConfig:
@@ -50,7 +85,8 @@ static func dark_forest() -> ExpeditionConfig:
 		BalanceConfig.EXPEDITION_2_BASE_TIME,
 		3,
 		2,
-		{"tack": 8, "tuning": 2}
+		{"tack": 8, "tuning": 2},
+		_dark_forest_drop_table()
 	)
 
 
