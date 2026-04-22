@@ -53,13 +53,39 @@ func resolve_rewards() -> Dictionary:
 	if active_config == null:
 		return {}
 
-	var rewards: Dictionary = {}
-	for currency_key: String in active_config.base_currency_rewards:
-		var base_amount: int = active_config.base_currency_rewards[currency_key]
-		var scaled_amount := _scale_reward(base_amount, active_config.difficulty)
-		rewards[currency_key] = scaled_amount
+	if active_config.drop_table != null:
+		return _resolve_from_drop_table()
 
-	return rewards
+	return {}
+
+
+func _resolve_from_drop_table() -> Dictionary:
+	var currencies: Dictionary = {}
+	var items: Array[Item] = []
+
+	var rolled_entries := active_config.drop_table.roll()
+	for entry: Dictionary in rolled_entries:
+		var qty: int = randi_range(entry["qty_min"], entry["qty_max"])
+
+		if entry["type"] == "currency":
+			var scaled := _scale_reward(qty, active_config.difficulty)
+			var key: String = entry["key"]
+			if key in currencies:
+				currencies[key] += scaled
+			else:
+				currencies[key] = scaled
+
+		elif entry["type"] == "item":
+			var tier: Tag_List.MaterialTier = entry["material_tier"] as Tag_List.MaterialTier
+			var bases := ItemFactory.get_bases_for_material(tier)
+			if bases.is_empty():
+				continue
+			var base_id: String = bases[randi() % bases.size()]
+			var item := ItemFactory.create_base(base_id)
+			if item != null:
+				items.append(item)
+
+	return {"currencies": currencies, "items": items}
 
 
 func complete_expedition() -> Dictionary:
@@ -69,7 +95,12 @@ func complete_expedition() -> Dictionary:
 	var rewards := resolve_rewards()
 	var expedition_id := active_config.expedition_id
 
-	GameState.add_currencies(rewards)
+	if "currencies" in rewards:
+		GameState.add_currencies(rewards["currencies"])
+		for item: Item in rewards.get("items", []):
+			GameState.add_item_to_inventory(item)
+	else:
+		GameState.add_currencies(rewards)
 
 	_reset()
 

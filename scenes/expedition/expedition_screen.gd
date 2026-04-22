@@ -78,14 +78,19 @@ func _populate_card(index: int) -> void:
 	for child in rewards_box.get_children():
 		child.queue_free()
 
-	for currency_key: String in config.base_currency_rewards:
-		var amount: int = config.base_currency_rewards[currency_key]
-		var display_name: String = GameState.CURRENCY_DISPLAY_NAMES.get(currency_key, currency_key)
-		var reward_label := Label.new()
-		reward_label.text = "· %d %s" % [amount, display_name]
-		reward_label.add_theme_color_override("font_color", Color(0.93, 0.88, 0.78))
-		reward_label.add_theme_font_size_override("font_size", 12)
-		rewards_box.add_child(reward_label)
+	if config.drop_table != null:
+		for entry: Dictionary in config.drop_table.entries:
+			if not entry["guaranteed"]:
+				continue
+			var reward_label := Label.new()
+			if entry["type"] == "currency":
+				var display_name: String = GameState.CURRENCY_DISPLAY_NAMES.get(entry["key"], entry["key"])
+				reward_label.text = "· %d-%d %s" % [entry["qty_min"], entry["qty_max"], display_name]
+			else:
+				reward_label.text = "· Item drop (T%d)" % entry["material_tier"]
+			reward_label.add_theme_color_override("font_color", Color(0.93, 0.88, 0.78))
+			reward_label.add_theme_font_size_override("font_size", 12)
+			rewards_box.add_child(reward_label)
 
 
 func _format_duration(seconds: float) -> String:

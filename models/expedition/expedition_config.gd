@@ -7,10 +7,6 @@ var duration_seconds: float
 var difficulty: int
 var reward_tier: int
 
-## Currency rewards: keys are currency keys (e.g. "tack"), values are base amounts.
-## Actual reward amounts are scaled by difficulty.
-var base_currency_rewards: Dictionary = {}
-
 var drop_table: DropTable = null
 
 
@@ -21,7 +17,6 @@ func _init(
 	p_duration: float = 30.0,
 	p_difficulty: int = 1,
 	p_reward_tier: int = 1,
-	p_rewards: Dictionary = {},
 	p_drop_table: DropTable = null
 ) -> void:
 	expedition_id = p_id
@@ -30,7 +25,6 @@ func _init(
 	duration_seconds = p_duration
 	difficulty = p_difficulty
 	reward_tier = p_reward_tier
-	base_currency_rewards = p_rewards
 	drop_table = p_drop_table
 
 
@@ -55,7 +49,6 @@ static func training_grounds() -> ExpeditionConfig:
 		BalanceConfig.EXPEDITION_1_BASE_TIME,
 		1,
 		1,
-		{"tack": 3},
 		_training_grounds_drop_table()
 	)
 
@@ -85,7 +78,6 @@ static func dark_forest() -> ExpeditionConfig:
 		BalanceConfig.EXPEDITION_2_BASE_TIME,
 		3,
 		2,
-		{"tack": 8, "tuning": 2},
 		_dark_forest_drop_table()
 	)
 
