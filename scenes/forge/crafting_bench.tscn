@@ -1,0 +1,113 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/forge/crafting_bench.gd" id="1_bench"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_badge"]
+bg_color = Color(0.08, 0.06, 0.05, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+
+[node name="CraftingBench" type="VBoxContainer"]
+size_flags_horizontal = 3
+script = ExtResource("1_bench")
+
+[node name="Header" type="Label" parent="."]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 16
+text = "ON THE BENCH"
+horizontal_alignment = 1
+
+[node name="Spacer1" type="Control" parent="."]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 8)
+
+[node name="BenchArea" type="HBoxContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="PrefixRail" type="VBoxContainer" parent="BenchArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(120, 0)
+
+[node name="RailHeader" type="Label" parent="BenchArea/PrefixRail"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.5, 1)
+theme_override_font_sizes/font_size = 12
+text = "Prefixes"
+horizontal_alignment = 1
+
+[node name="ItemBadge" type="PanelContainer" parent="BenchArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(160, 100)
+theme_override_styles/panel = SubResource("StyleBoxFlat_badge")
+
+[node name="BadgeVBox" type="VBoxContainer" parent="BenchArea/ItemBadge"]
+layout_mode = 2
+alignment = 1
+
+[node name="ItemName" type="Label" parent="BenchArea/ItemBadge/BadgeVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "Item Name"
+horizontal_alignment = 1
+
+[node name="MaterialTier" type="Label" parent="BenchArea/ItemBadge/BadgeVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.5, 1)
+theme_override_font_sizes/font_size = 11
+text = "Material"
+horizontal_alignment = 1
+
+[node name="BaseName" type="Label" parent="BenchArea/ItemBadge/BadgeVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+theme_override_font_sizes/font_size = 11
+text = "Base"
+horizontal_alignment = 1
+
+[node name="EmptyLabel" type="Label" parent="BenchArea/ItemBadge/BadgeVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.4, 0.4, 1)
+theme_override_font_sizes/font_size = 13
+text = "No item on bench"
+horizontal_alignment = 1
+
+[node name="SuffixRail" type="VBoxContainer" parent="BenchArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(120, 0)
+
+[node name="RailHeader" type="Label" parent="BenchArea/SuffixRail"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.5, 1)
+theme_override_font_sizes/font_size = 12
+text = "Suffixes"
+horizontal_alignment = 1
+
+[node name="Spacer2" type="Control" parent="."]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 8)
+
+[node name="StrikeButton" type="Button" parent="."]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
+disabled = true
+text = "⚡ STRIKE ⚡"
+
+[node name="ErrorFeedback" type="Label" parent="."]
+layout_mode = 2
+theme_override_colors/font_color = Color(1.0, 0.3, 0.3, 1)
+theme_override_font_sizes/font_size = 12
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 2

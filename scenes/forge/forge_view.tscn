@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scenes/forge/forge_view.gd" id="1_forge"]
+[ext_resource type="PackedScene" path="res://scenes/forge/hammer_rail.tscn" id="2_hammer_rail"]
+[ext_resource type="PackedScene" path="res://scenes/forge/crafting_bench.tscn" id="3_crafting_bench"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar"]
 bg_color = Color(0.12, 0.1, 0.08, 1)
@@ -89,22 +91,25 @@ layout_mode = 2
 custom_minimum_size = Vector2(250, 0)
 theme_override_styles/panel = SubResource("StyleBoxFlat_left")
 
-[node name="Label" type="Label" parent="Background/VBox/Body/LeftPanel"]
+[node name="HammerRail" parent="Background/VBox/Body/LeftPanel" instance=ExtResource("2_hammer_rail")]
+unique_name_in_owner = true
 layout_mode = 2
-text = "Hammer Rail"
-horizontal_alignment = 1
-vertical_alignment = 1
 
 [node name="CenterPanel" type="PanelContainer" parent="Background/VBox/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_center")
 
-[node name="Label" type="Label" parent="Background/VBox/Body/CenterPanel"]
+[node name="CenterVBox" type="VBoxContainer" parent="Background/VBox/Body/CenterPanel"]
 layout_mode = 2
-text = "Crafting Bench"
-horizontal_alignment = 1
-vertical_alignment = 1
+
+[node name="CraftingBench" parent="Background/VBox/Body/CenterPanel/CenterVBox" instance=ExtResource("3_crafting_bench")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="CenterSpacer" type="Control" parent="Background/VBox/Body/CenterPanel/CenterVBox"]
+layout_mode = 2
+size_flags_vertical = 3
 
 [node name="RightPanel" type="PanelContainer" parent="Background/VBox/Body"]
 layout_mode = 2
