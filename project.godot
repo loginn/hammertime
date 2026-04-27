@@ -26,6 +26,7 @@ ItemAffixes="*res://autoloads/item_affixes.gd"
 GameEvents="*res://autoloads/game_events.gd"
 GameState="*res://autoloads/game_state.gd"
 PrestigeManager="*res://autoloads/prestige_manager.gd"
+TotemAffixes="*res://autoloads/totem_affixes.gd"
 
 [display]
 

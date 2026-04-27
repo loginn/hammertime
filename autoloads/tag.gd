@@ -18,6 +18,8 @@ enum ItemSlot {
 enum MaterialTier {
 	IRON,
 	STEEL,
+	ASH,
+	OAK,
 }
 
 enum Rarity {
@@ -46,6 +48,21 @@ const MANA = "MANA"
 const MOVEMENT = "MOVEMENT"
 const UTILITY = "UTILITY"
 const EVASION = "EVASION"
+const EXPEDITION = "EXPEDITION"
+const TOTEM = "TOTEM"
+const DROP_QUANTITY = "DROP_QUANTITY"
+const DROP_QUALITY = "DROP_QUALITY"
+const DURATION = "DURATION"
+const HAMMER_CHANCE = "HAMMER_CHANCE"
+const MATERIAL_CHANCE = "MATERIAL_CHANCE"
+
+# Deity tags for Cthulhu mythos totem affixes
+const CTHULHU = "CTHULHU"
+const NYARLATHOTEP = "NYARLATHOTEP"
+const HASTUR = "HASTUR"
+const DAGON = "DAGON"
+const YOG_SOTHOTH = "YOG_SOTHOTH"
+const SHUB_NIGGURATH = "SHUB_NIGGURATH"
 
 enum StatType {
 	FLAT_DAMAGE,
@@ -97,6 +114,18 @@ const MATERIAL_TIER_CONFIG: Dictionary = {
 	},
 	MaterialTier.STEEL: {
 		"name": "Steel",
+		"min_affix_tier": 1,
+		"max_affix_tier": 4,
+		"base_stat_multiplier": 1.8,
+	},
+	MaterialTier.ASH: {
+		"name": "Ash",
+		"min_affix_tier": 5,
+		"max_affix_tier": 8,
+		"base_stat_multiplier": 1.0,
+	},
+	MaterialTier.OAK: {
+		"name": "Oak",
 		"min_affix_tier": 1,
 		"max_affix_tier": 4,
 		"base_stat_multiplier": 1.8,

@@ -39,6 +39,8 @@ const HIDDEN_CURRENCIES: Array[String] = ["scour"]
 # Base item creation material costs
 const BASE_ITEM_IRON_COST: int = 1
 const BASE_ITEM_STEEL_COST: int = 1
+const BASE_TOTEM_ASH_COST: int = 1
+const BASE_TOTEM_OAK_COST: int = 1
 
 # Prestige
 const PRESTIGE_LEVELS: Array[Dictionary] = [
