@@ -73,7 +73,7 @@ func _refresh_sacrifice_panel() -> void:
 	_add_sacrifice_row("Expedition progress", "—", expedition_status)
 
 	for key: String in GameState.CURRENCY_KEYS:
-		if key == "tack":
+		if key == "tack" or key in BalanceConfig.HIDDEN_CURRENCIES:
 			continue
 		var count: int = GameState.currency_counts.get(key, 0)
 		if count > 0:
@@ -168,6 +168,8 @@ func _refresh_reward_panel() -> void:
 	var total := 0
 
 	for key: String in GameState.CURRENCY_KEYS:
+		if key in BalanceConfig.HIDDEN_CURRENCIES:
+			continue
 		var have: int = GameState.currency_counts.get(key, 0)
 		var gain: int = reward
 		total += gain

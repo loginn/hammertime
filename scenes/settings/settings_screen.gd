@@ -15,7 +15,7 @@ const STEEL_KIT: Array[String] = [
 
 const CURRENCY_GRANT: Dictionary = {
 	"tack": 100, "tuning": 100, "forge": 100, "grand": 100,
-	"runic": 100, "claw": 100, "scour": 100,
+	"runic": 100, "claw": 100,
 }
 
 

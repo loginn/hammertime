@@ -36,6 +36,8 @@ func _ready() -> void:
 
 func _build_buttons() -> void:
 	for data in HAMMER_DATA:
+		if data["key"] in BalanceConfig.HIDDEN_CURRENCIES:
+			continue
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(56, 56)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
