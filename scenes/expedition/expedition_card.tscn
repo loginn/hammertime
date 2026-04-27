@@ -1,0 +1,231 @@
+[gd_scene format=3 uid="uid://bx4qmpntr8c6e"]
+
+[ext_resource type="Script" uid="uid://dx3v9k2p7wnm1" path="res://scenes/expedition/expedition_card.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+content_margin_left = 18.0
+content_margin_top = 18.0
+content_margin_right = 18.0
+content_margin_bottom = 18.0
+bg_color = Color(0.23, 0.16, 0.11, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.11, 0.07, 0.04, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_meta_accent"]
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 6.0
+bg_color = Color(0.08, 0.05, 0.03, 0.5)
+border_width_left = 3
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.77, 0.61, 0.36, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_meta_plain"]
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 6.0
+bg_color = Color(0.08, 0.05, 0.03, 0.5)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0, 0, 0, 0.5)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_bg"]
+bg_color = Color(0.11, 0.07, 0.04, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_fill"]
+bg_color = Color(0.91, 0.53, 0.29, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_send_btn"]
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+bg_color = Color(0.91, 0.53, 0.29, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_secondary_btn"]
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+bg_color = Color(0.24, 0.21, 0.19, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0, 0, 0, 1)
+
+[node name="ExpeditionCard" type="PanelContainer"]
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+script = ExtResource("1_script")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Header" type="Label" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.44, 0.26, 1)
+theme_override_font_sizes/font_size = 10
+text = "EXPEDITION I  ★☆☆"
+
+[node name="CardName" type="Label" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.77, 0.53, 1)
+theme_override_font_sizes/font_size = 26
+text = ""
+
+[node name="CardDesc" type="Label" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.54, 0.46, 0.38, 1)
+theme_override_font_sizes/font_size = 12
+text = ""
+autowrap_mode = 2
+
+[node name="MetaRow" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="MaterialBox" type="PanelContainer" parent="VBox/MetaRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_meta_accent")
+
+[node name="MaterialVBox" type="VBoxContainer" parent="VBox/MetaRow/MaterialBox"]
+layout_mode = 2
+
+[node name="MaterialLabel" type="Label" parent="VBox/MetaRow/MaterialBox/MaterialVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.54, 0.46, 0.38, 1)
+theme_override_font_sizes/font_size = 9
+text = "MATERIAL"
+
+[node name="CardMaterial" type="Label" parent="VBox/MetaRow/MaterialBox/MaterialVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.77, 0.53, 1)
+theme_override_font_sizes/font_size = 14
+text = "Tier 1"
+
+[node name="TimeBox" type="PanelContainer" parent="VBox/MetaRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_meta_plain")
+
+[node name="TimeVBox" type="VBoxContainer" parent="VBox/MetaRow/TimeBox"]
+layout_mode = 2
+
+[node name="TimeLabel" type="Label" parent="VBox/MetaRow/TimeBox/TimeVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.54, 0.46, 0.38, 1)
+theme_override_font_sizes/font_size = 9
+text = "EST. TIME"
+
+[node name="CardTime" type="Label" parent="VBox/MetaRow/TimeBox/TimeVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.77, 0.53, 1)
+theme_override_font_sizes/font_size = 14
+text = "0s"
+
+[node name="RewardsHeader" type="Label" parent="VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.54, 0.46, 0.38, 1)
+theme_override_font_sizes/font_size = 9
+text = "REWARDS"
+
+[node name="CardRewards" type="VBoxContainer" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="CardProgress" type="ProgressBar" parent="VBox"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 14)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_progress_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_progress_fill")
+max_value = 1.0
+step = 0.001
+show_percentage = false
+
+[node name="CardCountdown" type="Label" parent="VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.53, 0.29, 1)
+theme_override_font_sizes/font_size = 11
+text = "0s"
+horizontal_alignment = 1
+
+[node name="CardStatus" type="Label" parent="VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.7, 0.36, 1)
+theme_override_font_sizes/font_size = 11
+text = "IN PROGRESS"
+horizontal_alignment = 1
+
+[node name="CardSend" type="Button" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 10
+theme_override_colors/font_color = Color(0.1, 0.03, 0.01, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_send_btn")
+text = "Send Hero"
+
+[node name="CardBusy" type="Button" parent="VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.54, 0.46, 0.38, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_secondary_btn")
+disabled = true
+text = "Hero Busy"
+
+[node name="CardCollect" type="Button" parent="VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.1, 0.03, 0.01, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_send_btn")
+text = "Collect Rewards"
+
+[node name="CardRecall" type="Button" parent="VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.77, 0.5, 0.44, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleBoxFlat_secondary_btn")
+text = "Recall Hero"
