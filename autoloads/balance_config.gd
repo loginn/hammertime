@@ -29,6 +29,10 @@ const EXPEDITION_1_BASE_TIME: float = 10.0
 const EXPEDITION_2_BASE_TIME: float = 38.0
 const EXPEDITION_HERO_POWER_SCALING: float = 0.005
 
+# Base item creation material costs
+const BASE_ITEM_IRON_COST: int = 1
+const BASE_ITEM_STEEL_COST: int = 1
+
 # Prestige
 const PRESTIGE_TACK_HAMMER_COST: int = 100
 const PRESTIGE_REWARD_AMOUNT: int = 999

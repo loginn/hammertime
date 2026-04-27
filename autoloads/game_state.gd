@@ -11,7 +11,8 @@ var crafting_bench_item: Item = null
 var expedition_resolver: ExpeditionResolver = null
 
 const CURRENCY_KEYS: Array[String] = [
-	"tack", "tuning", "forge", "grand", "runic", "claw", "scour"
+	"tack", "tuning", "forge", "grand", "runic", "claw", "scour",
+	"iron", "steel", "wood"
 ]
 
 var _currency_classes: Dictionary = {}
@@ -24,6 +25,9 @@ const CURRENCY_DISPLAY_NAMES: Dictionary = {
 	"runic": "Runic Hammer",
 	"claw": "Claw Hammer",
 	"scour": "Scour Hammer",
+	"iron": "Iron",
+	"steel": "Steel",
+	"wood": "Wood",
 }
 
 

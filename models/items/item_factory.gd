@@ -101,6 +101,16 @@ static func _build_base_items() -> Dictionary:
 	}
 
 
+static func can_afford_base(base_id: String) -> bool:
+	var items := _get_base_items()
+	if base_id not in items:
+		return false
+	var tier: Tag_List.MaterialTier = items[base_id]["material_tier"]
+	var material_key: String = "iron" if tier == Tag_List.MaterialTier.IRON else "steel"
+	var cost: int = BalanceConfig.BASE_ITEM_IRON_COST if tier == Tag_List.MaterialTier.IRON else BalanceConfig.BASE_ITEM_STEEL_COST
+	return GameState.currency_counts.get(material_key, 0) >= cost
+
+
 static func create_base(base_id: String) -> Item:
 	var items := _get_base_items()
 	if base_id not in items:
@@ -108,6 +118,11 @@ static func create_base(base_id: String) -> Item:
 		return null
 
 	var def: Dictionary = items[base_id]
+	var tier: Tag_List.MaterialTier = def["material_tier"]
+	var material_key: String = "iron" if tier == Tag_List.MaterialTier.IRON else "steel"
+	var cost: int = BalanceConfig.BASE_ITEM_IRON_COST if tier == Tag_List.MaterialTier.IRON else BalanceConfig.BASE_ITEM_STEEL_COST
+	if not GameState.spend_currency(material_key, cost):
+		return null
 	var item := Item.new()
 	item.base_id = base_id
 	item.item_name = def["name"]

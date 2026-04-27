@@ -39,6 +39,7 @@ func _grant_currencies() -> void:
 
 
 func _grant_iron_kit() -> void:
+	GameState.add_currencies({"iron": IRON_KIT.size()})
 	for base_id: String in IRON_KIT:
 		var item: Item = ItemFactory.create_base(base_id)
 		if item:
@@ -46,6 +47,7 @@ func _grant_iron_kit() -> void:
 
 
 func _grant_steel_kit() -> void:
+	GameState.add_currencies({"steel": STEEL_KIT.size()})
 	for base_id: String in STEEL_KIT:
 		var item: Item = ItemFactory.create_base(base_id)
 		if item:
