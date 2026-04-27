@@ -80,7 +80,7 @@ static func _alchemy_drop_table() -> DropTable:
 		DropTable.create_entry("currency", "grand", -1, 60, 1, 2, false),
 		DropTable.create_entry("currency", "forge", -1, 25, 1, 2, false),
 		DropTable.create_entry("currency", "tuning", -1, 10, 2, 3, false),
-		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.STEEL, -1, 5, 1, 1, false),
+		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.STEEL, 5, 1, 1, false),
 	]
 	return dt
 
@@ -93,7 +93,7 @@ static func _exaltation_drop_table() -> DropTable:
 		DropTable.create_entry("currency", "runic", -1, 60, 1, 2, false),
 		DropTable.create_entry("currency", "grand", -1, 25, 1, 1, false),
 		DropTable.create_entry("currency", "forge", -1, 10, 1, 1, false),
-		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.STEEL, -1, 5, 1, 1, false),
+		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.STEEL, 5, 1, 1, false),
 	]
 	return dt
 
@@ -106,7 +106,7 @@ static func _annulment_drop_table() -> DropTable:
 		DropTable.create_entry("currency", "claw", -1, 60, 1, 2, false),
 		DropTable.create_entry("currency", "runic", -1, 25, 1, 1, false),
 		DropTable.create_entry("currency", "grand", -1, 10, 1, 1, false),
-		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.STEEL, -1, 5, 1, 1, false),
+		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.STEEL, 5, 1, 1, false),
 	]
 	return dt
 
