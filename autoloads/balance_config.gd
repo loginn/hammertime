@@ -25,8 +25,12 @@ const RARE_MAX_PREFIXES: int = 3
 const RARE_MAX_SUFFIXES: int = 3
 
 # Expedition timing
-const EXPEDITION_1_BASE_TIME: float = 10.0
-const EXPEDITION_2_BASE_TIME: float = 38.0
+const EXPEDITION_TRANSMUTE_TIME: float = 10.0
+const EXPEDITION_AUGMENTATION_TIME: float = 90.0
+const EXPEDITION_ALTERATION_TIME: float = 420.0
+const EXPEDITION_ALCHEMY_TIME: float = 720.0
+const EXPEDITION_EXALTATION_TIME: float = 3600.0
+const EXPEDITION_ANNULMENT_TIME: float = 10800.0
 const EXPEDITION_HERO_POWER_SCALING: float = 0.005
 
 # Currencies hidden from all UI surfaces (code preserved, drops intact)

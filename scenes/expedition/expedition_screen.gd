@@ -38,7 +38,7 @@ const REWARD_DISPLAY_DURATION: float = 3.0
 
 
 func _ready() -> void:
-	_configs = ExpeditionConfig.get_all_configs()
+	_configs = ExpeditionConfig.get_configs_for_prestige(0)
 
 	_populate_card(0)
 	_populate_card(1)
