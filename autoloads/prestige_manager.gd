@@ -6,11 +6,8 @@ var prestige_count: int = 0
 func can_prestige() -> bool:
 	if is_max_prestige():
 		return false
-	return GameState.currency_counts.get("tack", 0) >= BalanceConfig.PRESTIGE_LEVELS[prestige_count].cost
-
-
-func get_tack_hammer_count() -> int:
-	return GameState.currency_counts.get("tack", 0)
+	var level_data: Dictionary = BalanceConfig.PRESTIGE_LEVELS[prestige_count]
+	return GameState.currency_counts.get(level_data.cost_currency, 0) >= level_data.cost
 
 
 func get_next_level_data() -> Dictionary:
@@ -29,12 +26,9 @@ func execute_prestige() -> bool:
 
 	var level_data: Dictionary = BalanceConfig.PRESTIGE_LEVELS[prestige_count]
 
-	GameState.spend_currency("tack", level_data.cost)
+	GameState.spend_currency(level_data.cost_currency, level_data.cost)
 
 	GameState.wipe_run_state()
-
-	for key in GameState.CURRENCY_KEYS:
-		GameState.currency_counts[key] = level_data.reward_amount
 
 	prestige_count += 1
 
