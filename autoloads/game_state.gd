@@ -12,7 +12,7 @@ var expedition_resolver: ExpeditionResolver = null
 
 const CURRENCY_KEYS: Array[String] = [
 	"tack", "tuning", "forge", "grand", "runic", "claw", "scour",
-	"iron", "steel", "wood"
+	"iron", "steel", "ash", "oak"
 ]
 
 var _currency_classes: Dictionary = {}
@@ -27,7 +27,8 @@ const CURRENCY_DISPLAY_NAMES: Dictionary = {
 	"scour": "Scour Hammer",
 	"iron": "Iron",
 	"steel": "Steel",
-	"wood": "Wood",
+	"ash": "Ash Wood",
+	"oak": "Oak Wood",
 }
 
 

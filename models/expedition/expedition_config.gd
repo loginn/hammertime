@@ -31,6 +31,15 @@ func _init(
 	required_prestige = p_required_prestige
 
 
+# --- Wood Drop Helper ---
+
+static func _add_wood_entries(dt: DropTable, is_rare: bool) -> void:
+	var wood_key: String = "oak" if is_rare else "ash"
+	dt.entries.append(
+		DropTable.create_entry("currency", wood_key, -1, 1, 1, 1, false)
+	)
+
+
 # --- Starter Zone Drop Tables ---
 
 static func _transmute_drop_table() -> DropTable:
@@ -42,6 +51,8 @@ static func _transmute_drop_table() -> DropTable:
 		DropTable.create_entry("currency", "tuning", -1, 30, 1, 1, false),
 		DropTable.create_entry("currency", "forge", -1, 10, 1, 1, false),
 	]
+	if PrestigeManager.prestige_count >= 2:
+		_add_wood_entries(dt, false)
 	return dt
 
 
@@ -54,6 +65,8 @@ static func _augmentation_drop_table() -> DropTable:
 		DropTable.create_entry("currency", "forge", -1, 30, 1, 1, false),
 		DropTable.create_entry("currency", "tack", -1, 15, 2, 3, false),
 	]
+	if PrestigeManager.prestige_count >= 2:
+		_add_wood_entries(dt, false)
 	return dt
 
 
@@ -67,6 +80,8 @@ static func _alteration_drop_table() -> DropTable:
 		DropTable.create_entry("currency", "runic", -1, 15, 1, 1, false),
 		DropTable.create_entry("currency", "tuning", -1, 5, 1, 1, false),
 	]
+	if PrestigeManager.prestige_count >= 2:
+		_add_wood_entries(dt, false)
 	return dt
 
 
@@ -82,6 +97,8 @@ static func _alchemy_drop_table() -> DropTable:
 		DropTable.create_entry("currency", "tuning", -1, 10, 2, 3, false),
 		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.STEEL, 5, 1, 1, false),
 	]
+	if PrestigeManager.prestige_count >= 2:
+		_add_wood_entries(dt, true)
 	return dt
 
 
@@ -95,6 +112,8 @@ static func _exaltation_drop_table() -> DropTable:
 		DropTable.create_entry("currency", "forge", -1, 10, 1, 1, false),
 		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.STEEL, 5, 1, 1, false),
 	]
+	if PrestigeManager.prestige_count >= 2:
+		_add_wood_entries(dt, true)
 	return dt
 
 
@@ -108,6 +127,8 @@ static func _annulment_drop_table() -> DropTable:
 		DropTable.create_entry("currency", "grand", -1, 10, 1, 1, false),
 		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.STEEL, 5, 1, 1, false),
 	]
+	if PrestigeManager.prestige_count >= 2:
+		_add_wood_entries(dt, true)
 	return dt
 
 

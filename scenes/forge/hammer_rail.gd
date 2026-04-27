@@ -5,7 +5,8 @@ signal hammer_selected(key: String)
 const MATERIAL_DATA: Array[Dictionary] = [
 	{"key": "iron", "name": "Iron", "glyph": "Fe"},
 	{"key": "steel", "name": "Steel", "glyph": "St"},
-	{"key": "wood", "name": "Wood", "glyph": "W"},
+	{"key": "ash", "name": "Ash Wood", "glyph": "As"},
+	{"key": "oak", "name": "Oak Wood", "glyph": "Ok"},
 ]
 
 const HAMMER_DATA: Array[Dictionary] = [

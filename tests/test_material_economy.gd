@@ -13,27 +13,30 @@ func before_each() -> void:
 func test_iron_steel_wood_in_currency_keys() -> void:
 	assert_true("iron" in GameState.CURRENCY_KEYS, "iron in CURRENCY_KEYS")
 	assert_true("steel" in GameState.CURRENCY_KEYS, "steel in CURRENCY_KEYS")
-	assert_true("wood" in GameState.CURRENCY_KEYS, "wood in CURRENCY_KEYS")
+	assert_true("ash" in GameState.CURRENCY_KEYS, "ash in CURRENCY_KEYS")
+	assert_true("oak" in GameState.CURRENCY_KEYS, "oak in CURRENCY_KEYS")
 
 
 func test_material_display_names() -> void:
 	assert_eq(GameState.CURRENCY_DISPLAY_NAMES["iron"], "Iron")
 	assert_eq(GameState.CURRENCY_DISPLAY_NAMES["steel"], "Steel")
-	assert_eq(GameState.CURRENCY_DISPLAY_NAMES["wood"], "Wood")
+	assert_eq(GameState.CURRENCY_DISPLAY_NAMES["ash"], "Ash Wood")
+	assert_eq(GameState.CURRENCY_DISPLAY_NAMES["oak"], "Oak Wood")
 
 
 func test_materials_initialized_to_zero() -> void:
 	assert_eq(GameState.currency_counts["iron"], 0)
 	assert_eq(GameState.currency_counts["steel"], 0)
-	assert_eq(GameState.currency_counts["wood"], 0)
+	assert_eq(GameState.currency_counts["ash"], 0)
+	assert_eq(GameState.currency_counts["oak"], 0)
 
 
 func test_wipe_run_resets_materials() -> void:
-	GameState.add_currencies({"iron": 10, "steel": 5, "wood": 3})
+	GameState.add_currencies({"iron": 10, "steel": 5, "ash": 3})
 	GameState.wipe_run_state()
 	assert_eq(GameState.currency_counts["iron"], 0)
 	assert_eq(GameState.currency_counts["steel"], 0)
-	assert_eq(GameState.currency_counts["wood"], 0)
+	assert_eq(GameState.currency_counts["ash"], 0)
 
 
 func test_create_base_iron_item_costs_iron() -> void:

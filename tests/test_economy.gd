@@ -8,13 +8,15 @@ func before_each() -> void:
 func test_iron_steel_wood_in_currency_keys() -> void:
 	assert_true("iron" in GameState.CURRENCY_KEYS, "iron in CURRENCY_KEYS")
 	assert_true("steel" in GameState.CURRENCY_KEYS, "steel in CURRENCY_KEYS")
-	assert_true("wood" in GameState.CURRENCY_KEYS, "wood in CURRENCY_KEYS")
+	assert_true("ash" in GameState.CURRENCY_KEYS, "ash in CURRENCY_KEYS")
+	assert_true("oak" in GameState.CURRENCY_KEYS, "oak in CURRENCY_KEYS")
 
 
 func test_material_currencies_initialize_to_zero() -> void:
 	assert_eq(GameState.currency_counts["iron"], 0, "iron starts at 0")
 	assert_eq(GameState.currency_counts["steel"], 0, "steel starts at 0")
-	assert_eq(GameState.currency_counts["wood"], 0, "wood starts at 0")
+	assert_eq(GameState.currency_counts["ash"], 0, "ash starts at 0")
+	assert_eq(GameState.currency_counts["oak"], 0, "oak starts at 0")
 
 
 func test_create_base_consumes_iron() -> void:
