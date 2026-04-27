@@ -3,11 +3,11 @@
 [ext_resource type="Script" path="res://scenes/prestige/prestige_screen.gd" id="1_script"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
-bg_color = Color(0.12, 0.11, 0.10, 1)
-content_margin_left = 20.0
-content_margin_top = 20.0
-content_margin_right = 20.0
-content_margin_bottom = 20.0
+bg_color = Color(0.07, 0.05, 0.03, 1)
+content_margin_left = 28.0
+content_margin_top = 24.0
+content_margin_right = 28.0
+content_margin_bottom = 24.0
 
 [node name="PrestigeScreen" type="Control"]
 layout_mode = 3
@@ -27,97 +27,172 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
 
-[node name="VBox" type="VBoxContainer" parent="PanelBg"]
+[node name="Body" type="HBoxContainer" parent="PanelBg"]
 layout_mode = 2
+theme_override_constants/separation = 24
 
-[node name="HeaderRow" type="HBoxContainer" parent="PanelBg/VBox"]
-layout_mode = 2
-
-[node name="HeaderLabel" type="Label" parent="PanelBg/VBox/HeaderRow"]
+[node name="LeftPanel" type="VBoxContainer" parent="PanelBg/Body"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
-theme_override_font_sizes/font_size = 28
-text = "Prestige Level: 0"
-
-[node name="Spacer" type="Control" parent="PanelBg/VBox/HeaderRow"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.0
+theme_override_constants/separation = 6
 
-[node name="TackLabel" type="Label" parent="PanelBg/VBox/HeaderRow"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.93, 0.88, 0.78, 1)
-theme_override_font_sizes/font_size = 18
-text = "Tack Hammers: 0"
-
-[node name="TableTitle" type="Label" parent="PanelBg/VBox"]
+[node name="LeftHeader" type="Label" parent="PanelBg/Body/LeftPanel"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
-theme_override_font_sizes/font_size = 20
-text = "Prestige Unlock Table"
+theme_override_font_sizes/font_size = 16
+text = "YOU WILL SACRIFICE"
 
-[node name="UnlockTable" type="VBoxContainer" parent="PanelBg/VBox"]
+[node name="LeftSubheader" type="Label" parent="PanelBg/Body/LeftPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+text = "CURRENT RUN"
+
+[node name="SacrificeList" type="VBoxContainer" parent="PanelBg/Body/LeftPanel"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
 
-[node name="Separator" type="HSeparator" parent="PanelBg/VBox"]
-layout_mode = 2
-theme_override_colors/separator_color = Color(0.4, 0.35, 0.28, 1)
-
-[node name="ActionPanel" type="VBoxContainer" parent="PanelBg/VBox"]
+[node name="CenterPanel" type="VBoxContainer" parent="PanelBg/Body"]
 unique_name_in_owner = true
 layout_mode = 2
-
-[node name="NextPrestigeTitle" type="Label" parent="PanelBg/VBox/ActionPanel"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
-theme_override_font_sizes/font_size = 20
-text = "Next Prestige"
-
-[node name="NextCostLabel" type="Label" parent="PanelBg/VBox/ActionPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.93, 0.88, 0.78, 1)
-theme_override_font_sizes/font_size = 15
-text = "Cost: 100 Tack Hammers"
-
-[node name="NextRewardLabel" type="Label" parent="PanelBg/VBox/ActionPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.93, 0.88, 0.78, 1)
-theme_override_font_sizes/font_size = 15
-text = "Reward: 999 of each currency"
-
-[node name="NextUnlockLabel" type="Label" parent="PanelBg/VBox/ActionPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.93, 0.88, 0.78, 1)
-theme_override_font_sizes/font_size = 15
-text = "Unlocks: Item Tier 7"
-
-[node name="NextResetsLabel" type="Label" parent="PanelBg/VBox/ActionPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.75, 0.55, 0.45, 1)
-theme_override_font_sizes/font_size = 14
-text = "Resets: All currencies, inventory, hero equipment, area level"
-
-[node name="PrestigeButton" type="Button" parent="PanelBg/VBox/ActionPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-custom_minimum_size = Vector2(200, 50)
 size_flags_horizontal = 0
-theme_override_font_sizes/font_size = 18
-text = "Prestige"
+custom_minimum_size = Vector2(580, 0)
+theme_override_constants/separation = 12
+alignment = 1
 
-[node name="MaxLabel" type="Label" parent="PanelBg/VBox"]
+[node name="Subtitle" type="Label" parent="PanelBg/Body/CenterPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.55, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+horizontal_alignment = 1
+text = "◆ THE REFORGING ◆"
+
+[node name="Title" type="Label" parent="PanelBg/Body/CenterPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 38
+horizontal_alignment = 1
+text = "PRESTIGE"
+
+[node name="Flavor" type="Label" parent="PanelBg/Body/CenterPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.65, 0.55, 1)
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 1
+autowrap_mode = 2
+text = "Melt your works back to slag. The forge remembers only your craft — and rewards patience with a new beginning."
+
+[node name="GaugePanel" type="VBoxContainer" parent="PanelBg/Body/CenterPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="GaugeHeader" type="Label" parent="PanelBg/Body/CenterPanel/GaugePanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 9
+text = "TACK HAMMERS · THRESHOLD"
+
+[node name="CountRow" type="HBoxContainer" parent="PanelBg/Body/CenterPanel/GaugePanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="HaveCount" type="Label" parent="PanelBg/Body/CenterPanel/GaugePanel/CountRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 72
+text = "0"
+
+[node name="Slash" type="Label" parent="PanelBg/Body/CenterPanel/GaugePanel/CountRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.35, 0.28, 1)
+theme_override_font_sizes/font_size = 28
+text = " / "
+
+[node name="NeedCount" type="Label" parent="PanelBg/Body/CenterPanel/GaugePanel/CountRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.35, 0.28, 1)
+theme_override_font_sizes/font_size = 36
+text = "100"
+
+[node name="ProgressBar" type="ProgressBar" parent="PanelBg/Body/CenterPanel/GaugePanel"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 18)
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="GaugeFooter" type="Label" parent="PanelBg/Body/CenterPanel/GaugePanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+text = "100 MORE NEEDED"
+
+[node name="ReforgeButton" type="Button" parent="PanelBg/Body/CenterPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 56)
+theme_override_font_sizes/font_size = 18
+text = "REFORGE ⚒ (LOCKED)"
+
+[node name="PrestigeCount" type="Label" parent="PanelBg/Body/CenterPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 9
+horizontal_alignment = 1
+text = "PRESTIGE COUNT · 0 · FIRST REFORGE"
+
+[node name="MaxLabel" type="Label" parent="PanelBg/Body/CenterPanel"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.85, 0.45, 1)
 theme_override_font_sizes/font_size = 24
-text = "MAX PRESTIGE"
+horizontal_alignment = 1
+text = "MAX PRESTIGE REACHED"
+
+[node name="RightPanel" type="VBoxContainer" parent="PanelBg/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.0
+theme_override_constants/separation = 6
+
+[node name="RightHeader" type="Label" parent="PanelBg/Body/RightPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 16
+text = "YOU WILL RECEIVE"
+
+[node name="RightSubheader" type="Label" parent="PanelBg/Body/RightPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+text = "×7 HAMMERS"
+
+[node name="RewardList" type="VBoxContainer" parent="PanelBg/Body/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="TotalLabel" type="Label" parent="PanelBg/Body/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.55, 0.25, 1)
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 1
+text = "TOTAL · 6,993 HAMMERS"
 
 [node name="ConfirmDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true

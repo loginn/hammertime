@@ -18,7 +18,7 @@ var base_id: String
 var implicit: Implicit
 var prefixes: Array[Affix] = []
 var suffixes: Array[Affix] = []
-var valid_tags: Array[String]
+var valid_tags: Array[String] = []
 var rarity: Rarity = Rarity.NORMAL
 
 # Base stats (set from base definition)

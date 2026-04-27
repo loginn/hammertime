@@ -1,8 +1,8 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene format=3 uid="uid://djnouya86qjq0"]
 
-[ext_resource type="Script" path="res://scenes/forge/forge_view.gd" id="1_forge"]
+[ext_resource type="Script" uid="uid://dg0utgnq0ahwd" path="res://scenes/forge/forge_view.gd" id="1_forge"]
 [ext_resource type="PackedScene" path="res://scenes/forge/hammer_rail.tscn" id="2_hammer_rail"]
-[ext_resource type="PackedScene" path="res://scenes/forge/crafting_bench.tscn" id="3_crafting_bench"]
+[ext_resource type="PackedScene" uid="uid://c87vdo7xe20tk" path="res://scenes/forge/crafting_bench.tscn" id="3_crafting_bench"]
 [ext_resource type="PackedScene" path="res://scenes/forge/inventory_grid.tscn" id="4_inventory_grid"]
 [ext_resource type="PackedScene" path="res://scenes/forge/hero_panel.tscn" id="5_hero_panel"]
 
@@ -18,7 +18,7 @@ bg_color = Color(0.1, 0.08, 0.06, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_right"]
 bg_color = Color(0.13, 0.1, 0.08, 1)
 
-[node name="ForgeView" type="Control"]
+[node name="ForgeView" type="Control" unique_id=325227879]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -27,7 +27,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_forge")
 
-[node name="Background" type="PanelContainer" parent="."]
+[node name="Background" type="PanelContainer" parent="." unique_id=905301490]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -36,43 +36,47 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
 
-[node name="VBox" type="VBoxContainer" parent="Background"]
+[node name="VBox" type="VBoxContainer" parent="Background" unique_id=501629700]
 layout_mode = 2
 
-[node name="Body" type="HBoxContainer" parent="Background/VBox"]
+[node name="Body" type="HBoxContainer" parent="Background/VBox" unique_id=1817108560]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/separation = 10
 
-[node name="LeftPanel" type="PanelContainer" parent="Background/VBox/Body"]
-layout_mode = 2
+[node name="LeftPanel" type="PanelContainer" parent="Background/VBox/Body" unique_id=107745874]
 custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_left")
 
-[node name="HammerRail" parent="Background/VBox/Body/LeftPanel" instance=ExtResource("2_hammer_rail")]
+[node name="HammerRail" parent="Background/VBox/Body/LeftPanel" unique_id=213238172 instance=ExtResource("2_hammer_rail")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="CenterPanel" type="PanelContainer" parent="Background/VBox/Body"]
+[node name="CenterPanel" type="PanelContainer" parent="Background/VBox/Body" unique_id=847424886]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_center")
 
-[node name="CenterVBox" type="VBoxContainer" parent="Background/VBox/Body/CenterPanel"]
+[node name="CenterVBox" type="VBoxContainer" parent="Background/VBox/Body/CenterPanel" unique_id=1948952355]
+custom_minimum_size = Vector2(480, 0)
 layout_mode = 2
+theme_override_constants/separation = 10
 
-[node name="CraftingBench" parent="Background/VBox/Body/CenterPanel/CenterVBox" instance=ExtResource("3_crafting_bench")]
+[node name="CraftingBench" parent="Background/VBox/Body/CenterPanel/CenterVBox" unique_id=1380450904 instance=ExtResource("3_crafting_bench")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="InventoryGrid" parent="Background/VBox/Body/CenterPanel/CenterVBox" unique_id=1905794490 instance=ExtResource("4_inventory_grid")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="InventoryGrid" parent="Background/VBox/Body/CenterPanel/CenterVBox" instance=ExtResource("4_inventory_grid")]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="RightPanel" type="PanelContainer" parent="Background/VBox/Body"]
-layout_mode = 2
+[node name="RightPanel" type="PanelContainer" parent="Background/VBox/Body" unique_id=308115866]
 custom_minimum_size = Vector2(430, 0)
+layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_right")
 
-[node name="HeroPanel" parent="Background/VBox/Body/RightPanel" instance=ExtResource("5_hero_panel")]
+[node name="HeroPanel" parent="Background/VBox/Body/RightPanel" unique_id=380585454 instance=ExtResource("5_hero_panel")]
 unique_name_in_owner = true
 layout_mode = 2

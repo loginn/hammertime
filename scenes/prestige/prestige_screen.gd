@@ -1,103 +1,251 @@
 extends Control
 
-@onready var _header_label: Label = %HeaderLabel
-@onready var _tack_label: Label = %TackLabel
-@onready var _unlock_table: VBoxContainer = %UnlockTable
-@onready var _action_panel: VBoxContainer = %ActionPanel
-@onready var _next_cost_label: Label = %NextCostLabel
-@onready var _next_reward_label: Label = %NextRewardLabel
-@onready var _next_unlock_label: Label = %NextUnlockLabel
-@onready var _next_resets_label: Label = %NextResetsLabel
-@onready var _prestige_button: Button = %PrestigeButton
-@onready var _confirm_dialog: ConfirmationDialog = %ConfirmDialog
+const HAMMER_GLYPHS: Dictionary = {
+	"tack": "⬦", "tuning": "◈", "forge": "◆", "grand": "✦",
+	"runic": "⚒", "scour": "◎", "claw": "✕",
+}
+
+@onready var _sacrifice_list: VBoxContainer = %SacrificeList
+@onready var _reward_list: VBoxContainer = %RewardList
+@onready var _total_label: Label = %TotalLabel
+@onready var _have_count: Label = %HaveCount
+@onready var _need_count: Label = %NeedCount
+@onready var _progress_bar: ProgressBar = %ProgressBar
+@onready var _gauge_footer: Label = %GaugeFooter
+@onready var _gauge_header: Label = %GaugeHeader
+@onready var _reforge_button: Button = %ReforgeButton
+@onready var _prestige_count_label: Label = %PrestigeCount
 @onready var _max_label: Label = %MaxLabel
+@onready var _confirm_dialog: ConfirmationDialog = %ConfirmDialog
 
 
 func _ready() -> void:
-	_build_unlock_table()
-	_refresh_display()
-	_prestige_button.pressed.connect(_on_prestige_button_pressed)
+	_reforge_button.pressed.connect(_on_reforge_pressed)
 	_confirm_dialog.confirmed.connect(_on_confirm_accepted)
 	GameEvents.prestige_completed.connect(_on_prestige_completed)
 	GameEvents.currency_changed.connect(_on_currency_changed)
+	GameEvents.inventory_changed.connect(func(_s): _refresh_sacrifice_panel())
+	_refresh_all()
 
 
-func _build_unlock_table() -> void:
-	for child in _unlock_table.get_children():
+func _refresh_all() -> void:
+	_refresh_sacrifice_panel()
+	_refresh_gauge()
+	_refresh_reward_panel()
+	_refresh_prestige_count()
+
+
+func _refresh_sacrifice_panel() -> void:
+	for child in _sacrifice_list.get_children():
+		_sacrifice_list.remove_child(child)
 		child.queue_free()
 
-	var header_row := HBoxContainer.new()
-	_add_table_cell(header_row, "Level", 60, Color(0.7, 0.65, 0.55))
-	_add_table_cell(header_row, "Cost", 100, Color(0.7, 0.65, 0.55))
-	_add_table_cell(header_row, "Unlocks", 200, Color(0.7, 0.65, 0.55))
-	_add_table_cell(header_row, "Status", 80, Color(0.7, 0.65, 0.55))
-	_unlock_table.add_child(header_row)
+	var item_count := 0
+	var magic_count := 0
+	var rare_count := 0
+	var normal_count := 0
+	for slot: int in Tag.ALL_SLOTS:
+		var items: Array = GameState.crafting_inventory.get(slot, [])
+		for item: Item in items:
+			item_count += 1
+			match item.rarity:
+				Tag.Rarity.MAGIC: magic_count += 1
+				Tag.Rarity.RARE: rare_count += 1
+				_: normal_count += 1
 
-	for entry: Dictionary in BalanceConfig.PRESTIGE_LEVELS:
-		var row := HBoxContainer.new()
-		_add_table_cell(row, str(entry.level), 60, Color(0.93, 0.88, 0.78))
-		_add_table_cell(row, "%d Tack" % entry.cost, 100, Color(0.93, 0.88, 0.78))
-		_add_table_cell(row, entry.description, 200, Color(0.93, 0.88, 0.78))
+	var sub_parts: Array[String] = []
+	if magic_count > 0: sub_parts.append("%d magic" % magic_count)
+	if rare_count > 0: sub_parts.append("%d rare" % rare_count)
+	if normal_count > 0: sub_parts.append("%d normal" % normal_count)
+	var item_sub := " · ".join(sub_parts) if sub_parts.size() > 0 else "none"
 
-		var status_text := ""
-		if PrestigeManager.prestige_count >= entry.level:
-			status_text = "✓"
-		else:
-			status_text = "🔒"
-		_add_table_cell(row, status_text, 80, Color(0.93, 0.88, 0.78))
+	_add_sacrifice_row("All crafted items", str(item_count), item_sub)
 
-		_unlock_table.add_child(row)
+	var equipped_count := 0
+	for slot: int in Tag.ALL_SLOTS:
+		if GameState.hero.get_equipped(slot) != null:
+			equipped_count += 1
+	_add_sacrifice_row("Equipped gear", str(equipped_count), "%d / 5 slots" % equipped_count)
+
+	var expedition_status := "will reset"
+	if GameState.expedition_resolver and GameState.expedition_resolver.is_active:
+		expedition_status = "active — will reset"
+	_add_sacrifice_row("Expedition progress", "—", expedition_status)
+
+	for key: String in GameState.CURRENCY_KEYS:
+		if key == "tack":
+			continue
+		var count: int = GameState.currency_counts.get(key, 0)
+		if count > 0:
+			_add_sacrifice_row(GameState.CURRENCY_DISPLAY_NAMES[key], str(count), "stockpile")
 
 
-func _add_table_cell(row: HBoxContainer, text: String, min_width: int, color: Color) -> void:
-	var label := Label.new()
-	label.text = text
-	label.custom_minimum_size.x = min_width
-	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", 14)
-	row.add_child(label)
+func _add_sacrifice_row(label_text: String, value_text: String, sub_text: String) -> void:
+	var row := HBoxContainer.new()
+	row.custom_minimum_size.y = 28
+
+	var left := VBoxContainer.new()
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var name_label := Label.new()
+	name_label.text = label_text
+	name_label.add_theme_font_size_override("font_size", 13)
+	name_label.add_theme_color_override("font_color", Color(0.93, 0.88, 0.78))
+	left.add_child(name_label)
+
+	var sub_label := Label.new()
+	sub_label.text = sub_text
+	sub_label.add_theme_font_size_override("font_size", 9)
+	sub_label.add_theme_color_override("font_color", Color(0.4, 0.38, 0.3))
+	left.add_child(sub_label)
+
+	row.add_child(left)
+
+	var val_label := Label.new()
+	val_label.text = value_text
+	val_label.add_theme_font_size_override("font_size", 18)
+	val_label.add_theme_color_override("font_color", Color(0.5, 0.45, 0.35))
+	val_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(val_label)
+
+	_sacrifice_list.add_child(row)
 
 
-func _refresh_display() -> void:
-	_header_label.text = "Prestige Level: %d" % PrestigeManager.prestige_count
+func _refresh_gauge() -> void:
+	if PrestigeManager.is_max_prestige():
+		_have_count.text = "—"
+		_need_count.text = "—"
+		_progress_bar.value = 100
+		_gauge_footer.text = "MAX PRESTIGE REACHED"
+		_gauge_header.text = "TACK HAMMERS · COMPLETE"
+		_reforge_button.visible = false
+		_max_label.visible = true
+		return
 
-	var tack_count: int = GameState.currency_counts.get("tack", 0)
-	_tack_label.text = "Tack Hammers: %d" % tack_count
+	_reforge_button.visible = true
+	_max_label.visible = false
 
-	_rebuild_status_indicators()
+	var data: Dictionary = PrestigeManager.get_next_level_data()
+	var tack: int = GameState.currency_counts.get("tack", 0)
+	var need: int = data.cost
+	var pct: float = min(100.0, float(tack) / float(need) * 100.0)
+	var ready: bool = tack >= need
+
+	_have_count.text = str(tack)
+	_need_count.text = str(need)
+	_progress_bar.value = pct
+
+	if ready:
+		_have_count.add_theme_color_override("font_color", Color(0.9, 0.55, 0.25))
+		_gauge_footer.text = "◆ READY TO REFORGE"
+		_gauge_footer.add_theme_color_override("font_color", Color(0.9, 0.55, 0.25))
+		_reforge_button.text = "REFORGE · CLAIM THE %d" % data.reward_amount
+		_reforge_button.disabled = false
+	else:
+		_have_count.add_theme_color_override("font_color", Color(0.85, 0.75, 0.55))
+		_gauge_footer.text = "%d MORE NEEDED" % (need - tack)
+		_gauge_footer.add_theme_color_override("font_color", Color(0.5, 0.45, 0.35))
+		_reforge_button.text = "REFORGE ⚒ (LOCKED)"
+		_reforge_button.disabled = true
+
+
+func _refresh_reward_panel() -> void:
+	for child in _reward_list.get_children():
+		_reward_list.remove_child(child)
+		child.queue_free()
 
 	if PrestigeManager.is_max_prestige():
-		_action_panel.visible = false
-		_max_label.visible = true
-		_max_label.text = "MAX PRESTIGE"
-	else:
-		_action_panel.visible = true
-		_max_label.visible = false
-		var data: Dictionary = PrestigeManager.get_next_level_data()
-		_next_cost_label.text = "Cost: %d Tack Hammers" % data.cost
-		_next_reward_label.text = "Reward: %d of each currency" % data.reward_amount
-		_next_unlock_label.text = "Unlocks: %s" % data.description
-		_next_resets_label.text = "Resets: All currencies, inventory, hero equipment, area level"
-		_prestige_button.disabled = not PrestigeManager.can_prestige()
+		var done_label := Label.new()
+		done_label.text = "All prestiges complete"
+		done_label.add_theme_font_size_override("font_size", 14)
+		done_label.add_theme_color_override("font_color", Color(0.95, 0.85, 0.45))
+		_reward_list.add_child(done_label)
+		_total_label.text = ""
+		return
 
-
-func _rebuild_status_indicators() -> void:
-	var rows := _unlock_table.get_children()
-	for i in range(1, rows.size()):
-		var row: HBoxContainer = rows[i]
-		var status_label: Label = row.get_child(3)
-		var level_index: int = i - 1
-		var entry: Dictionary = BalanceConfig.PRESTIGE_LEVELS[level_index]
-		if PrestigeManager.prestige_count >= entry.level:
-			status_label.text = "✓"
-		else:
-			status_label.text = "🔒"
-
-
-func _on_prestige_button_pressed() -> void:
 	var data: Dictionary = PrestigeManager.get_next_level_data()
-	var next_level: int = data.level
-	_confirm_dialog.dialog_text = "Prestige to Level %d?\n\nCost: %d Tack Hammers\nReward: %d of each currency\nUnlocks: %s\n\nThis will RESET:\n- All currencies\n- All inventory items\n- Hero equipment\n- Area level" % [next_level, data.cost, data.reward_amount, data.description]
+	var reward: int = data.reward_amount
+	var total := 0
+
+	for key: String in GameState.CURRENCY_KEYS:
+		var have: int = GameState.currency_counts.get(key, 0)
+		var gain: int = reward
+		total += gain
+		var display_name: String = GameState.CURRENCY_DISPLAY_NAMES[key]
+		var glyph: String = HAMMER_GLYPHS.get(key, "·")
+		_add_reward_row(glyph, display_name, have, reward, gain)
+
+	_total_label.text = "TOTAL · %s HAMMERS" % _format_number(total)
+
+	var unlock_label := Label.new()
+	unlock_label.text = "Unlocks: %s" % data.description
+	unlock_label.add_theme_font_size_override("font_size", 11)
+	unlock_label.add_theme_color_override("font_color", Color(0.7, 0.55, 0.35))
+	unlock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_reward_list.add_child(unlock_label)
+
+
+func _add_reward_row(glyph: String, hammer_name: String, have: int, get_amt: int, gain: int) -> void:
+	var row := HBoxContainer.new()
+	row.custom_minimum_size.y = 32
+
+	var glyph_label := Label.new()
+	glyph_label.text = glyph
+	glyph_label.add_theme_font_size_override("font_size", 18)
+	glyph_label.add_theme_color_override("font_color", Color(0.85, 0.75, 0.55))
+	glyph_label.custom_minimum_size.x = 30
+	glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	row.add_child(glyph_label)
+
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var name_label := Label.new()
+	name_label.text = hammer_name
+	name_label.add_theme_font_size_override("font_size", 12)
+	name_label.add_theme_color_override("font_color", Color(0.93, 0.88, 0.78))
+	info.add_child(name_label)
+
+	var detail_label := Label.new()
+	detail_label.text = "HAVE %d → %d" % [have, get_amt]
+	detail_label.add_theme_font_size_override("font_size", 8)
+	detail_label.add_theme_color_override("font_color", Color(0.4, 0.38, 0.3))
+	info.add_child(detail_label)
+
+	row.add_child(info)
+
+	var gain_label := Label.new()
+	gain_label.text = "+%d" % gain
+	gain_label.add_theme_font_size_override("font_size", 16)
+	gain_label.add_theme_color_override("font_color", Color(0.9, 0.55, 0.25))
+	gain_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(gain_label)
+
+	_reward_list.add_child(row)
+
+
+func _refresh_prestige_count() -> void:
+	var count: int = PrestigeManager.prestige_count
+	var suffix := "FIRST REFORGE" if count == 0 else ""
+	if count > 0:
+		suffix = "REFORGES"
+	_prestige_count_label.text = "PRESTIGE COUNT · %d · %s" % [count, suffix]
+
+
+func _format_number(n: int) -> String:
+	var s := str(n)
+	var result := ""
+	var len := s.length()
+	for i in range(len):
+		if i > 0 and (len - i) % 3 == 0:
+			result += ","
+		result += s[i]
+	return result
+
+
+func _on_reforge_pressed() -> void:
+	var data: Dictionary = PrestigeManager.get_next_level_data()
+	_confirm_dialog.dialog_text = "Prestige to Level %d?\n\nCost: %d Tack Hammers\nReward: %d of each currency\nUnlocks: %s\n\nThis will RESET:\n- All currencies\n- All inventory items\n- Hero equipment" % [data.level, data.cost, data.reward_amount, data.description]
 	_confirm_dialog.popup_centered()
 
 
@@ -106,11 +254,9 @@ func _on_confirm_accepted() -> void:
 
 
 func _on_prestige_completed() -> void:
-	_refresh_display()
+	_refresh_all()
 
 
 func _on_currency_changed(_key: String, _amount: int) -> void:
-	var tack_count: int = GameState.currency_counts.get("tack", 0)
-	_tack_label.text = "Tack Hammers: %d" % tack_count
-	if not PrestigeManager.is_max_prestige():
-		_prestige_button.disabled = not PrestigeManager.can_prestige()
+	_refresh_gauge()
+	_refresh_reward_panel()

@@ -54,6 +54,7 @@ func _ready() -> void:
 	GameEvents.expedition_started.connect(_on_expedition_started)
 	GameEvents.expedition_completed.connect(_on_expedition_completed)
 	GameEvents.expedition_collected.connect(_on_expedition_collected)
+	GameEvents.equipment_changed.connect(_on_equipment_changed)
 
 
 func _populate_card(index: int) -> void:
@@ -72,8 +73,16 @@ func _populate_card(index: int) -> void:
 	header_label.text = "EXPEDITION %s  %s" % ["I" if index == 0 else "II", stars]
 	name_label.text = config.expedition_name
 	desc_label.text = config.description
-	material_label.text = "Tier %d" % config.reward_tier
-	time_label.text = _format_duration(config.duration_seconds)
+	var material_name := "Iron" if config.reward_tier == 1 else "Steel"
+	material_label.text = material_name
+	var resolver := GameState.expedition_resolver
+	var effective_duration: float
+	if resolver.is_active and resolver.active_config != null and resolver.active_config.expedition_id == config.expedition_id:
+		effective_duration = resolver.get_effective_duration()
+	else:
+		var hero_power := GameState.hero.get_hero_power()
+		effective_duration = config.duration_seconds / (1.0 + hero_power * BalanceConfig.EXPEDITION_HERO_POWER_SCALING)
+	time_label.text = _format_duration(effective_duration)
 
 	for child in rewards_box.get_children():
 		child.queue_free()
@@ -140,26 +149,27 @@ func _on_collect_pressed() -> void:
 
 
 func _process(delta: float) -> void:
+	var resolver := GameState.expedition_resolver
+	if resolver.is_active:
+		var active_index := _get_active_card_index()
+		if active_index >= 0:
+			var progress_bar := _card_1_progress if active_index == 0 else _card_2_progress
+			progress_bar.value = resolver.get_progress()
+
 	_poll_accumulator += delta
 	if _poll_accumulator < POLL_INTERVAL:
 		return
 	_poll_accumulator = 0.0
 
-	var resolver := GameState.expedition_resolver
 	if resolver.is_active:
 		var active_index := _get_active_card_index()
-		if active_index < 0:
-			return
+		if active_index >= 0:
+			var countdown_label := _card_1_countdown if active_index == 0 else _card_2_countdown
+			var remaining := resolver.get_remaining_seconds()
+			countdown_label.text = "%ds" % ceili(remaining)
 
-		var progress_bar := _card_1_progress if active_index == 0 else _card_2_progress
-		var countdown_label := _card_1_countdown if active_index == 0 else _card_2_countdown
-
-		progress_bar.value = resolver.get_progress()
-		var remaining := resolver.get_remaining_seconds()
-		countdown_label.text = "%ds" % ceili(remaining)
-
-		if resolver.is_completed():
-			_update_card_states()
+			if resolver.is_completed():
+				_update_card_states()
 
 	if _showing_rewards:
 		_reward_display_timer += POLL_INTERVAL
@@ -244,6 +254,19 @@ func _set_card_state(card_index: int, active_index: int, completed: bool) -> voi
 		countdown_label.visible = false
 		if not _showing_rewards:
 			status_label.visible = false
+
+
+func _on_equipment_changed(_slot: int, _item: Item) -> void:
+	_refresh_time_labels()
+
+
+func _refresh_time_labels() -> void:
+	var hero_power := GameState.hero.get_hero_power()
+	for i in range(_configs.size()):
+		var config := _configs[i]
+		var time_label := _card_1_time if i == 0 else _card_2_time
+		var effective := config.duration_seconds / (1.0 + hero_power * BalanceConfig.EXPEDITION_HERO_POWER_SCALING)
+		time_label.text = _format_duration(effective)
 
 
 func _on_expedition_started(_expedition_id: String) -> void:

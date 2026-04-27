@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "/home/vincent/.gsd/"
+    ]
+  },
+  "skipDangerousModePermissionPrompt": true
+}

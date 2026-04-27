@@ -113,7 +113,7 @@ static func create_base(base_id: String) -> Item:
 	item.item_name = def["name"]
 	item.slot = def["slot"]
 	item.material_tier = def["material_tier"]
-	item.valid_tags = def["valid_tags"]
+	item.valid_tags.assign(def["valid_tags"])
 	item.rarity = Item.Rarity.NORMAL
 
 	item.base_damage_min = def.get("base_damage_min", 0)
@@ -129,13 +129,17 @@ static func create_base(base_id: String) -> Item:
 
 	if "implicit" in def:
 		var imp_def: Dictionary = def["implicit"]
+		var imp_tags: Array[String] = []
+		imp_tags.assign(imp_def["tags"])
+		var imp_stats: Array[int] = []
+		imp_stats.assign(imp_def["stat_types"])
 		item.implicit = Implicit.new(
 			imp_def["name"],
 			Affix.AffixType.IMPLICIT,
 			imp_def["min"],
 			imp_def["max"],
-			imp_def["tags"],
-			imp_def["stat_types"]
+			imp_tags,
+			imp_stats
 		)
 
 	item.update_value()

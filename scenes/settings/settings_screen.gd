@@ -1,6 +1,9 @@
 extends Control
 
 @onready var _confirm_dialog: ConfirmationDialog = %ConfirmDialog
+@onready var _btn_save: Button = %BtnSaveGame
+@onready var _btn_new_game: Button = %BtnNewGame
+@onready var _btn_export: Button = %BtnExportSave
 
 const IRON_KIT: Array[String] = [
 	"iron_shortsword", "iron_vest", "iron_cap", "iron_sandals", "iron_band"
@@ -18,12 +21,21 @@ const CURRENCY_GRANT: Dictionary = {
 
 func _ready() -> void:
 	_confirm_dialog.confirmed.connect(_on_new_game_confirmed)
+	_btn_new_game.pressed.connect(_show_new_game_dialog)
+	_btn_save.pressed.connect(_on_save_pressed)
+	_btn_export.pressed.connect(_on_export_pressed)
+
+
+func _on_save_pressed() -> void:
+	pass
+
+
+func _on_export_pressed() -> void:
+	pass
 
 
 func _grant_currencies() -> void:
 	GameState.add_currencies(CURRENCY_GRANT)
-	for key: String in GameState.CURRENCY_KEYS:
-		GameEvents.currency_changed.emit(key, GameState.currency_counts[key])
 
 
 func _grant_iron_kit() -> void:

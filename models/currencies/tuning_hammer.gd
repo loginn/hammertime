@@ -21,12 +21,19 @@ func _do_apply(item: Item) -> void:
 	item.prefixes.clear()
 	item.suffixes.clear()
 	var mod_count = 1 if randf() < 0.7 else 2
+	var added := 0
 	for i in range(mod_count):
 		var choose_prefix = randi_range(0, 1) == 0
 		if choose_prefix:
-			if not item.add_prefix():
-				item.add_suffix()
+			if item.add_prefix():
+				added += 1
+			elif item.add_suffix():
+				added += 1
 		else:
-			if not item.add_suffix():
-				item.add_prefix()
+			if item.add_suffix():
+				added += 1
+			elif item.add_prefix():
+				added += 1
+	if added == 0:
+		item.rarity = Item.Rarity.NORMAL
 	item.update_value()

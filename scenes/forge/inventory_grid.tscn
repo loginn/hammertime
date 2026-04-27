@@ -1,27 +1,31 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://bm0fexlt6fddu"]
 
-[ext_resource type="Script" path="res://scenes/forge/inventory_grid.gd" id="1_inv"]
+[ext_resource type="Script" uid="uid://cppo3q0tlhgb8" path="res://scenes/forge/inventory_grid.gd" id="1_inv"]
 
-[node name="InventoryGrid" type="VBoxContainer"]
+[node name="InventoryGrid" type="VBoxContainer" unique_id=1556176736]
+custom_minimum_size = Vector2(480, 0)
 size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("1_inv")
 
-[node name="SlotTabs" type="HBoxContainer" parent="."]
+[node name="SlotTabs" type="HBoxContainer" parent="." unique_id=1724641840]
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
-custom_minimum_size = Vector2(0, 35)
+theme_override_constants/separation = 2
 
-[node name="ItemCount" type="Label" parent="."]
+[node name="ItemCount" type="Label" parent="." unique_id=1299057249]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.6, 0.5, 1)
 theme_override_font_sizes/font_size = 11
 text = "0 items"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="."]
+[node name="ScrollContainer" type="ScrollContainer" parent="." unique_id=1192540845]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Grid" type="GridContainer" parent="ScrollContainer"]
+[node name="Grid" type="GridContainer" parent="ScrollContainer" unique_id=431693222]
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_constants/h_separation = 5
+theme_override_constants/v_separation = 5
 columns = 6

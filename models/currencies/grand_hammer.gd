@@ -19,11 +19,12 @@ func get_error_message(item: Item) -> String:
 
 func _do_apply(item: Item) -> void:
 	item.rarity = Item.Rarity.RARE
+	var added := false
 	var choose_prefix = randi_range(0, 1) == 0
 	if choose_prefix:
-		if not item.add_prefix():
-			item.add_suffix()
+		added = item.add_prefix() or item.add_suffix()
 	else:
-		if not item.add_suffix():
-			item.add_prefix()
+		added = item.add_suffix() or item.add_prefix()
+	if not added:
+		item.rarity = Item.Rarity.MAGIC
 	item.update_value()

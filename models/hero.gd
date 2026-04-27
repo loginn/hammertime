@@ -6,7 +6,7 @@ var hero_name: String = "Hero"
 
 var equipped_items: Dictionary = {}
 var total_dps: float = 0.0
-var total_defense: int = 0
+var defensive_score: float = 0.0
 var total_armor: int = 0
 var total_evasion: int = 0
 var total_energy_shield: int = 0
@@ -165,8 +165,19 @@ func calculate_defense() -> int:
 	))
 
 	max_health = float(total_health)
-	total_defense = total_armor
-	return total_defense
+
+	var effective_hp := (max_health + float(total_energy_shield)) * (
+		1.0 + float(total_armor) / BalanceConfig.ARMOR_SCALING
+	)
+	var avg_res := (
+		minf(float(total_fire_resistance), float(BalanceConfig.RESISTANCE_CAP)) +
+		minf(float(total_cold_resistance), float(BalanceConfig.RESISTANCE_CAP)) +
+		minf(float(total_lightning_resistance), float(BalanceConfig.RESISTANCE_CAP))
+	) / 3.0
+	var res_factor := 1.0 + avg_res / 100.0
+	var evasion_factor := 1.0 + float(total_evasion) / BalanceConfig.EVASION_SCALING
+	defensive_score = effective_hp * res_factor * evasion_factor
+	return int(defensive_score)
 
 
 func calculate_crit_stats() -> void:
@@ -182,7 +193,7 @@ func calculate_crit_stats() -> void:
 
 
 func get_hero_power() -> float:
-	return total_dps + float(total_defense) + float(total_armor) * 0.5
+	return total_dps + defensive_score * BalanceConfig.DEFENSE_WEIGHT
 
 
 func take_damage(damage: float) -> void:

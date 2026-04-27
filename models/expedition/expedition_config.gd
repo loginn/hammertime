@@ -28,7 +28,7 @@ func _init(
 	drop_table = p_drop_table
 
 
-static func _training_grounds_drop_table() -> DropTable:
+static func _iron_quarry_drop_table() -> DropTable:
 	var dt := DropTable.new()
 	dt.drop_rolls = 1
 	dt.entries = [
@@ -41,19 +41,19 @@ static func _training_grounds_drop_table() -> DropTable:
 	return dt
 
 
-static func training_grounds() -> ExpeditionConfig:
+static func iron_quarry() -> ExpeditionConfig:
 	return ExpeditionConfig.new(
-		"training_grounds",
-		"Training Grounds",
-		"A safe area to practice. Short expedition with basic rewards.",
+		"iron_quarry",
+		"Iron Quarry",
+		"A collapsed surface mine. The veins run shallow but the ore is plentiful.",
 		BalanceConfig.EXPEDITION_1_BASE_TIME,
 		1,
 		1,
-		_training_grounds_drop_table()
+		_iron_quarry_drop_table()
 	)
 
 
-static func _dark_forest_drop_table() -> DropTable:
+static func _steel_depths_drop_table() -> DropTable:
 	var dt := DropTable.new()
 	dt.drop_rolls = 2
 	dt.entries = [
@@ -70,20 +70,20 @@ static func _dark_forest_drop_table() -> DropTable:
 	return dt
 
 
-static func dark_forest() -> ExpeditionConfig:
+static func steel_depths() -> ExpeditionConfig:
 	return ExpeditionConfig.new(
-		"dark_forest",
-		"Dark Forest",
-		"A dangerous woodland filled with lurking threats. Better rewards for the brave.",
+		"steel_depths",
+		"Steel Depths",
+		"The old mines run deep. Ore harder than iron, but everything still breathes down here.",
 		BalanceConfig.EXPEDITION_2_BASE_TIME,
 		3,
 		2,
-		_dark_forest_drop_table()
+		_steel_depths_drop_table()
 	)
 
 
 static func get_all_configs() -> Array[ExpeditionConfig]:
-	return [training_grounds(), dark_forest()]
+	return [iron_quarry(), steel_depths()]
 
 
 static func get_config_by_id(id: String) -> ExpeditionConfig:

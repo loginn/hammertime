@@ -73,6 +73,7 @@ func add_currencies(drops: Dictionary) -> void:
 	for currency_type in drops:
 		if currency_type in currency_counts:
 			currency_counts[currency_type] += drops[currency_type]
+			GameEvents.currency_changed.emit(currency_type, currency_counts[currency_type])
 
 
 func spend_currency(currency_type: String, amount: int = 1) -> bool:

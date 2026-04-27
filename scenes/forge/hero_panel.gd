@@ -18,8 +18,10 @@ const STAT_DEFS: Array[Dictionary] = [
 ]
 
 var _slot_rows: Dictionary = {}
+var _equip_buttons: Dictionary = {}
 var _stat_labels: Dictionary = {}
 var _delta_labels: Dictionary = {}
+var _bench_item: Item = null
 
 
 func _ready() -> void:
@@ -53,13 +55,26 @@ func _build_equipped_slots() -> void:
 	add_child(slots_header)
 
 	for slot_val in Tag.ALL_SLOTS:
+		var hbox := HBoxContainer.new()
+		hbox.custom_minimum_size = Vector2(0, 28)
+		add_child(hbox)
+
 		var row := Button.new()
 		row.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		row.custom_minimum_size = Vector2(0, 28)
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.flat = true
 		row.pressed.connect(_on_slot_row_pressed.bind(slot_val))
-		add_child(row)
+		hbox.add_child(row)
 		_slot_rows[slot_val] = row
+
+		var equip_btn := Button.new()
+		equip_btn.text = "Equip"
+		equip_btn.visible = false
+		equip_btn.custom_minimum_size = Vector2(50, 0)
+		equip_btn.add_theme_color_override("font_color", Color(0.4, 0.8, 0.4))
+		equip_btn.pressed.connect(_on_equip_pressed.bind(slot_val))
+		hbox.add_child(equip_btn)
+		_equip_buttons[slot_val] = equip_btn
 
 	_refresh_equipped_slots()
 
@@ -119,6 +134,18 @@ func _build_stat_display() -> void:
 func refresh() -> void:
 	_refresh_equipped_slots()
 	_refresh_stats()
+	_refresh_equip_buttons()
+
+
+func update_bench_item(item: Item) -> void:
+	_bench_item = item
+	_refresh_equip_buttons()
+
+
+func _refresh_equip_buttons() -> void:
+	for slot_val in Tag.ALL_SLOTS:
+		var btn: Button = _equip_buttons[slot_val]
+		btn.visible = _bench_item != null and _bench_item.slot == slot_val
 
 
 func _refresh_equipped_slots() -> void:
@@ -179,14 +206,7 @@ func show_deltas(bench_item: Item) -> void:
 		return
 
 	var old_stats: Dictionary = _snapshot_stats(hero)
-
-	hero.equip_item(bench_item)
-	var new_stats: Dictionary = _snapshot_stats(hero)
-
-	if original_item != null:
-		hero.equip_item(original_item)
-	else:
-		hero.unequip_item(slot)
+	var new_stats: Dictionary = _simulate_stats_with(hero, bench_item, slot, original_item)
 
 	for key in old_stats:
 		var delta: float = new_stats[key] - old_stats[key]
@@ -219,6 +239,16 @@ func show_deltas(bench_item: Item) -> void:
 func _clear_deltas() -> void:
 	for key in _delta_labels:
 		_delta_labels[key].text = ""
+		_delta_labels[key].remove_theme_color_override("font_color")
+
+
+func _simulate_stats_with(hero: Hero, bench_item: Item, slot: int, original_item: Item) -> Dictionary:
+	hero.equipped_items[slot] = bench_item
+	hero.update_stats()
+	var stats := _snapshot_stats(hero)
+	hero.equipped_items[slot] = original_item
+	hero.update_stats()
+	return stats
 
 
 func _snapshot_stats(hero: Hero) -> Dictionary:
@@ -241,6 +271,23 @@ func _find_stat_def(key: String) -> Dictionary:
 		if def["key"] == key:
 			return def
 	return {}
+
+
+func _on_equip_pressed(slot_val: int) -> void:
+	if _bench_item == null or _bench_item.slot != slot_val:
+		return
+	var hero: Hero = GameState.hero
+	var currently_equipped: Item = hero.get_equipped(slot_val)
+	if currently_equipped != null:
+		GameState.add_item_to_inventory(currently_equipped)
+	hero.equip_item(_bench_item)
+	hero.update_stats()
+	GameState.remove_item_from_inventory(_bench_item)
+	GameState.crafting_bench_item = null
+	GameEvents.equipment_changed.emit(slot_val, _bench_item)
+	GameEvents.inventory_changed.emit(slot_val)
+	_bench_item = null
+	_refresh_equip_buttons()
 
 
 func _on_slot_row_pressed(slot_val: int) -> void:

@@ -23,6 +23,13 @@ func start_expedition(config: ExpeditionConfig) -> bool:
 	return true
 
 
+func get_effective_duration() -> float:
+	if active_config == null:
+		return 0.0
+	var hero_power := GameState.hero.get_hero_power()
+	return active_config.duration_seconds / (1.0 + hero_power * BalanceConfig.EXPEDITION_HERO_POWER_SCALING)
+
+
 func get_elapsed_seconds() -> float:
 	if not is_active:
 		return 0.0
@@ -32,7 +39,7 @@ func get_elapsed_seconds() -> float:
 func get_remaining_seconds() -> float:
 	if not is_active or active_config == null:
 		return 0.0
-	var remaining := active_config.duration_seconds - get_elapsed_seconds()
+	var remaining := get_effective_duration() - get_elapsed_seconds()
 	return maxf(0.0, remaining)
 
 
@@ -40,13 +47,13 @@ func get_progress() -> float:
 	if not is_active or active_config == null:
 		return 0.0
 	var elapsed := get_elapsed_seconds()
-	return clampf(elapsed / active_config.duration_seconds, 0.0, 1.0)
+	return clampf(elapsed / get_effective_duration(), 0.0, 1.0)
 
 
 func is_completed() -> bool:
 	if not is_active or active_config == null:
 		return false
-	return get_elapsed_seconds() >= active_config.duration_seconds
+	return get_elapsed_seconds() >= get_effective_duration()
 
 
 func resolve_rewards() -> Dictionary:

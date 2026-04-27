@@ -4,6 +4,10 @@
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
 bg_color = Color(0.1, 0.08, 0.06, 1)
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
 
 [node name="SettingsScreen" type="Control"]
 layout_mode = 3
@@ -23,102 +27,144 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
 
-[node name="ScrollContainer" type="ScrollContainer" parent="Panel"]
+[node name="CenterVBox" type="VBoxContainer" parent="Panel"]
 layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+custom_minimum_size = Vector2(380, 0)
+theme_override_constants/separation = 8
 
-[node name="VBox" type="VBoxContainer" parent="Panel/ScrollContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 12
-
-[node name="DebugHeader" type="Label" parent="Panel/ScrollContainer/VBox"]
+[node name="Title" type="Label" parent="Panel/CenterVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
+text = "SETTINGS"
+
+[node name="Subtitle" type="Label" parent="Panel/CenterVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 1
+text = "All save data is stored locally."
+
+[node name="Spacer1" type="Control" parent="Panel/CenterVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 12)
+
+[node name="BtnSaveGame" type="Button" parent="Panel/CenterVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+theme_override_font_sizes/font_size = 13
+text = "Save Game"
+
+[node name="BtnNewGame" type="Button" parent="Panel/CenterVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+theme_override_font_sizes/font_size = 13
+text = "New Game..."
+
+[node name="BtnExportSave" type="Button" parent="Panel/CenterVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+theme_override_font_sizes/font_size = 13
+text = "Export Save (copies to clipboard)"
+
+[node name="Spacer2" type="Control" parent="Panel/CenterVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 8)
+
+[node name="ImportHeader" type="Label" parent="Panel/CenterVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+text = "IMPORT SAVE"
+
+[node name="ImportRow" type="HBoxContainer" parent="Panel/CenterVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ImportField" type="LineEdit" parent="Panel/CenterVBox/ImportRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Paste save code..."
+
+[node name="BtnImport" type="Button" parent="Panel/CenterVBox/ImportRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(80, 0)
+text = "IMPORT"
+
+[node name="Spacer3" type="Control" parent="Panel/CenterVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DebugPanel" type="VBoxContainer" parent="Panel/CenterVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="DebugHeader" type="Label" parent="Panel/CenterVBox/DebugPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 14
 text = "Debug Panel"
 
-[node name="DebugGrid" type="GridContainer" parent="Panel/ScrollContainer/VBox"]
+[node name="DebugGrid" type="GridContainer" parent="Panel/CenterVBox/DebugPanel"]
 layout_mode = 2
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 columns = 2
 
-[node name="BtnGrantCurrencies" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+[node name="BtnGrantCurrencies" type="Button" parent="Panel/CenterVBox/DebugPanel/DebugGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(190, 36)
 text = "Grant 100 Currencies"
 
-[node name="BtnGrantIronKit" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+[node name="BtnGrantIronKit" type="Button" parent="Panel/CenterVBox/DebugPanel/DebugGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(190, 36)
 text = "Grant Iron Kit"
 
-[node name="BtnGrantSteelKit" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+[node name="BtnGrantSteelKit" type="Button" parent="Panel/CenterVBox/DebugPanel/DebugGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(190, 36)
 text = "Grant Steel Kit"
 
-[node name="BtnAddPrestige" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+[node name="BtnAddPrestige" type="Button" parent="Panel/CenterVBox/DebugPanel/DebugGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(190, 36)
 text = "+1 Prestige"
 
-[node name="BtnResetPrestige" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+[node name="BtnResetPrestige" type="Button" parent="Panel/CenterVBox/DebugPanel/DebugGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(190, 36)
 text = "Reset Prestige"
 
-[node name="BtnWipeRun" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+[node name="BtnWipeRun" type="Button" parent="Panel/CenterVBox/DebugPanel/DebugGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(190, 36)
 text = "Wipe Run"
 
-[node name="BtnNewGameDebug" type="Button" parent="Panel/ScrollContainer/VBox/DebugGrid"]
+[node name="VersionLabel" type="Label" parent="Panel/CenterVBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(200, 40)
-text = "New Game"
-
-[node name="Separator" type="HSeparator" parent="Panel/ScrollContainer/VBox"]
-layout_mode = 2
-theme_override_colors/separator_color = Color(0.45, 0.38, 0.3, 1)
-
-[node name="SettingsHeader" type="Label" parent="Panel/ScrollContainer/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
-theme_override_font_sizes/font_size = 18
-text = "Settings"
-
-[node name="SettingsVBox" type="VBoxContainer" parent="Panel/ScrollContainer/VBox"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="BtnResetRun" type="Button" parent="Panel/ScrollContainer/VBox/SettingsVBox"]
-layout_mode = 2
-custom_minimum_size = Vector2(200, 40)
-text = "Reset Run"
-
-[node name="BtnNewGame" type="Button" parent="Panel/ScrollContainer/VBox/SettingsVBox"]
-layout_mode = 2
-custom_minimum_size = Vector2(200, 40)
-text = "New Game"
-
-[node name="VersionLabel" type="Label" parent="Panel/ScrollContainer/VBox/SettingsVBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.45, 0.38, 0.3, 1)
-theme_override_font_sizes/font_size = 12
-text = "HammerTime v0.2"
+theme_override_colors/font_color = Color(0.35, 0.3, 0.25, 1)
+theme_override_font_sizes/font_size = 10
+horizontal_alignment = 1
+text = "HAMMERTIME · v0.2.0-M002 · BUILD 2026.04.22"
 
 [node name="ConfirmDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true
 title = "Confirm New Game"
 size = Vector2i(400, 250)
 
-[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnGrantCurrencies" to="." method="_grant_currencies"]
-[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnGrantIronKit" to="." method="_grant_iron_kit"]
-[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnGrantSteelKit" to="." method="_grant_steel_kit"]
-[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnAddPrestige" to="." method="_add_prestige"]
-[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnResetPrestige" to="." method="_reset_prestige"]
-[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnWipeRun" to="." method="_wipe_run"]
-[connection signal="pressed" from="Panel/ScrollContainer/VBox/DebugGrid/BtnNewGameDebug" to="." method="_show_new_game_dialog"]
-[connection signal="pressed" from="Panel/ScrollContainer/VBox/SettingsVBox/BtnResetRun" to="." method="_wipe_run"]
-[connection signal="pressed" from="Panel/ScrollContainer/VBox/SettingsVBox/BtnNewGame" to="." method="_show_new_game_dialog"]
+[connection signal="pressed" from="Panel/CenterVBox/DebugPanel/DebugGrid/BtnGrantCurrencies" to="." method="_grant_currencies"]
+[connection signal="pressed" from="Panel/CenterVBox/DebugPanel/DebugGrid/BtnGrantIronKit" to="." method="_grant_iron_kit"]
+[connection signal="pressed" from="Panel/CenterVBox/DebugPanel/DebugGrid/BtnGrantSteelKit" to="." method="_grant_steel_kit"]
+[connection signal="pressed" from="Panel/CenterVBox/DebugPanel/DebugGrid/BtnAddPrestige" to="." method="_add_prestige"]
+[connection signal="pressed" from="Panel/CenterVBox/DebugPanel/DebugGrid/BtnResetPrestige" to="." method="_reset_prestige"]
+[connection signal="pressed" from="Panel/CenterVBox/DebugPanel/DebugGrid/BtnWipeRun" to="." method="_wipe_run"]

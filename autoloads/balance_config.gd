@@ -13,6 +13,11 @@ const RESISTANCE_CAP: int = 75
 const ES_SPLIT_RATIO: float = 0.5
 const ES_RECHARGE_RATE: float = 0.33
 
+# Hero power formula tuning
+const ARMOR_SCALING: float = 500.0    # armor value that doubles effective HP contribution
+const EVASION_SCALING: float = 300.0  # evasion value that adds +100% avoidance factor
+const DEFENSE_WEIGHT: float = 0.5     # how much defensive_score contributes vs DPS
+
 # Affix system
 const MAGIC_MAX_PREFIXES: int = 1
 const MAGIC_MAX_SUFFIXES: int = 1
@@ -22,6 +27,7 @@ const RARE_MAX_SUFFIXES: int = 3
 # Expedition timing
 const EXPEDITION_1_BASE_TIME: float = 10.0
 const EXPEDITION_2_BASE_TIME: float = 38.0
+const EXPEDITION_HERO_POWER_SCALING: float = 0.005
 
 # Prestige
 const PRESTIGE_TACK_HAMMER_COST: int = 100

@@ -37,28 +37,52 @@ func _ready() -> void:
 func _build_buttons() -> void:
 	for data in HAMMER_DATA:
 		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(54, 60)
+		btn.custom_minimum_size = Vector2(56, 56)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 		var vbox := VBoxContainer.new()
 		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vbox.add_theme_constant_override("separation", 0)
 
 		var glyph_label := Label.new()
 		glyph_label.text = data["glyph"]
 		glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		glyph_label.add_theme_font_size_override("font_size", 22)
 		glyph_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		vbox.add_child(glyph_label)
 
 		var count_label := Label.new()
 		count_label.text = "0"
 		count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		count_label.add_theme_font_size_override("font_size", 11)
+		count_label.add_theme_font_size_override("font_size", 10)
 		count_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 		count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		vbox.add_child(count_label)
 
 		btn.add_child(vbox)
+		vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+		var dot := Panel.new()
+		var dot_style := StyleBoxFlat.new()
+		dot_style.bg_color = Color(1.0, 0.7, 0.15)
+		dot_style.corner_radius_top_left = 5
+		dot_style.corner_radius_top_right = 5
+		dot_style.corner_radius_bottom_left = 5
+		dot_style.corner_radius_bottom_right = 5
+		dot_style.shadow_color = Color(1.0, 0.55, 0.0, 0.7)
+		dot_style.shadow_size = 3
+		dot_style.shadow_offset = Vector2(0, 0)
+		dot.add_theme_stylebox_override("panel", dot_style)
+		dot.custom_minimum_size = Vector2(6, 6)
+		dot.size = Vector2(6, 6)
+		dot.position = Vector2(5, 5)
+		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		dot.visible = false
+		btn.add_child(dot)
+
 		btn.pressed.connect(_on_hammer_pressed.bind(data["key"]))
 		btn.tooltip_text = data["name"]
 
@@ -77,12 +101,8 @@ func _on_hammer_pressed(key: String) -> void:
 func _update_selection_highlight() -> void:
 	for k in _buttons:
 		var btn: Button = _buttons[k]
-		if k == _selected_key:
-			btn.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
-			btn.modulate = Color(1.2, 1.1, 0.8)
-		else:
-			btn.remove_theme_color_override("font_color")
-			btn.modulate = Color.WHITE
+		var dot: Panel = btn.get_child(btn.get_child_count() - 1)
+		dot.visible = (k == _selected_key)
 
 
 func _update_detail_card() -> void:

@@ -1,125 +1,136 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://c87vdo7xe20tk"]
 
-[ext_resource type="Script" path="res://scenes/forge/crafting_bench.gd" id="1_bench"]
+[ext_resource type="Script" uid="uid://dygpu52gmymmc" path="res://scenes/forge/crafting_bench.gd" id="Script_bench"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_badge"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
 bg_color = Color(0.08, 0.06, 0.05, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
-content_margin_left = 12.0
-content_margin_top = 8.0
-content_margin_right = 12.0
-content_margin_bottom = 8.0
 
-[node name="CraftingBench" type="VBoxContainer"]
-size_flags_horizontal = 3
-script = ExtResource("1_bench")
+[node name="CraftingBench" type="HBoxContainer" unique_id=175309651]
+custom_minimum_size = Vector2(480, 0)
+offset_right = 480.0
+offset_bottom = 87.0
+size_flags_vertical = 3
+script = ExtResource("Script_bench")
 
-[node name="Header" type="Label" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=242898679]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
-theme_override_font_sizes/font_size = 16
-text = "ON THE BENCH"
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="PrefixRail" type="VBoxContainer" parent="MarginContainer" unique_id=2055953304]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+
+[node name="RailHeader" type="Label" parent="MarginContainer/PrefixRail" unique_id=2083131048]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.65, 0.85, 1)
+theme_override_font_sizes/font_size = 9
+text = "PREFIX"
 horizontal_alignment = 1
 
-[node name="Spacer1" type="Control" parent="."]
+[node name="PrefixCount" type="Label" parent="MarginContainer/PrefixRail" unique_id=1095433018]
+unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(0, 8)
+theme_override_colors/font_color = Color(0.4, 0.38, 0.3, 1)
+theme_override_font_sizes/font_size = 8
+text = "0 / 0"
 
-[node name="BenchArea" type="HBoxContainer" parent="."]
+[node name="MarginContainer3" type="MarginContainer" parent="." unique_id=1431899671]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+
+[node name="BadgeVBox" type="VBoxContainer" parent="MarginContainer3" unique_id=1987703217]
+layout_mode = 2
+theme_override_constants/separation = 2
 alignment = 1
 
-[node name="PrefixRail" type="VBoxContainer" parent="BenchArea"]
+[node name="ItemBadge" type="PanelContainer" parent="MarginContainer3/BadgeVBox" unique_id=1717854367]
+custom_minimum_size = Vector2(130, 160)
 layout_mode = 2
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(120, 0)
-
-[node name="RailHeader" type="Label" parent="BenchArea/PrefixRail"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.6, 0.5, 1)
-theme_override_font_sizes/font_size = 12
-text = "Prefixes"
-horizontal_alignment = 1
-
-[node name="ItemBadge" type="PanelContainer" parent="BenchArea"]
-layout_mode = 2
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(160, 100)
+size_flags_horizontal = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_badge")
 
-[node name="BadgeVBox" type="VBoxContainer" parent="BenchArea/ItemBadge"]
-layout_mode = 2
-alignment = 1
-
-[node name="ItemName" type="Label" parent="BenchArea/ItemBadge/BadgeVBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 15
-text = "Item Name"
-horizontal_alignment = 1
-
-[node name="MaterialTier" type="Label" parent="BenchArea/ItemBadge/BadgeVBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.6, 0.5, 1)
-theme_override_font_sizes/font_size = 11
-text = "Material"
-horizontal_alignment = 1
-
-[node name="BaseName" type="Label" parent="BenchArea/ItemBadge/BadgeVBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
-theme_override_font_sizes/font_size = 11
-text = "Base"
-horizontal_alignment = 1
-
-[node name="EmptyLabel" type="Label" parent="BenchArea/ItemBadge/BadgeVBox"]
+[node name="EmptyLabel" type="Label" parent="MarginContainer3/BadgeVBox/ItemBadge" unique_id=246394557]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.4, 0.4, 0.4, 1)
 theme_override_font_sizes/font_size = 13
 text = "No item on bench"
 horizontal_alignment = 1
 
-[node name="SuffixRail" type="VBoxContainer" parent="BenchArea"]
+[node name="ItemName" type="Label" parent="MarginContainer3/BadgeVBox" unique_id=791593581]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Item Name"
+horizontal_alignment = 1
+
+[node name="MaterialTier" type="Label" parent="MarginContainer3/BadgeVBox" unique_id=1569522615]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 9
+text = "IRON · SHORTSWORD · T1"
+horizontal_alignment = 1
+
+[node name="Item name" type="Label" parent="MarginContainer3/BadgeVBox" unique_id=304212801]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+theme_override_font_sizes/font_size = 11
+text = "Base"
+horizontal_alignment = 1
+
+[node name="StatReadout" type="VBoxContainer" parent="MarginContainer3/BadgeVBox" unique_id=927483891]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="PrimaryStat" type="Label" parent="MarginContainer3/BadgeVBox/StatReadout" unique_id=793134713]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.55, 0.25, 1)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="PrimaryLabel" type="Label" parent="MarginContainer3/BadgeVBox/StatReadout" unique_id=1353153117]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.38, 0.3, 1)
+theme_override_font_sizes/font_size = 8
+horizontal_alignment = 1
+
+[node name="MarginContainer2" type="MarginContainer" parent="." unique_id=761219401]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="SuffixRail" type="VBoxContainer" parent="MarginContainer2" unique_id=800217146]
+custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
 size_flags_horizontal = 3
-custom_minimum_size = Vector2(120, 0)
+theme_override_constants/separation = 4
 
-[node name="RailHeader" type="Label" parent="BenchArea/SuffixRail"]
+[node name="RailHeader" type="Label" parent="MarginContainer2/SuffixRail" unique_id=645622738]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.6, 0.5, 1)
-theme_override_font_sizes/font_size = 12
-text = "Suffixes"
+theme_override_colors/font_color = Color(0.55, 0.85, 0.65, 1)
+theme_override_font_sizes/font_size = 9
+text = "SUFFIX"
 horizontal_alignment = 1
 
-[node name="Spacer2" type="Control" parent="."]
+[node name="SuffixCount" type="Label" parent="MarginContainer2/SuffixRail" unique_id=1260546163]
+unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(0, 8)
-
-[node name="StrikeButton" type="Button" parent="."]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 40)
-disabled = true
-text = "⚡ STRIKE ⚡"
-
-[node name="EquipButton" type="Button" parent="."]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 36)
-disabled = true
-text = "Equip"
-
-[node name="MeltButton" type="Button" parent="."]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 36)
-disabled = true
-text = "Melt"
-
-[node name="ErrorFeedback" type="Label" parent="."]
-layout_mode = 2
-theme_override_colors/font_color = Color(1.0, 0.3, 0.3, 1)
-theme_override_font_sizes/font_size = 12
-text = ""
-horizontal_alignment = 1
-autowrap_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.38, 0.3, 1)
+theme_override_font_sizes/font_size = 8
+text = "0 / 0"
