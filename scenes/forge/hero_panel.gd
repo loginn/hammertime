@@ -21,7 +21,7 @@ var _slot_rows: Dictionary = {}
 var _equip_buttons: Dictionary = {}
 var _stat_labels: Dictionary = {}
 var _delta_labels: Dictionary = {}
-var _bench_item: Item = null
+var _bench_item: HeroItem = null
 
 
 func _ready() -> void:
@@ -137,7 +137,7 @@ func refresh() -> void:
 	_refresh_equip_buttons()
 
 
-func update_bench_item(item: Item) -> void:
+func update_bench_item(item: HeroItem) -> void:
 	_bench_item = item
 	_refresh_equip_buttons()
 
@@ -152,7 +152,7 @@ func _refresh_equipped_slots() -> void:
 	var hero: Hero = GameState.hero
 	for slot_val in Tag.ALL_SLOTS:
 		var slot_name: String = Tag.slot_name(slot_val).capitalize()
-		var item: Item = hero.get_equipped(slot_val)
+		var item: HeroItem = hero.get_equipped(slot_val)
 		var row: Button = _slot_rows[slot_val]
 		if item != null:
 			row.text = "%s: %s" % [slot_name, item.item_name]
@@ -193,14 +193,14 @@ func _get_hero_stat(hero: Hero, key: String) -> float:
 	return 0.0
 
 
-func show_deltas(bench_item: Item) -> void:
+func show_deltas(bench_item: HeroItem) -> void:
 	_clear_deltas()
 	if bench_item == null:
 		return
 
 	var hero: Hero = GameState.hero
 	var slot: int = bench_item.slot
-	var original_item: Item = hero.get_equipped(slot)
+	var original_item: HeroItem = hero.get_equipped(slot)
 
 	if original_item == bench_item:
 		return
@@ -242,7 +242,7 @@ func _clear_deltas() -> void:
 		_delta_labels[key].remove_theme_color_override("font_color")
 
 
-func _simulate_stats_with(hero: Hero, bench_item: Item, slot: int, original_item: Item) -> Dictionary:
+func _simulate_stats_with(hero: Hero, bench_item: HeroItem, slot: int, original_item: HeroItem) -> Dictionary:
 	hero.equipped_items[slot] = bench_item
 	hero.update_stats()
 	var stats := _snapshot_stats(hero)
@@ -277,7 +277,7 @@ func _on_equip_pressed(slot_val: int) -> void:
 	if _bench_item == null or _bench_item.slot != slot_val:
 		return
 	var hero: Hero = GameState.hero
-	var currently_equipped: Item = hero.get_equipped(slot_val)
+	var currently_equipped: HeroItem = hero.get_equipped(slot_val)
 	if currently_equipped != null:
 		GameState.add_item_to_inventory(currently_equipped)
 	hero.equip_item(_bench_item)
@@ -294,9 +294,9 @@ func _on_slot_row_pressed(slot_val: int) -> void:
 	slot_tab_requested.emit(slot_val)
 
 
-func _on_equipment_changed(_slot: int, _item: Item) -> void:
+func _on_equipment_changed(_slot: int, _item: HeroItem) -> void:
 	refresh()
 
 
-func _on_item_crafted(_item: Item) -> void:
+func _on_item_crafted(_item: HeroItem) -> void:
 	refresh()

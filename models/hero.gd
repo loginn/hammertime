@@ -35,7 +35,7 @@ func _init() -> void:
 	update_stats()
 
 
-func equip_item(item: Item) -> void:
+func equip_item(item: HeroItem) -> void:
 	equipped_items[item.slot] = item
 	update_stats()
 
@@ -45,7 +45,7 @@ func unequip_item(slot: Tag_List.ItemSlot) -> void:
 	update_stats()
 
 
-func get_equipped(slot: Tag_List.ItemSlot) -> Item:
+func get_equipped(slot: Tag_List.ItemSlot) -> HeroItem:
 	return equipped_items.get(slot)
 
 
@@ -64,7 +64,7 @@ func calculate_damage_ranges() -> void:
 		damage_ranges[element]["max"] = 0.0
 
 	for slot_val in [Tag.ItemSlot.WEAPON, Tag.ItemSlot.RING]:
-		var item: Item = equipped_items.get(slot_val)
+		var item: HeroItem = equipped_items.get(slot_val)
 		if item == null:
 			continue
 		var all_affixes: Array = item.prefixes.duplicate()
@@ -87,7 +87,7 @@ func calculate_dps() -> float:
 		total_avg_damage += (el_min + el_max) / 2.0
 
 	var speed := 1.0
-	var weapon: Item = equipped_items.get(Tag.ItemSlot.WEAPON)
+	var weapon: HeroItem = equipped_items.get(Tag.ItemSlot.WEAPON)
 	if weapon != null:
 		speed = float(weapon.base_speed)
 		var all_affixes: Array = weapon.prefixes.duplicate()
@@ -119,7 +119,7 @@ func calculate_defense() -> int:
 	var total_health: int = int(BalanceConfig.BASE_HEALTH)
 
 	for slot_val in [Tag.ItemSlot.HELMET, Tag.ItemSlot.ARMOR, Tag.ItemSlot.BOOTS]:
-		var item: Item = equipped_items.get(slot_val)
+		var item: HeroItem = equipped_items.get(slot_val)
 		if item == null:
 			continue
 		total_armor += item.computed_armor
@@ -128,7 +128,7 @@ func calculate_defense() -> int:
 		total_health += item.computed_health
 
 	for slot_val in Tag.ALL_SLOTS:
-		var item: Item = equipped_items.get(slot_val)
+		var item: HeroItem = equipped_items.get(slot_val)
 		if item == null:
 			continue
 		for suffix in item.suffixes:
@@ -144,7 +144,7 @@ func calculate_defense() -> int:
 				total_lightning_resistance += suffix.value
 
 	for slot_val in [Tag.ItemSlot.WEAPON, Tag.ItemSlot.RING]:
-		var item: Item = equipped_items.get(slot_val)
+		var item: HeroItem = equipped_items.get(slot_val)
 		if item == null:
 			continue
 		for suffix in item.suffixes:
@@ -155,7 +155,7 @@ func calculate_defense() -> int:
 
 	var all_percent_health_affixes: Array = []
 	for slot_val in Tag.ALL_SLOTS:
-		var item: Item = equipped_items.get(slot_val)
+		var item: HeroItem = equipped_items.get(slot_val)
 		if item == null:
 			continue
 		all_percent_health_affixes.append_array(item.prefixes)
@@ -185,7 +185,7 @@ func calculate_crit_stats() -> void:
 	total_crit_damage = BalanceConfig.BASE_CRIT_DAMAGE
 
 	for slot_val in [Tag.ItemSlot.WEAPON, Tag.ItemSlot.RING]:
-		var item: Item = equipped_items.get(slot_val)
+		var item: HeroItem = equipped_items.get(slot_val)
 		if item == null:
 			continue
 		total_crit_chance += item.crit_chance - BalanceConfig.BASE_CRIT_CHANCE

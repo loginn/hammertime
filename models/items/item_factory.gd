@@ -111,7 +111,7 @@ static func can_afford_base(base_id: String) -> bool:
 	return GameState.currency_counts.get(material_key, 0) >= cost
 
 
-static func create_base(base_id: String) -> Item:
+static func create_base(base_id: String) -> HeroItem:
 	var items := _get_base_items()
 	if base_id not in items:
 		push_error("Unknown base item: " + base_id)
@@ -123,13 +123,13 @@ static func create_base(base_id: String) -> Item:
 	var cost: int = BalanceConfig.BASE_ITEM_IRON_COST if tier == Tag_List.MaterialTier.IRON else BalanceConfig.BASE_ITEM_STEEL_COST
 	if not GameState.spend_currency(material_key, cost):
 		return null
-	var item := Item.new()
+	var item := HeroItem.new()
 	item.base_id = base_id
 	item.item_name = def["name"]
 	item.slot = def["slot"]
 	item.material_tier = def["material_tier"]
 	item.valid_tags.assign(def["valid_tags"])
-	item.rarity = Item.Rarity.NORMAL
+	item.rarity = CraftableItem.Rarity.NORMAL
 
 	item.base_damage_min = def.get("base_damage_min", 0)
 	item.base_damage_max = def.get("base_damage_max", 0)

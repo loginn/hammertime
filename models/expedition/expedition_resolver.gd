@@ -68,7 +68,7 @@ func resolve_rewards() -> Dictionary:
 
 func _resolve_from_drop_table() -> Dictionary:
 	var currencies: Dictionary = {}
-	var items: Array[Item] = []
+	var items: Array[HeroItem] = []
 
 	var rolled_entries := active_config.drop_table.roll()
 	for entry: Dictionary in rolled_entries:
@@ -104,7 +104,7 @@ func complete_expedition() -> Dictionary:
 
 	if "currencies" in rewards:
 		GameState.add_currencies(rewards["currencies"])
-		for item: Item in rewards.get("items", []):
+		for item: HeroItem in rewards.get("items", []):
 			GameState.add_item_to_inventory(item)
 	else:
 		GameState.add_currencies(rewards)

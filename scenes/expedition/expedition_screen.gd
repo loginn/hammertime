@@ -130,7 +130,7 @@ func _on_expedition_collected(_expedition_id: String) -> void:
 	_update_all_card_states()
 
 
-func _on_equipment_changed(_slot: int, _item: Item) -> void:
+func _on_equipment_changed(_slot: int, _item: HeroItem) -> void:
 	for card in _cards:
 		if is_instance_valid(card):
 			card.refresh_time()

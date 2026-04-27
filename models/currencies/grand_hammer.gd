@@ -7,18 +7,18 @@ func _init() -> void:
 	verb = "Regal"
 
 
-func can_apply(item: Item) -> bool:
-	return item.rarity == Item.Rarity.MAGIC
+func can_apply(item: HeroItem) -> bool:
+	return item.rarity == CraftableItem.Rarity.MAGIC
 
 
-func get_error_message(item: Item) -> String:
-	if item.rarity != Item.Rarity.MAGIC:
+func get_error_message(item: HeroItem) -> String:
+	if item.rarity != CraftableItem.Rarity.MAGIC:
 		return "Grand Hammer can only be used on Magic items"
 	return ""
 
 
-func _do_apply(item: Item) -> void:
-	item.rarity = Item.Rarity.RARE
+func _do_apply(item: HeroItem) -> void:
+	item.rarity = CraftableItem.Rarity.RARE
 	var added := false
 	var choose_prefix = randi_range(0, 1) == 0
 	if choose_prefix:
@@ -26,5 +26,5 @@ func _do_apply(item: Item) -> void:
 	else:
 		added = item.add_suffix() or item.add_prefix()
 	if not added:
-		item.rarity = Item.Rarity.MAGIC
+		item.rarity = CraftableItem.Rarity.MAGIC
 	item.update_value()

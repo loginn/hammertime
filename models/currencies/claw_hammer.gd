@@ -7,17 +7,17 @@ func _init() -> void:
 	verb = "Annul"
 
 
-func can_apply(item: Item) -> bool:
+func can_apply(item: HeroItem) -> bool:
 	return item.prefixes.size() > 0 or item.suffixes.size() > 0
 
 
-func get_error_message(item: Item) -> String:
+func get_error_message(item: HeroItem) -> String:
 	if item.prefixes.size() == 0 and item.suffixes.size() == 0:
 		return "Item has no mods to remove"
 	return ""
 
 
-func _do_apply(item: Item) -> void:
+func _do_apply(item: HeroItem) -> void:
 	var all_mods: Array[Dictionary] = []
 	for i in range(item.prefixes.size()):
 		all_mods.append({"type": "prefix", "index": i})

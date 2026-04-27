@@ -38,27 +38,27 @@ func test_wipe_run_resets_materials() -> void:
 
 func test_create_base_iron_item_costs_iron() -> void:
 	GameState.add_currencies({"iron": 3})
-	var item: Item = ItemFactory.create_base("iron_shortsword")
+	var item: HeroItem = ItemFactory.create_base("iron_shortsword")
 	assert_not_null(item)
 	assert_eq(GameState.currency_counts["iron"], 3 - BalanceConfig.BASE_ITEM_IRON_COST)
 
 
 func test_create_base_steel_item_costs_steel() -> void:
 	GameState.add_currencies({"steel": 3})
-	var item: Item = ItemFactory.create_base("steel_longsword")
+	var item: HeroItem = ItemFactory.create_base("steel_longsword")
 	assert_not_null(item)
 	assert_eq(GameState.currency_counts["steel"], 3 - BalanceConfig.BASE_ITEM_STEEL_COST)
 
 
 func test_create_base_iron_returns_null_when_no_iron() -> void:
 	assert_eq(GameState.currency_counts["iron"], 0)
-	var item: Item = ItemFactory.create_base("iron_shortsword")
+	var item: HeroItem = ItemFactory.create_base("iron_shortsword")
 	assert_null(item, "should return null when iron is 0")
 
 
 func test_create_base_steel_returns_null_when_no_steel() -> void:
 	assert_eq(GameState.currency_counts["steel"], 0)
-	var item: Item = ItemFactory.create_base("steel_longsword")
+	var item: HeroItem = ItemFactory.create_base("steel_longsword")
 	assert_null(item, "should return null when steel is 0")
 
 

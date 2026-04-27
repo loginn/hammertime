@@ -46,7 +46,7 @@ func _refresh_sacrifice_panel() -> void:
 	var normal_count := 0
 	for slot: int in Tag.ALL_SLOTS:
 		var items: Array = GameState.crafting_inventory.get(slot, [])
-		for item: Item in items:
+		for item: HeroItem in items:
 			item_count += 1
 			match item.rarity:
 				Tag.Rarity.MAGIC: magic_count += 1

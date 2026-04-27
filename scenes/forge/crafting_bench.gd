@@ -27,7 +27,7 @@ func _on_badge_gui_input(event: InputEvent) -> void:
 		strike_pressed.emit()
 
 
-func refresh(item: Item) -> void:
+func refresh(item: HeroItem) -> void:
 	if item == null:
 		_item_name_label.text = ""
 		_item_name_label.visible = false
@@ -63,7 +63,7 @@ func refresh(item: Item) -> void:
 	_populate_affix_rail(_suffix_rail, item.suffixes, MAX_AFFIX_SLOTS, "SUFFIX")
 
 
-func _update_stat_readout(item: Item) -> void:
+func _update_stat_readout(item: HeroItem) -> void:
 	_stat_readout.visible = true
 
 	if item.is_weapon_slot():

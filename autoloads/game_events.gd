@@ -1,8 +1,8 @@
 extends Node
 
-signal equipment_changed(slot: int, item: Item)
-signal item_crafted(item: Item)
-signal item_melted(item: Item)
+signal equipment_changed(slot: int, item: HeroItem)
+signal item_crafted(item: HeroItem)
+signal item_melted(item: HeroItem)
 
 signal expedition_started(expedition_id: String)
 signal expedition_completed(expedition_id: String, rewards: Dictionary)

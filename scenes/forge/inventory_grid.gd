@@ -1,6 +1,6 @@
 extends VBoxContainer
 
-signal item_selected(item: Item)
+signal item_selected(item: HeroItem)
 
 const NewBaseTile := preload("res://scenes/forge/new_base_tile.tscn")
 const ItemTile := preload("res://scenes/forge/item_tile.tscn")
@@ -73,14 +73,14 @@ func refresh_grid() -> void:
 	new_base_tile.new_base_requested.connect(_on_new_base_requested)
 	_grid.add_child(new_base_tile)
 
-	for item: Item in items:
+	for item: HeroItem in items:
 		var tile: Node = ItemTile.instantiate()
 		tile.item = item
 		tile.item_selected.connect(_on_item_tile_pressed)
 		_grid.add_child(tile)
 
 
-func _on_item_tile_pressed(item: Item) -> void:
+func _on_item_tile_pressed(item: HeroItem) -> void:
 	item_selected.emit(item)
 
 
@@ -88,7 +88,7 @@ func _on_new_base_requested(slot: int) -> void:
 	var bases: Array[String] = ItemFactory.get_bases_for_slot(slot)
 	if bases.is_empty():
 		return
-	var new_item: Item = ItemFactory.create_base(bases[0])
+	var new_item: HeroItem = ItemFactory.create_base(bases[0])
 	if new_item == null:
 		return
 	GameState.add_item_to_inventory(new_item)
@@ -99,10 +99,10 @@ func _on_inventory_changed(slot: int) -> void:
 		refresh_grid()
 
 
-func _on_equipment_changed(_slot: int, _item: Item) -> void:
+func _on_equipment_changed(_slot: int, _item: HeroItem) -> void:
 	refresh_grid()
 
 
-func _on_item_crafted(item: Item) -> void:
+func _on_item_crafted(item: HeroItem) -> void:
 	if item.slot == active_slot:
 		refresh_grid()

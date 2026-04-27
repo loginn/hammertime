@@ -1,8 +1,8 @@
 extends Button
 
-signal item_selected(item: Item)
+signal item_selected(item: HeroItem)
 
-var item: Item = null
+var item: HeroItem = null
 
 
 func _ready() -> void:
@@ -30,7 +30,7 @@ func _setup() -> void:
 	%ItemName.text = item.item_name
 	%ItemName.add_theme_color_override("font_color", item.get_rarity_color())
 
-	var equipped_item: Item = GameState.hero.get_equipped(item.slot)
+	var equipped_item: HeroItem = GameState.hero.get_equipped(item.slot)
 	%EqBadge.visible = (equipped_item == item)
 
 	%MaterialLabel.text = Tag.material_name(item.material_tier).to_upper()

@@ -6,7 +6,7 @@ var hero: Hero
 var currency_counts: Dictionary = {}
 
 var crafting_inventory: Dictionary = {}
-var crafting_bench_item: Item = null
+var crafting_bench_item: HeroItem = null
 
 var expedition_resolver: ExpeditionResolver = null
 
@@ -90,13 +90,13 @@ func spend_currency(currency_type: String, amount: int = 1) -> bool:
 	return true
 
 
-func add_item_to_inventory(item: Item) -> void:
+func add_item_to_inventory(item: HeroItem) -> void:
 	if item.slot in crafting_inventory:
 		crafting_inventory[item.slot].append(item)
 		GameEvents.inventory_changed.emit(item.slot)
 
 
-func remove_item_from_inventory(item: Item) -> void:
+func remove_item_from_inventory(item: HeroItem) -> void:
 	if item.slot in crafting_inventory:
 		crafting_inventory[item.slot].erase(item)
 		GameEvents.inventory_changed.emit(item.slot)

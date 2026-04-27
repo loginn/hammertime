@@ -20,14 +20,14 @@ func _ready() -> void:
 	_refresh_bench()
 
 
-func set_bench_item(item: Item) -> void:
+func set_bench_item(item: HeroItem) -> void:
 	GameState.crafting_bench_item = item
 	_refresh_bench()
 	_hero_panel.show_deltas(item)
 	_hero_panel.update_bench_item(item)
 
 
-func _on_item_selected(item: Item) -> void:
+func _on_item_selected(item: HeroItem) -> void:
 	set_bench_item(item)
 
 
@@ -36,7 +36,7 @@ func _on_hammer_selected(key: String) -> void:
 
 
 func _on_strike_pressed() -> void:
-	var item: Item = GameState.crafting_bench_item
+	var item: HeroItem = GameState.crafting_bench_item
 	if item == null:
 		return
 	if active_hammer_key == "":
@@ -60,11 +60,11 @@ func _on_strike_pressed() -> void:
 	GameEvents.item_crafted.emit(item)
 
 
-func _on_item_crafted(_item: Item) -> void:
+func _on_item_crafted(_item: HeroItem) -> void:
 	_refresh_bench()
 
 
-func _on_equipment_changed(_slot: int, _item: Item) -> void:
+func _on_equipment_changed(_slot: int, _item: HeroItem) -> void:
 	_refresh_bench()
 	_hero_panel.update_bench_item(GameState.crafting_bench_item)
 

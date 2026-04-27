@@ -7,17 +7,17 @@ func _init() -> void:
 	verb = "Alteration"
 
 
-func can_apply(item: Item) -> bool:
-	return item.rarity == Item.Rarity.MAGIC
+func can_apply(item: HeroItem) -> bool:
+	return item.rarity == CraftableItem.Rarity.MAGIC
 
 
-func get_error_message(item: Item) -> String:
-	if item.rarity != Item.Rarity.MAGIC:
+func get_error_message(item: HeroItem) -> String:
+	if item.rarity != CraftableItem.Rarity.MAGIC:
 		return "Tuning Hammer can only be used on Magic items"
 	return ""
 
 
-func _do_apply(item: Item) -> void:
+func _do_apply(item: HeroItem) -> void:
 	item.prefixes.clear()
 	item.suffixes.clear()
 	var mod_count = 1 if randf() < 0.7 else 2
@@ -35,5 +35,5 @@ func _do_apply(item: Item) -> void:
 			elif item.add_prefix():
 				added += 1
 	if added == 0:
-		item.rarity = Item.Rarity.NORMAL
+		item.rarity = CraftableItem.Rarity.NORMAL
 	item.update_value()
