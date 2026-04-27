@@ -97,3 +97,17 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
 theme_override_font_sizes/font_size = 11
 text = "Count: 0"
+
+[node name="Spacer3" type="Control" parent="MarginContainer/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 8)
+
+[node name="MaterialsHeader" type="Label" parent="MarginContainer/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 16
+text = "Materials"
+
+[node name="MaterialsGrid" type="GridContainer" parent="MarginContainer/Content"]
+layout_mode = 2
+columns = 4

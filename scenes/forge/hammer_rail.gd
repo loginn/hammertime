@@ -2,6 +2,12 @@ extends VBoxContainer
 
 signal hammer_selected(key: String)
 
+const MATERIAL_DATA: Array[Dictionary] = [
+	{"key": "iron", "name": "Iron", "glyph": "Fe"},
+	{"key": "steel", "name": "Steel", "glyph": "St"},
+	{"key": "wood", "name": "Wood", "glyph": "W"},
+]
+
 const HAMMER_DATA: Array[Dictionary] = [
 	{"key": "tack", "glyph": "🔨", "name": "Tack Hammer", "verb": "Transmute", "effect": "Normal → Magic", "target": "Normal"},
 	{"key": "tuning", "glyph": "🔧", "name": "Tuning Hammer", "verb": "Alteration", "effect": "Reroll Magic affixes", "target": "Magic"},
@@ -15,8 +21,10 @@ const HAMMER_DATA: Array[Dictionary] = [
 var _selected_key: String = ""
 var _buttons: Dictionary = {}
 var _count_labels: Dictionary = {}
+var _material_count_labels: Dictionary = {}
 
 @onready var _grid: GridContainer = $MarginContainer/Content/Grid
+@onready var _materials_grid: GridContainer = $MarginContainer/Content/MaterialsGrid
 @onready var _detail_panel: PanelContainer = $MarginContainer/Content/DetailPanel
 @onready var _detail_name: Label = $MarginContainer/Content/DetailPanel/DetailVBox/DetailName
 @onready var _detail_verb: Label = $MarginContainer/Content/DetailPanel/DetailVBox/DetailVerb
@@ -27,6 +35,7 @@ var _count_labels: Dictionary = {}
 
 func _ready() -> void:
 	_build_buttons()
+	_build_material_slots()
 	_update_all_counts()
 	_detail_panel.visible = false
 	GameEvents.currency_changed.connect(_on_currency_changed)
@@ -93,6 +102,43 @@ func _build_buttons() -> void:
 		_count_labels[data["key"]] = count_label
 
 
+func _build_material_slots() -> void:
+	for data in MATERIAL_DATA:
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(56, 56)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.disabled = true
+
+		var vbox := VBoxContainer.new()
+		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vbox.add_theme_constant_override("separation", 0)
+
+		var glyph_label := Label.new()
+		glyph_label.text = data["glyph"]
+		glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		glyph_label.add_theme_font_size_override("font_size", 22)
+		glyph_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vbox.add_child(glyph_label)
+
+		var count_label := Label.new()
+		count_label.text = "0"
+		count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		count_label.add_theme_font_size_override("font_size", 10)
+		count_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+		count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vbox.add_child(count_label)
+
+		btn.add_child(vbox)
+		vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		btn.tooltip_text = data["name"]
+
+		_materials_grid.add_child(btn)
+		_material_count_labels[data["key"]] = count_label
+
+
 func _on_hammer_pressed(key: String) -> void:
 	_selected_key = key
 	_update_selection_highlight()
@@ -135,6 +181,8 @@ func _get_hammer_data(key: String) -> Dictionary:
 func _on_currency_changed(currency_key: String, new_amount: int) -> void:
 	if currency_key in _count_labels:
 		_count_labels[currency_key].text = str(new_amount)
+	if currency_key in _material_count_labels:
+		_material_count_labels[currency_key].text = str(new_amount)
 	if currency_key == _selected_key:
 		_detail_count.text = "Count: %d" % new_amount
 
@@ -143,6 +191,9 @@ func _update_all_counts() -> void:
 	for key in _count_labels:
 		var count: int = GameState.currency_counts.get(key, 0)
 		_count_labels[key].text = str(count)
+	for key in _material_count_labels:
+		var count: int = GameState.currency_counts.get(key, 0)
+		_material_count_labels[key].text = str(count)
 
 
 func get_selected_key() -> String:
