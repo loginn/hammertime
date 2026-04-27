@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://bldf2owc8guaf" path="res://scenes/main.gd" id="3_main_script"]
 [ext_resource type="PackedScene" path="res://scenes/prestige/prestige_screen.tscn" id="4_prestige_screen"]
 [ext_resource type="PackedScene" path="res://scenes/settings/settings_screen.tscn" id="5_settings_screen"]
+[ext_resource type="PackedScene" path="res://scenes/totem/totem_screen.tscn" id="6_totem_screen"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar"]
 bg_color = Color(0.20392157, 0.18039216, 0.15686275, 1)
@@ -292,6 +293,21 @@ theme_override_font_sizes/font_size = 15
 text = "Prestige"
 flat = true
 
+[node name="MarginContainer4" type="MarginContainer" parent="VBox/TopBar/MarginContainer/HBox" unique_id=512841736]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_right = 5
+
+[node name="TabTotem" type="Button" parent="VBox/TopBar/MarginContainer/HBox/MarginContainer4" unique_id=317482951]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.47058824, 0.4, 0.32941177, 1)
+theme_override_colors/font_focus_color = Color(0.76862746, 0.60784316, 0.3647059, 1)
+theme_override_font_sizes/font_size = 15
+text = "Totem"
+flat = true
+visible = false
+
 [node name="Spacer" type="Control" parent="VBox/TopBar/MarginContainer/HBox" unique_id=874329506]
 custom_minimum_size = Vector2(700, 0)
 layout_mode = 2
@@ -321,5 +337,9 @@ visible = false
 layout_mode = 1
 
 [node name="SettingsScreen" parent="VBox/Body" unique_id=1013923969 instance=ExtResource("5_settings_screen")]
+visible = false
+layout_mode = 1
+
+[node name="TotemScreen" parent="VBox/Body" unique_id=728394651 instance=ExtResource("6_totem_screen")]
 visible = false
 layout_mode = 1
