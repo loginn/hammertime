@@ -6,10 +6,10 @@ var hero: Hero
 var currency_counts: Dictionary = {}
 
 var crafting_inventory: Dictionary = {}
-var crafting_bench_item: HeroItem = null
+var crafting_bench_item = null
 
 var totem_inventory: Array = []
-var totem_grid: TotemGrid = TotemGrid.new()
+var totem_grid = null  # TotemGrid, initialized in _ready()
 
 var expedition_resolver: ExpeditionResolver = null
 
@@ -55,7 +55,7 @@ func initialize_fresh_game() -> void:
 	crafting_bench_item = null
 	expedition_resolver = ExpeditionResolver.new()
 	totem_inventory = []
-	totem_grid = TotemGrid.new()
+	totem_grid = load("res://models/totem/totem_grid.gd").new()
 
 
 func wipe_run_state() -> void:
@@ -69,7 +69,7 @@ func wipe_run_state() -> void:
 
 	crafting_bench_item = null
 	totem_inventory = []
-	totem_grid = TotemGrid.new()
+	totem_grid = load("res://models/totem/totem_grid.gd").new()
 
 	if expedition_resolver != null:
 		expedition_resolver.cancel_expedition()
@@ -81,12 +81,12 @@ func wipe_run_state() -> void:
 	hero.update_stats()
 
 
-func add_totem_to_inventory(piece: TotemPiece) -> void:
+func add_totem_to_inventory(piece) -> void:
 	totem_inventory.append(piece)
 	GameEvents.totem_inventory_changed.emit()
 
 
-func remove_totem_from_inventory(piece: TotemPiece) -> void:
+func remove_totem_from_inventory(piece) -> void:
 	totem_inventory.erase(piece)
 	GameEvents.totem_inventory_changed.emit()
 
@@ -108,13 +108,13 @@ func spend_currency(currency_type: String, amount: int = 1) -> bool:
 	return true
 
 
-func add_item_to_inventory(item: HeroItem) -> void:
+func add_item_to_inventory(item) -> void:
 	if item.slot in crafting_inventory:
 		crafting_inventory[item.slot].append(item)
 		GameEvents.inventory_changed.emit(item.slot)
 
 
-func remove_item_from_inventory(item: HeroItem) -> void:
+func remove_item_from_inventory(item) -> void:
 	if item.slot in crafting_inventory:
 		crafting_inventory[item.slot].erase(item)
 		GameEvents.inventory_changed.emit(item.slot)

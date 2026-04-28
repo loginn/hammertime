@@ -8,7 +8,7 @@ const VALID_POSITIONS: Array[Vector2i] = [
 var slots: Dictionary = {}
 
 
-func place_piece(pos: Vector2i, piece: TotemPiece) -> bool:
+func place_piece(pos: Vector2i, piece) -> bool:
 	if pos not in VALID_POSITIONS:
 		print_debug("TotemGrid: invalid position ", pos)
 		return false
@@ -19,15 +19,15 @@ func place_piece(pos: Vector2i, piece: TotemPiece) -> bool:
 	return true
 
 
-func remove_piece(pos: Vector2i) -> TotemPiece:
+func remove_piece(pos: Vector2i) -> Object:
 	if not slots.has(pos):
 		return null
-	var piece: TotemPiece = slots[pos]
+	var piece = slots[pos]
 	slots.erase(pos)
 	return piece
 
 
-func get_piece(pos: Vector2i) -> TotemPiece:
+func get_piece(pos: Vector2i) -> Object:
 	return slots.get(pos, null)
 
 
@@ -48,13 +48,13 @@ func compute_synergies() -> Array[Dictionary]:
 	for pos_a: Vector2i in VALID_POSITIONS:
 		if not slots.has(pos_a):
 			continue
-		var piece_a: TotemPiece = slots[pos_a]
+		var piece_a = slots[pos_a]
 		if piece_a.deity_tag.is_empty():
 			continue
 		for pos_b: Vector2i in get_adjacent_slots(pos_a):
 			if not slots.has(pos_b):
 				continue
-			var piece_b: TotemPiece = slots[pos_b]
+			var piece_b = slots[pos_b]
 			if piece_b.deity_tag != piece_a.deity_tag:
 				continue
 			# Avoid duplicate pairs (A,B) and (B,A)
@@ -94,7 +94,7 @@ func get_effective_modifiers() -> Dictionary:
 			synergy_positions.append(s["pos_b"])
 
 	for pos: Vector2i in slots:
-		var piece: TotemPiece = slots[pos]
+		var piece = slots[pos]
 		var mods: Dictionary = piece.get_expedition_modifiers()
 		var multiplier: float = 1.5 if pos in synergy_positions else 1.0
 		for key in base_keys:
@@ -103,8 +103,8 @@ func get_effective_modifiers() -> Dictionary:
 	return result
 
 
-func clear() -> Array[TotemPiece]:
-	var pieces: Array[TotemPiece] = []
+func clear() -> Array:
+	var pieces: Array = []
 	for pos: Vector2i in slots:
 		pieces.append(slots[pos])
 	slots.clear()

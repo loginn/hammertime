@@ -17,7 +17,7 @@ func _get_suffix_pool() -> Array[Affix]:
 func recompute_deity_tag() -> void:
 	var counts: Dictionary = {}
 	var first_deity: String = ""
-	for affix: Affix in prefixes + suffixes:
+	for affix in prefixes + suffixes:
 		for tag: String in affix.tags:
 			if tag in [Tag.CTHULHU, Tag.NYARLATHOTEP, Tag.HASTUR,
 					Tag.DAGON, Tag.YOG_SOTHOTH, Tag.SHUB_NIGGURATH]:
@@ -54,7 +54,7 @@ func get_expedition_modifiers() -> Dictionary:
 		"bonus_roll_chance": 0,
 	}
 
-	for affix: Affix in prefixes + suffixes:
+	for affix in prefixes + suffixes:
 		var is_steel := Tag.DAGON in affix.tags and Tag.MATERIAL_CHANCE in affix.tags \
 				and affix.type == Affix.AffixType.SUFFIX
 		var is_wood := Tag.SHUB_NIGGURATH in affix.tags and Tag.MATERIAL_CHANCE in affix.tags \

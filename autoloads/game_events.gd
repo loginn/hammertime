@@ -1,8 +1,8 @@
 extends Node
 
-signal equipment_changed(slot: int, item: HeroItem)
-signal item_crafted(item: HeroItem)
-signal item_melted(item: HeroItem)
+signal equipment_changed(slot: int, item)
+signal item_crafted(item)
+signal item_melted(item)
 
 signal expedition_started(expedition_id: String)
 signal expedition_completed(expedition_id: String, rewards: Dictionary)
@@ -14,7 +14,7 @@ signal prestige_completed()
 signal currency_changed(currency_key: String, new_amount: int)
 signal inventory_changed(slot: int)
 
-signal totem_placed(pos: Vector2i, piece: TotemPiece)
-signal totem_removed(pos: Vector2i, piece: TotemPiece)
+signal totem_placed(pos: Vector2i, piece)
+signal totem_removed(pos: Vector2i, piece)
 signal totem_synergy_changed(synergies: Array)
 signal totem_inventory_changed()

@@ -73,7 +73,7 @@ func _get_totem_modifiers() -> Dictionary:
 
 func _resolve_from_drop_table() -> Dictionary:
 	var currencies: Dictionary = {}
-	var items: Array[HeroItem] = []
+	var items: Array = []
 	var mods := _get_totem_modifiers()
 
 	var drop_quantity: float = mods.get("drop_quantity", 0.0)
@@ -147,7 +147,7 @@ func complete_expedition() -> Dictionary:
 
 	if "currencies" in rewards:
 		GameState.add_currencies(rewards["currencies"])
-		for item: HeroItem in rewards.get("items", []):
+		for item in rewards.get("items", []):
 			GameState.add_item_to_inventory(item)
 	else:
 		GameState.add_currencies(rewards)

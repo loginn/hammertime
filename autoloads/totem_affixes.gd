@@ -1,4 +1,4 @@
-class_name TotemAffixes extends Node
+extends Node
 
 # Expedition-modifying affix pool for TotemPiece crafting.
 # Each affix carries exactly one deity tag enabling synergy builds.
