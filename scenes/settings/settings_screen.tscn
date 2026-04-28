@@ -145,6 +145,11 @@ layout_mode = 2
 custom_minimum_size = Vector2(190, 36)
 text = "Reset Prestige"
 
+[node name="BtnGrantMaterials" type="Button" parent="Panel/CenterVBox/DebugPanel/DebugGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(190, 36)
+text = "Grant Materials"
+
 [node name="BtnWipeRun" type="Button" parent="Panel/CenterVBox/DebugPanel/DebugGrid"]
 layout_mode = 2
 custom_minimum_size = Vector2(190, 36)
@@ -167,4 +172,5 @@ size = Vector2i(400, 250)
 [connection signal="pressed" from="Panel/CenterVBox/DebugPanel/DebugGrid/BtnGrantSteelKit" to="." method="_grant_steel_kit"]
 [connection signal="pressed" from="Panel/CenterVBox/DebugPanel/DebugGrid/BtnAddPrestige" to="." method="_add_prestige"]
 [connection signal="pressed" from="Panel/CenterVBox/DebugPanel/DebugGrid/BtnResetPrestige" to="." method="_reset_prestige"]
+[connection signal="pressed" from="Panel/CenterVBox/DebugPanel/DebugGrid/BtnGrantMaterials" to="." method="_grant_materials"]
 [connection signal="pressed" from="Panel/CenterVBox/DebugPanel/DebugGrid/BtnWipeRun" to="." method="_wipe_run"]

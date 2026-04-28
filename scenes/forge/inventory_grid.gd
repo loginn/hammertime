@@ -1,6 +1,7 @@
 extends VBoxContainer
 
 signal item_selected(item: HeroItem)
+signal material_selection_requested(slot: int)
 
 const NewBaseTile := preload("res://scenes/forge/new_base_tile.tscn")
 const ItemTile := preload("res://scenes/forge/item_tile.tscn")
@@ -8,6 +9,7 @@ const ItemTile := preload("res://scenes/forge/item_tile.tscn")
 var active_slot: Tag_List.ItemSlot = Tag_List.ItemSlot.WEAPON
 
 var _tab_buttons: Dictionary = {}
+var _pending_slot: int = -1
 
 @onready var _slot_tabs: HBoxContainer = $SlotTabs
 @onready var _item_count: Label = $ItemCount
@@ -85,13 +87,27 @@ func _on_item_tile_pressed(item: HeroItem) -> void:
 
 
 func _on_new_base_requested(slot: int) -> void:
-	var bases: Array[String] = ItemFactory.get_bases_for_slot(slot)
-	if bases.is_empty():
+	_pending_slot = slot
+	material_selection_requested.emit(slot)
+
+
+func on_material_selected(material_key: String) -> void:
+	if _pending_slot < 0:
 		return
-	var new_item: HeroItem = ItemFactory.create_base(bases[0])
+	var tier_map := {"iron": Tag_List.MaterialTier.IRON, "steel": Tag_List.MaterialTier.STEEL}
+	if material_key not in tier_map:
+		return
+	var tier: Tag_List.MaterialTier = tier_map[material_key]
+	var base_id: String = ItemFactory.get_base_for_slot_and_material(
+		_pending_slot as Tag_List.ItemSlot, tier
+	)
+	if base_id == "":
+		return
+	var new_item: HeroItem = ItemFactory.create_base(base_id)
 	if new_item == null:
 		return
 	GameState.add_item_to_inventory(new_item)
+	_pending_slot = -1
 
 
 func _on_inventory_changed(slot: int) -> void:

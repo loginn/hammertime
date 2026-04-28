@@ -11,92 +11,56 @@ const POLL_INTERVAL: float = 0.1
 var _config: ExpeditionConfig = null
 var _resolver: ExpeditionResolver = null
 var _poll_accumulator: float = 0.0
+var _state: CardState = CardState.IDLE
+var _hovering: bool = false
 
-@onready var _header: Label = %Header
 @onready var _name: Label = %CardName
-@onready var _desc: Label = %CardDesc
-@onready var _material: Label = %CardMaterial
-@onready var _time: Label = %CardTime
+@onready var _stars: Label = %CardStars
+@onready var _duration: Label = %CardDuration
 @onready var _rewards: VBoxContainer = %CardRewards
-@onready var _progress: ProgressBar = %CardProgress
-@onready var _countdown: Label = %CardCountdown
-@onready var _status: Label = %CardStatus
-@onready var _send_btn: Button = %CardSend
-@onready var _busy_btn: Button = %CardBusy
-@onready var _collect_btn: Button = %CardCollect
-@onready var _recall_btn: Button = %CardRecall
+@onready var _action_btn: Button = %ActionButton
+@onready var _fill_overlay: ColorRect = %FillOverlay
+@onready var _btn_label: Label = %ButtonLabel
 
 
-func setup(config: ExpeditionConfig, resolver: ExpeditionResolver, card_index: int = 0) -> void:
+func setup(config: ExpeditionConfig, resolver: ExpeditionResolver, _card_index: int = 0) -> void:
 	_config = config
 	_resolver = resolver
 
-	var roman := ["I", "II", "III", "IV", "V", "VI"]
-	var stars := ""
+	var star_str := ""
 	for i in range(1, 4):
-		stars += "★" if i <= config.difficulty else "☆"
-	_header.text = "EXPEDITION %s  %s" % [roman[card_index] if card_index < roman.size() else str(card_index + 1), stars]
+		star_str += "★" if i <= config.difficulty else "☆"
+	_stars.text = star_str
 
 	_name.text = config.expedition_name
-	_desc.text = config.description
-
-	var material_name := "Iron" if config.reward_tier == 1 else "Steel"
-	_material.text = material_name
-
 	_refresh_time()
 	_populate_rewards()
 
-	_send_btn.pressed.connect(func() -> void: expedition_send_requested.emit(_config))
-	_collect_btn.pressed.connect(func() -> void: expedition_collect_requested.emit(_config))
-	_recall_btn.pressed.connect(func() -> void: expedition_recall_requested.emit(_config))
+	_action_btn.pressed.connect(_on_button_pressed)
+	_action_btn.mouse_entered.connect(func() -> void:
+		_hovering = true
+		_update_button_display()
+	)
+	_action_btn.mouse_exited.connect(func() -> void:
+		_hovering = false
+		_update_button_display()
+	)
 
 
 func update_state(state: CardState) -> void:
-	match state:
-		CardState.COMPLETED:
-			_send_btn.visible = false
-			_busy_btn.visible = false
-			_collect_btn.visible = true
-			_recall_btn.visible = false
-			_progress.visible = true
-			_progress.value = 1.0
-			_countdown.visible = false
-			_status.text = "COMPLETE"
-			_status.visible = true
-		CardState.IN_PROGRESS:
-			_send_btn.visible = false
-			_busy_btn.visible = false
-			_collect_btn.visible = false
-			_recall_btn.visible = true
-			_progress.visible = true
-			_countdown.visible = true
-			_status.text = "IN PROGRESS"
-			_status.visible = true
-		CardState.BUSY:
-			_send_btn.visible = false
-			_busy_btn.visible = true
-			_collect_btn.visible = false
-			_recall_btn.visible = false
-			_progress.visible = false
-			_countdown.visible = false
-			_status.visible = false
-		CardState.IDLE:
-			_send_btn.visible = true
-			_busy_btn.visible = false
-			_collect_btn.visible = false
-			_recall_btn.visible = false
-			_progress.visible = false
-			_countdown.visible = false
-			_status.visible = false
+	_state = state
+	_hovering = false
+	_update_button_display()
 
 
 func show_status(text: String) -> void:
-	_status.text = text
-	_status.visible = true
+	_duration.text = text
+	_duration.add_theme_color_override("font_color", Color(1, 0.7, 0.36, 1))
 
 
 func hide_status() -> void:
-	_status.visible = false
+	_refresh_time()
+	_duration.add_theme_color_override("font_color", Color(0.54, 0.46, 0.38, 1))
 
 
 func refresh_time() -> void:
@@ -111,15 +75,89 @@ func _process(delta: float) -> void:
 	if _resolver.active_config == null or _resolver.active_config.expedition_id != _config.expedition_id:
 		return
 
-	_progress.value = _resolver.get_progress()
+	var progress := _resolver.get_progress()
+	_update_fill(progress)
 
 	_poll_accumulator += delta
 	if _poll_accumulator < POLL_INTERVAL:
 		return
 	_poll_accumulator = 0.0
 
-	var remaining := _resolver.get_remaining_seconds()
-	_countdown.text = "%ds" % ceili(remaining)
+	if not _hovering:
+		var remaining := _resolver.get_remaining_seconds()
+		_btn_label.text = "%ds" % ceili(remaining)
+
+	if _resolver.is_completed() and _state != CardState.COMPLETED:
+		update_state(CardState.COMPLETED)
+
+
+func _on_button_pressed() -> void:
+	match _state:
+		CardState.IDLE:
+			expedition_send_requested.emit(_config)
+		CardState.IN_PROGRESS:
+			expedition_recall_requested.emit(_config)
+		CardState.COMPLETED:
+			expedition_collect_requested.emit(_config)
+
+
+func _update_button_display() -> void:
+	_action_btn.text = ""
+	match _state:
+		CardState.IDLE:
+			_action_btn.disabled = false
+			_btn_label.visible = true
+			_btn_label.text = "Send Hero"
+			_btn_label.add_theme_color_override("font_color", Color(0.1, 0.03, 0.01, 1))
+			_fill_overlay.visible = false
+			_set_btn_bg(Color(0.91, 0.53, 0.29, 1))
+		CardState.IN_PROGRESS:
+			_action_btn.disabled = false
+			_btn_label.visible = true
+			_fill_overlay.visible = true
+			if _hovering:
+				_btn_label.text = "Recall"
+				_btn_label.add_theme_color_override("font_color", Color(0.9, 0.6, 0.5, 1))
+			else:
+				_btn_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.9))
+			_set_btn_bg(Color(0.15, 0.1, 0.07, 1))
+		CardState.COMPLETED:
+			_action_btn.disabled = false
+			_btn_label.visible = true
+			_btn_label.text = "Collect"
+			_btn_label.add_theme_color_override("font_color", Color(0.1, 0.03, 0.01, 1))
+			_fill_overlay.visible = true
+			_update_fill(1.0)
+			_set_btn_bg(Color(0.15, 0.1, 0.07, 1))
+		CardState.BUSY:
+			_action_btn.disabled = true
+			_btn_label.visible = true
+			_btn_label.text = "Hero Busy"
+			_btn_label.add_theme_color_override("font_color", Color(0.54, 0.46, 0.38, 1))
+			_fill_overlay.visible = false
+			_set_btn_bg(Color(0.24, 0.21, 0.19, 1))
+
+
+func _update_fill(ratio: float) -> void:
+	var btn_width := _action_btn.size.x
+	_fill_overlay.offset_right = btn_width * clampf(ratio, 0.0, 1.0)
+
+
+func _set_btn_bg(color: Color) -> void:
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.content_margin_left = 8.0
+	style.content_margin_top = 4.0
+	style.content_margin_right = 8.0
+	style.content_margin_bottom = 4.0
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.border_color = Color(0, 0, 0, 1)
+	_action_btn.add_theme_stylebox_override("normal", style)
+	_action_btn.add_theme_stylebox_override("hover", style)
+	_action_btn.add_theme_stylebox_override("pressed", style)
 
 
 func _refresh_time() -> void:
@@ -131,7 +169,7 @@ func _refresh_time() -> void:
 	else:
 		var hero_power := GameState.hero.get_hero_power()
 		effective_duration = _config.duration_seconds / (1.0 + hero_power * BalanceConfig.EXPEDITION_HERO_POWER_SCALING)
-	_time.text = _format_duration(effective_duration)
+	_duration.text = _format_duration(effective_duration)
 
 
 func _populate_rewards() -> void:
@@ -140,21 +178,26 @@ func _populate_rewards() -> void:
 	if _config.drop_table == null:
 		return
 	for entry: Dictionary in _config.drop_table.entries:
-		if not entry["guaranteed"]:
-			continue
 		var reward_label := Label.new()
+		var is_guaranteed: bool = entry["guaranteed"]
 		if entry["type"] == "currency":
 			var display_name: String = GameState.CURRENCY_DISPLAY_NAMES.get(entry["key"], entry["key"])
-			reward_label.text = "· %d-%d %s" % [entry["qty_min"], entry["qty_max"], display_name]
+			if is_guaranteed:
+				reward_label.text = "· %d-%d %s" % [entry["qty_min"], entry["qty_max"], display_name]
+			else:
+				reward_label.text = "· %d-%d %s (chance)" % [entry["qty_min"], entry["qty_max"], display_name]
 		else:
 			reward_label.text = "· Item drop (T%d)" % entry["material_tier"]
-		reward_label.add_theme_color_override("font_color", Color(0.93, 0.88, 0.78))
-		reward_label.add_theme_font_size_override("font_size", 12)
+		var color := Color(0.93, 0.88, 0.78) if is_guaranteed else Color(0.65, 0.58, 0.48)
+		reward_label.add_theme_color_override("font_color", color)
+		reward_label.add_theme_font_size_override("font_size", 10)
 		_rewards.add_child(reward_label)
 
 
 func _format_duration(seconds: float) -> String:
 	var s := int(seconds)
+	if s >= 3600:
+		return "%dh %dm" % [s / 3600, (s % 3600) / 60]
 	if s >= 60:
 		return "%dm %ds" % [s / 60, s % 60]
 	return "%ds" % s

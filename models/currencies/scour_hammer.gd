@@ -7,17 +7,17 @@ func _init() -> void:
 	verb = "Scour"
 
 
-func can_apply(item: HeroItem) -> bool:
+func can_apply(item: CraftableItem) -> bool:
 	return item.rarity != CraftableItem.Rarity.NORMAL
 
 
-func get_error_message(item: HeroItem) -> String:
+func get_error_message(item: CraftableItem) -> String:
 	if item.rarity == CraftableItem.Rarity.NORMAL:
 		return "Item is already Normal rarity"
 	return ""
 
 
-func _do_apply(item: HeroItem) -> void:
+func _do_apply(item: CraftableItem) -> void:
 	item.prefixes.clear()
 	item.suffixes.clear()
 	item.rarity = CraftableItem.Rarity.NORMAL

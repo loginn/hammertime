@@ -9,6 +9,7 @@ var reward_tier: int
 var required_prestige: int
 
 var drop_table: DropTable = null
+var resource_drops: Array[Dictionary] = []
 
 
 func _init(
@@ -19,7 +20,8 @@ func _init(
 	p_difficulty: int = 1,
 	p_reward_tier: int = 1,
 	p_drop_table: DropTable = null,
-	p_required_prestige: int = 0
+	p_required_prestige: int = 0,
+	p_resource_drops: Array[Dictionary] = []
 ) -> void:
 	expedition_id = p_id
 	expedition_name = p_name
@@ -29,6 +31,7 @@ func _init(
 	reward_tier = p_reward_tier
 	drop_table = p_drop_table
 	required_prestige = p_required_prestige
+	resource_drops = p_resource_drops
 
 
 # --- Wood Drop Helper ---
@@ -46,8 +49,7 @@ static func _transmute_drop_table() -> DropTable:
 	var dt := DropTable.new()
 	dt.drop_rolls = 1
 	dt.entries = [
-		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.IRON, -1, 1, 1, true),
-		DropTable.create_entry("currency", "tack", -1, 60, 2, 4, false),
+		DropTable.create_entry("currency", "tack", -1, 0, 4, 8, true),
 		DropTable.create_entry("currency", "tuning", -1, 30, 1, 1, false),
 		DropTable.create_entry("currency", "forge", -1, 10, 1, 1, false),
 	]
@@ -60,9 +62,8 @@ static func _augmentation_drop_table() -> DropTable:
 	var dt := DropTable.new()
 	dt.drop_rolls = 1
 	dt.entries = [
-		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.IRON, -1, 1, 1, true),
-		DropTable.create_entry("currency", "tuning", -1, 55, 1, 2, false),
-		DropTable.create_entry("currency", "forge", -1, 30, 1, 1, false),
+		DropTable.create_entry("currency", "forge", -1, 0, 2, 4, true),
+		DropTable.create_entry("currency", "tuning", -1, 30, 1, 1, false),
 		DropTable.create_entry("currency", "tack", -1, 15, 2, 3, false),
 	]
 	if PrestigeManager.prestige_count >= 2:
@@ -74,8 +75,7 @@ static func _alteration_drop_table() -> DropTable:
 	var dt := DropTable.new()
 	dt.drop_rolls = 1
 	dt.entries = [
-		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.IRON, -1, 1, 1, true),
-		DropTable.create_entry("currency", "forge", -1, 55, 1, 2, false),
+		DropTable.create_entry("currency", "tuning", -1, 0, 4, 8, true),
 		DropTable.create_entry("currency", "grand", -1, 25, 1, 1, false),
 		DropTable.create_entry("currency", "runic", -1, 15, 1, 1, false),
 		DropTable.create_entry("currency", "tuning", -1, 5, 1, 1, false),
@@ -91,11 +91,9 @@ static func _alchemy_drop_table() -> DropTable:
 	var dt := DropTable.new()
 	dt.drop_rolls = 1
 	dt.entries = [
-		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.IRON, -1, 1, 1, true),
-		DropTable.create_entry("currency", "grand", -1, 60, 1, 2, false),
+		DropTable.create_entry("currency", "grand", -1, 0, 1, 2, true),
 		DropTable.create_entry("currency", "forge", -1, 25, 1, 2, false),
 		DropTable.create_entry("currency", "tuning", -1, 10, 2, 3, false),
-		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.STEEL, 5, 1, 1, false),
 	]
 	if PrestigeManager.prestige_count >= 2:
 		_add_wood_entries(dt, true)
@@ -106,11 +104,9 @@ static func _exaltation_drop_table() -> DropTable:
 	var dt := DropTable.new()
 	dt.drop_rolls = 1
 	dt.entries = [
-		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.IRON, -1, 1, 1, true),
-		DropTable.create_entry("currency", "runic", -1, 60, 1, 2, false),
+		DropTable.create_entry("currency", "runic", -1, 0, 1, 2, true),
 		DropTable.create_entry("currency", "grand", -1, 25, 1, 1, false),
 		DropTable.create_entry("currency", "forge", -1, 10, 1, 1, false),
-		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.STEEL, 5, 1, 1, false),
 	]
 	if PrestigeManager.prestige_count >= 2:
 		_add_wood_entries(dt, true)
@@ -121,11 +117,9 @@ static func _annulment_drop_table() -> DropTable:
 	var dt := DropTable.new()
 	dt.drop_rolls = 1
 	dt.entries = [
-		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.IRON, -1, 1, 1, true),
-		DropTable.create_entry("currency", "claw", -1, 60, 1, 2, false),
+		DropTable.create_entry("currency", "claw", -1, 0, 1, 2, true),
 		DropTable.create_entry("currency", "runic", -1, 25, 1, 1, false),
 		DropTable.create_entry("currency", "grand", -1, 10, 1, 1, false),
-		DropTable.create_entry("item", "random_from_tier", Tag_List.MaterialTier.STEEL, 5, 1, 1, false),
 	]
 	if PrestigeManager.prestige_count >= 2:
 		_add_wood_entries(dt, true)
@@ -135,6 +129,7 @@ static func _annulment_drop_table() -> DropTable:
 # --- Zone Factory Methods ---
 
 static func transmute() -> ExpeditionConfig:
+	var res: Array[Dictionary] = [{"key": "iron", "chance": 1.0, "qty_min": 1, "qty_max": 2}]
 	return ExpeditionConfig.new(
 		"transmute",
 		"Transmute",
@@ -143,11 +138,13 @@ static func transmute() -> ExpeditionConfig:
 		1,
 		1,
 		_transmute_drop_table(),
-		0
+		0,
+		res
 	)
 
 
 static func augmentation() -> ExpeditionConfig:
+	var res: Array[Dictionary] = [{"key": "iron", "chance": 1.0, "qty_min": 1, "qty_max": 3}]
 	return ExpeditionConfig.new(
 		"augmentation",
 		"Augmentation",
@@ -156,11 +153,13 @@ static func augmentation() -> ExpeditionConfig:
 		2,
 		1,
 		_augmentation_drop_table(),
-		0
+		0,
+		res
 	)
 
 
 static func alteration() -> ExpeditionConfig:
+	var res: Array[Dictionary] = [{"key": "iron", "chance": 1.0, "qty_min": 2, "qty_max": 4}]
 	return ExpeditionConfig.new(
 		"alteration",
 		"Alteration",
@@ -169,46 +168,62 @@ static func alteration() -> ExpeditionConfig:
 		3,
 		1,
 		_alteration_drop_table(),
-		0
+		0,
+		res
 	)
 
 
 static func alchemy() -> ExpeditionConfig:
+	var res: Array[Dictionary] = [
+		{"key": "iron", "chance": 1.0, "qty_min": 2, "qty_max": 4},
+		{"key": "steel", "chance": 0.05, "qty_min": 1, "qty_max": 2},
+	]
 	return ExpeditionConfig.new(
-		"alchemy",
-		"Alchemy",
+		"regal",
+		"Regal",
 		"A resonant cave complex. Grand hammers ring off every wall. Steel seams run thin but present.",
 		BalanceConfig.EXPEDITION_ALCHEMY_TIME,
-		4,
+		3,
 		2,
 		_alchemy_drop_table(),
-		1
+		1,
+		res
 	)
 
 
 static func exaltation() -> ExpeditionConfig:
+	var res: Array[Dictionary] = [
+		{"key": "iron", "chance": 1.0, "qty_min": 2, "qty_max": 4},
+		{"key": "steel", "chance": 0.05, "qty_min": 1, "qty_max": 3},
+	]
 	return ExpeditionConfig.new(
 		"exaltation",
 		"Exaltation",
 		"A deep magmatic shelf. Runic hammers are common here. Steel bleeds from the cracks.",
 		BalanceConfig.EXPEDITION_EXALTATION_TIME,
-		5,
+		4,
 		2,
 		_exaltation_drop_table(),
-		1
+		1,
+		res
 	)
 
 
 static func annulment() -> ExpeditionConfig:
+	var res: Array[Dictionary] = [
+		{"key": "iron", "chance": 1.0, "qty_min": 3, "qty_max": 5},
+		{"key": "steel", "chance": 0.05, "qty_min": 1, "qty_max": 3},
+	]
 	return ExpeditionConfig.new(
 		"annulment",
 		"Annulment",
 		"The lowest known excavation. Claw hammers are the prize. Steel is a certainty to the patient.",
 		BalanceConfig.EXPEDITION_ANNULMENT_TIME,
-		6,
+		4,
 		2,
 		_annulment_drop_table(),
-		1
+		1,
+		res
 	)
 
 

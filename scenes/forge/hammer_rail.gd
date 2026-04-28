@@ -1,6 +1,11 @@
 extends VBoxContainer
 
 signal hammer_selected(key: String)
+signal material_selected(material_key: String)
+
+var _material_selecting: bool = false
+var _material_flash_tweens: Array[Tween] = []
+var _material_buttons: Dictionary = {}
 
 const MATERIAL_DATA: Array[Dictionary] = [
 	{"key": "iron", "name": "Iron", "glyph": "Fe"},
@@ -135,8 +140,10 @@ func _build_material_slots() -> void:
 		btn.add_child(vbox)
 		vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		btn.tooltip_text = data["name"]
+		btn.pressed.connect(_on_material_pressed.bind(data["key"]))
 
 		_materials_grid.add_child(btn)
+		_material_buttons[data["key"]] = btn
 		_material_count_labels[data["key"]] = count_label
 
 
@@ -210,6 +217,61 @@ func _update_elemental_tab() -> void:
 		_tab_elemental.disabled = true
 		_tab_elemental.text = "🔒 Elemental"
 		_tab_elemental.tooltip_text = "Unlock by completing your first Prestige"
+
+
+func start_material_selection(allowed_keys: Array[String]) -> void:
+	_material_selecting = true
+	for key in _material_buttons:
+		var btn: Button = _material_buttons[key]
+		btn.disabled = key not in allowed_keys
+	_start_flash(allowed_keys)
+
+
+func stop_material_selection() -> void:
+	_material_selecting = false
+	_stop_flash()
+	for key in _material_buttons:
+		var btn: Button = _material_buttons[key]
+		btn.disabled = true
+
+
+func _on_material_pressed(key: String) -> void:
+	if not _material_selecting:
+		return
+	stop_material_selection()
+	material_selected.emit(key)
+
+
+func flash_materials_red(keys: Array[String]) -> void:
+	_stop_flash()
+	for key in keys:
+		if key not in _material_buttons:
+			continue
+		var btn: Button = _material_buttons[key]
+		var tween := create_tween()
+		tween.tween_property(btn, "modulate", Color(1.5, 0.3, 0.3), 0.15)
+		tween.tween_property(btn, "modulate", Color.WHITE, 0.3)
+		_material_flash_tweens.append(tween)
+
+
+func _start_flash(keys: Array[String]) -> void:
+	_stop_flash()
+	for key in keys:
+		if key not in _material_buttons:
+			continue
+		var btn: Button = _material_buttons[key]
+		var tween := create_tween().set_loops()
+		tween.tween_property(btn, "modulate", Color(1.4, 1.2, 0.6), 0.4)
+		tween.tween_property(btn, "modulate", Color.WHITE, 0.4)
+		_material_flash_tweens.append(tween)
+
+
+func _stop_flash() -> void:
+	for tw in _material_flash_tweens:
+		tw.kill()
+	_material_flash_tweens.clear()
+	for key in _material_buttons:
+		(_material_buttons[key] as Button).modulate = Color.WHITE
 
 
 func _on_prestige_completed() -> void:

@@ -96,6 +96,7 @@ func test_effective_modifiers_with_synergy_multiplier() -> void:
 		[],
 		Vector2i(1, 8)
 	)
+	affix_a.value = 4
 	var piece_a := TotemPiece.new()
 	piece_a.prefixes.append(affix_a)
 	piece_a.deity_tag = Tag.CTHULHU
@@ -108,6 +109,7 @@ func test_effective_modifiers_with_synergy_multiplier() -> void:
 		[],
 		Vector2i(1, 8)
 	)
+	affix_b.value = 2
 	var piece_b := TotemPiece.new()
 	piece_b.prefixes.append(affix_b)
 	piece_b.deity_tag = Tag.CTHULHU
@@ -130,6 +132,7 @@ func test_effective_modifiers_no_synergy_no_multiplier() -> void:
 		[],
 		Vector2i(1, 8)
 	)
+	affix.value = 4
 	var piece := TotemPiece.new()
 	piece.prefixes.append(affix)
 	piece.deity_tag = Tag.CTHULHU

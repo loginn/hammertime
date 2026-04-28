@@ -7,13 +7,13 @@ func _init() -> void:
 	verb = "Exalt"
 
 
-func can_apply(item: HeroItem) -> bool:
+func can_apply(item: CraftableItem) -> bool:
 	if item.rarity != CraftableItem.Rarity.RARE:
 		return false
 	return item.prefixes.size() < item.max_prefixes() or item.suffixes.size() < item.max_suffixes()
 
 
-func get_error_message(item: HeroItem) -> String:
+func get_error_message(item: CraftableItem) -> String:
 	if item.rarity != CraftableItem.Rarity.RARE:
 		return "Runic Hammer can only be used on Rare items"
 	if item.prefixes.size() >= item.max_prefixes() and item.suffixes.size() >= item.max_suffixes():
@@ -21,7 +21,7 @@ func get_error_message(item: HeroItem) -> String:
 	return ""
 
 
-func _do_apply(item: HeroItem) -> void:
+func _do_apply(item: CraftableItem) -> void:
 	var prefix_available = item.prefixes.size() < item.max_prefixes()
 	var suffix_available = item.suffixes.size() < item.max_suffixes()
 	var try_prefix_first = randi_range(0, 1) == 0

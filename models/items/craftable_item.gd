@@ -19,6 +19,10 @@ var valid_tags: Array[String] = []
 var rarity: Rarity = Rarity.NORMAL
 
 
+func update_value() -> void:
+	pass
+
+
 func max_prefixes() -> int:
 	return RARITY_LIMITS[rarity]["prefixes"]
 

@@ -35,8 +35,10 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="CardGrid" type="HBoxContainer" parent="Background/MarginContainer/ScrollContainer" unique_id=1713883080]
+[node name="CardGrid" type="GridContainer" parent="Background/MarginContainer/ScrollContainer" unique_id=1713883080]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 16
+columns = 3
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 16

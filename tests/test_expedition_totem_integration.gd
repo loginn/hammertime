@@ -15,9 +15,10 @@ func _make_config_currency_only():
 	# Guaranteed single currency entry, fixed qty=10, difficulty=1.
 	var dt = DropTable.new()
 	dt.drop_rolls = 1
-	dt.entries = [
+	var entries: Array[Dictionary] = [
 		DropTable.create_entry("currency", "tack", -1, -1, 10, 10, true),
 	]
+	dt.entries = entries
 	return ExpeditionConfig.new("test", "Test", "Test config", 300.0, 1, 1, dt, 0)
 
 
@@ -171,17 +172,20 @@ func test_synergy_produces_more_than_non_synergy_pair() -> void:
 
 
 func test_hammer_chance_produces_extra_drops_over_trials() -> void:
-	# hammer_chance=100 → randf() < 1.0 always → guaranteed bonus hammer-type drop.
-	var base_total: int = 0
-	var boosted_total: int = 0
+	# hammer_chance=100 → randf() < 1.0 always → guaranteed bonus hammer-type drop each resolve.
+	# Non-tack hammer keys (tuning/forge/grand/runic/claw) only appear via hammer_chance bonus
+	# (DropTable has only tack). Over 10 trials at least 1 non-tack key must appear.
+	const OTHER_HAMMER_KEYS := ["tuning", "forge", "grand", "runic", "claw"]
+	var found_bonus: bool = false
 	for i in range(10):
-		seed(i * 13)
-		GameState.totem_grid = TotemGrid.new()
-		base_total += _total_currency(_make_resolver().resolve_rewards())
-	for i in range(10):
-		seed(i * 13)
 		GameState.totem_grid = TotemGrid.new()
 		GameState.totem_grid.place_piece(Vector2i(0, 0), _make_hammer_piece(100))
-		boosted_total += _total_currency(_make_resolver().resolve_rewards())
-	assert_gt(boosted_total, base_total,
-		"hammer_chance=100 (guaranteed) produces more total drops than baseline")
+		var rewards = _make_resolver().resolve_rewards()
+		for key in OTHER_HAMMER_KEYS:
+			if rewards["currencies"].get(key, 0) > 0:
+				found_bonus = true
+				break
+		if found_bonus:
+			break
+	assert_true(found_bonus,
+		"hammer_chance=100 should produce at least one non-tack hammer bonus in 10 trials")

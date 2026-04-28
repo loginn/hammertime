@@ -63,20 +63,20 @@ custom_minimum_size = Vector2(480, 0)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="TotemGridPanel" parent="Background/VBox/Body/CenterPanel/CenterVBox" instance=ExtResource("3_grid_panel")]
-unique_name_in_owner = true
-layout_mode = 2
-
 [node name="TotemCraftingBench" parent="Background/VBox/Body/CenterPanel/CenterVBox" instance=ExtResource("4_bench")]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_horizontal = 4
+
+[node name="TotemInventoryGrid" parent="Background/VBox/Body/CenterPanel/CenterVBox" instance=ExtResource("5_inv_grid")]
+unique_name_in_owner = true
+layout_mode = 2
 
 [node name="RightPanel" type="PanelContainer" parent="Background/VBox/Body"]
 custom_minimum_size = Vector2(430, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_right")
 
-[node name="TotemInventoryGrid" parent="Background/VBox/Body/RightPanel" instance=ExtResource("5_inv_grid")]
+[node name="TotemGridPanel" parent="Background/VBox/Body/RightPanel" instance=ExtResource("3_grid_panel")]
 unique_name_in_owner = true
 layout_mode = 2

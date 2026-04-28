@@ -41,6 +41,11 @@ func test_hero_item_backward_compat() -> void:
 	tack.apply(item)
 	assert_eq(item.rarity, CraftableItem.Rarity.MAGIC, "tack changes to magic")
 
+	# Tack may randomly fill all MAGIC slots (1 prefix + 1 suffix).
+	# Clear to one affix so forge always has room.
+	if item.prefixes.size() + item.suffixes.size() >= item.max_prefixes() + item.max_suffixes():
+		item.suffixes.clear()
+
 	var forge := ForgeHammer.new()
 	var can_forge: bool = forge.can_apply(item)
 	assert_true(can_forge, "forge can apply to magic item with open slots")
@@ -123,6 +128,7 @@ func test_totem_piece_expedition_modifiers() -> void:
 		[],
 		Vector2i(1, 8)
 	)
+	qty_affix.value = 3
 	piece.prefixes.append(qty_affix)
 
 	var mods: Dictionary = piece.get_expedition_modifiers()

@@ -34,6 +34,12 @@ func _on_export_pressed() -> void:
 	pass
 
 
+func _grant_materials() -> void:
+	GameState.add_currencies({"iron": 50, "steel": 10, "ash": 20, "oak": 10})
+	for key: String in ["iron", "steel", "ash", "oak"]:
+		GameEvents.currency_changed.emit(key, GameState.currency_counts[key])
+
+
 func _grant_currencies() -> void:
 	GameState.add_currencies(CURRENCY_GRANT)
 

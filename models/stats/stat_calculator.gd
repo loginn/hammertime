@@ -15,7 +15,7 @@ static func calculate_dps(
 
 	for affix: Affix in affixes:
 		if Tag.StatType.FLAT_DAMAGE in affix.stat_types:
-			damage += affix.value
+			damage += (affix.add_min + affix.add_max) / 2.0
 
 	var additive_damage_mult := 0.0
 	for affix: Affix in affixes:

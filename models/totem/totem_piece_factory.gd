@@ -28,4 +28,5 @@ static func create_base(material_tier: Tag_List.MaterialTier) -> TotemPiece:
 	piece.rarity = CraftableItem.Rarity.NORMAL
 	piece.item_name = Tag_List.material_name(material_tier) + " Totem"
 	piece.base_id = "totem_" + Tag_List.material_name(material_tier).to_lower()
+	piece.valid_tags = [Tag.TOTEM, Tag.EXPEDITION]
 	return piece

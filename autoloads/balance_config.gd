@@ -25,13 +25,13 @@ const RARE_MAX_PREFIXES: int = 3
 const RARE_MAX_SUFFIXES: int = 3
 
 # Expedition timing
-const EXPEDITION_TRANSMUTE_TIME: float = 10.0
-const EXPEDITION_AUGMENTATION_TIME: float = 90.0
-const EXPEDITION_ALTERATION_TIME: float = 420.0
-const EXPEDITION_ALCHEMY_TIME: float = 720.0
-const EXPEDITION_EXALTATION_TIME: float = 3600.0
-const EXPEDITION_ANNULMENT_TIME: float = 10800.0
-const EXPEDITION_HERO_POWER_SCALING: float = 0.005
+const EXPEDITION_TRANSMUTE_TIME: float = 7.0
+const EXPEDITION_AUGMENTATION_TIME: float = 60.0
+const EXPEDITION_ALTERATION_TIME: float = 280.0
+const EXPEDITION_ALCHEMY_TIME: float = 480.0
+const EXPEDITION_EXALTATION_TIME: float = 1800.0
+const EXPEDITION_ANNULMENT_TIME: float = 5400.0
+const EXPEDITION_HERO_POWER_SCALING: float = 0.02
 
 # Currencies hidden from all UI surfaces (code preserved, drops intact)
 const HIDDEN_CURRENCIES: Array[String] = ["scour"]

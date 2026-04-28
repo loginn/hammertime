@@ -14,6 +14,8 @@ func _ready() -> void:
 	_crafting_bench.strike_pressed.connect(_on_strike_pressed)
 	GameEvents.item_crafted.connect(_on_item_crafted)
 	_inventory_grid.item_selected.connect(_on_item_selected)
+	_inventory_grid.material_selection_requested.connect(_on_material_selection_requested)
+	_hammer_rail.material_selected.connect(_on_material_picked)
 	GameEvents.equipment_changed.connect(_on_equipment_changed)
 	_hero_panel.slot_tab_requested.connect(_on_slot_tab_requested)
 
@@ -75,6 +77,23 @@ func _refresh_bench() -> void:
 
 func _on_slot_tab_requested(slot: int) -> void:
 	_inventory_grid.switch_to_slot(slot)
+
+
+func _on_material_selection_requested(_slot: int) -> void:
+	var allowed: Array[String] = ["iron", "steel"]
+	var has_any := false
+	for key in allowed:
+		if GameState.currency_counts.get(key, 0) > 0:
+			has_any = true
+			break
+	if not has_any:
+		_hammer_rail.flash_materials_red(allowed)
+		return
+	_hammer_rail.start_material_selection(allowed)
+
+
+func _on_material_picked(material_key: String) -> void:
+	_inventory_grid.on_material_selected(material_key)
 
 
 func _on_prestige_completed() -> void:

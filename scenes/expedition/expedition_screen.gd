@@ -1,14 +1,9 @@
 extends Control
 
 const ExpeditionCardScene = preload("res://scenes/expedition/expedition_card.tscn")
-const REWARD_DISPLAY_DURATION: float = 3.0
-
 var _cards: Array[ExpeditionCard] = []
-var _reward_display_timer: float = 0.0
-var _showing_rewards: bool = false
-var _active_reward_card: ExpeditionCard = null
 
-@onready var _card_grid: HBoxContainer = %CardGrid
+@onready var _card_grid: GridContainer = %CardGrid
 
 
 func _ready() -> void:
@@ -61,16 +56,6 @@ func _update_all_card_states() -> void:
 			card.update_state(ExpeditionCard.CardState.IDLE)
 
 
-func _process(delta: float) -> void:
-	if _showing_rewards:
-		_reward_display_timer += delta
-		if _reward_display_timer >= REWARD_DISPLAY_DURATION:
-			_showing_rewards = false
-			if is_instance_valid(_active_reward_card):
-				_active_reward_card.hide_status()
-			_active_reward_card = null
-			_update_all_card_states()
-
 
 func _on_send_requested(config: ExpeditionConfig) -> void:
 	var resolver := GameState.expedition_resolver
@@ -88,20 +73,13 @@ func _on_collect_requested(config: ExpeditionConfig) -> void:
 	if rewards.is_empty():
 		return
 
-	var card := _find_card_for_config(config)
-	if card != null:
-		var parts: Array[String] = []
-		var currencies: Dictionary = rewards.get("currencies", {})
-		for currency_key: String in currencies:
-			var display_name: String = GameState.CURRENCY_DISPLAY_NAMES.get(currency_key, currency_key)
-			parts.append("%d %s" % [currencies[currency_key], display_name])
-		var items: Array = rewards.get("items", [])
-		if items.size() > 0:
-			parts.append("%d item%s" % [items.size(), "s" if items.size() > 1 else ""])
-		card.show_status("Earned: %s" % ", ".join(parts))
-		_active_reward_card = card
-		_showing_rewards = true
-		_reward_display_timer = 0.0
+	var parts: Array[String] = []
+	var currencies: Dictionary = rewards.get("currencies", {})
+	for currency_key: String in currencies:
+		var display_name: String = GameState.CURRENCY_DISPLAY_NAMES.get(currency_key, currency_key)
+		parts.append("%d %s" % [currencies[currency_key], display_name])
+	if not parts.is_empty():
+		Toast.show_message("Earned: %s" % ", ".join(parts))
 
 	_update_all_card_states()
 

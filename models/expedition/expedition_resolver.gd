@@ -117,6 +117,15 @@ func _resolve_from_drop_table() -> Dictionary:
 				if item != null:
 					items.append(item)
 
+	# Independent resource drops (iron, steel) — rolled separately from hammer pool
+	for res_drop: Dictionary in active_config.resource_drops:
+		if randf() < res_drop["chance"]:
+			var qty: int = randi_range(res_drop["qty_min"], res_drop["qty_max"])
+			var scaled := _scale_reward(qty, active_config.difficulty)
+			var boosted := maxi(1, int(float(scaled) * (1.0 + drop_quantity)))
+			var key: String = res_drop["key"]
+			currencies[key] = currencies.get(key, 0) + boosted
+
 	# Post-roll bonus drops from chance modifiers
 	const HAMMER_KEYS: Array[String] = ["tack", "tuning", "forge", "grand", "runic", "claw"]
 	const WOOD_KEYS: Array[String] = ["ash", "oak"]
