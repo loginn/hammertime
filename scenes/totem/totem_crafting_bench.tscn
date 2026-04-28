@@ -1,0 +1,125 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/totem/totem_crafting_bench.gd" id="1_bench"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_badge"]
+bg_color = Color(0.08, 0.06, 0.05, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+
+[node name="TotemCraftingBench" type="HBoxContainer"]
+custom_minimum_size = Vector2(480, 0)
+size_flags_vertical = 3
+script = ExtResource("1_bench")
+
+[node name="MarginLeft" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="PrefixRail" type="VBoxContainer" parent="MarginLeft"]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+
+[node name="RailHeader" type="Label" parent="MarginLeft/PrefixRail"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.65, 0.85, 1)
+theme_override_font_sizes/font_size = 9
+text = "PREFIX"
+horizontal_alignment = 1
+
+[node name="PrefixCount" type="Label" parent="MarginLeft/PrefixRail"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.38, 0.3, 1)
+theme_override_font_sizes/font_size = 8
+text = "0 / 0"
+
+[node name="MarginCenter" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+
+[node name="BadgeVBox" type="VBoxContainer" parent="MarginCenter"]
+layout_mode = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="ItemBadge" type="PanelContainer" parent="MarginCenter/BadgeVBox"]
+custom_minimum_size = Vector2(130, 160)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_badge")
+
+[node name="EmptyLabel" type="Label" parent="MarginCenter/BadgeVBox/ItemBadge"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.4, 0.4, 1)
+theme_override_font_sizes/font_size = 13
+text = "No piece\non bench"
+horizontal_alignment = 1
+
+[node name="ItemName" type="Label" parent="MarginCenter/BadgeVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Piece Name"
+horizontal_alignment = 1
+visible = false
+
+[node name="DeityTag" type="Label" parent="MarginCenter/BadgeVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.6, 0.9, 1)
+theme_override_font_sizes/font_size = 10
+horizontal_alignment = 1
+visible = false
+
+[node name="MaterialTier" type="Label" parent="MarginCenter/BadgeVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 9
+horizontal_alignment = 1
+visible = false
+
+[node name="ModifierSummary" type="Label" parent="MarginCenter/BadgeVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.8, 0.6, 1)
+theme_override_font_sizes/font_size = 9
+horizontal_alignment = 1
+autowrap_mode = 2
+visible = false
+
+[node name="MarginRight" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="SuffixRail" type="VBoxContainer" parent="MarginRight"]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="RailHeader" type="Label" parent="MarginRight/SuffixRail"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.85, 0.65, 1)
+theme_override_font_sizes/font_size = 9
+text = "SUFFIX"
+horizontal_alignment = 1
+
+[node name="SuffixCount" type="Label" parent="MarginRight/SuffixRail"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.38, 0.3, 1)
+theme_override_font_sizes/font_size = 8
+text = "0 / 0"

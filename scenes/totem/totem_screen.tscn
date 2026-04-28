@@ -1,21 +1,22 @@
-[gd_scene load_steps=4 format=4 uid="uid://totem_screen"]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scenes/totem/totem_screen.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/forge/hammer_rail.tscn" id="2_hammer_rail"]
+[ext_resource type="PackedScene" path="res://scenes/totem/totem_grid_panel.tscn" id="3_grid_panel"]
+[ext_resource type="PackedScene" path="res://scenes/totem/totem_crafting_bench.tscn" id="4_bench"]
+[ext_resource type="PackedScene" path="res://scenes/totem/totem_inventory_grid.tscn" id="5_inv_grid"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.06, 0.04, 0.03, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_left"]
+bg_color = Color(0.15, 0.12, 0.1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_center"]
 bg_color = Color(0.1, 0.08, 0.06, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.15, 0.12, 0.09, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.3, 0.25, 0.18, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_right"]
+bg_color = Color(0.13, 0.1, 0.08, 1)
 
 [node name="TotemScreen" type="Control"]
 layout_mode = 3
@@ -26,7 +27,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="BG" type="PanelContainer" parent="."]
+[node name="Background" type="PanelContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -35,25 +36,47 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
 
-[node name="CenterContainer" type="CenterContainer" parent="BG"]
+[node name="VBox" type="VBoxContainer" parent="Background"]
+layout_mode = 2
+
+[node name="Body" type="HBoxContainer" parent="Background/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="LeftPanel" type="PanelContainer" parent="Background/VBox/Body"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_left")
+
+[node name="HammerRail" parent="Background/VBox/Body/LeftPanel" instance=ExtResource("2_hammer_rail")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="CenterPanel" type="PanelContainer" parent="Background/VBox/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_center")
+
+[node name="CenterVBox" type="VBoxContainer" parent="Background/VBox/Body/CenterPanel"]
+custom_minimum_size = Vector2(480, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TotemGridPanel" parent="Background/VBox/Body/CenterPanel/CenterVBox" instance=ExtResource("3_grid_panel")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TotemCraftingBench" parent="Background/VBox/Body/CenterPanel/CenterVBox" instance=ExtResource("4_bench")]
+unique_name_in_owner = true
+layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Panel" type="PanelContainer" parent="BG/CenterContainer"]
+[node name="RightPanel" type="PanelContainer" parent="Background/VBox/Body"]
+custom_minimum_size = Vector2(430, 0)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+theme_override_styles/panel = SubResource("StyleBoxFlat_right")
 
-[node name="Margin" type="MarginContainer" parent="BG/CenterContainer/Panel"]
+[node name="TotemInventoryGrid" parent="Background/VBox/Body/RightPanel" instance=ExtResource("5_inv_grid")]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/margin_left = 40
-theme_override_constants/margin_top = 30
-theme_override_constants/margin_right = 40
-theme_override_constants/margin_bottom = 30
-
-[node name="Label" type="Label" parent="BG/CenterContainer/Panel/Margin"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.55, 0.4, 1)
-theme_override_font_sizes/font_size = 18
-text = "Totem Crafting — Coming Soon"
-horizontal_alignment = 1
