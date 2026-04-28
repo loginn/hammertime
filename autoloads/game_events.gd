@@ -13,3 +13,8 @@ signal prestige_completed()
 
 signal currency_changed(currency_key: String, new_amount: int)
 signal inventory_changed(slot: int)
+
+signal totem_placed(pos: Vector2i, piece: TotemPiece)
+signal totem_removed(pos: Vector2i, piece: TotemPiece)
+signal totem_synergy_changed(synergies: Array)
+signal totem_inventory_changed()

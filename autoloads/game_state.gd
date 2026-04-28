@@ -8,6 +8,9 @@ var currency_counts: Dictionary = {}
 var crafting_inventory: Dictionary = {}
 var crafting_bench_item: HeroItem = null
 
+var totem_inventory: Array = []
+var totem_grid: TotemGrid = TotemGrid.new()
+
 var expedition_resolver: ExpeditionResolver = null
 
 const CURRENCY_KEYS: Array[String] = [
@@ -51,6 +54,8 @@ func initialize_fresh_game() -> void:
 
 	crafting_bench_item = null
 	expedition_resolver = ExpeditionResolver.new()
+	totem_inventory = []
+	totem_grid = TotemGrid.new()
 
 
 func wipe_run_state() -> void:
@@ -63,6 +68,8 @@ func wipe_run_state() -> void:
 		crafting_inventory[slot_val] = []
 
 	crafting_bench_item = null
+	totem_inventory = []
+	totem_grid = TotemGrid.new()
 
 	if expedition_resolver != null:
 		expedition_resolver.cancel_expedition()
@@ -72,6 +79,16 @@ func wipe_run_state() -> void:
 		hero.unequip_item(slot_val)
 
 	hero.update_stats()
+
+
+func add_totem_to_inventory(piece: TotemPiece) -> void:
+	totem_inventory.append(piece)
+	GameEvents.totem_inventory_changed.emit()
+
+
+func remove_totem_from_inventory(piece: TotemPiece) -> void:
+	totem_inventory.erase(piece)
+	GameEvents.totem_inventory_changed.emit()
 
 
 func add_currencies(drops: Dictionary) -> void:
